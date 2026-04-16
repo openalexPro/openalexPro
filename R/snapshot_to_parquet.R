@@ -90,10 +90,182 @@ snapshot_to_parquet <- function(
 
   for (data_set in data_sets) {
     parquet_ds <- file.path(parquet_dir, data_set)
+    metadata_ds <- file.path(parquet_dir, paste0(".", data_set, "_metadata"))
+    metadata_old_conversion <- file.path(
+      parquet_dir,
+      paste0(".", data_set, "_conversion_metadata")
+    )
+    schema_cache_new <- file.path(metadata_ds, "schemata")
+    schema_cache_old_conversion <- file.path(
+      parquet_dir,
+      paste0(".", data_set, "_conversion_metadata"),
+      "schema_cache"
+    )
+    schema_cache_old <- file.path(parquet_ds, ".schema_cache")
     json_dir <- file.path(snapshot_dir, "data", data_set)
+    logs_dir <- file.path(metadata_ds, "logs")
+    log_file <- file.path(logs_dir, "convert.log")
+    log_line <- function(...) {
+      dir.create(logs_dir, recursive = TRUE, showWarnings = FALSE)
+      ts <- as.integer(Sys.time())
+      cat(
+        paste0(ts, " [convert] ", paste0(..., collapse = "")),
+        "\n",
+        file = log_file,
+        append = TRUE
+      )
+    }
 
     message("Processing ", data_set, " ...")
     ds_start <- Sys.time()
+    log_line("start dataset=", data_set)
+
+    # Auto-migrate full prior metadata root (includes schema, verify, logs) ----
+    if (dir.exists(metadata_old_conversion)) {
+      if (!dir.exists(metadata_ds)) {
+        message(
+          "  Migrating prior metadata root: ",
+          metadata_old_conversion,
+          " -> ",
+          metadata_ds
+        )
+        moved_root <- file.rename(metadata_old_conversion, metadata_ds)
+        if (!isTRUE(moved_root)) {
+          dir.create(metadata_ds, recursive = TRUE, showWarnings = FALSE)
+          prior_files <- list.files(
+            metadata_old_conversion,
+            recursive = TRUE,
+            all.files = TRUE,
+            full.names = TRUE,
+            no.. = TRUE
+          )
+          for (src in prior_files) {
+            rel <- substring(src, nchar(metadata_old_conversion) + 2)
+            dst <- file.path(metadata_ds, rel)
+            if (dir.exists(src)) {
+              dir.create(dst, recursive = TRUE, showWarnings = FALSE)
+            } else {
+              dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
+              ok <- file.copy(src, dst, overwrite = FALSE, copy.mode = TRUE)
+              if (!isTRUE(ok)) {
+                stop("Failed to migrate prior metadata file: ", src, call. = FALSE)
+              }
+            }
+          }
+          unlink(metadata_old_conversion, recursive = TRUE)
+        }
+      } else {
+        message(
+          "  Merging prior metadata root: ",
+          metadata_old_conversion,
+          " -> ",
+          metadata_ds
+        )
+        prior_files <- list.files(
+          metadata_old_conversion,
+          recursive = TRUE,
+          all.files = TRUE,
+          full.names = TRUE,
+          no.. = TRUE
+        )
+        for (src in prior_files) {
+          rel <- substring(src, nchar(metadata_old_conversion) + 2)
+          dst <- file.path(metadata_ds, rel)
+          if (dir.exists(src)) {
+            dir.create(dst, recursive = TRUE, showWarnings = FALSE)
+          } else if (!file.exists(dst)) {
+            dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
+            ok <- file.copy(src, dst, overwrite = FALSE, copy.mode = TRUE)
+            if (!isTRUE(ok)) {
+              stop("Failed to merge prior metadata file: ", src, call. = FALSE)
+            }
+          }
+        }
+        unlink(metadata_old_conversion, recursive = TRUE)
+      }
+    }
+
+    # Auto-migrate prior/legacy schema cache location if only old location exists ----
+    if (!dir.exists(schema_cache_new) && dir.exists(schema_cache_old_conversion)) {
+      message(
+        "  Migrating prior schema cache: ",
+        schema_cache_old_conversion,
+        " -> ",
+        schema_cache_new
+      )
+      log_line(
+        "migrating prior schema cache ",
+        schema_cache_old_conversion,
+        " -> ",
+        schema_cache_new
+      )
+      dir.create(dirname(schema_cache_new), recursive = TRUE, showWarnings = FALSE)
+      moved <- file.rename(schema_cache_old_conversion, schema_cache_new)
+      if (!isTRUE(moved)) {
+        dir.create(schema_cache_new, recursive = TRUE, showWarnings = FALSE)
+        legacy_files <- list.files(
+          schema_cache_old_conversion,
+          recursive = TRUE,
+          all.files = TRUE,
+          full.names = TRUE,
+          no.. = TRUE
+        )
+        for (src in legacy_files) {
+          rel <- substring(src, nchar(schema_cache_old_conversion) + 2)
+          dst <- file.path(schema_cache_new, rel)
+          if (dir.exists(src)) {
+            dir.create(dst, recursive = TRUE, showWarnings = FALSE)
+          } else {
+            dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
+            ok <- file.copy(src, dst, overwrite = TRUE, copy.mode = TRUE)
+            if (!isTRUE(ok)) {
+              stop("Failed to migrate prior schema cache file: ", src, call. = FALSE)
+            }
+          }
+        }
+        unlink(schema_cache_old_conversion, recursive = TRUE)
+      }
+    }
+    if (!dir.exists(schema_cache_new) && dir.exists(schema_cache_old)) {
+      message(
+        "  Migrating legacy schema cache: ",
+        schema_cache_old,
+        " -> ",
+        schema_cache_new
+      )
+      log_line(
+        "migrating legacy schema cache ",
+        schema_cache_old,
+        " -> ",
+        schema_cache_new
+      )
+      dir.create(dirname(schema_cache_new), recursive = TRUE, showWarnings = FALSE)
+      moved <- file.rename(schema_cache_old, schema_cache_new)
+      if (!isTRUE(moved)) {
+        dir.create(schema_cache_new, recursive = TRUE, showWarnings = FALSE)
+        legacy_files <- list.files(
+          schema_cache_old,
+          recursive = TRUE,
+          all.files = TRUE,
+          full.names = TRUE,
+          no.. = TRUE
+        )
+        for (src in legacy_files) {
+          rel <- substring(src, nchar(schema_cache_old) + 2)
+          dst <- file.path(schema_cache_new, rel)
+          if (dir.exists(src)) {
+            dir.create(dst, recursive = TRUE, showWarnings = FALSE)
+          } else {
+            dir.create(dirname(dst), recursive = TRUE, showWarnings = FALSE)
+            ok <- file.copy(src, dst, overwrite = TRUE, copy.mode = TRUE)
+            if (!isTRUE(ok)) {
+              stop("Failed to migrate legacy schema cache file: ", src, call. = FALSE)
+            }
+          }
+        }
+        unlink(schema_cache_old, recursive = TRUE)
+      }
+    }
 
     # Enumerate all .gz files ----
     gz_files <- list.files(
@@ -110,6 +282,7 @@ snapshot_to_parquet <- function(
         "', skipping.",
         call. = FALSE
       )
+      log_line("no source files found")
       next
     }
 
@@ -134,16 +307,19 @@ snapshot_to_parquet <- function(
     skipped <- sum(!todo_mask)
     if (skipped > 0) {
       message("  Skipping ", skipped, " already converted file(s)")
+      log_line("skipping already converted files=", skipped)
     }
     gz_files <- gz_files[todo_mask]
     output_files <- file.path(parquet_ds, expected_parquets[todo_mask])
 
     if (length(gz_files) == 0) {
       message("  All files already converted.")
+      log_line("all files already converted")
       next
     }
 
     message("  Converting ", length(gz_files), " file(s)...")
+    log_line("todo_files=", length(gz_files), " schema inference start")
 
     # Stage 1: Infer unified schema ----
     ndjson_options <- if (data_set == "works") {
@@ -166,9 +342,10 @@ snapshot_to_parquet <- function(
       sample_size = sample_size,
       extra_options = ndjson_options,
       verbose = TRUE,
-      schema_cache_dir = file.path(parquet_ds, ".schema_cache")
+      schema_cache_dir = schema_cache_new
     )
     DBI::dbDisconnect(con, shutdown = TRUE)
+    log_line("schema inference complete")
 
     # For works: abstract_inverted_index has duplicate JSON keys ("as" vs "As")
     # that DuckDB case-folds to the same struct field name, causing a collision.
@@ -204,10 +381,18 @@ snapshot_to_parquet <- function(
       handlers = progressr::handler_cli()
     )
 
+    for (out_file in output_files) {
+      log_line("file converted ", out_file)
+    }
+
     message(
       "  done after ",
       round(difftime(Sys.time(), ds_start, units = "secs"), 2),
       " seconds"
+    )
+    log_line(
+      "dataset done elapsed_s=",
+      round(as.numeric(difftime(Sys.time(), ds_start, units = "secs")), 2)
     )
   }
 }

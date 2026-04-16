@@ -292,7 +292,7 @@ testthat::test_that("snapshot_to_parquet creates per-file and unified schema cac
     data_sets    = "authors"
   )
 
-  cache_dir <- file.path(parquet_dir, "authors", ".schema_cache")
+  cache_dir <- file.path(parquet_dir, ".authors_metadata", "schemata")
   expect_true(dir.exists(cache_dir))
 
   # Per-file schema CSVs (one per gz file, named <update_date>_<part_name>.csv)
@@ -336,7 +336,7 @@ testthat::test_that("snapshot_to_parquet reuses unified schema cache on re-run",
     data_sets    = "authors"
   )
 
-  cache_dir    <- file.path(parquet_dir, "authors", ".schema_cache")
+  cache_dir    <- file.path(parquet_dir, ".authors_metadata", "schemata")
   unified_csv  <- file.path(cache_dir, "unified_schema.csv")
   expect_true(file.exists(unified_csv))
 
