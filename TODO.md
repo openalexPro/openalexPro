@@ -20,3 +20,6 @@ Add tests <https://github.com/rkrug/openalexPro/issues/5>
 
 Add Abstract and Citation function based on the corpus from
 `pro_request_json_to_parquet()`
+
+decide if R implementation of convert and index should stay ore use
+openalex-snapshot
