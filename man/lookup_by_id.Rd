@@ -2,75 +2,69 @@
 % Please edit documentation in R/lookup_by_id.R
 \name{lookup_by_id}
 \alias{lookup_by_id}
-\title{Look up records by ID using a pre-built index}
+\title{Look up records by ID and extract them into a project directory}
 \usage{
 lookup_by_id(
-  index_file,
+  root_dir,
   ids,
-  selected = NULL,
+  project_dir,
+  data_sets = NULL,
   workers = NULL,
-  output = NULL,
-  verbose = TRUE
+  profile = c("balanced", "safe", "fast"),
+  progress = TRUE,
+  oas_bin = NULL
 )
 }
 \arguments{
-\item{index_file}{Path to the index parquet file created by
-\code{\link[=build_corpus_index]{build_corpus_index()}}.}
+\item{root_dir}{Root directory containing \code{parquet/} and the dataset
+indexes produced by \code{\link[=build_corpus_index]{build_corpus_index()}}.}
 
-\item{ids}{Character vector of OpenAlex IDs to look up. Can be in long form
-(e.g., \code{"https://openalex.org/W2741809807"}) or short form
-(e.g., \code{"W2741809807"}).}
+\item{ids}{Character vector of OpenAlex IDs to retrieve. Can be long form
+(e.g. \code{"https://openalex.org/W2741809807"}) or short form
+(e.g. \code{"W2741809807"}).}
 
-\item{selected}{Path to the parquet dataset containing the selected indices,
-partitioned by \code{parquet_file} of the work. If \code{NULL}, not saved.}
+\item{project_dir}{Project output directory. Extracted Parquet files are
+written to \code{<project_dir>/snapshot_extract_<dataset>.parquet},
+consistent with the project-folder convention used by \code{\link[=pro_request]{pro_request()}} and
+\code{\link[=pro_fetch]{pro_fetch()}}.}
 
-\item{workers}{Number of parallel workers for reading corpus files.
-Default is \code{NULL} (sequential). If \verb{> 1}, uses
-\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}} with \link[future:multisession]{future::multisession}.}
+\item{data_sets}{Character vector of dataset names to search (e.g.
+\code{c("works", "authors")}). \code{NULL} searches all datasets.}
 
-\item{output}{Path to an output directory for writing results as parquet
-files. If \code{NULL} (default), results are returned as a data frame.
-If set, filtered records are written directly to parquet (one file per
-source corpus file) without loading them into R memory. The directory
-must not already exist.}
+\item{workers}{Number of parallel worker threads. \code{NULL} uses the
+binary's default (4).}
 
-\item{verbose}{If \code{TRUE}, print progress messages. Default: \code{TRUE}}
+\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
+(default), or \code{"fast"}.}
+
+\item{progress}{Show progress bars. Default is \code{TRUE}.}
+
+\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
+(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
 }
 \value{
-If \code{output} is \code{NULL}, a data frame containing the matching records.
-If \code{output} is set, the output directory path is returned invisibly.
+Invisibly returns \code{project_dir}.
 }
 \description{
-This function retrieves specific records from a parquet corpus using
-an index built by \code{\link[=build_corpus_index]{build_corpus_index()}}. It reads only the
-necessary files and rows, making it much faster than scanning the
-entire corpus.
+Delegates ID-based record extraction to the external
+\code{openalex-snapshot} binary. The binary uses the pre-built index
+(created by \code{\link[=build_corpus_index]{build_corpus_index()}}) to locate records efficiently and writes
+them as Parquet files into \code{<project_dir>/snapshot_extract/}.
 }
 \details{
-The function first filters the index (a single parquet file) using
-\code{\link[arrow:open_dataset]{arrow::open_dataset()}} and \code{\link[dplyr:filter]{dplyr::filter()}} to find matching IDs.
-It then uses DuckDB to efficiently read only the specific rows needed
-from each corpus parquet file, avoiding full file scans.
-
-When \code{output} is set, DuckDB writes the filtered rows directly to parquet
-files using \verb{COPY ... TO}, so the data never enters R memory. This is
-essential for lookups involving millions of IDs.
+The pure-R fallback is available as \code{\link[=lookup_by_id_R]{lookup_by_id_R()}}.
 }
 \examples{
 \dontrun{
-# Return results as data frame
-records <- lookup_by_id(
-  index_file = "works_id_index.parquet",
-  ids = c("W2741809807", "W1234567890")
-)
-
-# Write results to parquet (for millions of IDs)
 lookup_by_id(
-  index_file = "works_id_index.parquet",
-  ids = large_id_vector,
-  output = "filtered_works",
-  workers = 3
+  root_dir    = "/Volumes/openalex",
+  ids         = c("W2741809807", "W1234567890"),
+  project_dir = "my_project"
 )
 }
 
+}
+\seealso{
+\code{\link[=lookup_by_id_R]{lookup_by_id_R()}} for the pure-R fallback,
+\code{\link[=build_corpus_index]{build_corpus_index()}} for building the required index.
 }

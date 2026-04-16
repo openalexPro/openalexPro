@@ -1,40 +1,129 @@
-#' Convert OA snapshot to Parquet format
+# snapshot_to_parquet -----------------------------------------------------------
+#
+# Two implementations are provided:
+#   snapshot_to_parquet()   — thin wrapper around the openalex-snapshot binary
+#   snapshot_to_parquet_R() — pure R / DuckDB fallback (original implementation)
+
+# snapshot_to_parquet (binary wrapper) -----------------------------------------
+
+#' Convert OA snapshot to Parquet format via openalex-snapshot
 #'
-#' This function converts the OA (OpenAlex) snapshot data to Parquet format,
-#' processing each `.gz` file individually. Existing output files are skipped,
-#' allowing interrupted conversions to resume. On macOS, a `.metadata_never_index`
-#' file is created in the output directory to prevent Spotlight from indexing
-#' the parquet files.
+#' Delegates conversion of OpenAlex snapshot `.json.gz` files to Parquet to the
+#' external \code{openalex-snapshot} binary (the companion Rust CLI tool).
+#' The binary derives all paths from a single root directory:
+#' \describe{
+#'   \item{\code{<root_dir>/openalex-snapshot/}}{Source snapshot data}
+#'   \item{\code{<root_dir>/parquet/}}{Parquet output}
+#'   \item{\code{<root_dir>/.openalex-snapshot_metadata/}}{Logs, schema cache, reports}
+#' }
+#'
+#' The pure-R fallback implementation is available as [snapshot_to_parquet_R()].
+#'
+#' @param root_dir Root directory containing the snapshot and parquet
+#'   subdirectories (see Details).
+#' @param data_sets Character vector of dataset names to convert (e.g.
+#'   \code{c("works", "authors")}). \code{NULL} converts all datasets.
+#' @param workers Number of parallel worker threads. \code{NULL} uses the
+#'   binary's default (4).
+#' @param profile Performance/memory profile: \code{"safe"}, \code{"balanced"}
+#'   (default), or \code{"fast"}.
+#' @param max_memory_mb Optional per-worker memory cap in MB.
+#' @param sample_size Number of source files to sample for schema inference.
+#'   Default is \code{100}.
+#' @param refresh_cache If \code{TRUE}, forces re-inference of the schema
+#'   (ignores cached schema). Default is \code{FALSE}.
+#' @param progress Show progress bars. Default is \code{TRUE}.
+#' @param oas_bin Path to the \code{openalex-snapshot} binary. If \code{NULL}
+#'   (default), checks \code{getOption("openalexPro.oas_bin")} then PATH.
+#'
+#' @return Invisibly returns \code{root_dir}.
+#'
+#' @seealso [snapshot_to_parquet_R()] for the pure-R fallback,
+#'   [build_corpus_index()] for indexing the resulting Parquet files.
+#'
+#' @examples
+#' \dontrun{
+#' snapshot_to_parquet(root_dir = "/Volumes/openalex")
+#'
+#' snapshot_to_parquet(
+#'   root_dir  = "/Volumes/openalex",
+#'   data_sets = c("authors", "works"),
+#'   workers   = 4,
+#'   profile   = "safe"
+#' )
+#' }
+#'
+#' @importFrom cli cli_abort
+#' @importFrom rlang caller_env
+#' @export
+#' @md
+snapshot_to_parquet <- function(
+  root_dir,
+  data_sets     = NULL,
+  workers       = NULL,
+  profile       = c("balanced", "safe", "fast"),
+  max_memory_mb = NULL,
+  sample_size   = 100L,
+  refresh_cache = FALSE,
+  progress      = TRUE,
+  oas_bin       = NULL
+) {
+  profile <- match.arg(profile)
+
+  datasets_to_run <- if (is.null(data_sets)) "all" else data_sets
+
+  for (ds in datasets_to_run) {
+    args <- c(
+      "convert",
+      "--root-dir",    root_dir,
+      "--dataset",     ds,
+      "--profile",     profile,
+      "--sample-size", as.integer(sample_size)
+    )
+    if (!is.null(workers))       args <- c(args, "--workers",        as.integer(workers))
+    if (!is.null(max_memory_mb)) args <- c(args, "--max-memory-mb",  as.integer(max_memory_mb))
+    if (isTRUE(refresh_cache))   args <- c(args, "--refresh-cache")
+    if (!isTRUE(progress))       args <- c(args, "--no-progress")
+
+    run_oas(args, oas_bin = oas_bin)
+  }
+
+  invisible(root_dir)
+}
+
+
+# snapshot_to_parquet_R (pure-R fallback) --------------------------------------
+
+#' Convert OA snapshot to Parquet format (pure-R implementation)
+#'
+#' Pure-R / DuckDB implementation of snapshot-to-Parquet conversion. This is
+#' the original implementation, preserved as a fallback for environments where
+#' the \code{openalex-snapshot} binary is not available.
+#'
+#' For most users, [snapshot_to_parquet()] (which delegates to the binary) is
+#' preferred as it is faster and includes additional features (verification,
+#' repair, structured logging).
 #'
 #' @param snapshot_dir The directory path of the OA snapshot data.
-#'   Default is `"Volumes/openalex/openalex-snapshot"`.
+#'   Default is \code{"Volumes/openalex/openalex-snapshot"}.
 #' @param parquet_dir The directory path where the Parquet files will be saved.
-#'   Default is `"Volumes/openalex/parquet"`.
+#'   Default is \code{"Volumes/openalex/parquet"}.
 #' @param data_sets A character vector specifying the data sets to process.
-#'   Default is `NULL`, which processes all data sets.
-#' @param sample_size Number of `.gz` files to sample for unified schema
+#'   Default is \code{NULL}, which processes all data sets.
+#' @param sample_size Number of \code{.gz} files to sample for unified schema
 #'   inference. Higher values give more accurate schemas but take longer.
-#'   Default is `20`. Use `NULL` or `0` to use all files.
+#'   Default is \code{20}. Use \code{NULL} or \code{0} to use all files.
 #' @param temp_directory Location of the temporary directory for DuckDB.
-#'   Passed to each worker's DuckDB connection. Default is `NULL` (system default).
-#' @param memory_limit DuckDB memory limit per worker (e.g., `"8GB"`).
-#'   Default is `NULL` (DuckDB default).
+#'   Passed to each worker's DuckDB connection. Default is \code{NULL}
+#'   (system default).
+#' @param memory_limit DuckDB memory limit per worker (e.g., \code{"8GB"}).
+#'   Default is \code{NULL} (DuckDB default).
 #' @param workers Number of parallel workers for file conversion via
-#'   [future.apply::future_lapply()]. Default is `NULL` (sequential processing).
+#'   [future.apply::future_lapply()]. Default is \code{NULL} (sequential).
 #'
-#' @details
-#' The conversion proceeds in two stages for each data set:
+#' @return Invisibly returns \code{NULL}.
 #'
-#' 1. **Schema inference**: A sample of `.gz` files is read using DuckDB's
-#'    `read_json_auto()` with `union_by_name = true` to infer a unified schema.
-#'    This ensures all output parquet files have consistent column types.
-#'
-#' 2. **Per-file conversion**: Each `.gz` file is converted individually to a
-#'    `.parquet` file. When `workers > 1`, files are processed in parallel using
-#'    [future::multisession], with each worker creating its own DuckDB connection.
-#'
-#' Already-converted files (those with a matching `.parquet` output) are
-#' automatically skipped, so the function can resume after interruption.
+#' @seealso [snapshot_to_parquet()] for the preferred binary-backed version.
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbExecute
 #' @importFrom duckdb duckdb
@@ -44,28 +133,26 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Convert all data sets in the default snapshot directory
-#' snapshot_to_parquet()
+#' snapshot_to_parquet_R()
 #'
-#' # Convert specific data sets with parallel processing
-#' snapshot_to_parquet(
+#' snapshot_to_parquet_R(
 #'   snapshot_dir = "/path/to/snapshot",
-#'   data_sets = c("authors", "works"),
-#'   workers = 4,
+#'   data_sets    = c("authors", "works"),
+#'   workers      = 4,
 #'   memory_limit = "8GB"
 #' )
 #' }
 #'
 #' @export
 #' @md
-snapshot_to_parquet <- function(
+snapshot_to_parquet_R <- function(
   snapshot_dir = file.path("", "Volumes", "openalex", "openalex-snapshot"),
-  parquet_dir = file.path("", "Volumes", "openalex", "parquet"),
-  data_sets = NULL,
-  sample_size = 20,
+  parquet_dir  = file.path("", "Volumes", "openalex", "parquet"),
+  data_sets    = NULL,
+  sample_size  = 20,
   temp_directory = NULL,
   memory_limit = NULL,
-  workers = NULL
+  workers      = NULL
 ) {
   if (is.null(data_sets)) {
     data_sets <- list.dirs(
@@ -90,7 +177,7 @@ snapshot_to_parquet <- function(
 
   for (data_set in data_sets) {
     parquet_ds <- file.path(parquet_dir, data_set)
-    json_dir <- file.path(snapshot_dir, "data", data_set)
+    json_dir   <- file.path(snapshot_dir, "data", data_set)
 
     message("Processing ", data_set, " ...")
     ds_start <- Sys.time()
@@ -98,16 +185,14 @@ snapshot_to_parquet <- function(
     # Enumerate all .gz files ----
     gz_files <- list.files(
       json_dir,
-      pattern = "\\.gz$",
+      pattern   = "\\.gz$",
       recursive = TRUE,
       full.names = TRUE
     )
 
     if (length(gz_files) == 0) {
       warning(
-        "No .gz files found for '",
-        data_set,
-        "', skipping.",
+        "No .gz files found for '", data_set, "', skipping.",
         call. = FALSE
       )
       next
@@ -125,8 +210,8 @@ snapshot_to_parquet <- function(
     dir.create(parquet_ds, recursive = TRUE, showWarnings = FALSE)
     existing_parquets <- gsub("\\\\", "/", list.files(
       parquet_ds,
-      pattern = "\\.parquet$",
-      recursive = TRUE,
+      pattern    = "\\.parquet$",
+      recursive  = TRUE,
       full.names = FALSE
     ))
     expected_parquets <- sub("\\.gz$", ".parquet", rel_paths)
@@ -135,7 +220,7 @@ snapshot_to_parquet <- function(
     if (skipped > 0) {
       message("  Skipping ", skipped, " already converted file(s)")
     }
-    gz_files <- gz_files[todo_mask]
+    gz_files     <- gz_files[todo_mask]
     output_files <- file.path(parquet_ds, expected_parquets[todo_mask])
 
     if (length(gz_files) == 0) {
@@ -161,11 +246,11 @@ snapshot_to_parquet <- function(
       DBI::dbExecute(conn = con, paste0("SET temp_directory = '", temp_directory, "'"))
     }
     columns_clause <- infer_json_schema(
-      con = con,
-      files = gz_files,
-      sample_size = sample_size,
-      extra_options = ndjson_options,
-      verbose = TRUE,
+      con            = con,
+      files          = gz_files,
+      sample_size    = sample_size,
+      extra_options  = ndjson_options,
+      verbose        = TRUE,
       schema_cache_dir = file.path(parquet_ds, ".schema_cache")
     )
     DBI::dbDisconnect(con, shutdown = TRUE)
@@ -190,11 +275,11 @@ snapshot_to_parquet <- function(
 
         future.apply::future_lapply(seq_along(gz_files), function(i) {
           result <- convert_json_to_parquet(
-            input_file = gz_files[i],
-            output_file = output_files[i],
+            input_file     = gz_files[i],
+            output_file    = output_files[i],
             columns_clause = columns_clause,
-            extra_options = ndjson_options,
-            memory_limit = memory_limit,
+            extra_options  = ndjson_options,
+            memory_limit   = memory_limit,
             temp_directory = temp_directory
           )
           p()
@@ -210,4 +295,6 @@ snapshot_to_parquet <- function(
       " seconds"
     )
   }
+
+  invisible(NULL)
 }

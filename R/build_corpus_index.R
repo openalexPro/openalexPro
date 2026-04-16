@@ -1,37 +1,127 @@
-#' Build a Parquet index for fast ID lookups in a parquet corpus
+# build_corpus_index -----------------------------------------------------------
+#
+# Two implementations are provided:
+#   build_corpus_index()   — thin wrapper around the openalex-snapshot binary
+#   build_corpus_index_R() — pure R / DuckDB fallback (original implementation)
+
+# build_corpus_index (binary wrapper) ------------------------------------------
+
+#' Build a Parquet ID-lookup index via openalex-snapshot
 #'
-#' This function creates a Parquet index that maps OpenAlex IDs
-#' to their physical location in the parquet corpus. This enables fast random
-#' access to specific records without scanning entire partitions.
+#' Delegates index creation to the external \code{openalex-snapshot} binary.
+#' The binary builds \code{<dataset>_id_idx.parquet} inside
+#' \code{<root_dir>/parquet/}, enabling fast record retrieval by OpenAlex ID
+#' using [lookup_by_id()].
 #'
-#' The index file will be created in the same directory as the `corpus_dir` and
-#' has to stay there for the lookup to function. Together with the `corpus_dir`,
-#' the index file can be moved to any location.
+#' The pure-R fallback is available as [build_corpus_index_R()].
+#'
+#' @param root_dir Root directory containing the \code{parquet/} subdirectory
+#'   produced by [snapshot_to_parquet()].
+#' @param data_sets Character vector of dataset names to index (e.g.
+#'   \code{c("works", "authors")}). \code{NULL} indexes all datasets.
+#' @param workers Number of parallel worker threads. \code{NULL} uses the
+#'   binary's default (4).
+#' @param profile Performance/memory profile: \code{"safe"}, \code{"balanced"}
+#'   (default), or \code{"fast"}.
+#' @param max_memory_mb Optional per-worker memory cap in MB.
+#' @param overwrite If \code{TRUE}, rebuilds existing indexes. Default is
+#'   \code{FALSE} (skip if index already exists).
+#' @param progress Show progress bars. Default is \code{TRUE}.
+#' @param oas_bin Path to the \code{openalex-snapshot} binary. If \code{NULL}
+#'   (default), checks \code{getOption("openalexPro.oas_bin")} then PATH.
+#'
+#' @return Invisibly returns \code{root_dir}.
+#'
+#' @seealso [build_corpus_index_R()] for the pure-R fallback,
+#'   [lookup_by_id()] for ID-based record retrieval.
+#'
+#' @examples
+#' \dontrun{
+#' build_corpus_index(root_dir = "/Volumes/openalex")
+#'
+#' build_corpus_index(
+#'   root_dir  = "/Volumes/openalex",
+#'   data_sets = "works",
+#'   workers   = 4
+#' )
+#' }
+#'
+#' @importFrom cli cli_abort
+#' @importFrom rlang caller_env
+#' @export
+#' @md
+build_corpus_index <- function(
+  root_dir,
+  data_sets     = NULL,
+  workers       = NULL,
+  profile       = c("balanced", "safe", "fast"),
+  max_memory_mb = NULL,
+  overwrite     = FALSE,
+  progress      = TRUE,
+  oas_bin       = NULL
+) {
+  profile <- match.arg(profile)
+
+  datasets_to_run <- if (is.null(data_sets)) "all" else data_sets
+
+  for (ds in datasets_to_run) {
+    args <- c(
+      "index",
+      "--root-dir", root_dir,
+      "--dataset",  ds,
+      "--profile",  profile
+    )
+    if (!is.null(workers))       args <- c(args, "--workers",       as.integer(workers))
+    if (!is.null(max_memory_mb)) args <- c(args, "--max-memory-mb", as.integer(max_memory_mb))
+    if (isTRUE(overwrite))       args <- c(args, "--overwrite")
+    if (!isTRUE(progress))       args <- c(args, "--no-progress")
+
+    run_oas(args, oas_bin = oas_bin)
+  }
+
+  invisible(root_dir)
+}
+
+
+# build_corpus_index_R (pure-R fallback) ---------------------------------------
+
+#' Build a Parquet ID-lookup index (pure-R implementation)
+#'
+#' Pure-R / DuckDB implementation of corpus index building. This is the
+#' original implementation, preserved as a fallback for environments where the
+#' \code{openalex-snapshot} binary is not available.
+#'
+#' For most users, [build_corpus_index()] (which delegates to the binary) is
+#' preferred.
+#'
+#' The index file will be created in the same directory as \code{corpus_dir}
+#' and must stay there for lookup to function. Together with \code{corpus_dir},
+#' the index can be moved to any location.
 #'
 #' The function is memory-efficient and can handle 300M+ records by using
 #' a two-stage approach: first indexing each parquet file individually
-#' (bounded memory per file), then combining into a single parquet index
-#' file. This avoids loading the entire dataset at once.
-#' Stage 1 is parallelized using [future.apply::future_lapply()] and
-#' supports resuming if interrupted. On macOS, a `.metadata_never_index`
-#' file is created in the temporary directory to prevent Spotlight from
-#' indexing the parquet files during building.
+#' (bounded memory per file), then combining into a single parquet index file.
+#' Stage 1 is parallelised using [future.apply::future_lapply()] and supports
+#' resuming if interrupted.
 #'
 #' @param corpus_dir Path to the parquet corpus directory.
-#' @param memory_limit DuckDB memory limit (e.g., "20GB"). Default is `NULL`.
+#' @param memory_limit DuckDB memory limit (e.g., \code{"20GB"}). Default is
+#'   \code{NULL}.
 #' @param workers Number of parallel workers for Stage 1 indexing and DuckDB
-#'   threads for Stage 2. Default is `NULL` (use all cores).
+#'   threads for Stage 2. Default is \code{NULL} (use all cores).
 #'
-#' @return Invisibly returns the path to the created index.
+#' @return Invisibly returns the path to the created index file.
 #'
 #' @details
 #' The index contains the following columns:
 #' \describe{
 #'   \item{id}{The OpenAlex ID}
-#'   \item{id_block}{Block number computed as `floor(numeric_id / 10000)`}
+#'   \item{id_block}{Block number computed as \code{floor(numeric_id / 10000)}}
 #'   \item{parquet_file}{Relative path to the parquet file in the corpus}
 #'   \item{file_row_number}{Row number within the file (0-indexed)}
 #' }
+#'
+#' @seealso [build_corpus_index()] for the preferred binary-backed version.
 #'
 #' @importFrom DBI dbConnect dbDisconnect dbExecute dbGetQuery
 #' @importFrom duckdb duckdb
@@ -41,19 +131,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Build partitioned index for OpenAlex IDs (fast O(1) lookup)
-#' build_corpus_index(
-#'   corpus_dir = "/Volumes/openalex/parquet/works",
+#' build_corpus_index_R(
+#'   corpus_dir   = "/Volumes/openalex/parquet/works",
 #'   memory_limit = "20GB"
 #' )
 #' }
 #'
 #' @export
 #' @md
-build_corpus_index <- function(
+build_corpus_index_R <- function(
   corpus_dir,
   memory_limit = NULL,
-  workers = NULL
+  workers      = NULL
 ) {
   if (!dir.exists(corpus_dir)) {
     stop("corpus_dir does not exist: ", corpus_dir)
@@ -62,7 +151,7 @@ build_corpus_index <- function(
   corpus_dir <- normalizePath(corpus_dir)
 
   snapshot_dir <- dirname(corpus_dir)
-  corpus_name <- basename(corpus_dir)
+  corpus_name  <- basename(corpus_dir)
 
   index_file <- file.path(snapshot_dir, paste0(corpus_name, "_id_idx.parquet"))
 
@@ -105,7 +194,7 @@ build_corpus_index <- function(
 
   ## Two-stage approach:
   ##   Stage 1: Index each parquet file individually (bounded memory, parallel)
-  ##   Stage 2: Combine into a sibngle .parquet file
+  ##   Stage 2: Combine into a single .parquet file
 
   ## OpenAlex ID formats:
   ##   https://openalex.org/W1234567890  (standard: letter + digits)
@@ -120,8 +209,8 @@ build_corpus_index <- function(
 
   parquet_files <- list.files(
     corpus_dir,
-    pattern = "\\.parquet$",
-    recursive = TRUE,
+    pattern    = "\\.parquet$",
+    recursive  = TRUE,
     full.names = TRUE
   )
 
@@ -229,13 +318,10 @@ build_corpus_index <- function(
 
   dbExecute(con, copy_query)
 
-  # arrow::open_dataset(temp_dir) |>
-  #   arrow::write_parquet(index_file, compression = "snappy")
-
   unlink(temp_dir, recursive = TRUE)
 
-  index_files <- index_file
-  total_size <- sum(file.info(index_files)$size)
+  index_files  <- index_file
+  total_size   <- sum(file.info(index_files)$size)
   file_size_gb <- round(total_size / 1024^3, 2)
 
   message(
