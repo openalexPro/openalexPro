@@ -31,3 +31,4 @@
 ^\.github$
 ^.claude
 ^DEVELOPMENT.md$
+^CLAUDE\.md$
