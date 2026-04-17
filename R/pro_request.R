@@ -79,29 +79,26 @@ pro_request <- function(
       future::plan(future::sequential)
     }
 
+    # Flatten nested list to leaf (URL, path) pairs
+    leaf_queries <- collect_leaf_queries(query_url)
+    leaf_urls    <- vapply(leaf_queries, `[[`, character(1), "url")
+    leaf_paths   <- lapply(leaf_queries, `[[`, "path")
+
     # Handle count_only case
     if (count_only) {
       result <- future.apply::future_lapply(
-        seq_along(query_url),
+        seq_along(leaf_queries),
         function(i) {
           pro_count(
-            query_url = query_url[[i]],
+            query_url = leaf_urls[[i]],
             api_key = api_key
           )
         },
         future.seed = TRUE
       )
 
-      # Create names for each query
-      query_names <- if (is.null(names(query_url))) {
-        paste0("query_", seq_along(query_url))
-      } else {
-        names(query_url)
-      }
-
-      # Combine results into a single data.frame with query names
       out <- do.call(rbind, result)
-      out$query <- query_names
+      out$query <- vapply(leaf_paths, paste, character(1), collapse = "/")
 
       return(out)
     }
@@ -110,7 +107,7 @@ pro_request <- function(
     if (progress) {
       cli::cli_alert_info("Fetching query counts...")
       counts <- vapply(
-        query_url,
+        leaf_urls,
         function(url) {
           pro_count(url, api_key = api_key)$count
         },
@@ -139,16 +136,17 @@ pro_request <- function(
         }
 
         result <- future.apply::future_lapply(
-          seq_along(query_url),
+          seq_along(leaf_queries),
           function(i) {
-            nm <- names(query_url)[i]
-            if (is.null(nm) || identical(nm, "")) {
-              nm <- paste0("query_", i)
+            path_parts <- leaf_paths[[i]]
+            query_output <- if (is.null(output)) {
+              NULL
+            } else {
+              do.call(file.path, c(list(output), as.list(path_parts)))
             }
-            query_output <- if (is.null(output)) NULL else file.path(output, nm)
 
             fetch_query_pages(
-              query_url = query_url[[i]],
+              query_url = leaf_urls[[i]],
               pages = pages,
               output = query_output,
               overwrite = FALSE,
@@ -408,4 +406,30 @@ fetch_query_pages <- function(
   success <- TRUE
 
   output
+}
+
+
+#' Flatten a nested query list into (path, url) leaf pairs
+#'
+#' @param x A character URL or a (possibly nested) named list of URLs.
+#' @param path_parts Character vector of name segments accumulated so far.
+#' @return A flat list of `list(path = character, url = character)` entries.
+#' @keywords internal
+#' @noRd
+collect_leaf_queries <- function(x, path_parts = character(0)) {
+  if (is.character(x)) {
+    return(list(list(path = path_parts, url = x)))
+  }
+  nms <- names(x)
+  if (is.null(nms)) {
+    nms <- paste0("query_", seq_along(x))
+  } else {
+    unnamed <- !nzchar(nms)
+    nms[unnamed] <- paste0("query_", which(unnamed))
+  }
+  result <- list()
+  for (i in seq_along(x)) {
+    result <- c(result, collect_leaf_queries(x[[i]], c(path_parts, nms[i])))
+  }
+  result
 }
