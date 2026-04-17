@@ -197,7 +197,11 @@ pro_request_jsonl <- function(
         gsub(pattern = ".json", replacement = "")
 
       if (has_subdirs) {
-        jsonl <- file.path(output, basename(dirname(fn)), basename(fn))
+        # Preserve full relative subdirectory path (handles arbitrary nesting depth)
+        input_depth <- length(strsplit(gsub("\\\\", "/", input_json), "/")[[1]])
+        f_parts     <- strsplit(gsub("\\\\", "/", dirname(fn)), "/")[[1]]
+        rel_parts   <- f_parts[seq(input_depth + 1L, length(f_parts))]
+        jsonl <- do.call(file.path, c(list(output), as.list(rel_parts), list(basename(fn))))
         pn <- basename(dirname(fn))
       } else {
         jsonl <- file.path(output, basename(fn))

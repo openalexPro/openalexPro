@@ -1,5 +1,17 @@
 # openalexPro (development)
 
+## New Features
+
+* `pro_request()`, `pro_request_jsonl()`, and `pro_request_jsonl_parquet()`
+  now accept **nested lists** of query URLs. Each nesting level is preserved
+  as a subdirectory in the output, and the parquet stage converts directory
+  depth into hive-style partition keys: depth 1 → `query=<name>`, depth 2 →
+  `query_l2=<name>`, depth 3 → `query_l3=<name>`, etc. The resulting dataset
+  is readable with `arrow::open_dataset()` and the partition columns appear
+  as regular columns. `pro_fetch()` inherits this behaviour automatically.
+  A new internal helper `collect_leaf_queries()` performs the recursive list
+  flattening.
+
 # openalexPro 0.7.0
 
 ## Breaking Changes

@@ -35,7 +35,7 @@ The package has two functional areas:
 Functions that query the live OpenAlex REST API:
 
 - `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking
-- `pro_request()` — paginates through API results, writes JSONL
+- `pro_request()` — paginates through API results, writes JSONL; accepts nested lists of URLs (each nesting level becomes a subdirectory)
 - `pro_fetch()` — all-in-one: query → paginate → convert to parquet (project folder)
 - `pro_count()` — counts matching records
 - `pro_download_content()` — downloads PDFs / TEI XML from `content.openalex.org`
@@ -93,6 +93,7 @@ Each test file (`test-011`, `test-012`, `test-013`) has two sections:
 - `id_block()` — converts an OpenAlex ID to its block number (`floor(numeric_id / 10000)`)
 - `opt_select_fields()`, `opt_filter_names()` — helpers for building API queries
 - `prepare_snapshot()` — snapshot download/preparation utilities
+- `collect_leaf_queries()` — recursively flattens a nested list of URLs into `(path, url)` pairs (internal, used by `pro_request()`)
 
 ## Branching
 
@@ -105,5 +106,6 @@ Each test file (`test-011`, `test-012`, `test-013`) has two sections:
 - `project_dir` is the standard output directory parameter (consistent across `pro_fetch()`, `pro_request()`, `lookup_by_id()`)
 - OpenAlex IDs accepted in both short form (`W2741809807`) and long form (`https://openalex.org/W2741809807`)
 - The `openalex-snapshot` binary only accepts one `--dataset` per invocation; multi-dataset calls loop in R
+- Nested query lists produce hive-partitioned parquet: depth 1 → `query=<name>`, depth N → `query_lN=<name>`
 - VCR cassettes record/replay API calls; `api_key` is filtered to `<api-key>` in cassettes
 - `OPENALEXPRO_LIVE_TESTS=true` + a real API key enables live API tests in `test-900`

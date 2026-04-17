@@ -166,6 +166,52 @@ pro_request(
 # Creates: data/json/chunk_1/, data/json/chunk_2/, data/json/chunk_3/
 ```
 
+## Nested List Queries
+
+`pro_request()` also accepts **nested lists** of URLs. Each nesting level is preserved as a subdirectory, and `pro_request_jsonl_parquet()` converts the directory depth to hive-style partition keys:
+
+| Directory depth | Partition key |
+|----------------|--------------|
+| 1 | `query=<name>` |
+| 2 | `query_l2=<name>` |
+| 3 | `query_l3=<name>` |
+
+```{r}
+# Build a nested query list manually
+queries <- list(
+  year_2022 = pro_query(entity = "works", publication_year = 2022),
+  year_2023 = pro_query(entity = "works", publication_year = 2023),
+  institutions = list(
+    usa = pro_query(entity = "institutions", country_code = "US"),
+    uk  = pro_query(entity = "institutions", country_code = "GB")
+  )
+)
+
+# Download: creates nested subdirectory structure
+pro_request(
+  query_url = queries,
+  output    = "data/json"
+)
+# Creates:
+#   data/json/year_2022/
+#   data/json/year_2023/
+#   data/json/institutions/usa/
+#   data/json/institutions/uk/
+
+# After jsonl + parquet conversion the dataset is hive-partitioned:
+#   data/parquet/query=year_2022/
+#   data/parquet/query=year_2023/
+#   data/parquet/query=institutions/query_l2=usa/
+#   data/parquet/query=institutions/query_l2=uk/
+
+# Filter by partition
+ds <- arrow::open_dataset("data/parquet")
+ds |> dplyr::filter(query == "year_2022")
+ds |> dplyr::filter(query == "institutions", query_l2 == "usa")
+```
+
+`pro_fetch()` inherits nested list support automatically — you can pass a nested list directly as `query_url`.
+
 ## Parallel Downloads
 
 For chunked queries, enable parallel processing:
@@ -739,20 +785,42 @@ flowchart LR
 
 ## Output Structure
 
-The Parquet dataset is partitioned by the `page` field:
+For a flat (single-URL) input:
 
 ```
 data/parquet/
-├── page=chunk_1_1/
-│   └── data_0.parquet
-├── page=chunk_1_2/
-│   └── data_0.parquet
-├── page=chunk_2_1/
-│   └── data_0.parquet
+├── results_page_1.parquet
+├── results_page_2.parquet
 └── ...
 ```
 
-This partitioning enables efficient filtering when querying subsets of the data.
+For a flat list of URLs (e.g. `chunk_1`, `chunk_2` from auto-chunking):
+
+```
+data/parquet/
+├── query=chunk_1/
+│   ├── results_page_1.parquet
+│   └── results_page_2.parquet
+└── query=chunk_2/
+    └── results_page_1.parquet
+```
+
+For a two-level nested list:
+
+```
+data/parquet/
+├── query=year_2022/
+│   └── results_page_1.parquet
+├── query=year_2023/
+│   └── results_page_1.parquet
+└── query=institutions/
+    ├── query_l2=usa/
+    │   └── results_page_1.parquet
+    └── query_l2=uk/
+        └── results_page_1.parquet
+```
+
+The hive partition columns (`query`, `query_l2`, …) become regular columns when you open the dataset with `arrow::open_dataset()`, enabling efficient predicate pushdown.
 
 ---
 

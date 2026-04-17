@@ -147,6 +147,18 @@ openalexPro::pro_request(
 
 Will retrieve the records and save them into the folder specified in output. One important difference is now between the query being a single URL or a list: if it is a list, the `future` and `future.apply` packages are used to process the URLs in the list in parallel.
 
+`pro_request()` also accepts **nested lists**, which creates a mirrored nested directory structure. The subsequent `pro_request_jsonl_parquet()` step converts the directory depth into hive-style partition keys (`query=<name>`, `query_l2=<name>`, …), so the final parquet dataset can be filtered by group directly:
+
+```r
+queries <- list(
+  year_2022 = pro_query(entity = "works", publication_year = 2022),
+  year_2023 = pro_query(entity = "works", publication_year = 2023)
+)
+pro_fetch(query_url = queries, project_folder = "by_year")
+# Parquet partitions: by_year/parquet/query=year_2022/ and query=year_2023/
+arrow::open_dataset("by_year/parquet") |> dplyr::filter(query == "year_2022")
+```
+
 ### 3. Processing `json` files (`openalexPro::pro_request_jsonl()`)
 
 This step prepares the json files for the final ingestion into a `parquet` database:

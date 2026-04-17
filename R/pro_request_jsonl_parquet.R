@@ -171,19 +171,26 @@ pro_request_jsonl_parquet <- function(
   # for some calls and long names (runneradmin) for others, so comparing
   # dirname(normalizePath(f)) == normalizePath(input_jsonl) is unreliable.
   # Counting components is immune to this because 8.3 and long names occupy
-  # the same depth in the hierarchy. ----
+  # the same depth in the hierarchy.
+  #
+  # Hive partition key naming by depth: depth 1 -> "query", depth N -> "query_lN"
+  hive_key <- function(depth) if (depth == 1L) "query" else paste0("query_l", depth)
+
   input_depth <- length(strsplit(gsub("\\\\", "/", input_jsonl), "/")[[1]])
   output_files <- vapply(jsons, function(f) {
-    f_parts <- strsplit(gsub("\\\\", "/", f), "/")[[1]]
-    fname   <- sub("\\.json$", ".parquet", basename(f))
-    rel_dir <- if (length(f_parts) > input_depth + 1L) {
-      # File is in a subdirectory relative to input_jsonl
-      paste(f_parts[seq(input_depth + 1L, length(f_parts) - 1L)], collapse = "/")
+    f_parts  <- strsplit(gsub("\\\\", "/", f), "/")[[1]]
+    fname    <- sub("\\.json$", ".parquet", basename(f))
+    rel_parts <- if (length(f_parts) > input_depth + 1L) {
+      f_parts[seq(input_depth + 1L, length(f_parts) - 1L)]
     } else {
-      ""
+      character(0)
     }
-    if (nchar(rel_dir) > 0) {
-      file.path(output, paste0("query=", rel_dir), fname)
+    if (length(rel_parts) > 0L) {
+      hive_dirs <- mapply(
+        function(depth, val) paste0(hive_key(depth), "=", val),
+        seq_along(rel_parts), rel_parts
+      )
+      do.call(file.path, c(list(output), as.list(hive_dirs), list(fname)))
     } else {
       file.path(output, fname)
     }
