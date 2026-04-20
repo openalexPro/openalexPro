@@ -79,6 +79,17 @@ pro_request <- function(
       future::plan(future::sequential)
     }
 
+    # Delete output directory upfront if overwrite requested
+    if (!is.null(output) && dir.exists(output)) {
+      if (!overwrite) {
+        stop(
+          "Directory ", output, " exists.\n",
+          "Either specify `overwrite = TRUE` or delete it."
+        )
+      }
+      unlink(output, recursive = TRUE)
+    }
+
     # Flatten nested list to leaf (URL, path) pairs
     leaf_queries <- collect_leaf_queries(query_url)
     leaf_urls    <- vapply(leaf_queries, `[[`, character(1), "url")
