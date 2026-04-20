@@ -1,5 +1,14 @@
 # openalexPro (development)
 
+## New Features
+
+* New debug option `openalexPro.ratelimit_check`: when set to `TRUE` via
+  `options(openalexPro.ratelimit_check = TRUE)`, every API call prints the
+  current rate-limit status (budget, usage, remaining, reset time) as a message
+  before the request is sent. Internally handled in `api_call()` using
+  `pro_rate_limit_status(verbose = TRUE)`. A recursion guard temporarily
+  disables the option during the nested rate-limit request.
+
 # openalexPro 0.8.1
 
 ## Bug Fixes
