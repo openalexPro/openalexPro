@@ -101,6 +101,11 @@ Each test file (`test-011`, `test-012`, `test-013`) has two sections:
 - Merge into `dev` (never commit directly to `main`)
 - `main` receives only release commits
 
+## Debug Options
+
+- `options(openalexPro.ratelimit_check = TRUE)` — print rate-limit status before every API call (via `api_call()`)
+- `options(openalexPro.oas_bin = "/path/to/openalex-snapshot")` — override binary path for snapshot functions
+
 ## Key Conventions
 
 - `project_dir` is the standard output directory parameter (consistent across `pro_fetch()`, `pro_request()`, `lookup_by_id()`)
