@@ -3,7 +3,7 @@
 #' @param update logical. If `TRUE` update the existing value. Default is `FALSE`.
 #' @return A character vector of available filter names
 #'
-#' @importFrom httr2 request req_url_query req_error req_perform resp_body_json
+#' @importFrom httr2 request req_url_query resp_body_json
 #' @export
 opt_filter_names <- function(update = FALSE) {
   if (update) {
@@ -16,8 +16,7 @@ opt_filter_names <- function(update = FALSE) {
     url <- "https://api.openalex.org/works?filter=DOESNTEXIST%3A1"
     resp <- httr2::request("https://api.openalex.org/works") |>
       httr2::req_url_query(filter = "DOESNTEXIST:1") |>
-      httr2::req_error(is_error = ~FALSE) |> # don't throw on HTTP errors
-      httr2::req_perform() |>
+      api_call(get_html_response = NULL) |>
       httr2::resp_body_json()
 
     filter <- resp$message |>
