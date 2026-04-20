@@ -30,8 +30,11 @@ all pages will be downloaded. Default: 100000.}
 If it does not exist, it is created. If \code{NULL}, a temporary
 directory is created.}
 
-\item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted if it already
-exists.}
+\item{overwrite}{Logical. If \code{TRUE}, all three subdirectories
+(\code{json}, \code{jsonl}, \code{parquet}) are deleted from
+\code{project_folder} before the pipeline starts. If \code{FALSE} (the
+default) and any of those subdirectories already exist, the function stops
+with an error.}
 
 \item{api_key}{Character string API key or \code{NULL}. Defaults to
 \code{Sys.getenv("openalexPro.apikey")}. If \code{NULL} or \code{""}, requests are sent

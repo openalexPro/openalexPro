@@ -18,8 +18,10 @@
 #'   all pages will be downloaded. Default: 100000.
 #' @param output directory where the JSON files are saved. Default is a
 #'   temporary directory. Needs to be specified.
-#' @param overwrite Logical. If `TRUE`, `output` will be deleted if it already
-#'   exists.
+#' @param overwrite Logical. If `TRUE`, `output` will be deleted before
+#'   downloading. For a list `query_url`, the entire top-level `output`
+#'   directory is removed upfront. If `FALSE` (the default) and `output`
+#'   already exists, the function stops with an error.
 #' @param api_key Character string API key or `NULL`. Defaults to
 #'   `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, requests are sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
@@ -77,6 +79,17 @@ pro_request <- function(
       future::plan(future::multisession, workers = workers)
     } else {
       future::plan(future::sequential)
+    }
+
+    # Delete output directory upfront if overwrite requested
+    if (!is.null(output) && dir.exists(output)) {
+      if (!overwrite) {
+        stop(
+          "Directory ", output, " exists.\n",
+          "Either specify `overwrite = TRUE` or delete it."
+        )
+      }
+      unlink(output, recursive = TRUE)
     }
 
     # Flatten nested list to leaf (URL, path) pairs

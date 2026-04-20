@@ -6,6 +6,34 @@ development history for the `openalexPro` package. It is aimed at future contrib
 
 ---
 
+## 2026-04-20 — Fix `overwrite` parameter in `pro_request()` list method and `pro_fetch()` (0.8.1)
+
+**Bug:** `pro_request()` accepted an `overwrite` parameter but silently ignored
+it when `query_url` was a list — the top-level output directory was never
+checked or deleted, and each sub-query's `fetch_query_pages()` call received
+`overwrite = FALSE` hardcoded, so re-running with an existing output caused
+cryptic per-subdirectory errors rather than a clean atomic overwrite.
+
+**Fix (`R/pro_request.R`):** Added an upfront check in the list method before
+flattening queries: error if `output` exists and `overwrite = FALSE`; delete
+it with `unlink(recursive = TRUE)` if `overwrite = TRUE`. Sub-function calls
+keep `overwrite = FALSE` (the directory no longer exists by the time they run).
+
+**Bug:** `pro_fetch()` delegated `overwrite` to each of the three sub-functions
+(`pro_request`, `pro_request_jsonl`, `pro_request_jsonl_parquet`) individually,
+so directories were deleted one at a time as the pipeline progressed. If
+`overwrite = FALSE` and only `jsonl/` existed (not `json/`), the first step
+would succeed silently and only fail on the second.
+
+**Fix (`R/pro_fetch.R`):** Upfront check across all three subdirectories before
+starting the pipeline: collect which of `json/`, `jsonl/`, `parquet/` exist,
+error with a combined message if `overwrite = FALSE`, delete all existing ones
+if `overwrite = TRUE`. Sub-functions receive `overwrite = FALSE`.
+
+**Key files:** `R/pro_request.R`, `R/pro_fetch.R`
+
+---
+
 ## 2026-04-16 — Wrap `openalex-snapshot` binary; add `*_R()` fallbacks (0.7.0)
 
 **Motivation:** The companion Rust CLI `openalex-snapshot` is now more capable
