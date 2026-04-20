@@ -1,5 +1,22 @@
 # openalexPro (development)
 
+# openalexPro 0.8.1
+
+## Bug Fixes
+
+* `pro_request()` list method now respects the `overwrite` parameter. Previously,
+  when `query_url` was a list, the top-level `output` directory was neither
+  checked nor deleted regardless of `overwrite`. It now errors if the directory
+  exists and `overwrite = FALSE`, and deletes it upfront if `overwrite = TRUE`.
+
+* `pro_fetch()` now deletes all three subdirectories (`json`, `jsonl`, `parquet`)
+  upfront before the pipeline starts when `overwrite = TRUE`, rather than
+  delegating deletion to each sub-function individually. If any of the
+  subdirectories exist and `overwrite = FALSE`, the function now errors
+  immediately with a clear message listing which directories already exist.
+
+# openalexPro 0.8.0
+
 ## New Features
 
 * `pro_request()`, `pro_request_jsonl()`, and `pro_request_jsonl_parquet()`

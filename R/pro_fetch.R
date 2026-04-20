@@ -29,6 +29,11 @@
 #'   \code{jsonl}) and final (\code{parquet}) results are stored.
 #'   If it does not exist, it is created. If \code{NULL}, a temporary
 #'   directory is created.
+#' @param overwrite Logical. If \code{TRUE}, all three subdirectories
+#'   (\code{json}, \code{jsonl}, \code{parquet}) are deleted from
+#'   \code{project_folder} before the pipeline starts. If \code{FALSE} (the
+#'   default) and any of those subdirectories already exist, the function stops
+#'   with an error.
 #'
 #' @return Invisibly, the normalized path of the \code{parquet} subfolder
 #'   inside \code{project_folder}, i.e. the value returned by
