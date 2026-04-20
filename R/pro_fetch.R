@@ -73,11 +73,26 @@ pro_fetch <- function(
     )
   }
 
+  subdirs <- c("json", "jsonl", "parquet")
+  existing <- subdirs[dir.exists(file.path(project_folder, subdirs))]
+  if (length(existing) > 0) {
+    if (!overwrite) {
+      stop(
+        "The following subdirectories already exist in '", project_folder, "': ",
+        paste(existing, collapse = ", "), ".\n",
+        "Either specify `overwrite = TRUE` or delete them."
+      )
+    }
+    for (d in existing) {
+      unlink(file.path(project_folder, d), recursive = TRUE)
+    }
+  }
+
   pro_request(
     query_url = query_url,
     pages = pages,
     output = file.path(project_folder, "json"),
-    overwrite = overwrite,
+    overwrite = FALSE,
     api_key = api_key,
     workers = workers,
     verbose = verbose,
@@ -87,14 +102,14 @@ pro_fetch <- function(
   ) |>
     pro_request_jsonl(
       output = file.path(project_folder, "jsonl"),
-      overwrite = overwrite,
+      overwrite = FALSE,
       progress = progress,
       delete_input = FALSE,
       workers = workers
     ) |>
     pro_request_jsonl_parquet(
       output = file.path(project_folder, "parquet"),
-      overwrite = overwrite,
+      overwrite = FALSE,
       verbose = verbose,
       delete_input = FALSE
     )
