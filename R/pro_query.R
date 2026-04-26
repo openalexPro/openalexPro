@@ -181,6 +181,9 @@
 #' @param id Optional ID or vector of IDs (e.g., \code{"W1775749144"}). If a single ID
 #'   is provided, fetches one entity directly. If multiple IDs are provided, they are
 #'   automatically moved into the \code{ids.openalex} filter.
+#' @param doi Optional DOI or vector of DOIs (e.g., \code{"10.1038/s41586-021-03819-2"}).
+#'   Values are moved into the \code{doi} filter and automatically chunked into
+#'   separate requests when the number of DOIs exceeds \code{chunk_limit}.
 #' @param search Optional full-text search string. Applies stemming and
 #'   stop-word removal. Supports boolean operators (\code{AND}, \code{OR},
 #'   \code{NOT} in uppercase), quoted phrases (\code{"exact phrase"}),
@@ -256,6 +259,7 @@ pro_query <- function(
     "funders"
   ),
   id = NULL,
+  doi = NULL,
   search = NULL,
   search.exact = NULL,
   search.semantic = NULL,
@@ -284,6 +288,11 @@ pro_query <- function(
   if (length(id) > 1) {
     filter <- c(filter, list(`ids.openalex` = unique(id)))
     id <- NULL
+  }
+
+  # move DOIs into filter (always via filter; chunked automatically)
+  if (!is.null(doi) && length(doi) > 0) {
+    filter <- c(filter, list(doi = unique(doi)))
   }
 
   # validate filters and select fields
