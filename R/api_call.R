@@ -122,15 +122,6 @@ api_call <- function(
       class = "unexpected_http_status"
     )
   } else if (is.null(get_html_response)) {
-    # returned for all non-200
-    log_fun(
-      paste0(
-        "\u26A0 HTTP ",
-        status,
-        " - returning response for caller inspection"
-      ),
-      error_log
-    )
     return(resp)
   } else if (is.numeric(get_html_response) && status == get_html_response) {
     ct <- httr2::resp_header(resp, "content-type")
