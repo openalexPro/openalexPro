@@ -18,219 +18,217 @@ execute:
 ```{r}
 #| include: false
 #| label: knitr_setup
-
 try(
-  params <- rmarkdown::yaml_front_matter("inst/compatibility.qmd")$params
+  params <- rmarkdown::yaml_front_matter("inst/compatibility.qmd")$params,
+  silent = TRUE
 )
-
 ```
+
 
 ```{r}
 #| label: setup
-
 library(openalexPro)
 library(openalexR)
 library(dplyr)
+library(tictoc)
 ```
 
 # Compatibility between `openalexR` and `openalexPro`
-One of the aims of this package is compatibility with `openalexR::oa_fetch(output = "tibble")`.
+One of the aims of this package is compatibility between `openalexPro` and `openalexR`. 
 
-Here we will demonstrate how this can be achieved and what the differences are. 
+In this report, several searches under different conditions (filters, grouping, snowball searches) will be done and the results compared. As `openalexPro` is agnostic to the underlying structure of the returned datsets, structural equivalence is not always expected or possible. 
 
-# Get the data
+Thew search scenarios we will compare below are:
+- [TODO] count of search
+- search
+  - abstract and title search
+  - [TODO] full text search
+  - [TODO] with filter
+  - [TODO] return of selected fields
+- snowball search (this is only done if the package [`openalexSnowball`](https://rkrug.r-universe.dev/openalexPro) is also installed )
 
-## Search Term Based Search
+As `openalexR` is fully memory based, whereas `openalexPro` fully file based, doifferent approaches need to be followed which will be discussed in the sections. 
+
+# Basic title_and_abstract Search
+
+## `openalexR`
+
 First we fetch the works using `openalexR::oa_fetch()`:
 
 ```{r}
 #| label: openalexR_fetch
+tic()
+fn <- file.path("openalexR", "works.rds")
 
-fn <- file.path("openalexR", "data", "works.rds")
+dir.create(dirname(fn), recursive = TRUE, showWarnings = FALSE)
+fetchR <- openalexR::oa_fetch(
+  entity = "works",
+  output = "tibble",
+  title_and_abstract.search = params$search_term,
+) |>
+  dplyr::arrange(id)
 
-if (!file.exists(fn)) {
-  dir.create(dirname(fn), recursive = TRUE, showWarnings = FALSE)
-  fetchR <- openalexR::oa_fetch(
-    entity = "works",
-    output = "tibble",
-    title_and_abstract.search = params$search_term,
-  ) |>
-    dplyr::arrange(id)
-
-  saveRDS(
-    fetchR,
-    file = fn
-  )
-}
-
-fetchR <- readRDS(fn)
+saveRDS(
+  fetchR,
+  file = fn
+)
+toc()
 ```
 
-Now we will do the same using the `openalexPro` pipeline (JSON -> JSONL -> Parquet):
+
+## `openalexPro`
+
+Now we will downloiad the results using `openalexPro::pro_fetch()`
 
 ```{r}
 #| label: openalexPro_fetch
-
-json_dir <- file.path("openalexPro", "data", "works", "json")
-jsonl_dir <- file.path("openalexPro", "data", "works", "jsonl")
-fetchPro <- file.path("openalexPro", "data", "works", "corpus")
-
-if (!dir.exists(dirname(fetchPro))) {
-  if (dir.exists(json_dir)) {
-    unlink(json_dir, recursive = TRUE, force = TRUE)
-  }
-  if (dir.exists(jsonl_dir)) {
-    unlink(jsonl_dir, recursive = TRUE, force = TRUE)
-  }
-  if (dir.exists(fetchPro)) {
-    unlink(fetchPro, recursive = TRUE, force = TRUE)
-  }
-
-  fetchPro <- pro_query(
-    title_and_abstract.search = params$search_term,
-    entity = "works"
-  ) |>
-    pro_request(
-      output = json_dir,
-      overwrite = TRUE,
-      verbose = params$verbose
-    ) |>
-    pro_request_jsonl(
-      output = jsonl_dir,
-      overwrite = TRUE,
-      verbose = params$verbose
-    ) |>
-    pro_request_jsonl_parquet(
-      output = fetchPro,
-      overwrite = TRUE,
-      verbose = params$verbose
-    )
-}
-
+tic()
+fetchPro <- pro_query(
+  title_and_abstract.search = params$search_term,
+  entity = "works"
+) |>
+  pro_fetch(
+    project_folder = "openalexPro",
+    overwrite = TRUE,
+    verbose = params$verbose
+  )
+toc()
 ```
 
-## Snowball Search
+
+
+# Snowball Search
+
+## `openalexR`
 
 First we fetch the works using `openalexR::oa_snowball()`:
 
 ```{r}
 #| label: openalexR_oa_snowball
-fn <- file.path("openalexR", "data", "snowballR.rds")
+tic()
+fn <- file.path("openalexR", "snowball.rds")
 
-if (!file.exists(fn)) {
-  dir.create(dirname(fn), recursive = TRUE, showWarnings = FALSE)
+dir.create(dirname(fn), recursive = TRUE, showWarnings = FALSE)
 
-  snowballR <- openalexR::oa_snowball(
-    identifier = params$identifier,
-    id_type = "original",
-    verbose = params$verbose
-  )
-  saveRDS(snowballR, fn)
-}
-
-snowballR <- readRDS(fn)
+snowballR <- openalexR::oa_snowball(
+  identifier = params$identifier,
+  id_type = "original",
+  verbose = params$verbose
+)
+saveRDS(snowballR, fn)
+toc()
 ```
+
+## `openalexPro`
 
 Now we will do the same using `openalexSnowball::pro_snowball()`.
 
 ```{r}
 #| label: openalexPro_pro_snowball
+tic()
+snowballPro <- file.path("openalexPro", "snowball")
 
-snowballPro <- file.path("openalexPro", "data", "snowballPro")
-
-if (!dir.exists(snowballPro)) {
-  snowballPro <- openalexSnowball::pro_snowball(
-    identifier = params$identifier,
-    output = snowballPro,
-    verbose = params$verbose
-  )
-}
+snowballPro <- openalexSnowball::pro_snowball(
+  identifier = params$identifier,
+  output = snowballPro,
+  verbose = params$verbose
+)
+toc()
 ```
 
-## Comparison Search Term Search
+# Comparison Search Term Search
 
+To compare the search term results, we have to read these
 
-### Works retrieved (`id`s)
+```{r}
+#| label: read_search_results
+fetchR <- readRDS(file.path("openalexR", "works.rds"))
+fetchPro <- openalexPro::read_corpus(
+  file.path(("openalexPro"), "parquet"),
+  return_data = TRUE
+)
+```
+
+## Works retrieved (`id`s)
 
 Works retrieved using `openalexR::oa_fetch()` and not in the `openalexPro` result:
 
 ```{r}
 setdiff(
   fetchR$id,
-  read_corpus(fetchPro, return_data = FALSE) |>
-    dplyr::select(id) |>
-    dplyr::collect() |>
-    dplyr::pull(id)
+  fetchPro$id
 )
 ```
+
 
 Works retrieved using the `openalexPro` pipeline and not in `openalexR::oa_fetch()`:
 
 ```{r}
 setdiff(
-  read_corpus(fetchPro, return_data = FALSE) |>
-    dplyr::select(id) |>
-    dplyr::collect() |>
-    dplyr::pull(id),
+  fetchPro$id,
   fetchR$id
 )
 ```
 
 If both are empty, the same works are retrieved.
 
-### Names of Columns
+## Names of Columns
 
 Let's compare the names. The following columns are in both `fetchR` and `fetchPro`:
 ```{r}
 #| label: columns_in_both
-
 intersect(
   names(fetchR),
-  read_corpus(fetchPro, return_data = FALSE) |> names()
+  names(fetchPro)
 )
 ```
 
 The following are missing from `fetchPro`:
 ```{r}
 #| label: columns not_in_fetchPro_comp
-
+#| 
 setdiff(
   names(fetchR),
-  read_corpus(fetchPro, return_data = FALSE) |> names()
+  names(fetchPro)
 )
 ```
 
 and these are missing from `fetchR`:
 ```{r}
 #| label: columns not_in_fetchR
-
+#| 
 setdiff(
-  read_corpus(fetchPro, return_data = FALSE) |> names(),
+  names(fetchPro),
   names(fetchR)
 )
 ```
 
+These differences are based on normalisation which `openalexR` os doing, while `openalexPro` is agnostic to the fields retrieved. See the documentation of `openalexR` for details.
 
-## Comparison Snowball Search
+# Comparison Snowball Search
 
+To compare the snowball searches the results have to be read into memory.
 
-### Nodes - works retrieved (`id`s)
+```{r}
+#| label: read_snowball_results
+#| 
+snowballR <- readRDS(file.path("openalexR", "snowball.rds"))
+snowballPro <- openalexSnowball::read_snowball(
+  file.path(("openalexPro"), "snowball"),
+  return_data = TRUE
+)
+```
+
+## Nodes - works retrieved (`id`s)
 
 First we check if the same papers are retrieved:.
 
 The following works are in `openalexR::oa_snowball()` but not in `openalexSnowball::pro_snowball()`:
 
 ```{r}
-
 setdiff(
   snowballR$nodes$id,
-  openalexSnowball::read_snowball(snowballPro, return_data = FALSE)$nodes |>
-    dplyr::select(id) |>
-    dplyr::mutate(
-      id = paste0("https://openalex.org/", id)
-    ) |>
-    dplyr::collect() |>
-    dplyr::pull(id)
+  snowballPro$nodes$id
 )
 ```
 
@@ -238,48 +236,35 @@ The following works are in `openalexR::oa_snowball()` but not in `openalexSnowba
 
 ```{r}
 setdiff(
-  openalexSnowball::read_snowball(snowballPro, return_data = FALSE)$nodes |>
-    dplyr::select(id) |>
-    dplyr::mutate(
-      id = paste0("https://openalex.org/", id)
-    ) |>
-    dplyr::collect() |>
-    dplyr::pull(id),
+  snowballPro$id,
   snowballR$nodes$id
 )
 ```
 
 Both should be empty!
 
-### Edges
+The fields in the nodes follow the same pattern as the default fetch.
+
+## Edges
 
 
-#### Edges Identified
+### Edges Identified
 
 The following edges are in `openalexR::oa_snowball()` but not in `openalexSnowball::pro_snowball()`:
 
 ```{r}
 setdiff(
   snowballR$edges |>
-  dplyr::arrange(
-    from, 
-    to
-  ),
-  openalexSnowball::read_snowball(snowballPro, return_data = FALSE)$edges |>
+    dplyr::arrange(
+      from,
+      to
+    ),
+  snowballPro$edges |>
     dplyr::filter(edge_type == "core") |>
     dplyr::select(
       from,
       to
-    ) |>
-    dplyr::mutate(
-      from = paste0("https://openalex.org/", from),
-      to = paste0("https://openalex.org/", to)
-    ) |>
-    dplyr::arrange(
-      from,
-      to
-    ) |>
-    dplyr::collect()
+    )
 )
 ```
   
@@ -287,21 +272,12 @@ The following works are in `openalexR::oa_snowball()` but not in `openalexSnowba
 
 ```{r}
 setdiff(
-  openalexSnowball::read_snowball(snowballPro, return_data = FALSE)$edges |>
+  snowballPro$edges |>
     dplyr::filter(edge_type == "core") |>
     dplyr::select(
       from,
       to
-    ) |>
-    dplyr::mutate(
-      from = paste0("https://openalex.org/", from),
-      to = paste0("https://openalex.org/", to)
-    ) |>
-    dplyr::arrange(
-      from,
-      to
-    ) |>
-    dplyr::collect(),
+    ),
   snowballR$edges |>
     dplyr::arrange(
       from,
@@ -309,4 +285,3 @@ setdiff(
     )
 )
 ```
-
