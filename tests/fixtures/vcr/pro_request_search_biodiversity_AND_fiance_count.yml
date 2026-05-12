@@ -112,4 +112,43 @@ http_interactions:
       string: |
         {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid select field. Valid fields for select are: id, doi, title, display_name, relevance_score, publication_year, publication_date, ids, language, primary_location, sources, type, type_crossref, indexed_in, open_access, authorships, institution_assertions, institutions, countries_distinct_count, institutions_distinct_count, corresponding_author_ids, corresponding_institution_ids, apc_list, apc_paid, fwci, is_authors_truncated, has_fulltext, fulltext_origin, cited_by_count, citation_normalized_percentile, cited_by_percentile_year, biblio, is_retracted, is_paratext, is_xpac, primary_topic, topics, keywords, concepts, mesh, locations_count, locations, best_oa_location, sustainable_development_goals, awards, funders, datasets, versions, has_content, content_urls, referenced_works_count, referenced_works, related_works, abstract_inverted_index, cited_by_api_url, counts_by_year, updated_date, created_date."}
   recorded_at: 2026-03-02 13:45:40
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity+AND+finance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
+  response:
+    status: 200
+    headers:
+      date: Tue, 12 May 2026 10:26:33 GMT
+      content-type: application/json
+      cf-ray: 9fa8b9cce8950e55-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 1.1 heroku-router
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type
+      access-control-allow-methods: GET, HEAD, POST, OPTIONS
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=9N7moJbhg9Sz%2BTJPmxVCANRxwdo6qZCHElqCwBHPYvA%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1778581593"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=9N7moJbhg9Sz%2BTJPmxVCANRxwdo6qZCHElqCwBHPYvA%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1778581593"
+      x-ratelimit-cost-usd: '0.001'
+      x-ratelimit-credits-used: '10'
+      x-ratelimit-limit: '10000'
+      x-ratelimit-limit-usd: '1'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '9888'
+      x-ratelimit-remaining-usd: '0.9888'
+      x-ratelimit-reset: '48807'
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 422, "db_response_time_ms": 34, "page": 1, "per_page":
+        1, "groups_count": null, "cost_usd": 0.001}, "results": [{"ids": {"openalex":
+        "https://openalex.org/W4235089722", "doi": "https://doi.org/10.1111/1468-2346.00131"}}],
+        "group_by": []}'
+  recorded_at: 2026-05-12 10:26:33
 recorded_with: VCR-vcr/2.0.0

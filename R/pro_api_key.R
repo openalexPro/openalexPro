@@ -34,13 +34,16 @@ pro_api_key = function() {
   api_key <- opt_api_key()
   if (is.null(api_key)) {
     api_key <- Sys.getenv("openalexPro.api_key")
-    if (nzchar(api_key)) {
+    if (!nzchar(api_key)) {
       api_key <- NULL
     }
   }
   if (is.null(api_key)) {
     if (requireNamespace("keyring", quietly = TRUE)) {
-      api_key <- keyring::key_get("API_openalex")
+      try(
+        api_key <- keyring::key_get("API_openalex"),
+        silent = TRUE
+      )
     }
   }
   return(api_key)

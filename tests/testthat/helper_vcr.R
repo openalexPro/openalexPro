@@ -101,7 +101,7 @@ if (vcr_record_mode == "all") {
 }
 
 # Ensure a dummy API key is set so validation passes during VCR-recorded tests
-if (!nzchar(pro_api_key())) {
+if (is.null(pro_api_key())) {
   Sys.setenv(openalexPro.apikey = "test-api-key")
 }
 
