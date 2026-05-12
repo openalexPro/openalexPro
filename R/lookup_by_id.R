@@ -57,23 +57,16 @@ lookup_by_id <- function(
   ids,
   project_dir,
   data_sets = NULL,
-  workers   = NULL,
-  profile   = c("balanced", "safe", "fast"),
-  progress  = TRUE,
-  oas_bin   = NULL
+  workers = NULL,
+  profile = c("balanced", "safe", "fast"),
+  progress = TRUE,
+  oas_bin = NULL
 ) {
   profile <- match.arg(profile)
 
   if (missing(ids) || length(ids) == 0) {
     cli::cli_abort("{.arg ids} must be provided and non-empty.")
   }
-
-  # Normalise IDs to long form
-  ids <- ifelse(
-    grepl("^https://openalex\\.org/", ids),
-    ids,
-    paste0("https://openalex.org/", ids)
-  )
 
   # Write IDs to a temporary CSV file
   tmp_csv <- tempfile(fileext = ".csv")
@@ -87,14 +80,23 @@ lookup_by_id <- function(
 
   args <- c(
     "extract",
-    "--root-dir", root_dir,
-    "--ids",      tmp_csv,
-    "--output",   output_base,
-    "--dataset",  ds,
-    "--profile",  profile
+    "--root-dir",
+    root_dir,
+    "--ids",
+    tmp_csv,
+    "--output",
+    output_base,
+    "--dataset",
+    ds,
+    "--profile",
+    profile
   )
-  if (!is.null(workers))  args <- c(args, "--workers", as.integer(workers))
-  if (!isTRUE(progress))  args <- c(args, "--no-progress")
+  if (!is.null(workers)) {
+    args <- c(args, "--workers", as.integer(workers))
+  }
+  if (!isTRUE(progress)) {
+    args <- c(args, "--no-progress")
+  }
 
   run_oas(args, oas_bin = oas_bin)
 
@@ -166,9 +168,9 @@ lookup_by_id_R <- function(
   index_file,
   ids,
   selected = NULL,
-  workers  = NULL,
-  output   = NULL,
-  verbose  = TRUE
+  workers = NULL,
+  output = NULL,
+  verbose = TRUE
 ) {
   ## Validate inputs
   if (missing(ids) || length(ids) == 0) {
@@ -176,7 +178,7 @@ lookup_by_id_R <- function(
   }
 
   ## Check index exists
-  index_file    <- normalizePath(index_file, mustWork = FALSE)
+  index_file <- normalizePath(index_file, mustWork = FALSE)
   snapshot_path <- dirname(index_file)
   if (!file.exists(index_file)) {
     stop("Index file not found: ", index_file)
@@ -226,9 +228,9 @@ lookup_by_id_R <- function(
       message("Saving selected ids to ", selected)
     }
     arrow::write_dataset(
-      dataset      = matches,
-      path         = selected,
-      format       = "parquet",
+      dataset = matches,
+      path = selected,
+      format = "parquet",
       partitioning = "parquet_file"
     )
   }
@@ -247,7 +249,8 @@ lookup_by_id_R <- function(
   # Normalise to forward slashes so DuckDB receives consistent paths on all
   # platforms (normalizePath on Windows may produce backslashes). ----
   names(file_chunks) <- gsub(
-    "\\\\", "/",
+    "\\\\",
+    "/",
     file.path(snapshot_path, names(file_chunks))
   )
 
@@ -265,67 +268,70 @@ lookup_by_id_R <- function(
     dir.create(output, recursive = TRUE, showWarnings = FALSE)
   }
 
-  progressr::with_progress({
-    p <- progressr::progressor(along = file_chunks)
-    results <- future.apply::future_lapply(
-      names(file_chunks),
-      function(pq_file) {
-        row_numbers <- file_chunks[[pq_file]]
+  progressr::with_progress(
+    {
+      p <- progressr::progressor(along = file_chunks)
+      results <- future.apply::future_lapply(
+        names(file_chunks),
+        function(pq_file) {
+          row_numbers <- file_chunks[[pq_file]]
 
-        ## Each worker gets its own DuckDB connection
-        worker_con <- DBI::dbConnect(duckdb::duckdb(), read_only = TRUE)
-        on.exit(DBI::dbDisconnect(worker_con, shutdown = TRUE))
+          ## Each worker gets its own DuckDB connection
+          worker_con <- DBI::dbConnect(duckdb::duckdb(), read_only = TRUE)
+          on.exit(DBI::dbDisconnect(worker_con, shutdown = TRUE))
 
-        row_filter <- paste(row_numbers, collapse = ", ")
+          row_filter <- paste(row_numbers, collapse = ", ")
 
-        result <- if (!is.null(output)) {
-          ## Write directly to parquet — never loads into R memory
-          out_file   <- file.path(output, paste0("part_", basename(pq_file)))
-          copy_query <- paste0(
-            "COPY (SELECT * FROM read_parquet('",
-            pq_file,
-            "', file_row_number = true) ",
-            "WHERE file_row_number IN (",
-            row_filter,
-            ")) ",
-            "TO '",
-            out_file,
-            "' (FORMAT PARQUET, COMPRESSION SNAPPY)"
-          )
-          tryCatch(
-            {
-              DBI::dbExecute(worker_con, copy_query)
-              length(row_numbers)
-            },
-            error = function(e) {
-              warning("Failed to write from ", pq_file, ": ", e$message)
-              0L
-            }
-          )
-        } else {
-          ## Return data frame (in-memory mode)
-          query <- paste0(
-            "SELECT * FROM read_parquet('",
-            pq_file,
-            "', file_row_number = true) ",
-            "WHERE file_row_number IN (",
-            row_filter,
-            ")"
-          )
-          tryCatch(
-            DBI::dbGetQuery(worker_con, query),
-            error = function(e) {
-              warning("Failed to read from ", pq_file, ": ", e$message)
-              data.frame()
-            }
-          )
+          result <- if (!is.null(output)) {
+            ## Write directly to parquet — never loads into R memory
+            out_file <- file.path(output, paste0("part_", basename(pq_file)))
+            copy_query <- paste0(
+              "COPY (SELECT * FROM read_parquet('",
+              pq_file,
+              "', file_row_number = true) ",
+              "WHERE file_row_number IN (",
+              row_filter,
+              ")) ",
+              "TO '",
+              out_file,
+              "' (FORMAT PARQUET, COMPRESSION SNAPPY)"
+            )
+            tryCatch(
+              {
+                DBI::dbExecute(worker_con, copy_query)
+                length(row_numbers)
+              },
+              error = function(e) {
+                warning("Failed to write from ", pq_file, ": ", e$message)
+                0L
+              }
+            )
+          } else {
+            ## Return data frame (in-memory mode)
+            query <- paste0(
+              "SELECT * FROM read_parquet('",
+              pq_file,
+              "', file_row_number = true) ",
+              "WHERE file_row_number IN (",
+              row_filter,
+              ")"
+            )
+            tryCatch(
+              DBI::dbGetQuery(worker_con, query),
+              error = function(e) {
+                warning("Failed to read from ", pq_file, ": ", e$message)
+                data.frame()
+              }
+            )
+          }
+
+          p()
+          result
         }
-
-        p()
-        result
-      }
-    )
-  }, handlers = progressr::handler_cli())
+      )
+    },
+    handlers = progressr::handler_cli()
+  )
 
   if (!is.null(output)) {
     total <- sum(unlist(results))

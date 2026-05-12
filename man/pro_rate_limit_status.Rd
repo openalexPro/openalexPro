@@ -4,14 +4,11 @@
 \alias{pro_rate_limit_status}
 \title{Check OpenAlex rate limit status}
 \usage{
-pro_rate_limit_status(
-  api_key = Sys.getenv("openalexPro.apikey"),
-  verbose = TRUE
-)
+pro_rate_limit_status(api_key = pro_api_key(), verbose = TRUE)
 }
 \arguments{
 \item{api_key}{API key (character string) or `NULL`. Defaults to
-\code{Sys.getenv("openalexPro.apikey")}. If `NULL` or `""`, this function
+\code{pro_api_key()}. If `NULL` or `""`, this function
 returns \code{FALSE} with an informational message.}
 
 \item{verbose}{Logical. If \code{TRUE} (default), prints rate limit info via \code{message()}.}

@@ -91,18 +91,24 @@
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
 pro_download_content <- function(
   ids,
-  format   = c("pdf", "grobid-xml"),
-  output   = ".",
-  workers  = 1L,
-  api_key  = Sys.getenv("openalexPro.apikey"),
+  format = c("pdf", "grobid-xml"),
+  output = ".",
+  workers = 1L,
+  api_key = pro_api_key(),
   endpoint = "https://content.openalex.org"
 ) {
   format <- match.arg(format)
 
-  if (is.null(api_key) || (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))) {
+  if (
+    is.null(api_key) ||
+      (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
+  ) {
     api_key <- NULL
   } else if (!is.character(api_key) || length(api_key) != 1) {
-    stop("`api_key` must be NULL or a length-1 character string.", call. = FALSE)
+    stop(
+      "`api_key` must be NULL or a length-1 character string.",
+      call. = FALSE
+    )
   }
 
   if (!length(ids) || all(is.na(ids))) {
@@ -138,34 +144,61 @@ pro_download_content <- function(
         url <- paste0(endpoint, "/works/", id, ".", format)
         out_file <- file.path(output, paste0(id, ".", format))
 
-        result <- tryCatch({
-          req <- httr2::request(url)
-          if (!is.null(api_key)) {
-            req <- httr2::req_url_query(req, api_key = api_key)
-          }
-          req <- httr2::req_user_agent(req, paste0("openalexPro/", utils::packageVersion("openalexPro")))
-
-          resp <- suppressMessages(api_call(req, max_retries = 5, get_html_response = NULL))
-          status_code <- httr2::resp_status(resp)
-
-          if (status_code == 404L) {
-            list(id = id, file = NA_character_, status = "not_found",
-                 message = "Content not available in this format")
-          } else if (status_code >= 400L) {
-            list(id = id, file = NA_character_, status = "error",
-                 message = paste0("HTTP ", status_code))
-          } else {
-            if (format == "pdf") {
-              writeBin(httr2::resp_body_raw(resp), out_file)
-            } else {
-              writeLines(httr2::resp_body_string(resp), out_file)
+        result <- tryCatch(
+          {
+            req <- httr2::request(url)
+            if (!is.null(api_key)) {
+              req <- httr2::req_url_query(req, api_key = api_key)
             }
-            list(id = id, file = out_file, status = "ok", message = NA_character_)
+            req <- httr2::req_user_agent(
+              req,
+              paste0("openalexPro/", utils::packageVersion("openalexPro"))
+            )
+
+            resp <- suppressMessages(api_call(
+              req,
+              max_retries = 5,
+              get_html_response = NULL
+            ))
+            status_code <- httr2::resp_status(resp)
+
+            if (status_code == 404L) {
+              list(
+                id = id,
+                file = NA_character_,
+                status = "not_found",
+                message = "Content not available in this format"
+              )
+            } else if (status_code >= 400L) {
+              list(
+                id = id,
+                file = NA_character_,
+                status = "error",
+                message = paste0("HTTP ", status_code)
+              )
+            } else {
+              if (format == "pdf") {
+                writeBin(httr2::resp_body_raw(resp), out_file)
+              } else {
+                writeLines(httr2::resp_body_string(resp), out_file)
+              }
+              list(
+                id = id,
+                file = out_file,
+                status = "ok",
+                message = NA_character_
+              )
+            }
+          },
+          error = function(e) {
+            list(
+              id = id,
+              file = NA_character_,
+              status = "error",
+              message = conditionMessage(e)
+            )
           }
-        }, error = function(e) {
-          list(id = id, file = NA_character_, status = "error",
-               message = conditionMessage(e))
-        })
+        )
 
         p()
         result
@@ -176,20 +209,24 @@ pro_download_content <- function(
 
   # Assemble data frame
   out <- data.frame(
-    id      = vapply(results, `[[`, character(1), "id"),
-    file    = vapply(results, `[[`, character(1), "file"),
-    status  = vapply(results, `[[`, character(1), "status"),
+    id = vapply(results, `[[`, character(1), "id"),
+    file = vapply(results, `[[`, character(1), "file"),
+    status = vapply(results, `[[`, character(1), "status"),
     message = vapply(results, `[[`, character(1), "message"),
     stringsAsFactors = FALSE
   )
 
-  n_ok  <- sum(out$status == "ok")
+  n_ok <- sum(out$status == "ok")
   n_404 <- sum(out$status == "not_found")
   n_err <- sum(out$status == "error")
 
   cli::cli_alert_success("{n_ok} file{?s} downloaded successfully.")
-  if (n_404 > 0) cli::cli_alert_warning("{n_404} ID{?s} had no content available (404).")
-  if (n_err > 0) cli::cli_alert_warning("{n_err} download{?s} failed with errors.")
+  if (n_404 > 0) {
+    cli::cli_alert_warning("{n_404} ID{?s} had no content available (404).")
+  }
+  if (n_err > 0) {
+    cli::cli_alert_warning("{n_err} download{?s} failed with errors.")
+  }
 
   out
 }

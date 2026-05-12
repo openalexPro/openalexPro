@@ -4,10 +4,7 @@
 \alias{pro_validate_credentials}
 \title{Validate OpenAlex credentials}
 \usage{
-pro_validate_credentials(
-  api_key = Sys.getenv("openalexPro.apikey"),
-  show_credentials = FALSE
-)
+pro_validate_credentials(api_key = pro_api_key(), show_credentials = FALSE)
 }
 \arguments{
 \item{api_key}{API key to validate (character string) or `NULL`.}

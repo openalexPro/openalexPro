@@ -47,17 +47,23 @@ pro_fetch <- function(
   pages = 10000,
   project_folder = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
   count_only,
   error_log = NULL
 ) {
-  if (is.null(api_key) || (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))) {
+  if (
+    is.null(api_key) ||
+      (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
+  ) {
     api_key <- NULL
   } else if (!is.character(api_key) || length(api_key) != 1) {
-    stop("`api_key` must be NULL or a length-1 character string.", call. = FALSE)
+    stop(
+      "`api_key` must be NULL or a length-1 character string.",
+      call. = FALSE
+    )
   }
 
   if (!missing(count_only)) {
@@ -83,8 +89,11 @@ pro_fetch <- function(
   if (length(existing) > 0) {
     if (!overwrite) {
       stop(
-        "The following subdirectories already exist in '", project_folder, "': ",
-        paste(existing, collapse = ", "), ".\n",
+        "The following subdirectories already exist in '",
+        project_folder,
+        "': ",
+        paste(existing, collapse = ", "),
+        ".\n",
         "Either specify `overwrite = TRUE` or delete them."
       )
     }
