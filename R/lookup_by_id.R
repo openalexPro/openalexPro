@@ -28,8 +28,6 @@
 #'   \code{c("works", "authors")}). \code{NULL} searches all datasets.
 #' @param workers Number of parallel worker threads. \code{NULL} uses the
 #'   binary's default (4).
-#' @param profile Performance/memory profile: \code{"safe"}, \code{"balanced"}
-#'   (default), or \code{"fast"}.
 #' @param progress Show progress bars. Default is \code{TRUE}.
 #' @param oas_bin Path to the \code{openalex-snapshot} binary. If \code{NULL}
 #'   (default), checks \code{getOption("openalexPro.oas_bin")} then PATH.
@@ -58,12 +56,9 @@ lookup_by_id <- function(
   project_dir,
   data_sets = NULL,
   workers = NULL,
-  profile = c("balanced", "safe", "fast"),
   progress = TRUE,
   oas_bin = NULL
 ) {
-  profile <- match.arg(profile)
-
   if (missing(ids) || length(ids) == 0) {
     cli::cli_abort("{.arg ids} must be provided and non-empty.")
   }
@@ -87,9 +82,7 @@ lookup_by_id <- function(
     "--output",
     output_base,
     "--dataset",
-    ds,
-    "--profile",
-    profile
+    ds
   )
   if (!is.null(workers)) {
     args <- c(args, "--workers", as.integer(workers))

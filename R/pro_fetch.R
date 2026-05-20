@@ -25,6 +25,9 @@
 #' @param count_only Do not use it here. The function will abort if it set to
 #' `TRUE` and give a warning if `FALSE`
 #'
+#' @param delete_input Determines if the `input_json` should be deleted
+#'   afterwards. Defaults to `FALSE`.
+#'
 #' @param project_folder Directory where all intermediate (\code{json},
 #'   \code{jsonl}) and final (\code{parquet}) results are stored.
 #'   If it does not exist, it is created. If \code{NULL}, a temporary
@@ -48,6 +51,7 @@ pro_fetch <- function(
   project_folder = NULL,
   overwrite = FALSE,
   api_key = pro_api_key(),
+  delete_input = TRUE,
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
@@ -118,13 +122,13 @@ pro_fetch <- function(
       output = file.path(project_folder, "jsonl"),
       overwrite = FALSE,
       progress = progress,
-      delete_input = FALSE,
+      delete_input = delete_input,
       workers = workers
     ) |>
     pro_request_jsonl_parquet(
       output = file.path(project_folder, "parquet"),
       overwrite = FALSE,
       verbose = verbose,
-      delete_input = FALSE
+      delete_input = delete_input
     )
 }
