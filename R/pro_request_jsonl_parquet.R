@@ -59,6 +59,15 @@ pro_request_jsonl_parquet <- function(
   sample_size = 1000,
   workers = NULL
 ) {
+  .Deprecated(
+    new = "pro_request_parquet",
+    msg = paste0(
+      "`pro_request_jsonl()` + `pro_request_jsonl_parquet()` are deprecated.\n",
+      "Use `pro_request_parquet()` instead: it converts JSON directly to Parquet\n",
+      "in one step with no intermediate JSONL files on disk."
+    )
+  )
+
   # Argument Checks --------------------------------------------------------
 
   if (is.null(input_jsonl)) {
