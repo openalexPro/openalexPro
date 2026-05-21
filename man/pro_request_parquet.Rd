@@ -31,7 +31,8 @@ Default \code{FALSE}.}
 
 \item{verbose}{Logical.  Show progress messages.  Default \code{TRUE}.}
 
-\item{progress}{Logical.  Show a progress bar.  Default \code{TRUE}.}
+\item{progress}{Logical.  Ignored (kept for backward compatibility; progress
+is reported to stderr by the Rust backend).}
 
 \item{delete_input}{Logical.  Delete \code{input_json} after a successful
 conversion.  Default \code{FALSE}.}
@@ -41,7 +42,7 @@ conversion.  Default \code{FALSE}.}
 records (accurate but slow for large files).  Default \code{1000}.}
 
 \item{workers}{Integer.  Number of parallel workers for
-\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}.  \code{NULL} or \code{1} runs sequentially.
+\code{\link[=oa_api_files_to_parquet]{oa_api_files_to_parquet()}}.  \code{NULL} or \code{1} runs sequentially.
 Default \code{NULL}.}
 
 \item{enrich}{Logical.  When \code{TRUE} (the default) and the inferred schema
@@ -55,7 +56,8 @@ Output directory path (invisibly).
 Single-step replacement for the two-step
 \code{pro_request_jsonl()} + \code{pro_request_jsonl_parquet()} pipeline.
 Reads the JSON files written by \code{\link[=pro_request]{pro_request()}} and converts each one to a
-Parquet file using DuckDB, with no intermediate JSONL on disk.
+Parquet file using the Rust backend (parallel via rayon), with no
+intermediate JSONL on disk.
 }
 \details{
 For works entities the function detects the presence of
@@ -89,6 +91,7 @@ multi-query inputs).
 
 \seealso{
 \code{\link[=pro_request]{pro_request()}} to download the JSON files,
+\code{\link[=pro_request_parquet_R]{pro_request_parquet_R()}} for the pure-R/DuckDB fallback,
 \code{\link[=pro_request_jsonl]{pro_request_jsonl()}} and \code{\link[=pro_request_jsonl_parquet]{pro_request_jsonl_parquet()}} for the older
 two-step pipeline (now deprecated).
 }

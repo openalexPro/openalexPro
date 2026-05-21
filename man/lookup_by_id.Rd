@@ -27,7 +27,7 @@ indexes produced by \code{\link[=build_corpus_index]{build_corpus_index()}}. Ind
 (e.g. \code{"W2741809807"}).}
 
 \item{project_dir}{Project output directory. Extracted Parquet files are
-written to \code{<project_dir>/snapshot_extract/<dataset>.parquet}. Only
+written to \code{<project_dir>/snapshot_extract_<dataset>/}. Only
 used when \code{root_dir} is provided.}
 
 \item{data_sets}{Character vector of dataset names to search (e.g.
@@ -38,7 +38,7 @@ provided.}
 \item{workers}{Number of parallel workers for reading corpus files.
 Default is \code{NULL} (sequential).}
 
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
+\item{progress}{Ignored (kept for backward compatibility).}
 
 \item{verbose}{Print progress messages. Default is \code{TRUE}.}
 
@@ -46,9 +46,8 @@ Default is \code{NULL} (sequential).}
 \code{\link[=build_corpus_index]{build_corpus_index()}}. When provided, \code{root_dir}, \code{data_sets},
 and \code{project_dir} are ignored.}
 
-\item{selected}{Path to save the selected index entries as a partitioned
-Parquet dataset. Ignored when \code{index_file} is not provided directly.
-Default is \code{NULL} (not saved).}
+\item{selected}{Ignored in the Rust backend (kept for backward
+compatibility with the pure-R implementation).}
 
 \item{output}{Path to an output directory for writing results as Parquet
 files when using \code{index_file} mode. If \code{NULL} (default),
@@ -100,6 +99,6 @@ lookup_by_id(
 
 }
 \seealso{
-\code{\link[=lookup_by_id_R]{lookup_by_id_R()}} (identical function, alternative name),
+\code{\link[=lookup_by_id_R]{lookup_by_id_R()}} for the pure-R/DuckDB fallback,
 \code{\link[=build_corpus_index]{build_corpus_index()}} for building the required index.
 }

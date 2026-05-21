@@ -47,9 +47,9 @@ created index file. When \code{root_dir} is used, invisibly returns
 \code{root_dir}.
 }
 \description{
-Alias for \code{\link[=build_corpus_index]{build_corpus_index()}}. Retained so code that referenced the
-previous \code{build_corpus_index_R()} name continues to work without
-modification. Both functions share the same arguments and implementation.
+Pure-R/DuckDB fallback for \code{\link[=build_corpus_index]{build_corpus_index()}}.  Use this variant in
+environments where the compiled Rust library is not available.  Both
+functions share the same argument signature.
 }
 \seealso{
 \code{\link[=build_corpus_index]{build_corpus_index()}}

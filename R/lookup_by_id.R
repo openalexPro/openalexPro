@@ -1,8 +1,8 @@
 # lookup_by_id -----------------------------------------------------------------
 #
-# Pure-R implementation. Both lookup_by_id() and lookup_by_id_R() share the
-# same argument signature and implementation; the _R suffix is kept as an alias
-# for environments that relied on the previous naming convention.
+# Main function calls Rust via oa_lookup_by_id() (extendr).
+# lookup_by_id_R() is the standalone pure-R/DuckDB fallback with an identical
+# argument signature.
 
 #' Look up records by OpenAlex ID
 #'
@@ -20,7 +20,7 @@
 #'   (e.g. \code{"https://openalex.org/W2741809807"}) or short form
 #'   (e.g. \code{"W2741809807"}).
 #' @param project_dir Project output directory. Extracted Parquet files are
-#'   written to \code{<project_dir>/snapshot_extract/<dataset>.parquet}. Only
+#'   written to \code{<project_dir>/snapshot_extract_<dataset>/}. Only
 #'   used when \code{root_dir} is provided.
 #' @param data_sets Character vector of dataset names to search (e.g.
 #'   \code{c("works", "authors")}). \code{NULL} searches all indexed datasets
@@ -28,14 +28,13 @@
 #'   provided.
 #' @param workers Number of parallel workers for reading corpus files.
 #'   Default is \code{NULL} (sequential).
-#' @param progress Show progress bars. Default is \code{TRUE}.
+#' @param progress Ignored (kept for backward compatibility).
 #' @param verbose Print progress messages. Default is \code{TRUE}.
 #' @param index_file Explicit path to an index parquet file created by
 #'   [build_corpus_index()]. When provided, \code{root_dir}, \code{data_sets},
 #'   and \code{project_dir} are ignored.
-#' @param selected Path to save the selected index entries as a partitioned
-#'   Parquet dataset. Ignored when \code{index_file} is not provided directly.
-#'   Default is \code{NULL} (not saved).
+#' @param selected Ignored in the Rust backend (kept for backward
+#'   compatibility with the pure-R implementation).
 #' @param output Path to an output directory for writing results as Parquet
 #'   files when using \code{index_file} mode. If \code{NULL} (default),
 #'   results are returned as a data frame. Ignored when \code{root_dir} is
@@ -48,17 +47,11 @@
 #'   of matching records.
 #' * \code{root_dir} mode: invisibly returns \code{project_dir}.
 #'
-#' @seealso [lookup_by_id_R()] (identical function, alternative name),
+#' @seealso [lookup_by_id_R()] for the pure-R/DuckDB fallback,
 #'   [build_corpus_index()] for building the required index.
 #'
-#' @importFrom arrow open_dataset write_dataset
-#' @importFrom DBI dbConnect dbDisconnect dbGetQuery dbExecute
-#' @importFrom dplyr filter collect
-#' @importFrom rlang .data
-#' @importFrom duckdb duckdb
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
-#' @importFrom progressr with_progress progressor handler_cli
+#' @importFrom arrow open_dataset
+#' @importFrom dplyr collect
 #'
 #' @examples
 #' \dontrun{
@@ -88,6 +81,146 @@
 #' @export
 #' @md
 lookup_by_id <- function(
+  root_dir    = NULL,
+  ids,
+  project_dir = NULL,
+  data_sets   = NULL,
+  workers     = NULL,
+  progress    = TRUE,
+  verbose     = TRUE,
+  index_file  = NULL,
+  selected    = NULL,
+  output      = NULL
+) {
+  if (missing(ids) || length(ids) == 0) {
+    stop("'ids' must be provided and non-empty.", call. = FALSE)
+  }
+
+  workers_int <- as.integer(if (is.null(workers)) 1L else workers)
+
+  # index_file mode ------------------------------------------------------------
+  if (!is.null(index_file)) {
+    if (is.null(output)) {
+      # Write to a temp dir, read back as data frame, clean up.
+      tmp_out <- tempfile(pattern = "oa_lookup_")
+      on.exit(unlink(tmp_out, recursive = TRUE, force = TRUE), add = TRUE)
+      oa_lookup_by_id(
+        index_file = index_file,
+        ids        = as.character(ids),
+        output     = tmp_out,
+        workers    = workers_int,
+        verbose    = isTRUE(verbose)
+      )
+      pq_files <- list.files(tmp_out, pattern = "\\.parquet$", full.names = TRUE, recursive = TRUE)
+      if (length(pq_files) == 0L) {
+        message("No matching records found.")
+        return(data.frame())
+      }
+      result <- arrow::open_dataset(tmp_out) |> dplyr::collect()
+      if ("file_row_number" %in% names(result)) {
+        result$file_row_number <- NULL
+      }
+      message("Retrieved ", nrow(result), " records")
+      return(result)
+    } else {
+      oa_lookup_by_id(
+        index_file = index_file,
+        ids        = as.character(ids),
+        output     = output,
+        workers    = workers_int,
+        verbose    = isTRUE(verbose)
+      )
+      return(invisible(output))
+    }
+  }
+
+  # root_dir mode --------------------------------------------------------------
+  if (is.null(root_dir)) {
+    stop(
+      "Provide either `root_dir` or `index_file`.",
+      call. = FALSE
+    )
+  }
+
+  parquet_root <- file.path(root_dir, "parquet")
+
+  if (is.null(data_sets)) {
+    idx_files <- list.files(
+      parquet_root,
+      pattern    = "_id_idx\\.parquet$",
+      full.names = FALSE,
+      recursive  = FALSE
+    )
+    data_sets <- sub("_id_idx\\.parquet$", "", idx_files)
+  }
+
+  if (length(data_sets) == 0) {
+    stop(
+      "No index files found under ", parquet_root,
+      ". Run build_corpus_index() first.",
+      call. = FALSE
+    )
+  }
+
+  if (!is.null(project_dir)) {
+    dir.create(project_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  for (ds in data_sets) {
+    idx_path <- file.path(parquet_root, paste0(ds, "_id_idx.parquet"))
+    if (!file.exists(idx_path)) {
+      if (isTRUE(verbose)) {
+        message("No index for dataset '", ds, "', skipping.")
+      }
+      next
+    }
+
+    ds_output <- if (!is.null(project_dir)) {
+      file.path(project_dir, paste0("snapshot_extract_", ds))
+    } else {
+      stop(
+        "project_dir must be provided in root_dir mode.",
+        call. = FALSE
+      )
+    }
+
+    oa_lookup_by_id(
+      index_file = idx_path,
+      ids        = as.character(ids),
+      output     = ds_output,
+      workers    = workers_int,
+      verbose    = isTRUE(verbose)
+    )
+  }
+
+  invisible(project_dir)
+}
+
+
+#' Look up records by ID using a pre-built index (pure-R implementation)
+#'
+#' Pure-R/DuckDB fallback for [lookup_by_id()].  Use this variant in
+#' environments where the compiled Rust library is not available.  Both
+#' functions share the same argument signature.
+#'
+#' @inheritParams lookup_by_id
+#'
+#' @return See [lookup_by_id()].
+#'
+#' @seealso [lookup_by_id()]
+#'
+#' @importFrom arrow open_dataset write_dataset
+#' @importFrom DBI dbConnect dbDisconnect dbGetQuery dbExecute
+#' @importFrom dplyr filter collect
+#' @importFrom rlang .data
+#' @importFrom duckdb duckdb
+#' @importFrom future plan multisession
+#' @importFrom future.apply future_lapply
+#' @importFrom progressr with_progress progressor handler_cli
+#'
+#' @export
+#' @md
+lookup_by_id_R <- function(
   root_dir    = NULL,
   ids,
   project_dir = NULL,
@@ -319,20 +452,3 @@ lookup_by_id <- function(
   message("Retrieved ", nrow(result), " records")
   result
 }
-
-
-#' Look up records by ID using a pre-built index (pure-R implementation)
-#'
-#' Alias for [lookup_by_id()]. Retained so code that referenced the previous
-#' \code{lookup_by_id_R()} name continues to work without modification.  Both
-#' functions share the same arguments and implementation.
-#'
-#' @inheritParams lookup_by_id
-#'
-#' @return See [lookup_by_id()].
-#'
-#' @seealso [lookup_by_id()]
-#'
-#' @export
-#' @md
-lookup_by_id_R <- lookup_by_id

@@ -1,8 +1,8 @@
 # build_corpus_index -----------------------------------------------------------
 #
-# Pure-R implementation. Both build_corpus_index() and build_corpus_index_R()
-# share the same argument signature and implementation; the _R suffix is kept as
-# an alias for environments that relied on the previous naming convention.
+# Main function calls Rust via oa_build_corpus_index() (extendr).
+# build_corpus_index_R() is the standalone pure-R/DuckDB fallback with an
+# identical argument signature.
 
 #' Build a Parquet ID-lookup index
 #'
@@ -10,11 +10,10 @@
 #' produced by [snapshot_to_parquet()], enabling fast record retrieval by
 #' OpenAlex ID using [lookup_by_id()].
 #'
-#' The function is memory-efficient and can handle 300M+ records via a
-#' two-stage approach:
+#' The function uses a two-stage approach:
 #' \enumerate{
-#'   \item Index each parquet file individually (bounded memory, optionally
-#'         parallel, with resume support).
+#'   \item Index each parquet file individually (bounded memory, parallel via
+#'         rayon, with resume support).
 #'   \item Combine the per-file shard indexes into a single parquet index.
 #' }
 #'
@@ -54,14 +53,8 @@
 #'   \item{file_row_number}{Row number within the file (0-indexed)}
 #' }
 #'
-#' @seealso [build_corpus_index_R()] (identical function, alternative name),
+#' @seealso [build_corpus_index_R()] for the pure-R/DuckDB fallback,
 #'   [lookup_by_id()] for ID-based record retrieval.
-#'
-#' @importFrom DBI dbConnect dbDisconnect dbExecute
-#' @importFrom duckdb duckdb
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
-#' @importFrom progressr with_progress progressor handler_cli
 #'
 #' @examples
 #' \dontrun{
@@ -83,6 +76,82 @@
 #' @export
 #' @md
 build_corpus_index <- function(
+  root_dir     = NULL,
+  data_sets    = NULL,
+  workers      = NULL,
+  memory_limit = NULL,
+  overwrite    = FALSE,
+  verbose      = TRUE,
+  corpus_dir   = NULL
+) {
+  workers_int      <- as.integer(if (is.null(workers)) 1L else workers)
+  memory_limit_str <- if (is.null(memory_limit)) "" else as.character(memory_limit)
+
+  # corpus_dir mode: index a single explicit directory -------------------------
+  if (!is.null(corpus_dir)) {
+    idx_path <- oa_build_corpus_index(
+      corpus_dir   = corpus_dir,
+      workers      = workers_int,
+      memory_limit = memory_limit_str,
+      overwrite    = isTRUE(overwrite),
+      verbose      = isTRUE(verbose)
+    )
+    return(invisible(idx_path))
+  }
+
+  # root_dir mode: iterate over datasets ---------------------------------------
+  if (is.null(root_dir)) {
+    stop(
+      "Provide either `root_dir` or `corpus_dir`.",
+      call. = FALSE
+    )
+  }
+
+  parquet_root <- file.path(root_dir, "parquet")
+
+  if (is.null(data_sets)) {
+    data_sets <- list.dirs(parquet_root, recursive = FALSE, full.names = FALSE)
+    # Exclude index files and hidden directories
+    data_sets <- data_sets[!grepl("^\\.", data_sets)]
+  }
+
+  for (ds in data_sets) {
+    oa_build_corpus_index(
+      corpus_dir   = file.path(parquet_root, ds),
+      workers      = workers_int,
+      memory_limit = memory_limit_str,
+      overwrite    = isTRUE(overwrite),
+      verbose      = isTRUE(verbose)
+    )
+  }
+
+  invisible(root_dir)
+}
+
+
+#' Build a Parquet ID-lookup index (pure-R implementation)
+#'
+#' Pure-R/DuckDB fallback for [build_corpus_index()].  Use this variant in
+#' environments where the compiled Rust library is not available.  Both
+#' functions share the same argument signature.
+#'
+#' @inheritParams build_corpus_index
+#'
+#' @return When \code{corpus_dir} is provided, invisibly returns the path to the
+#'   created index file. When \code{root_dir} is used, invisibly returns
+#'   \code{root_dir}.
+#'
+#' @seealso [build_corpus_index()]
+#'
+#' @importFrom DBI dbConnect dbDisconnect dbExecute
+#' @importFrom duckdb duckdb
+#' @importFrom future plan multisession
+#' @importFrom future.apply future_lapply
+#' @importFrom progressr with_progress progressor handler_cli
+#'
+#' @export
+#' @md
+build_corpus_index_R <- function(
   root_dir     = NULL,
   data_sets    = NULL,
   workers      = NULL,
@@ -283,22 +352,3 @@ build_corpus_index <- function(
 
   invisible(index_file)
 }
-
-
-#' Build a Parquet ID-lookup index (pure-R implementation)
-#'
-#' Alias for [build_corpus_index()]. Retained so code that referenced the
-#' previous \code{build_corpus_index_R()} name continues to work without
-#' modification. Both functions share the same arguments and implementation.
-#'
-#' @inheritParams build_corpus_index
-#'
-#' @return When \code{corpus_dir} is provided, invisibly returns the path to the
-#'   created index file. When \code{root_dir} is used, invisibly returns
-#'   \code{root_dir}.
-#'
-#' @seealso [build_corpus_index()]
-#'
-#' @export
-#' @md
-build_corpus_index_R <- build_corpus_index

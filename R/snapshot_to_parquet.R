@@ -1,12 +1,13 @@
 # snapshot_to_parquet -----------------------------------------------------------
 #
-# Pure-R implementation. Both snapshot_to_parquet() and snapshot_to_parquet_R()
-# share the same argument signature and implementation; the _R suffix is kept as
-# an alias for environments that relied on the previous naming convention.
+# Main function calls Rust via oa_snapshot_to_parquet() (extendr).
+# snapshot_to_parquet_R() is the standalone pure-R/DuckDB fallback with an
+# identical argument signature.
 
 #' Convert OA snapshot to Parquet format
 #'
-#' Converts OpenAlex snapshot \code{.json.gz} files to Parquet using DuckDB.
+#' Converts OpenAlex snapshot \code{.json.gz} files to Parquet using a Rust
+#' pipeline (schema inference + parallel conversion via rayon).
 #' Paths can be supplied as a single \code{root_dir} (which derives
 #' \code{snapshot_dir} and \code{parquet_dir} automatically) or as explicit
 #' \code{snapshot_dir} and \code{parquet_dir} arguments.
@@ -17,17 +18,17 @@
 #' @param data_sets Character vector of dataset names to convert (e.g.
 #'   \code{c("works", "authors")}). \code{NULL} converts all datasets found
 #'   under \code{<snapshot_dir>/data/}.
-#' @param workers Number of parallel workers for file conversion via
-#'   [future.apply::future_lapply()]. Default is \code{NULL} (sequential).
+#' @param workers Number of parallel workers for file conversion. Default is
+#'   \code{NULL} (sequential).
 #' @param sample_size Number of \code{.gz} files to sample for unified schema
 #'   inference. Higher values give more accurate schemas but take longer.
 #'   Default is \code{20}. Use \code{NULL} or \code{0} to use all files.
 #' @param memory_limit DuckDB memory limit per worker (e.g., \code{"8GB"}).
 #'   Default is \code{NULL} (DuckDB default).
 #' @param temp_directory Location of the temporary directory for DuckDB.
-#'   Passed to each worker's DuckDB connection. Default is \code{NULL}
-#'   (system default).
-#' @param progress Show progress bars. Default is \code{TRUE}.
+#'   Default is \code{NULL} (system default).
+#' @param progress Ignored (kept for backward compatibility; progress is
+#'   reported to stderr by the Rust backend).
 #' @param verbose Print per-dataset progress messages. Default is \code{TRUE}.
 #' @param snapshot_dir Explicit path to the snapshot data directory (the one
 #'   containing a \code{data/} subfolder). Required when \code{root_dir} is not
@@ -37,14 +38,8 @@
 #'
 #' @return Invisibly returns \code{NULL}.
 #'
-#' @seealso [snapshot_to_parquet_R()] (identical function, alternative name),
+#' @seealso [snapshot_to_parquet_R()] for the pure-R/DuckDB fallback,
 #'   [build_corpus_index()] for indexing the resulting Parquet files.
-#'
-#' @importFrom DBI dbConnect dbDisconnect dbExecute
-#' @importFrom duckdb duckdb
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
-#' @importFrom progressr with_progress progressor handler_cli
 #'
 #' @examples
 #' \dontrun{
@@ -68,6 +63,65 @@
 #' @export
 #' @md
 snapshot_to_parquet <- function(
+  root_dir       = NULL,
+  data_sets      = NULL,
+  workers        = NULL,
+  sample_size    = 20,
+  memory_limit   = NULL,
+  temp_directory = NULL,
+  progress       = TRUE,
+  verbose        = TRUE,
+  snapshot_dir   = NULL,
+  parquet_dir    = NULL
+) {
+  # Resolve paths from root_dir if provided ------------------------------------
+  if (!is.null(root_dir)) {
+    snapshot_dir <- file.path(root_dir, "openalex-snapshot")
+    parquet_dir  <- file.path(root_dir, "parquet")
+  }
+  if (is.null(snapshot_dir) || is.null(parquet_dir)) {
+    stop(
+      "Provide either `root_dir` or both `snapshot_dir` and `parquet_dir`.",
+      call. = FALSE
+    )
+  }
+
+  oa_snapshot_to_parquet(
+    snapshot_dir  = snapshot_dir,
+    parquet_dir   = parquet_dir,
+    data_sets     = if (is.null(data_sets)) character(0L) else as.character(data_sets),
+    workers       = as.integer(if (is.null(workers)) 1L else workers),
+    sample_size   = as.integer(if (is.null(sample_size) || sample_size == 0) 0L else sample_size),
+    memory_limit  = if (is.null(memory_limit)) "" else as.character(memory_limit),
+    temp_dir      = if (is.null(temp_directory)) "" else as.character(temp_directory),
+    verbose       = isTRUE(verbose)
+  )
+
+  invisible(NULL)
+}
+
+
+#' Convert OA snapshot to Parquet format (pure-R implementation)
+#'
+#' Pure-R/DuckDB fallback for [snapshot_to_parquet()].  Use this variant in
+#' environments where the compiled Rust library is not available.  Both
+#' functions share the same argument signature.
+#'
+#' @inheritParams snapshot_to_parquet
+#'
+#' @return Invisibly returns \code{NULL}.
+#'
+#' @seealso [snapshot_to_parquet()]
+#'
+#' @importFrom DBI dbConnect dbDisconnect dbExecute
+#' @importFrom duckdb duckdb
+#' @importFrom future plan multisession
+#' @importFrom future.apply future_lapply
+#' @importFrom progressr with_progress progressor handler_cli
+#'
+#' @export
+#' @md
+snapshot_to_parquet_R <- function(
   root_dir       = NULL,
   data_sets      = NULL,
   workers        = NULL,
@@ -236,20 +290,3 @@ snapshot_to_parquet <- function(
 
   invisible(NULL)
 }
-
-
-#' Convert OA snapshot to Parquet format (pure-R implementation)
-#'
-#' Alias for [snapshot_to_parquet()]. Retained so code that referenced the
-#' previous \code{snapshot_to_parquet_R()} name continues to work without
-#' modification. Both functions share the same arguments and implementation.
-#'
-#' @inheritParams snapshot_to_parquet
-#'
-#' @return Invisibly returns \code{NULL}.
-#'
-#' @seealso [snapshot_to_parquet()]
-#'
-#' @export
-#' @md
-snapshot_to_parquet_R <- snapshot_to_parquet

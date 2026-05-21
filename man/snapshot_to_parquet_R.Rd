@@ -26,8 +26,8 @@ snapshot_to_parquet_R(
 \code{c("works", "authors")}). \code{NULL} converts all datasets found
 under \code{<snapshot_dir>/data/}.}
 
-\item{workers}{Number of parallel workers for file conversion via
-\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Default is \code{NULL} (sequential).}
+\item{workers}{Number of parallel workers for file conversion. Default is
+\code{NULL} (sequential).}
 
 \item{sample_size}{Number of \code{.gz} files to sample for unified schema
 inference. Higher values give more accurate schemas but take longer.
@@ -37,10 +37,10 @@ Default is \code{20}. Use \code{NULL} or \code{0} to use all files.}
 Default is \code{NULL} (DuckDB default).}
 
 \item{temp_directory}{Location of the temporary directory for DuckDB.
-Passed to each worker's DuckDB connection. Default is \code{NULL}
-(system default).}
+Default is \code{NULL} (system default).}
 
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
+\item{progress}{Ignored (kept for backward compatibility; progress is
+reported to stderr by the Rust backend).}
 
 \item{verbose}{Print per-dataset progress messages. Default is \code{TRUE}.}
 
@@ -55,9 +55,9 @@ when \code{root_dir} is not provided.}
 Invisibly returns \code{NULL}.
 }
 \description{
-Alias for \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}. Retained so code that referenced the
-previous \code{snapshot_to_parquet_R()} name continues to work without
-modification. Both functions share the same arguments and implementation.
+Pure-R/DuckDB fallback for \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}.  Use this variant in
+environments where the compiled Rust library is not available.  Both
+functions share the same argument signature.
 }
 \seealso{
 \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}

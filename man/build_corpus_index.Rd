@@ -52,11 +52,10 @@ produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}, enabling 
 OpenAlex ID using \code{\link[=lookup_by_id]{lookup_by_id()}}.
 }
 \details{
-The function is memory-efficient and can handle 300M+ records via a
-two-stage approach:
+The function uses a two-stage approach:
 \enumerate{
-\item Index each parquet file individually (bounded memory, optionally
-parallel, with resume support).
+\item Index each parquet file individually (bounded memory, parallel via
+rayon, with resume support).
 \item Combine the per-file shard indexes into a single parquet index.
 }
 
@@ -91,6 +90,6 @@ build_corpus_index(
 
 }
 \seealso{
-\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} (identical function, alternative name),
+\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} for the pure-R/DuckDB fallback,
 \code{\link[=lookup_by_id]{lookup_by_id()}} for ID-based record retrieval.
 }
