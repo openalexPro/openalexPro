@@ -2,7 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, rust_lib]
   pull_request:
 
 name: R-CMD-check.yaml
@@ -31,6 +31,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - uses: r-lib/actions/setup-pandoc@v2
 
