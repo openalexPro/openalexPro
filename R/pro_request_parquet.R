@@ -174,46 +174,10 @@ pro_request_parquet <- function(
   add_abstract  <- enrich && "abstract_inverted_index" %in% present_cols
   add_citation  <- enrich && all(c("authorships", "publication_year") %in% present_cols)
 
-  # ── SQL expression helpers (identical to openalex-core Rust expressions) ─────
-  abstract_expr <- function() {
-    "CASE WHEN abstract_inverted_index IS NULL THEN NULL
-     ELSE array_to_string(
-       list_transform(
-         list_sort(
-           flatten(
-             apply(
-               map_entries(abstract_inverted_index),
-               x -> apply(x.value, p -> {pos: p, word: x.key})
-             )
-           )
-         ),
-         e -> e.word
-       ),
-       ' '
-     ) END"
-  }
-
-  citation_expr <- function() {
-    y <- "COALESCE(publication_year::VARCHAR, 'n.d.')"
-    sprintf(
-      "CASE
-         WHEN authorships IS NULL OR len(authorships) = 0 THEN NULL
-         WHEN len(authorships) = 1 THEN
-           authorships[1].author.display_name || ' (' || %s || ')'
-         WHEN len(authorships) = 2 THEN
-           authorships[1].author.display_name
-           || ' & ' || authorships[2].author.display_name
-           || ' (' || %s || ')'
-         ELSE
-           authorships[1].author.display_name || ' et al. (' || %s || ')'
-       END",
-      y, y, y
-    )
-  }
-
-  # Pre-compute SQL strings (must survive serialisation into future workers)
-  abstract_sql <- if (add_abstract) abstract_expr() else NULL
-  citation_sql <- if (add_citation) citation_expr() else NULL
+  # Pre-compute SQL strings from openalex-core (via extendr Rust binding).
+  # Must survive serialisation into future workers, so computed here once.
+  abstract_sql <- if (add_abstract) oa_works_abstract_sql() else NULL
+  citation_sql <- if (add_citation) oa_works_citation_sql() else NULL
 
   # ── Compute output file paths ─────────────────────────────────────────────────
   # Mirror input subdirectory structure using hive-partition naming
