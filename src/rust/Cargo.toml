@@ -15,7 +15,7 @@ path = 'document.rs'
 
 [dependencies]
 extendr-api = '0.9.0'
-openalex-core = { git = "https://github.com/rkrug/openalex-snapshot", rev = "2da4cce1ee702536dc4ea153d9a08ea8f8d9080c", features = ["conversion"] }
+openalex-core = { git = "https://github.com/rkrug/openalex-snapshot", rev = "63c4758b9c617d1ab78c5a4d524e02e96d5aaefa", features = ["conversion"] }
 
 [profile.release]
 lto = true
