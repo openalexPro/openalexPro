@@ -314,10 +314,9 @@ testthat::test_that("snapshot_to_parquet_R preserves hive partition directory st
 
 # ── snapshot_to_parquet() tests (binary wrapper, skipped if binary absent) ──
 
-testthat::test_that("snapshot_to_parquet (binary) converts JSON to Parquet", {
-  skip_if(Sys.which("openalex-snapshot") == "", "openalex-snapshot binary not found in PATH")
-  skip_if(Sys.which("duckdb") == "",             "duckdb binary not found in PATH")
+testthat::test_that("snapshot_to_parquet converts JSON to Parquet (root_dir mode)", {
   skip_if_not_installed("arrow")
+  skip_if_not_installed("duckdb")
 
   root_dir <- file.path(tempdir(), "test_oas_root")
   unlink(root_dir, recursive = TRUE)
@@ -351,9 +350,9 @@ testthat::test_that("snapshot_to_parquet (binary) converts JSON to Parquet", {
   unlink(root_dir, recursive = TRUE)
 })
 
-testthat::test_that("snapshot_to_parquet errors when binary not found", {
+testthat::test_that("snapshot_to_parquet errors when neither root_dir nor snapshot_dir/parquet_dir provided", {
   expect_error(
-    snapshot_to_parquet(root_dir = tempdir(), oas_bin = "/nonexistent/openalex-snapshot"),
-    "binary was not found"
+    snapshot_to_parquet(),
+    "Provide either"
   )
 })

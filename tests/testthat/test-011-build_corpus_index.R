@@ -76,10 +76,9 @@ testthat::test_that("build_corpus_index_R errors on non-existent directory", {
 
 # ── build_corpus_index() tests (binary wrapper, skipped if binary absent) ───
 
-testthat::test_that("build_corpus_index (binary) creates index from parquet files", {
-  skip_if(Sys.which("openalex-snapshot") == "", "openalex-snapshot binary not found in PATH")
-  skip_if(Sys.which("duckdb") == "",             "duckdb binary not found in PATH")
+testthat::test_that("build_corpus_index creates index from parquet files (root_dir mode)", {
   skip_if_not_installed("arrow")
+  skip_if_not_installed("duckdb")
 
   root_dir   <- file.path(tempdir(), "test_oas_index_root")
   unlink(root_dir, recursive = TRUE)
@@ -103,9 +102,9 @@ testthat::test_that("build_corpus_index (binary) creates index from parquet file
   unlink(root_dir, recursive = TRUE)
 })
 
-testthat::test_that("build_corpus_index errors when binary not found", {
+testthat::test_that("build_corpus_index errors when neither root_dir nor corpus_dir is provided", {
   expect_error(
-    build_corpus_index(root_dir = tempdir(), oas_bin = "/nonexistent/openalex-snapshot"),
-    "binary was not found"
+    build_corpus_index(),
+    "Provide either"
   )
 })

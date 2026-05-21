@@ -107,10 +107,9 @@ testthat::test_that("lookup_by_id_R handles errors correctly", {
 
 # ── lookup_by_id() tests (binary wrapper, skipped if binary absent) ─────────
 
-testthat::test_that("lookup_by_id (binary) extracts records into project_dir", {
-  skip_if(Sys.which("openalex-snapshot") == "", "openalex-snapshot binary not found in PATH")
-  skip_if(Sys.which("duckdb") == "",             "duckdb binary not found in PATH")
+testthat::test_that("lookup_by_id extracts records into project_dir (root_dir mode)", {
   skip_if_not_installed("arrow")
+  skip_if_not_installed("duckdb")
 
   root_dir    <- file.path(tempdir(), "test_oas_lookup_root")
   project_dir <- file.path(tempdir(), "test_oas_lookup_project")
@@ -128,10 +127,10 @@ testthat::test_that("lookup_by_id (binary) extracts records into project_dir", {
   )
   arrow::write_parquet(test_data, file.path(parquet_ds, "test.parquet"))
 
-  # Build index using the R implementation (places index at correct path for binary)
+  # Build index (placed at <parquet_root>/authors_id_idx.parquet)
   build_corpus_index_R(corpus_dir = parquet_ds)
 
-  # Now use the binary wrapper to extract
+  # Extract via root_dir mode
   result <- lookup_by_id(
     root_dir    = root_dir,
     ids         = c("https://openalex.org/A1", "https://openalex.org/A3"),
@@ -148,14 +147,9 @@ testthat::test_that("lookup_by_id (binary) extracts records into project_dir", {
   unlink(project_dir, recursive = TRUE)
 })
 
-testthat::test_that("lookup_by_id errors when binary not found", {
+testthat::test_that("lookup_by_id errors when neither root_dir nor index_file is provided", {
   expect_error(
-    lookup_by_id(
-      root_dir    = tempdir(),
-      ids         = "W1",
-      project_dir = tempdir(),
-      oas_bin     = "/nonexistent/openalex-snapshot"
-    ),
-    "binary was not found"
+    lookup_by_id(ids = "W1"),
+    "Provide either"
   )
 })
