@@ -164,8 +164,8 @@ test_that("pro_request with nested list creates nested output dirs", {
   expect_snapshot(json_files)
 })
 
-test_that("pro_request_jsonl with nested subdirs", {
-  out <- pro_request_jsonl(
+test_that("pro_request_jsonl_R with nested subdirs", {
+  out <- pro_request_jsonl_R(
     input  = output_json_nested,
     output = output_jsonl_nested,
     verbose = FALSE,

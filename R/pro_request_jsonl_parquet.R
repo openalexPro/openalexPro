@@ -1,11 +1,11 @@
 #' Convert JSON files to Apache Parquet files
 #'
 #' The function takes a directory of JSONL files as written from a call to
-#' `pro_request_jsonl(...)` and converts each file individually to a Parquet file.
+#' `pro_request_jsonl_R(...)` and converts each file individually to a Parquet file.
 #' The subfolder structure from the input is preserved in the output, so files
 #' in `Chunk_1/` will be written to `Chunk_1/` in the output directory.
 #'
-#' The `page` column (added by [pro_request_jsonl()]) is preserved as a regular
+#' The `page` column (added by [pro_request_jsonl_R()]) is preserved as a regular
 #' column in the Parquet data.
 #'
 #' When starting the conversion, a file `00_in.progress` is created which is
@@ -62,7 +62,7 @@ pro_request_jsonl_parquet <- function(
   .Deprecated(
     new = "pro_request_parquet",
     msg = paste0(
-      "`pro_request_jsonl()` + `pro_request_jsonl_parquet()` are deprecated.\n",
+      "`pro_request_jsonl_R()` + `pro_request_jsonl_parquet()` are deprecated.\n",
       "Use `pro_request_parquet()` instead: it converts JSON directly to Parquet\n",
       "in one step with no intermediate JSONL files on disk."
     )

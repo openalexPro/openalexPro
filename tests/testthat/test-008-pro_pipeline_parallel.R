@@ -70,10 +70,10 @@ test_that("pro_request with url list  and parallel", {
   }
 })
 
-test_that("pro_request_jsonl with subfolders", {
+test_that("pro_request_jsonl_R with subfolders", {
   # Convert to jsonl
   output_jsonl <- output_json |>
-    pro_request_jsonl(
+    pro_request_jsonl_R(
       output = output_jsonl,
       verbose = FALSE,
       progress = TRUE

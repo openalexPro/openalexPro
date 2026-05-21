@@ -1,7 +1,7 @@
 #' Convert JSON files from pro_request() directly to Apache Parquet
 #'
 #' Single-step replacement for the two-step
-#' `pro_request_jsonl()` + `pro_request_jsonl_parquet()` pipeline.
+#' `pro_request_jsonl_R()` + `pro_request_jsonl_parquet()` pipeline.
 #' Reads the JSON files written by [pro_request()] and converts each one to a
 #' Parquet file using the Rust backend (parallel via rayon), with no
 #' intermediate JSONL on disk.
@@ -55,7 +55,7 @@
 #'
 #' @seealso [pro_request()] to download the JSON files,
 #'   [pro_request_parquet_R()] for the pure-R/DuckDB fallback,
-#'   [pro_request_jsonl()] and [pro_request_jsonl_parquet()] for the older
+#'   [pro_request_jsonl_R()] and [pro_request_jsonl_parquet()] for the older
 #'   two-step pipeline (now deprecated).
 #'
 #' @importFrom duckdb duckdb

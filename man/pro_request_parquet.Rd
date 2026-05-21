@@ -54,7 +54,7 @@ Output directory path (invisibly).
 }
 \description{
 Single-step replacement for the two-step
-\code{pro_request_jsonl()} + \code{pro_request_jsonl_parquet()} pipeline.
+\code{pro_request_jsonl_R()} + \code{pro_request_jsonl_parquet()} pipeline.
 Reads the JSON files written by \code{\link[=pro_request]{pro_request()}} and converts each one to a
 Parquet file using the Rust backend (parallel via rayon), with no
 intermediate JSONL on disk.
@@ -92,6 +92,6 @@ multi-query inputs).
 \seealso{
 \code{\link[=pro_request]{pro_request()}} to download the JSON files,
 \code{\link[=pro_request_parquet_R]{pro_request_parquet_R()}} for the pure-R/DuckDB fallback,
-\code{\link[=pro_request_jsonl]{pro_request_jsonl()}} and \code{\link[=pro_request_jsonl_parquet]{pro_request_jsonl_parquet()}} for the older
+\code{\link[=pro_request_jsonl_R]{pro_request_jsonl_R()}} and \code{\link[=pro_request_jsonl_parquet]{pro_request_jsonl_parquet()}} for the older
 two-step pipeline (now deprecated).
 }
