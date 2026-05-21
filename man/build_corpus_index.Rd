@@ -2,53 +2,75 @@
 % Please edit documentation in R/build_corpus_index.R
 \name{build_corpus_index}
 \alias{build_corpus_index}
-\title{Build a Parquet ID-lookup index via openalex-snapshot}
+\title{Build a Parquet ID-lookup index}
 \usage{
 build_corpus_index(
-  root_dir,
+  root_dir = NULL,
   data_sets = NULL,
   workers = NULL,
-  profile = c("balanced", "safe", "fast"),
-  max_memory_mb = NULL,
+  memory_limit = NULL,
   overwrite = FALSE,
-  progress = TRUE,
-  oas_bin = NULL
+  verbose = TRUE,
+  corpus_dir = NULL
 )
 }
 \arguments{
-\item{root_dir}{Root directory containing the \code{parquet/} subdirectory
-produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}.}
+\item{root_dir}{Root directory containing a \code{parquet/} subdirectory
+produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}. If provided, the index for each
+dataset in \code{data_sets} is created at
+\code{<root_dir>/parquet/<dataset>_id_idx.parquet}.}
 
 \item{data_sets}{Character vector of dataset names to index (e.g.
-\code{c("works", "authors")}). \code{NULL} indexes all datasets.}
+\code{c("works", "authors")}). \code{NULL} indexes all datasets found
+under \code{<root_dir>/parquet/}. Ignored when \code{corpus_dir} is
+provided.}
 
-\item{workers}{Number of parallel worker threads. \code{NULL} uses the
-binary's default (4).}
+\item{workers}{Number of parallel workers for Stage 1 indexing.
+Default is \code{NULL} (sequential).}
 
-\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
-(default), or \code{"fast"}.}
-
-\item{max_memory_mb}{Optional per-worker memory cap in MB.}
+\item{memory_limit}{DuckDB memory limit (e.g., \code{"20GB"}).
+Default is \code{NULL}.}
 
 \item{overwrite}{If \code{TRUE}, rebuilds existing indexes. Default is
-\code{FALSE} (skip if index already exists).}
+\code{FALSE} (skip if the index already exists).}
 
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
+\item{verbose}{Print progress messages. Default is \code{TRUE}.}
 
-\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
-(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
+\item{corpus_dir}{Explicit path to a single dataset Parquet directory (e.g.
+\code{"/Volumes/openalex/parquet/works"}). The index is written as a
+sibling file: \code{<parent>/<basename>_id_idx.parquet}. When this is
+provided, \code{root_dir} and \code{data_sets} are ignored.}
 }
 \value{
-Invisibly returns \code{root_dir}.
+When \code{corpus_dir} is provided, invisibly returns the path to the
+created index file. When \code{root_dir} is used, invisibly returns
+\code{root_dir}.
 }
 \description{
-Delegates index creation to the external \code{openalex-snapshot} binary.
-The binary builds \code{<dataset>_id_idx.parquet} inside
-\code{<root_dir>/parquet/}, enabling fast record retrieval by OpenAlex ID
-using \code{\link[=lookup_by_id]{lookup_by_id()}}.
+Builds a \code{<dataset>_id_idx.parquet} index from the Parquet corpus
+produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}, enabling fast record retrieval by
+OpenAlex ID using \code{\link[=lookup_by_id]{lookup_by_id()}}.
 }
 \details{
-The pure-R fallback is available as \code{\link[=build_corpus_index_R]{build_corpus_index_R()}}.
+The function is memory-efficient and can handle 300M+ records via a
+two-stage approach:
+\enumerate{
+\item Index each parquet file individually (bounded memory, optionally
+parallel, with resume support).
+\item Combine the per-file shard indexes into a single parquet index.
+}
+
+Paths can be supplied as a single \code{root_dir} (which iterates over all
+requested \code{data_sets}) or as an explicit \code{corpus_dir} pointing to
+a single dataset directory.
+
+The index contains columns:
+\describe{
+\item{id}{The OpenAlex ID}
+\item{id_block}{Block number computed as \code{floor(numeric_id / 10000)}}
+\item{parquet_file}{Relative path to the Parquet file in the corpus}
+\item{file_row_number}{Row number within the file (0-indexed)}
+}
 }
 \examples{
 \dontrun{
@@ -59,10 +81,16 @@ build_corpus_index(
   data_sets = "works",
   workers   = 4
 )
+
+# Single explicit directory:
+build_corpus_index(
+  corpus_dir   = "/Volumes/openalex/parquet/works",
+  memory_limit = "20GB"
+)
 }
 
 }
 \seealso{
-\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} for the pure-R fallback,
+\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} (identical function, alternative name),
 \code{\link[=lookup_by_id]{lookup_by_id()}} for ID-based record retrieval.
 }

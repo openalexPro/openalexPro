@@ -58,3 +58,6 @@ only_local/
 .DS_Store
 
 **/*.quarto_ipynb
+src/rust/vendor
+src/Makevars
+src/Makevars.win

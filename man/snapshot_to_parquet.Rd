@@ -2,76 +2,85 @@
 % Please edit documentation in R/snapshot_to_parquet.R
 \name{snapshot_to_parquet}
 \alias{snapshot_to_parquet}
-\title{Convert OA snapshot to Parquet format via openalex-snapshot}
+\title{Convert OA snapshot to Parquet format}
 \usage{
 snapshot_to_parquet(
-  root_dir,
+  root_dir = NULL,
   data_sets = NULL,
   workers = NULL,
-  profile = c("balanced", "safe", "fast"),
-  max_memory_mb = NULL,
-  sample_size = 100L,
-  refresh_cache = FALSE,
+  sample_size = 20,
+  memory_limit = NULL,
+  temp_directory = NULL,
   progress = TRUE,
-  oas_bin = NULL
+  verbose = TRUE,
+  snapshot_dir = NULL,
+  parquet_dir = NULL
 )
 }
 \arguments{
-\item{root_dir}{Root directory containing the snapshot and parquet
-subdirectories (see Details).}
+\item{root_dir}{Root directory. If provided, \code{snapshot_dir} defaults to
+\code{<root_dir>/openalex-snapshot} and \code{parquet_dir} defaults to
+\code{<root_dir>/parquet}.}
 
 \item{data_sets}{Character vector of dataset names to convert (e.g.
-\code{c("works", "authors")}). \code{NULL} converts all datasets.}
+\code{c("works", "authors")}). \code{NULL} converts all datasets found
+under \code{<snapshot_dir>/data/}.}
 
-\item{workers}{Number of parallel worker threads. \code{NULL} uses the
-binary's default (4).}
+\item{workers}{Number of parallel workers for file conversion via
+\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Default is \code{NULL} (sequential).}
 
-\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
-(default), or \code{"fast"}.}
+\item{sample_size}{Number of \code{.gz} files to sample for unified schema
+inference. Higher values give more accurate schemas but take longer.
+Default is \code{20}. Use \code{NULL} or \code{0} to use all files.}
 
-\item{max_memory_mb}{Optional per-worker memory cap in MB.}
+\item{memory_limit}{DuckDB memory limit per worker (e.g., \code{"8GB"}).
+Default is \code{NULL} (DuckDB default).}
 
-\item{sample_size}{Number of source files to sample for schema inference.
-Default is \code{100}.}
-
-\item{refresh_cache}{If \code{TRUE}, forces re-inference of the schema
-(ignores cached schema). Default is \code{FALSE}.}
+\item{temp_directory}{Location of the temporary directory for DuckDB.
+Passed to each worker's DuckDB connection. Default is \code{NULL}
+(system default).}
 
 \item{progress}{Show progress bars. Default is \code{TRUE}.}
 
-\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
-(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
+\item{verbose}{Print per-dataset progress messages. Default is \code{TRUE}.}
+
+\item{snapshot_dir}{Explicit path to the snapshot data directory (the one
+containing a \code{data/} subfolder). Required when \code{root_dir} is not
+provided.}
+
+\item{parquet_dir}{Explicit path to the Parquet output directory. Required
+when \code{root_dir} is not provided.}
 }
 \value{
-Invisibly returns \code{root_dir}.
+Invisibly returns \code{NULL}.
 }
 \description{
-Delegates conversion of OpenAlex snapshot \code{.json.gz} files to Parquet to the
-external \code{openalex-snapshot} binary (the companion Rust CLI tool).
-The binary derives all paths from a single root directory:
-\describe{
-\item{\code{<root_dir>/openalex-snapshot/}}{Source snapshot data}
-\item{\code{<root_dir>/parquet/}}{Parquet output}
-\item{\code{<root_dir>/.openalex-snapshot_metadata/}}{Logs, schema cache, reports}
-}
-}
-\details{
-The pure-R fallback implementation is available as \code{\link[=snapshot_to_parquet_R]{snapshot_to_parquet_R()}}.
+Converts OpenAlex snapshot \code{.json.gz} files to Parquet using DuckDB.
+Paths can be supplied as a single \code{root_dir} (which derives
+\code{snapshot_dir} and \code{parquet_dir} automatically) or as explicit
+\code{snapshot_dir} and \code{parquet_dir} arguments.
 }
 \examples{
 \dontrun{
 snapshot_to_parquet(root_dir = "/Volumes/openalex")
 
 snapshot_to_parquet(
-  root_dir  = "/Volumes/openalex",
-  data_sets = c("authors", "works"),
-  workers   = 4,
-  profile   = "safe"
+  root_dir     = "/Volumes/openalex",
+  data_sets    = c("authors", "works"),
+  workers      = 4,
+  memory_limit = "8GB"
+)
+
+# Explicit paths (no root_dir):
+snapshot_to_parquet(
+  snapshot_dir = "/data/openalex-snapshot",
+  parquet_dir  = "/data/parquet",
+  data_sets    = "authors"
 )
 }
 
 }
 \seealso{
-\code{\link[=snapshot_to_parquet_R]{snapshot_to_parquet_R()}} for the pure-R fallback,
+\code{\link[=snapshot_to_parquet_R]{snapshot_to_parquet_R()}} (identical function, alternative name),
 \code{\link[=build_corpus_index]{build_corpus_index()}} for indexing the resulting Parquet files.
 }

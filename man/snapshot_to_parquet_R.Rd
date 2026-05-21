@@ -5,65 +5,60 @@
 \title{Convert OA snapshot to Parquet format (pure-R implementation)}
 \usage{
 snapshot_to_parquet_R(
-  snapshot_dir = file.path("", "Volumes", "openalex", "openalex-snapshot"),
-  parquet_dir = file.path("", "Volumes", "openalex", "parquet"),
+  root_dir = NULL,
   data_sets = NULL,
+  workers = NULL,
   sample_size = 20,
-  temp_directory = NULL,
   memory_limit = NULL,
-  workers = NULL
+  temp_directory = NULL,
+  progress = TRUE,
+  verbose = TRUE,
+  snapshot_dir = NULL,
+  parquet_dir = NULL
 )
 }
 \arguments{
-\item{snapshot_dir}{The directory path of the OA snapshot data.
-Default is \code{"Volumes/openalex/openalex-snapshot"}.}
+\item{root_dir}{Root directory. If provided, \code{snapshot_dir} defaults to
+\code{<root_dir>/openalex-snapshot} and \code{parquet_dir} defaults to
+\code{<root_dir>/parquet}.}
 
-\item{parquet_dir}{The directory path where the Parquet files will be saved.
-Default is \code{"Volumes/openalex/parquet"}.}
+\item{data_sets}{Character vector of dataset names to convert (e.g.
+\code{c("works", "authors")}). \code{NULL} converts all datasets found
+under \code{<snapshot_dir>/data/}.}
 
-\item{data_sets}{A character vector specifying the data sets to process.
-Default is \code{NULL}, which processes all data sets.}
+\item{workers}{Number of parallel workers for file conversion via
+\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Default is \code{NULL} (sequential).}
 
 \item{sample_size}{Number of \code{.gz} files to sample for unified schema
 inference. Higher values give more accurate schemas but take longer.
 Default is \code{20}. Use \code{NULL} or \code{0} to use all files.}
 
+\item{memory_limit}{DuckDB memory limit per worker (e.g., \code{"8GB"}).
+Default is \code{NULL} (DuckDB default).}
+
 \item{temp_directory}{Location of the temporary directory for DuckDB.
 Passed to each worker's DuckDB connection. Default is \code{NULL}
 (system default).}
 
-\item{memory_limit}{DuckDB memory limit per worker (e.g., \code{"8GB"}).
-Default is \code{NULL} (DuckDB default).}
+\item{progress}{Show progress bars. Default is \code{TRUE}.}
 
-\item{workers}{Number of parallel workers for file conversion via
-\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Default is \code{NULL} (sequential).}
+\item{verbose}{Print per-dataset progress messages. Default is \code{TRUE}.}
+
+\item{snapshot_dir}{Explicit path to the snapshot data directory (the one
+containing a \code{data/} subfolder). Required when \code{root_dir} is not
+provided.}
+
+\item{parquet_dir}{Explicit path to the Parquet output directory. Required
+when \code{root_dir} is not provided.}
 }
 \value{
 Invisibly returns \code{NULL}.
 }
 \description{
-Pure-R / DuckDB implementation of snapshot-to-Parquet conversion. This is
-the original implementation, preserved as a fallback for environments where
-the \code{openalex-snapshot} binary is not available.
-}
-\details{
-For most users, \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}} (which delegates to the binary) is
-preferred as it is faster and includes additional features (verification,
-repair, structured logging).
-}
-\examples{
-\dontrun{
-snapshot_to_parquet_R()
-
-snapshot_to_parquet_R(
-  snapshot_dir = "/path/to/snapshot",
-  data_sets    = c("authors", "works"),
-  workers      = 4,
-  memory_limit = "8GB"
-)
-}
-
+Alias for \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}. Retained so code that referenced the
+previous \code{snapshot_to_parquet_R()} name continues to work without
+modification. Both functions share the same arguments and implementation.
 }
 \seealso{
-\code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}} for the preferred binary-backed version.
+\code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}
 }

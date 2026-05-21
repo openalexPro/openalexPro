@@ -4,56 +4,53 @@
 \alias{build_corpus_index_R}
 \title{Build a Parquet ID-lookup index (pure-R implementation)}
 \usage{
-build_corpus_index_R(corpus_dir, memory_limit = NULL, workers = NULL)
-}
-\arguments{
-\item{corpus_dir}{Path to the parquet corpus directory.}
-
-\item{memory_limit}{DuckDB memory limit (e.g., \code{"20GB"}). Default is
-\code{NULL}.}
-
-\item{workers}{Number of parallel workers for Stage 1 indexing and DuckDB
-threads for Stage 2. Default is \code{NULL} (use all cores).}
-}
-\value{
-Invisibly returns the path to the created index file.
-}
-\description{
-Pure-R / DuckDB implementation of corpus index building. This is the
-original implementation, preserved as a fallback for environments where the
-\code{openalex-snapshot} binary is not available.
-}
-\details{
-For most users, \code{\link[=build_corpus_index]{build_corpus_index()}} (which delegates to the binary) is
-preferred.
-
-The index file will be created in the same directory as \code{corpus_dir}
-and must stay there for lookup to function. Together with \code{corpus_dir},
-the index can be moved to any location.
-
-The function is memory-efficient and can handle 300M+ records by using
-a two-stage approach: first indexing each parquet file individually
-(bounded memory per file), then combining into a single parquet index file.
-Stage 1 is parallelised using \code{\link[future.apply:future_lapply]{future.apply::future_lapply()}} and supports
-resuming if interrupted.
-
-The index contains the following columns:
-\describe{
-\item{id}{The OpenAlex ID}
-\item{id_block}{Block number computed as \code{floor(numeric_id / 10000)}}
-\item{parquet_file}{Relative path to the parquet file in the corpus}
-\item{file_row_number}{Row number within the file (0-indexed)}
-}
-}
-\examples{
-\dontrun{
 build_corpus_index_R(
-  corpus_dir   = "/Volumes/openalex/parquet/works",
-  memory_limit = "20GB"
+  root_dir = NULL,
+  data_sets = NULL,
+  workers = NULL,
+  memory_limit = NULL,
+  overwrite = FALSE,
+  verbose = TRUE,
+  corpus_dir = NULL
 )
 }
+\arguments{
+\item{root_dir}{Root directory containing a \code{parquet/} subdirectory
+produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}. If provided, the index for each
+dataset in \code{data_sets} is created at
+\code{<root_dir>/parquet/<dataset>_id_idx.parquet}.}
 
+\item{data_sets}{Character vector of dataset names to index (e.g.
+\code{c("works", "authors")}). \code{NULL} indexes all datasets found
+under \code{<root_dir>/parquet/}. Ignored when \code{corpus_dir} is
+provided.}
+
+\item{workers}{Number of parallel workers for Stage 1 indexing.
+Default is \code{NULL} (sequential).}
+
+\item{memory_limit}{DuckDB memory limit (e.g., \code{"20GB"}).
+Default is \code{NULL}.}
+
+\item{overwrite}{If \code{TRUE}, rebuilds existing indexes. Default is
+\code{FALSE} (skip if the index already exists).}
+
+\item{verbose}{Print progress messages. Default is \code{TRUE}.}
+
+\item{corpus_dir}{Explicit path to a single dataset Parquet directory (e.g.
+\code{"/Volumes/openalex/parquet/works"}). The index is written as a
+sibling file: \code{<parent>/<basename>_id_idx.parquet}. When this is
+provided, \code{root_dir} and \code{data_sets} are ignored.}
+}
+\value{
+When \code{corpus_dir} is provided, invisibly returns the path to the
+created index file. When \code{root_dir} is used, invisibly returns
+\code{root_dir}.
+}
+\description{
+Alias for \code{\link[=build_corpus_index]{build_corpus_index()}}. Retained so code that referenced the
+previous \code{build_corpus_index_R()} name continues to work without
+modification. Both functions share the same arguments and implementation.
 }
 \seealso{
-\code{\link[=build_corpus_index]{build_corpus_index()}} for the preferred binary-backed version.
+\code{\link[=build_corpus_index]{build_corpus_index()}}
 }

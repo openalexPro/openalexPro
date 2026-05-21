@@ -5,67 +5,64 @@
 \title{Look up records by ID using a pre-built index (pure-R implementation)}
 \usage{
 lookup_by_id_R(
-  index_file,
+  root_dir = NULL,
   ids,
-  selected = NULL,
+  project_dir = NULL,
+  data_sets = NULL,
   workers = NULL,
-  output = NULL,
-  verbose = TRUE
+  progress = TRUE,
+  verbose = TRUE,
+  index_file = NULL,
+  selected = NULL,
+  output = NULL
 )
 }
 \arguments{
-\item{index_file}{Path to the index parquet file created by
-\code{\link[=build_corpus_index_R]{build_corpus_index_R()}}.}
+\item{root_dir}{Root directory containing \code{parquet/} and the dataset
+indexes produced by \code{\link[=build_corpus_index]{build_corpus_index()}}. Index files are expected at
+\code{<root_dir>/parquet/<dataset>_id_idx.parquet}.}
 
-\item{ids}{Character vector of OpenAlex IDs to look up. Can be in long form
-(e.g., \code{"https://openalex.org/W2741809807"}) or short form
-(e.g., \code{"W2741809807"}).}
+\item{ids}{Character vector of OpenAlex IDs to retrieve. Can be long form
+(e.g. \code{"https://openalex.org/W2741809807"}) or short form
+(e.g. \code{"W2741809807"}).}
 
-\item{selected}{Path to the parquet dataset containing the selected indices,
-partitioned by \code{parquet_file} of the work. If \code{NULL}, not saved.}
+\item{project_dir}{Project output directory. Extracted Parquet files are
+written to \code{<project_dir>/snapshot_extract/<dataset>.parquet}. Only
+used when \code{root_dir} is provided.}
+
+\item{data_sets}{Character vector of dataset names to search (e.g.
+\code{c("works", "authors")}). \code{NULL} searches all indexed datasets
+under \code{<root_dir>/parquet/}. Ignored when \code{index_file} is
+provided.}
 
 \item{workers}{Number of parallel workers for reading corpus files.
-Default is \code{NULL} (sequential). If \code{> 1}, uses
-\code{\link[future.apply:future_lapply]{future.apply::future_lapply()}} with \link[future:multisession]{future::multisession}.}
+Default is \code{NULL} (sequential).}
 
-\item{output}{Path to an output directory for writing results as parquet
-files. If \code{NULL} (default), results are returned as a data frame.
-If set, filtered records are written directly to parquet (one file per
-source corpus file) without loading them into R memory. The directory
-must not already exist.}
+\item{progress}{Show progress bars. Default is \code{TRUE}.}
 
-\item{verbose}{If \code{TRUE}, print progress messages. Default: \code{TRUE}.}
+\item{verbose}{Print progress messages. Default is \code{TRUE}.}
+
+\item{index_file}{Explicit path to an index parquet file created by
+\code{\link[=build_corpus_index]{build_corpus_index()}}. When provided, \code{root_dir}, \code{data_sets},
+and \code{project_dir} are ignored.}
+
+\item{selected}{Path to save the selected index entries as a partitioned
+Parquet dataset. Ignored when \code{index_file} is not provided directly.
+Default is \code{NULL} (not saved).}
+
+\item{output}{Path to an output directory for writing results as Parquet
+files when using \code{index_file} mode. If \code{NULL} (default),
+results are returned as a data frame. Ignored when \code{root_dir} is
+used (use \code{project_dir} instead).}
 }
 \value{
-If \code{output} is \code{NULL}, a data frame containing the
-matching records. If \code{output} is set, the output directory path is
-returned invisibly.
+See \code{\link[=lookup_by_id]{lookup_by_id()}}.
 }
 \description{
-Pure-R / DuckDB implementation of ID-based record retrieval. This is the
-original implementation, preserved as a fallback for environments where the
-\code{openalex-snapshot} binary is not available.
-}
-\details{
-For most users, \code{\link[=lookup_by_id]{lookup_by_id()}} (which delegates to the binary) is
-preferred.
-}
-\examples{
-\dontrun{
-records <- lookup_by_id_R(
-  index_file = "works_id_index.parquet",
-  ids        = c("W2741809807", "W1234567890")
-)
-
-lookup_by_id_R(
-  index_file = "works_id_index.parquet",
-  ids        = large_id_vector,
-  output     = "filtered_works",
-  workers    = 3
-)
-}
-
+Alias for \code{\link[=lookup_by_id]{lookup_by_id()}}. Retained so code that referenced the previous
+\code{lookup_by_id_R()} name continues to work without modification.  Both
+functions share the same arguments and implementation.
 }
 \seealso{
-\code{\link[=lookup_by_id]{lookup_by_id()}} for the preferred binary-backed version.
+\code{\link[=lookup_by_id]{lookup_by_id()}}
 }
