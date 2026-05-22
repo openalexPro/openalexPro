@@ -8,14 +8,6 @@
       [5] "grp_b/chunk_3/results_page_1.json" "grp_b/chunk_3/results_page_2.json"
       [7] "grp_b/chunk_4/results_page_1.json" "grp_b/chunk_4/results_page_2.json"
 
-# pro_request_jsonl with nested subdirs
-
-    Code
-      jsonl_files
-    Output
-      [1] "grp_a/chunk_1/results_page_1.json" "grp_a/chunk_2/results_page_1.json"
-      [3] "grp_b/chunk_3/results_page_1.json" "grp_b/chunk_4/results_page_1.json"
-
 # pro_request_jsonl_parquet with nested subdirs produces hive partitions
 
     Code

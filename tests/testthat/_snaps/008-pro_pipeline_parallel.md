@@ -29,14 +29,6 @@
       [4] "results_page_2.json" "results_page_1.json" "results_page_2.json"
       [7] "results_page_1.json" "results_page_2.json"
 
-# pro_request_jsonl with subfolders
-
-    Code
-      basename(fns)
-    Output
-      [1] "results_page_1.json" "results_page_1.json" "results_page_1.json"
-      [4] "results_page_1.json"
-
 # pro_request_jsonl_parquet with subfolders
 
     Code
