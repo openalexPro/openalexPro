@@ -70,6 +70,79 @@ cfg <- if (is_debug) "debug" else "release"
   ""
 )
 
+# Detect macOS deployment target so Rust/DuckDB objects are compiled for the
+# same macOS version that R's linker targets.  Without this, bundled DuckDB
+# uses the system Xcode SDK (e.g. 15.5) while R links against 15.0, producing
+# dozens of ld warnings that R CMD check promotes to errors.
+#
+# Strategy:
+#   1. Read MACOSX_DEPLOYMENT_TARGET from R's own Makeconf (most reliable).
+#   2. Fall back to the MACOSX_DEPLOYMENT_TARGET env var if the Makeconf
+#      variable is absent.
+#   3. If still unknown, use the version R itself was built against (via
+#      R.version$os parsing), which always matches R's linker expectation.
+#   4. On non-macOS / WASM, emit an empty string (no-op).
+.macosx_deployment_target_export <- ""
+if (.Platform$OS.type != "windows" && !is_wasm) {
+  mdt <- ""
+
+  # 1. R's Makeconf
+  makeconf <- file.path(R.home("etc"), "Makeconf")
+  if (file.exists(makeconf)) {
+    lines <- readLines(makeconf, warn = FALSE)
+    hit <- grep("^MACOSX_DEPLOYMENT_TARGET[[:space:]]*=", lines, value = TRUE)
+    if (length(hit) > 0L) {
+      mdt <- trimws(sub("^[^=]+=", "", hit[1L]))
+    }
+  }
+
+  # 2. Env var fallback
+  if (!nzchar(mdt)) {
+    mdt <- Sys.getenv("MACOSX_DEPLOYMENT_TARGET")
+  }
+
+  # 3. Parse -mmacosx-version-min from R's LDFLAGS or CFLAGS in Makeconf
+  if (!nzchar(mdt) && file.exists(makeconf)) {
+    lines <- readLines(makeconf, warn = FALSE)
+    for (var in c("LDFLAGS", "CFLAGS", "CXXFLAGS")) {
+      hit <- grep(paste0("^", var, "[[:space:]]*="), lines, value = TRUE)
+      if (length(hit) > 0L) {
+        m <- regmatches(
+          hit[1L],
+          regexpr("-mmacosx-version-min=([0-9]+\\.[0-9]+(\\.[0-9]+)?)", hit[1L])
+        )
+        if (length(m) > 0L && nzchar(m)) {
+          mdt <- sub("-mmacosx-version-min=", "", m)
+          break
+        }
+      }
+    }
+  }
+
+  # 4. Read minos from R's own libR.dylib via otool (most reliable fallback)
+  if (!nzchar(mdt)) {
+    libR_paths <- Sys.glob(file.path(R.home("lib"), "libR*.dylib"))
+    if (length(libR_paths) > 0L) {
+      ot <- tryCatch(
+        system2("otool", c("-l", libR_paths[1L]), stdout = TRUE, stderr = FALSE),
+        error = function(e) character(0)
+      )
+      # LC_BUILD_VERSION block contains "minos X.Y" (macOS 15+)
+      # LC_VERSION_MIN_MACOSX block contains "version X.Y.Z" (older)
+      minos_hit <- grep("\\bminos\\b", ot, value = TRUE, ignore.case = TRUE)
+      if (length(minos_hit) > 0L) {
+        m <- regmatches(minos_hit[1L], regexpr("[0-9]+\\.[0-9]+(\\.[0-9]+)?", minos_hit[1L]))
+        if (length(m) > 0L && nzchar(m)) mdt <- m
+      }
+    }
+  }
+
+  if (nzchar(mdt)) {
+    message("Setting MACOSX_DEPLOYMENT_TARGET=", mdt, " for Rust/DuckDB build.")
+    .macosx_deployment_target_export <- paste0("export MACOSX_DEPLOYMENT_TARGET=", mdt, " &&")
+  }
+}
+
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
@@ -102,7 +175,8 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CLEAN_TARGET@", .clean_targets, x = _) |>
   gsub("@LIBDIR@", .libdir, x = _) |>
   gsub("@TARGET@", .target, x = _) |>
-  gsub("@PANIC_EXPORTS@", .panic_exports, x = _)
+  gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
+  gsub("@MACOSX_DEPLOYMENT_TARGET_EXPORT@", .macosx_deployment_target_export, x = _)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")
