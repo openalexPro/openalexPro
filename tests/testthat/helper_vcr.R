@@ -71,6 +71,8 @@ compare_json_ignore <- function(ignore_fields) {
 }
 
 vcr_dir <- vcr::vcr_test_path("fixtures", "vcr")
+message("[vcr] cassette dir: ", vcr_dir)
+message("[vcr] cassettes found: ", length(list.files(vcr_dir, pattern = "\\.yml$")))
 vcr::vcr_configure_log(file = file.path(vcr_dir, "vcr.log"))
 
 # "all" re-records every cassette; triggered by record_cassettes.R script.
