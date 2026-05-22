@@ -71,8 +71,6 @@ compare_json_ignore <- function(ignore_fields) {
 }
 
 vcr_dir <- vcr::vcr_test_path("fixtures", "vcr")
-message("[vcr] cassette dir: ", vcr_dir)
-message("[vcr] cassettes found: ", length(list.files(vcr_dir, pattern = "\\.yml$")))
 vcr::vcr_configure_log(file = file.path(vcr_dir, "vcr.log"))
 
 # "all" re-records every cassette; triggered by record_cassettes.R script.
@@ -102,9 +100,12 @@ if (vcr_record_mode == "all") {
   ))
 }
 
-# Ensure a dummy API key is set so validation passes during VCR-recorded tests
+# Ensure a dummy API key is set so validation passes during VCR-recorded tests.
+# Note: pro_api_key() reads Sys.getenv("openalexPro.api_key"); use that exact
+# name here so CI (which has no real key) still sends api_key=test-api-key and
+# VCR's filter_query_parameters can normalise it to <api-key> before matching.
 if (is.null(pro_api_key())) {
-  Sys.setenv(openalexPro.apikey = "test-api-key")
+  Sys.setenv(openalexPro.api_key = "test-api-key")
 }
 
 # try(
