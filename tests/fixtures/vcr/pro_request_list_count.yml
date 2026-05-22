@@ -5,156 +5,77 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Mon, 02 Mar 2026 12:54:09 GMT
+      date: Fri, 22 May 2026 12:24:19 GMT
       content-type: application/json
+      cf-ray: 9ffbcc0fc9381e6d-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       server: cloudflare
       via: 1.1 heroku-router
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type
       access-control-allow-methods: GET, HEAD, POST, OPTIONS
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=0Df7CZy%2FTXqFyIv2NohJM1rGWF3VtynwyhF%2Frk9Itn0%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1772456049"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=0Df7CZy%2FTXqFyIv2NohJM1rGWF3VtynwyhF%2Frk9Itn0%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1772456049"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999286'
-      x-ratelimit-remaining-usd: '199.9286'
-      x-ratelimit-reset: '39951'
+      x-ratelimit-remaining: '1998080'
+      x-ratelimit-remaining-usd: '199.808'
+      x-ratelimit-reset: '41741'
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       content-encoding: gzip
-      cf-ray: 9d608c674d3dcd00-ZRH
     body:
-      string: '{"meta": {"count": 145616, "db_response_time_ms": 19, "page": 1, "per_page":
+      string: '{"meta": {"count": 148174, "db_response_time_ms": 28, "page": 1, "per_page":
         1, "groups_count": null, "cost_usd": 0.0001}, "results": [{"ids": {"openalex":
         "https://openalex.org/W2162348455", "doi": "https://doi.org/10.1038/35002501",
         "mag": "2162348455", "pmid": "https://pubmed.ncbi.nlm.nih.gov/10706275"}}],
         "group_by": []}'
-  recorded_at: 2026-03-02 12:54:09
+  recorded_at: 2026-05-22 12:24:19
 - request:
     method: GET
     uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Afinance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1&api_key=%3Capi-key%3E
   response:
     status: 200
     headers:
-      date: Mon, 02 Mar 2026 12:54:10 GMT
+      date: Fri, 22 May 2026 12:24:19 GMT
       content-type: application/json
+      cf-ray: 9ffbcc10ec1c1e6d-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       server: cloudflare
       via: 1.1 heroku-router
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type
       access-control-allow-methods: GET, HEAD, POST, OPTIONS
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1772456050"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1772456050"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999285'
-      x-ratelimit-remaining-usd: '199.9285'
-      x-ratelimit-reset: '39950'
+      x-ratelimit-remaining: '1998079'
+      x-ratelimit-remaining-usd: '199.8079'
+      x-ratelimit-reset: '41741'
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       content-encoding: gzip
-      cf-ray: 9d608c68582ecd00-ZRH
     body:
-      string: '{"meta": {"count": 241534, "db_response_time_ms": 24, "page": 1, "per_page":
+      string: '{"meta": {"count": 248534, "db_response_time_ms": 31, "page": 1, "per_page":
         1, "groups_count": null, "cost_usd": 0.0001}, "results": [{"ids": {"openalex":
         "https://openalex.org/W3121759882", "doi": "https://doi.org/10.1086/250042",
         "mag": "3121759882"}}], "group_by": []}'
-  recorded_at: 2026-03-02 12:54:10
-- request:
-    method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
-  response:
-    status: 200
-    headers:
-      date: Tue, 12 May 2026 10:26:34 GMT
-      content-type: application/json
-      cf-ray: 9fa8b9d10b180e55-MXP
-      cf-cache-status: DYNAMIC
-      access-control-allow-origin: '*'
-      server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1778581594"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1778581594"
-      x-ratelimit-cost-usd: '0.001'
-      x-ratelimit-credits-used: '10'
-      x-ratelimit-limit: '10000'
-      x-ratelimit-limit-usd: '1'
-      x-ratelimit-onetime-remaining: '0'
-      x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '9878'
-      x-ratelimit-remaining-usd: '0.9878'
-      x-ratelimit-reset: '48806'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
-      content-encoding: gzip
-    body:
-      string: '{"meta": {"count": 148192, "db_response_time_ms": 123, "page": 1, "per_page":
-        1, "groups_count": null, "cost_usd": 0.001}, "results": [{"ids": {"openalex":
-        "https://openalex.org/W2162348455", "doi": "https://doi.org/10.1038/35002501",
-        "mag": "2162348455", "pmid": "https://pubmed.ncbi.nlm.nih.gov/10706275"}}],
-        "group_by": []}'
-  recorded_at: 2026-05-12 10:26:34
-- request:
-    method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Afinance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
-  response:
-    status: 200
-    headers:
-      date: Tue, 12 May 2026 10:26:34 GMT
-      content-type: application/json
-      cf-ray: 9fa8b9d4de230e55-MXP
-      cf-cache-status: DYNAMIC
-      access-control-allow-origin: '*'
-      server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1778581594"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1778581594"
-      x-ratelimit-cost-usd: '0.001'
-      x-ratelimit-credits-used: '10'
-      x-ratelimit-limit: '10000'
-      x-ratelimit-limit-usd: '1'
-      x-ratelimit-onetime-remaining: '0'
-      x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '9868'
-      x-ratelimit-remaining-usd: '0.9868'
-      x-ratelimit-reset: '48806'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
-      content-encoding: gzip
-    body:
-      string: '{"meta": {"count": 248183, "db_response_time_ms": 67, "page": 1, "per_page":
-        1, "groups_count": null, "cost_usd": 0.001}, "results": [{"ids": {"openalex":
-        "https://openalex.org/W3121759882", "doi": "https://doi.org/10.1086/250042",
-        "mag": "3121759882"}}], "group_by": []}'
-  recorded_at: 2026-05-12 10:26:34
-recorded_with: VCR-vcr/2.0.0
+  recorded_at: 2026-05-22 12:24:19
+recorded_with: VCR-vcr/2.1.0

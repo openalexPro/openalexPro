@@ -5,7 +5,7 @@ http_interactions:
   response:
     status: 401
     headers:
-      date: Mon, 02 Mar 2026 12:58:55 GMT
+      date: Fri, 22 May 2026 12:25:31 GMT
       content-type: application/json
       content-length: '68'
       access-control-allow-origin: '*'
@@ -18,8 +18,8 @@ http_interactions:
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       server: cloudflare
-      cf-ray: 9d60935fdc3cc126-ZRH
+      cf-ray: 9ffbcdd20f2a0395-ZRH
     body:
       string: '{"error":"Invalid or missing API key","message":"API key not found"}'
-  recorded_at: 2026-03-02 12:58:55
-recorded_with: VCR-vcr/2.0.0
+  recorded_at: 2026-05-22 12:25:31
+recorded_with: VCR-vcr/2.1.0

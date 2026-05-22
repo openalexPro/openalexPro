@@ -5,183 +5,53 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Mon, 02 Mar 2026 12:54:10 GMT
+      date: Fri, 22 May 2026 12:24:19 GMT
       content-type: application/json
+      cf-ray: 9ffbcc12b89e1e6d-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       server: cloudflare
       via: 1.1 heroku-router
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type
       access-control-allow-methods: GET, HEAD, POST, OPTIONS
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1772456050"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1772456050"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999284'
-      x-ratelimit-remaining-usd: '199.9284'
-      x-ratelimit-reset: '39950'
-      content-encoding: gzip
-      cf-ray: 9d608c6a4d0fcd00-ZRH
-    body:
-      string: '{"meta": {"count": 145616, "db_response_time_ms": 32, "page": null,
-        "per_page": 200, "next_cursor": "InN1cHBsZW1lbnRhcnktbWF0ZXJpYWxzIg==", "groups_count":
-        18, "cost_usd": 0.0001}, "group_by": [{"key": "https://openalex.org/types/article",
-        "key_display_name": "article", "count": 129243}, {"key": "https://openalex.org/types/book",
-        "key_display_name": "book", "count": 3037}, {"key": "https://openalex.org/types/book-chapter",
-        "key_display_name": "book-chapter", "count": 6113}, {"key": "https://openalex.org/types/database",
-        "key_display_name": "database", "count": 1}, {"key": "https://openalex.org/types/dataset",
-        "key_display_name": "dataset", "count": 280}, {"key": "https://openalex.org/types/dissertation",
-        "key_display_name": "dissertation", "count": 2017}, {"key": "https://openalex.org/types/editorial",
-        "key_display_name": "editorial", "count": 170}, {"key": "https://openalex.org/types/erratum",
-        "key_display_name": "erratum", "count": 45}, {"key": "https://openalex.org/types/letter",
-        "key_display_name": "letter", "count": 318}, {"key": "https://openalex.org/types/libguides",
-        "key_display_name": "libguides", "count": 22}, {"key": "https://openalex.org/types/other",
-        "key_display_name": "other", "count": 563}, {"key": "https://openalex.org/types/paratext",
-        "key_display_name": "paratext", "count": 184}, {"key": "https://openalex.org/types/preprint",
-        "key_display_name": "preprint", "count": 1392}, {"key": "https://openalex.org/types/reference-entry",
-        "key_display_name": "reference-entry", "count": 24}, {"key": "https://openalex.org/types/report",
-        "key_display_name": "report", "count": 310}, {"key": "https://openalex.org/types/review",
-        "key_display_name": "review", "count": 1895}, {"key": "https://openalex.org/types/standard",
-        "key_display_name": "standard", "count": 1}, {"key": "https://openalex.org/types/supplementary-materials",
-        "key_display_name": "supplementary-materials", "count": 1}]}'
-  recorded_at: 2026-03-02 12:54:10
-- request:
-    method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&group_by=type&per_page=200&cursor=%2A
-  response:
-    status: 200
-    headers:
-      date: Tue, 12 May 2026 10:26:34 GMT
-      content-type: application/json
-      cf-ray: 9fa8b9d74fdb0e55-MXP
-      cf-cache-status: DYNAMIC
-      access-control-allow-origin: '*'
-      server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1778581594"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=QFePnw21NtVw9upaqbhmNxWh%2Bj4N7kgO4ZYcIUDKdIs%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1778581594"
-      x-ratelimit-cost-usd: '0.0001'
-      x-ratelimit-credits-used: '1'
-      x-ratelimit-limit: '10000'
-      x-ratelimit-limit-usd: '1'
-      x-ratelimit-onetime-remaining: '0'
-      x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '9867'
-      x-ratelimit-remaining-usd: '0.9867'
-      x-ratelimit-reset: '48806'
+      x-ratelimit-remaining: '1998078'
+      x-ratelimit-remaining-usd: '199.8078'
+      x-ratelimit-reset: '41741'
       access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
         X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 148192, "db_response_time_ms": 74, "page": null,
+      string: '{"meta": {"count": 148174, "db_response_time_ms": 33, "page": null,
         "per_page": 200, "next_cursor": "InN0YW5kYXJkIg==", "groups_count": 17, "cost_usd":
         0.0001}, "group_by": [{"key": "https://openalex.org/types/article", "key_display_name":
-        "article", "count": 130845}, {"key": "https://openalex.org/types/book", "key_display_name":
-        "book", "count": 3071}, {"key": "https://openalex.org/types/book-chapter",
-        "key_display_name": "book-chapter", "count": 6214}, {"key": "https://openalex.org/types/database",
+        "article", "count": 130804}, {"key": "https://openalex.org/types/book", "key_display_name":
+        "book", "count": 3073}, {"key": "https://openalex.org/types/book-chapter",
+        "key_display_name": "book-chapter", "count": 6220}, {"key": "https://openalex.org/types/database",
         "key_display_name": "database", "count": 1}, {"key": "https://openalex.org/types/dataset",
         "key_display_name": "dataset", "count": 278}, {"key": "https://openalex.org/types/dissertation",
-        "key_display_name": "dissertation", "count": 2182}, {"key": "https://openalex.org/types/editorial",
-        "key_display_name": "editorial", "count": 227}, {"key": "https://openalex.org/types/erratum",
-        "key_display_name": "erratum", "count": 45}, {"key": "https://openalex.org/types/letter",
-        "key_display_name": "letter", "count": 683}, {"key": "https://openalex.org/types/libguides",
+        "key_display_name": "dissertation", "count": 2193}, {"key": "https://openalex.org/types/editorial",
+        "key_display_name": "editorial", "count": 219}, {"key": "https://openalex.org/types/erratum",
+        "key_display_name": "erratum", "count": 60}, {"key": "https://openalex.org/types/letter",
+        "key_display_name": "letter", "count": 663}, {"key": "https://openalex.org/types/libguides",
         "key_display_name": "libguides", "count": 22}, {"key": "https://openalex.org/types/other",
-        "key_display_name": "other", "count": 672}, {"key": "https://openalex.org/types/paratext",
+        "key_display_name": "other", "count": 677}, {"key": "https://openalex.org/types/paratext",
         "key_display_name": "paratext", "count": 188}, {"key": "https://openalex.org/types/preprint",
         "key_display_name": "preprint", "count": 1396}, {"key": "https://openalex.org/types/reference-entry",
         "key_display_name": "reference-entry", "count": 25}, {"key": "https://openalex.org/types/report",
         "key_display_name": "report", "count": 411}, {"key": "https://openalex.org/types/review",
-        "key_display_name": "review", "count": 1931}, {"key": "https://openalex.org/types/standard",
+        "key_display_name": "review", "count": 1943}, {"key": "https://openalex.org/types/standard",
         "key_display_name": "standard", "count": 1}]}'
-  recorded_at: 2026-05-12 10:26:34
-- request:
-    method: GET
-    uri: https://api.openalex.org/works?filter=DOESNTEXIST%3A1
-  response:
-    status: 400
-    headers:
-      date: Thu, 21 May 2026 15:41:58 GMT
-      content-type: application/json
-      content-length: '4770'
-      cf-ray: 9ff4b03819e9ed52-MXP
-      cf-cache-status: DYNAMIC
-      access-control-allow-origin: '*'
-      server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=WrTSHIedZmMLJRUw9n0VuhzfzzyxVIFIP5tQ%2FE1EYcg%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1779378118"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=WrTSHIedZmMLJRUw9n0VuhzfzzyxVIFIP5tQ%2FE1EYcg%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1779378118"
-      x-ratelimit-cost-usd: '0.0001'
-      x-ratelimit-credits-used: '1'
-      x-ratelimit-limit: '10000'
-      x-ratelimit-limit-usd: '1'
-      x-ratelimit-onetime-remaining: '0'
-      x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '9999'
-      x-ratelimit-remaining-usd: '0.9999'
-      x-ratelimit-reset: '29882'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
-    body:
-      string: |
-        {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid field. Valid fields are underscore or hyphenated versions of: abstract.search, abstract.search.exact, apc_list.currency, apc_list.provenance, apc_list.value, apc_list.value_usd, apc_paid.currency, apc_paid.provenance, apc_paid.value, apc_paid.value_usd, author.id, author.orcid, authors_count, authorships.affiliations.institution_ids, authorships.author.id, authorships.author.orcid, authorships.countries, authorships.institutions.continent, authorships.institutions.country_code, authorships.institutions.id, authorships.institutions.is_global_south, authorships.institutions.lineage, authorships.institutions.ror, authorships.institutions.type, authorships.is_corresponding, authorships.raw_orcid, awards.doi, awards.funder_award_id, awards.funder_display_name, awards.funder_id, awards.id, best_oa_location.is_accepted, best_oa_location.is_oa, best_oa_location.is_published, best_oa_location.landing_page_url, best_oa_location.license, best_oa_location.license_id, best_oa_location.raw_type, best_oa_location.source.host_organization, best_oa_location.source.host_organization_lineage, best_oa_location.source.id, best_oa_location.source.is_in_doaj, best_oa_location.source.is_oa, best_oa_location.source.issn, best_oa_location.source.type, best_oa_location.version, best_open_version, biblio.first_page, biblio.issue, biblio.last_page, biblio.volume, citation_normalized_percentile.is_in_top_10_percent, citation_normalized_percentile.is_in_top_1_percent, citation_normalized_percentile.value, cited_by, cited_by_count, cited_by_percentile_year.max, cited_by_percentile_year.min, cites, concept.id, concepts.id, concepts.wikidata, concepts_count, corresponding_author_ids, corresponding_institution_ids, countries_distinct_count, created_date, datasets, default.search, display_name, display_name.search, display_name.search.exact, doi, doi_starts_with, from_created_date, from_publication_date, fulltext.search, fulltext.search.exact, fulltext_origin, funders.id, fwci, has_abstract, has_content.grobid_xml, has_content.pdf, has_doi, has_embeddings, has_fulltext, has_oa_accepted_or_published_version, has_oa_submitted_version, has_old_authors, has_orcid, has_pdf_url, has_pmcid, has_pmid, has_raw_affiliation_strings, has_references, ids.mag, ids.openalex, ids.pmcid, ids.pmid, indexed_in, institution.id, institution_assertions.country_code, institution_assertions.id, institution_assertions.lineage, institution_assertions.ror, institution_assertions.type, institutions.continent, institutions.country_code, institutions.id, institutions.is_global_south, institutions.ror, institutions.type, institutions_distinct_count, is_corresponding, is_oa, is_paratext, is_retracted, is_xpac, journal, keyword.search, keywords.id, label, language, locations.is_accepted, locations.is_oa, locations.is_published, locations.landing_page_url, locations.license, locations.license_id, locations.raw_type, locations.source.has_issn, locations.source.host_institution_lineage, locations.source.host_organization, locations.source.host_organization_lineage, locations.source.id, locations.source.is_core, locations.source.is_in_doaj, locations.source.is_oa, locations.source.issn, locations.source.publisher_lineage, locations.source.type, locations.version, locations_count, mag, mag_only, oa_status, open_access.any_repository_has_fulltext, open_access.is_oa, open_access.oa_status, openalex, openalex_id, pmcid, pmid, primary_location.is_accepted, primary_location.is_oa, primary_location.is_published, primary_location.landing_page_url, primary_location.license, primary_location.license_id, primary_location.raw_type, primary_location.source.has_issn, primary_location.source.host_institution_lineage, primary_location.source.host_organization, primary_location.source.host_organization_lineage, primary_location.source.id, primary_location.source.is_core, primary_location.source.is_in_doaj, primary_location.source.is_oa, primary_location.source.issn, primary_location.source.publisher_lineage, primary_location.source.type, primary_location.version, primary_topic.domain.id, primary_topic.field.id, primary_topic.id, primary_topic.subfield.id, publication_date, publication_year, raw_affiliation_strings, raw_affiliation_strings.search, raw_author_name.search, referenced_works, referenced_works_count, related_to, repository, semantic.search, sustainable_development_goals.id, sustainable_development_goals.score, title.search, title.search.exact, title_and_abstract.search, title_and_abstract.search.exact, to_created_date, to_publication_date, to_updated_date, topics.domain.id, topics.field.id, topics.id, topics.subfield.id, topics_count, type, type_crossref, updated_date, version"}
-  recorded_at: 2026-05-21 15:41:58
-- request:
-    method: GET
-    uri: https://api.openalex.org/works/W1775749144?select=DOESNTEXIST
-  response:
-    status: 400
-    headers:
-      date: Thu, 21 May 2026 15:41:59 GMT
-      content-type: application/json
-      content-length: '991'
-      cf-ray: 9ff4b03b4c37ed52-MXP
-      cf-cache-status: DYNAMIC
-      access-control-allow-origin: '*'
-      server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=WrTSHIedZmMLJRUw9n0VuhzfzzyxVIFIP5tQ%2FE1EYcg%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1779378118"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=WrTSHIedZmMLJRUw9n0VuhzfzzyxVIFIP5tQ%2FE1EYcg%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1779378118"
-      x-ratelimit-cost-usd: '0'
-      x-ratelimit-credits-used: '0'
-      x-ratelimit-limit: '10000'
-      x-ratelimit-limit-usd: '1'
-      x-ratelimit-onetime-remaining: '0'
-      x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '9999'
-      x-ratelimit-remaining-usd: '0.9999'
-      x-ratelimit-reset: '29881'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
-    body:
-      string: |
-        {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid select field. Valid fields for select are: id, doi, title, display_name, relevance_score, publication_year, publication_date, ids, language, primary_location, sources, type, type_crossref, indexed_in, open_access, authorships, institution_assertions, institutions, countries_distinct_count, institutions_distinct_count, corresponding_author_ids, corresponding_institution_ids, apc_list, apc_paid, fwci, is_authors_truncated, has_fulltext, fulltext_origin, cited_by_count, citation_normalized_percentile, cited_by_percentile_year, biblio, is_retracted, is_paratext, is_xpac, primary_topic, topics, keywords, concepts, mesh, locations_count, locations, best_oa_location, sustainable_development_goals, awards, funders, datasets, versions, has_content, content_urls, referenced_works_count, referenced_works, related_works, abstract_inverted_index, cited_by_api_url, counts_by_year, updated_date, created_date."}
-  recorded_at: 2026-05-21 15:41:59
+  recorded_at: 2026-05-22 12:24:19
 recorded_with: VCR-vcr/2.1.0

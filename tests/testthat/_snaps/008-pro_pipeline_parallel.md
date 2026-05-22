@@ -61,7 +61,7 @@
       type: string
       indexed_in: list<element: string>
       open_access: struct<is_oa: bool, oa_status: string, oa_url: string, any_repository_has_fulltext: bool>
-      authorships: list<element: struct<author_position: string, author: struct<id: string, display_name: string, orcid: string>, institutions: list<element: struct<id: string, display_name: string, ror: string, country_code: string, type: string, lineage: list<element: string>>>, countries: list<element: string>, is_corresponding: bool, raw_author_name: string, raw_affiliation_strings: list<element: string>, affiliations: list<element: struct<raw_affiliation_string: string, institution_ids: list<element: string>>>, raw_orcid: string>>
+      authorships: list<element: struct<author_position: string, author: struct<id: string, display_name: string, orcid: string>, institutions: list<element: struct<id: string, display_name: string, ror: string, country_code: string, type: string, lineage: list<element: string>>>, countries: list<element: string>, is_corresponding: bool, raw_author_name: string, raw_affiliation_strings: list<element: string>, raw_orcid: string, affiliations: list<element: struct<raw_affiliation_string: string, institution_ids: list<element: string>>>>>
       institutions: list<element: string>
       countries_distinct_count: int64
       institutions_distinct_count: int64
