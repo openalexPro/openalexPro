@@ -20,7 +20,10 @@ jobs:
       matrix:
         config:
           - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
+          # windows-latest excluded: bundled DuckDB cannot be compiled from
+          # source via Rust on the MinGW toolchain (g++ -std=gnu++20 fails).
+          # Windows support requires pre-built DuckDB binaries; tracked as a
+          # future task.
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
