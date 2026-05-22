@@ -25,9 +25,16 @@
     Code
       basename(fns)
     Output
-      [1] "results_page_1.json" "results_page_2.json" "results_page_1.json"
-      [4] "results_page_2.json" "results_page_1.json" "results_page_2.json"
-      [7] "results_page_1.json" "results_page_2.json"
+      [1] "results_page_1.json" "results_page_1.json" "results_page_1.json"
+      [4] "results_page_1.json"
+
+# pro_request_jsonl_R with subfolders
+
+    Code
+      basename(fns)
+    Output
+      [1] "results_page_1.json" "results_page_1.json" "results_page_1.json"
+      [4] "results_page_1.json"
 
 # pro_request_jsonl_parquet with subfolders
 
@@ -41,29 +48,29 @@
       p
     Output
       FileSystemDataset with 4 Parquet files
-      53 columns
+      52 columns
       id: string
       doi: string
       title: string
       display_name: string
       publication_year: int64
       publication_date: date32[day]
-      ids: struct<openalex: string, doi: string, mag: string, pmid: string, pmcid: string>
+      ids: struct<openalex: string, doi: string, mag: string, pmid: string>
       language: string
-      primary_location: struct<is_oa: bool, landing_page_url: string, pdf_url: string, source: struct<id: string, display_name: string, issn_l: string, issn: list<element: string>, is_oa: bool, is_in_doaj: bool, is_indexed_in_scopus: bool, is_core: bool, host_organization: string, host_organization_name: string, host_organization_lineage: list<element: string>, host_organization_lineage_names: list<element: string>, type: string>, license: string, license_id: string, version: string, is_accepted: bool, is_published: bool>
+      primary_location: struct<id: string, is_oa: bool, landing_page_url: string, pdf_url: string, source: struct<id: string, display_name: string, issn_l: string, issn: list<element: string>, is_oa: bool, is_in_doaj: bool, is_core: bool, host_organization: string, host_organization_name: string, host_organization_lineage: list<element: string>, host_organization_lineage_names: list<element: string>, type: string>, license: string, license_id: string, version: string, is_accepted: bool, is_published: bool, raw_source_name: string, raw_type: string>
       type: string
-      type_crossref: string
       indexed_in: list<element: string>
       open_access: struct<is_oa: bool, oa_status: string, oa_url: string, any_repository_has_fulltext: bool>
-      authorships: list<element: struct<author_position: string, author: struct<id: string, display_name: string, orcid: string>, institutions: list<element: struct<id: string, display_name: string, ror: string, country_code: string, type: string, lineage: list<element: string>>>, countries: list<element: string>, is_corresponding: bool, raw_author_name: string, raw_affiliation_strings: list<element: string>, affiliations: list<element: struct<raw_affiliation_string: string, institution_ids: list<element: string>>>>>
-      institution_assertions: list<element: string>
+      authorships: list<element: struct<author_position: string, author: struct<id: string, display_name: string, orcid: string>, institutions: list<element: struct<id: string, display_name: string, ror: string, country_code: string, type: string, lineage: list<element: string>>>, countries: list<element: string>, is_corresponding: bool, raw_author_name: string, raw_affiliation_strings: list<element: string>, affiliations: list<element: struct<raw_affiliation_string: string, institution_ids: list<element: string>>>, raw_orcid: string>>
+      institutions: list<element: string>
       countries_distinct_count: int64
       institutions_distinct_count: int64
       corresponding_author_ids: list<element: string>
       corresponding_institution_ids: list<element: string>
       apc_list: struct<value: int64, currency: string, value_usd: int64>
+      apc_paid: struct<value: int64, currency: string, value_usd: int64>
       ...
-      33 more columns
+      32 more columns
       Use `schema()` to see entire schema
     Code
       dplyr::collect(dplyr::arrange(dplyr::distinct(dplyr::select(p, page)), page))
