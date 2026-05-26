@@ -7,7 +7,7 @@
 #' @return TRUE if credentials work, FALSE otherwise
 #' @export
 pro_validate_credentials <- function(
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   show_credentials = FALSE
 ) {
   message("Testing:")

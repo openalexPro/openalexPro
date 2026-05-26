@@ -6,6 +6,87 @@ development history for the `openalexPro` package. It is aimed at future contrib
 
 ---
 
+## 2026-04-20 — Fix `overwrite` parameter in `pro_request()` list method and `pro_fetch()` (0.8.1)
+
+**Bug:** `pro_request()` accepted an `overwrite` parameter but silently ignored
+it when `query_url` was a list — the top-level output directory was never
+checked or deleted, and each sub-query's `fetch_query_pages()` call received
+`overwrite = FALSE` hardcoded, so re-running with an existing output caused
+cryptic per-subdirectory errors rather than a clean atomic overwrite.
+
+**Fix (`R/pro_request.R`):** Added an upfront check in the list method before
+flattening queries: error if `output` exists and `overwrite = FALSE`; delete
+it with `unlink(recursive = TRUE)` if `overwrite = TRUE`. Sub-function calls
+keep `overwrite = FALSE` (the directory no longer exists by the time they run).
+
+**Bug:** `pro_fetch()` delegated `overwrite` to each of the three sub-functions
+(`pro_request`, `pro_request_jsonl`, `pro_request_jsonl_parquet`) individually,
+so directories were deleted one at a time as the pipeline progressed. If
+`overwrite = FALSE` and only `jsonl/` existed (not `json/`), the first step
+would succeed silently and only fail on the second.
+
+**Fix (`R/pro_fetch.R`):** Upfront check across all three subdirectories before
+starting the pipeline: collect which of `json/`, `jsonl/`, `parquet/` exist,
+error with a combined message if `overwrite = FALSE`, delete all existing ones
+if `overwrite = TRUE`. Sub-functions receive `overwrite = FALSE`.
+
+**Key files:** `R/pro_request.R`, `R/pro_fetch.R`
+
+---
+
+## 2026-04-16 — Wrap `openalex-snapshot` binary; add `*_R()` fallbacks (0.7.0)
+
+**Motivation:** The companion Rust CLI `openalex-snapshot` is now more capable
+than the pure-R implementations for snapshot processing (adds verification,
+repair, progress monitoring, and schema comparison) and substantially faster.
+Rather than maintaining two competing implementations, the R package now delegates
+to the binary via `system2()` while preserving the original R code under `*_R()`
+suffixed names.
+
+**Breaking API changes:**
+
+| Old call | New call |
+|---|---|
+| `snapshot_to_parquet(snapshot_dir="...", parquet_dir="...")` | `snapshot_to_parquet(root_dir="...")` |
+| `build_corpus_index(corpus_dir="...")` | `build_corpus_index(root_dir="...")` |
+| `lookup_by_id(index_file="...", output="...")` | `lookup_by_id(root_dir="...", project_dir="...")` |
+
+**Root-dir layout:** the binary derives all paths from a single `--root-dir`:
+`<root>/openalex-snapshot/` (raw JSON), `<root>/parquet/` (converted parquet),
+`<root>/.openalex-snapshot_metadata/` (metadata). `root_dir = "."` means the
+working directory.
+
+**New helpers (`R/oas_binary.R`):**
+
+- `find_oas_binary(oas_bin = NULL)`: resolves binary via `oas_bin` arg →
+  `options("openalexPro.oas_bin")` → `Sys.which("openalex-snapshot")`. Errors
+  with an actionable message if not found.
+- `run_oas(args, oas_bin)`: calls `system2(binary, args)`, aborts on non-zero exit.
+
+**Preserved pure-R fallbacks (exported):**
+
+- `snapshot_to_parquet_R()` — original R + DuckDB conversion
+- `build_corpus_index_R()` — original R + DuckDB index building
+- `lookup_by_id_R()` — original R + DuckDB record retrieval
+
+These retain the original parameter names and work without any external binary.
+
+**Test pattern:** Each test file has two sections — one for the `*_R()` function
+(always runs; requires arrow + duckdb) and one for the binary wrapper (gated with
+`skip_if(Sys.which("openalex-snapshot") == "", "...")`).
+
+**Makefile:** `inst/Makefile.snapshot` rewritten to call the binary directly via
+`openalex-snapshot convert --root-dir ${ROOTDIR}` and
+`openalex-snapshot index --root-dir ${ROOTDIR}` instead of `Rscript`.
+
+**Key files:** `R/oas_binary.R` (new), `R/snapshot_to_parquet.R`,
+`R/build_corpus_index.R`, `R/lookup_by_id.R`, `inst/Makefile.snapshot`,
+`tests/testthat/test-013-snapshot_to_parquet.R`,
+`tests/testthat/test-011-build_corpus_index.R`,
+`tests/testthat/test-012-lookup_by_id.R`
+
+---
+
 ## 2026-03-02 — Normalize `api_key` handling; add live contract tests
 
 **Background:** API key handling diverged across functions and docs. Some code

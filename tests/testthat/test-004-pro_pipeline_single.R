@@ -33,10 +33,10 @@ test_that("pro_request single identifier", {
   )
 })
 
-test_that("pro_request_jsonl single identifier", {
+test_that("pro_request_jsonl_R single identifier", {
   # Convert to jsonl
   output_jsonl <- output_json |>
-    pro_request_jsonl(
+    pro_request_jsonl_R(
       output = output_jsonl,
       verbose = FALSE,
       progress = TRUE

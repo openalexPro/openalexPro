@@ -17,11 +17,11 @@ The authors are not affiliated with [OpenAlex](https://openalex.org) in any way.
 
 # LLM Usage Disclosure
 
-Code and documentation in this project have been generated with the assistance of the codex LLM tools as well as Claude code in Positron. All content and code is based on conceptualisation by the authors and has been thoroughly reviewed and edited by humans afterwards.
+Code and documentation in this project have been generated with the assistance of the codex LLM tools as well as Claude Code in Positron. All content and code and documentation is based on the conceptualisation by the authors and has been thoroughly reviewed and edited by humans afterwards.
 
 # Introduction
 
-This package builds on the package [openalexR](https://github.com/ropensci/openalexR) but provides a more advanced approach to retrieve works from OpenAlex. In contrast to `openalexR`, which does all processing and conversions in memory, `openalexPro` uses an on-disc processing approach where the data is processed by number of records returned per call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from [OpenAlex](https://openalex.org), but limits the number of works which can be retrieved due to memory limitations. Even before the limit is reached, the often occurring new allocation of memory slows down the processing. 
+This package is inspired by the package [`openalexR`](https://github.com/ropensci/openalexR) but provides a different approach to retrieve works from OpenAlex. In contrast to `openalexR`, which does all processing and conversions in memory, [`openalexPro`](https://rkrug.r-universe.dev/openalexPro) uses an on-disc processing approach where the data is processed by number of records returned per individual call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from [OpenAlex](https://openalex.org), but limits the number of works which can be retrieved due to memory limitations and a considerable slowdown due to repeated memory allocations even before that. The on-disc based processing essentially should scale at most linearly with the number of pages requested from [OpenAlex](https://openalex.org) and likely considerably less as parallel processing is used extensively in [`openalexPro`](https://rkrug.r-universe.dev/openalexPro).
 
 # Quickstart
 
@@ -44,16 +44,23 @@ remotes::install_github("rkrug/openalexPro", ref = "dev")
 ## Authentication (Optional, Recommended)
 
 `openalexPro` can run without an API key, but OpenAlex applies much stricter
-limits in unauthenticated mode. For real workloads, set `openalexPro.apikey`
-in `.Renviron` or your current session.
+limits in unauthenticated mode. For real workloads, an API key should be obtained. 
+Let's assume your key is "xxxxxxx".
+
+There are three ways of providing, which are evaluated in order:
+
+1. You can set an `openalexPro` option using `opt_api_key("xxxxxxx")
+2. You can set the environmental variable `openalexPro.api_key` to the API key. This can be set in 
+   the `.Renviron file` 
+3. You can save your API key in the keyring using `keyring::key_set("API_openalex")` which will ask you 
+   for the key which then will be saved securely and encrypted in your keyring. Where that is, 
+   depends on the OS and your setup (see the [`keyring` package documentation](https://keyring.r-lib.org/index.html) for details).
+  
+The safest one is (3), but (1) depends how you put the API key in the option.
+
+After setup, you can validate your credentials and see your available daily or prepaid budget:
 
 ```r
-# Recommended: set once in .Renviron
-# openalexPro.apikey=your-api-key
-
-# Or for the current session only:
-Sys.setenv(openalexPro.apikey = "your-api-key")
-
 # Check current key status
 pro_validate_credentials()
 
@@ -68,42 +75,7 @@ To run online contract checks against the live OpenAlex API:
 
 ```r
 Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
-Sys.setenv(openalexPro.apikey = "your-api-key")
 devtools::test(filter = "900-live")
-```
-
-## Simplest Approach: `pro_fetch()`
-
-For most use cases, `pro_fetch()` handles everything in one call:
-
-```r
-library(openalexPro)
-
-# Build query
-url <- pro_query(
-  entity = "works",
-  search = "climate change",
-  from_publication_date = "2023-01-01",
-  type = "article",
-  select = c("ids", "title", "publication_year", "cited_by_count")
-)
-
-# Download, transform, and convert to Parquet in one step
-pro_fetch(
-  query_url = url,
-  project_folder = "my_climate_data",
-  progress = TRUE
-)
-```
-
-Your data is now ready in `my_climate_data/parquet/`.
-
-## Advanced Workflow (Individual Functions)
-
-For more control over the pipeline, use the individual functions:
-
-```r
-library(openalexPro)
 ```
 
 ### 1. Define query (`openalexPro::pro_query()`)
@@ -126,8 +98,11 @@ This defines a basic query.
 
 ```r
 query <- pro_query(
-  entity = "works",
-  search = "biodiversity AND conservation AND IPBES"
+entity = "works",
+  search = "biodiversity sandwich island",
+  from_publication_date = "2023-01-01",
+  type = "article",
+  select = c("ids", "title", "publication_year", "cited_by_count")
 )
 ```
 
@@ -135,10 +110,36 @@ This returns a URL, which one can open in the browser.
 
 If, however, for example 100 DOIs are given to be retrieved, the query is chunked into chunks of a maximum of the value of the argument `chunk_limit`, default is 50. In this case, the functions returns a `list()` with each element named `Chunk_x` and containing the URL as a character vector.
 
-### 2. Retrieving records (`openalexPro::pro_request()`)
+The resulting URL(s) can be opened in the browser for evaluation.
+
+## `pro_fetch()`
+
+For most use cases, `pro_fetch()` handles everything in one call:
 
 ```r
-openalexPro::pro_request(
+# Download, transform, and convert to Parquet in one step
+pro_fetch(
+  query_url = url,
+  project_folder = "Biodiversity_from_sandwich_islands",
+  progress = TRUE
+)
+```
+
+All intermediate folders and data are deleted, and only the final parquet dataset remains in `Biodiversity_from_sandwich_islands/parquet/`.
+
+## Advanced Workflow (Individual Functions)
+
+For more control over the pipeline, use the individual functions:
+
+```r
+library(openalexPro)
+```
+
+
+### 1. Retrieving records (`openalexPro::pro_request()`)
+
+```r
+json_files <- openalexPro::pro_request(
   query_url = query,
   output = "json",
   verbose = TRUE
@@ -147,13 +148,26 @@ openalexPro::pro_request(
 
 Will retrieve the records and save them into the folder specified in output. One important difference is now between the query being a single URL or a list: if it is a list, the `future` and `future.apply` packages are used to process the URLs in the list in parallel.
 
+`pro_request()` also accepts **nested lists**, which creates a mirrored nested directory structure. The subsequent `pro_request_jsonl_parquet()` step converts the directory depth into hive-style partition keys (`query=<name>`, `query_l2=<name>`, …), so the final parquet dataset can be filtered by group directly:
+
+```r
+queries <- list(
+  year_2022 = pro_query(entity = "works", publication_year = 2022),
+  year_2023 = pro_query(entity = "works", publication_year = 2023)
+)
+pro_fetch(query_url = queries, project_folder = "by_year")
+
+# Parquet partitions: by_year/parquet/query=year_2022/ and query=year_2023/
+arrow::open_dataset("by_year/parquet") |> dplyr::filter(query == "year_2022")
+```
+
 ### 3. Processing `json` files (`openalexPro::pro_request_jsonl()`)
 
 This step prepares the json files for the final ingestion into a `parquet` database:
 
 ```r
 openalex_jsonl_folder <- openalexPro::pro_request_jsonl(
-  input_json = "json_files",
+  input_json = json_files,
   output = "jsonl_files",
   verbose = TRUE
 )
@@ -168,15 +182,32 @@ Here the files are converted into a parquet page partitioned dataset saved as in
 ```r
 parquet <- "./parquet"
 openalexPro::pro_request_jsonl_parquet(
-  input_jsonl = "jsonl_files",
+  input_jsonl = jsonl_files,
   output = parquet,
   verbose = TRUE
 )
 ```
 
-### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
-The `read_corpus()` function reads the corpus either as a arrow `Dataset` object if `return_data = FALSE`, which is essentially metadata to the dataset,  or a `data.frame`, i.e. a data table, if `return_data = TRUE`, in which case the whole dataset is loaded into memory.
+These functions are pipeline ready and can be chained in a pipeline:
 
+```r
+corpus <- pro_query(...) |>
+  pro_request(...) |>
+  pro_request_jsonl(...) |>
+  pro_request_jsonl_parquet(...)
+```
+
+### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
+The `read_corpus()` function reads the corpus either as a arrow `Dataset` object if `return_data = FALSE`, which is essentially metadata to the dataset,  or a `data.frame`, if `return_data = TRUE`, in which case the whole dataset is loaded into memory.
+Especially the `return_data = FALSE` opens possiblilities on on-disc process =ing of mlarge datasets using the `dplyr` pipeline with `dplyr::collect()` at the end to retrieve the actual data:
+
+```r
+read_corpus("Biodiversity_from_sandwich_islands") |>
+  dplyr::filter(cited_by_count > 100) |>
+
+  # only now, the actual data is retrieved.
+  dplyr::collect()
+```
 
 # Design Principles
 The retrieval of works and the initial processing / preparation can be split into these three steps:
@@ -187,13 +218,11 @@ In a second step (`openalexPro::pro_request_jsonl()`), the json files are proces
 
 In the third (and final) step (`openalexPro::pro_request_jsonl_parquet()`) converts the jsonl files into a parquet database partitioned by `page` using the `duckdb` package. Again, as the processing is done per page as well, the conversion is not limited by memory.
 
-
 This approach results in a stable pipeline which works for the retrieval of small as well as large to huge corpora. As the processing is done per page (which have a maximum of 200 works), the scaling should be more or less linear (in one application, more than 4 million works were retrieved without problems). 
 
 One point which needs to be taken into consideration when retrieving huge corpora, are rate limits by OpenAlex (see [here](https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication) and [here](https://help.openalex.org/hc/en-us/articles/24397762024087-Pricing) for further details). Use `pro_rate_limit_status()` to inspect your current daily budget, usage, and remaining allowance at any time.
 
-
-The final format which is used in this package to save the retrieved data is the `parquet` format which is space efficient and allows on disc processing, therefor there is no need to load the complete data into memory (see [here](https://parquet.apache.org/docs/) for a detailed description of the format as well as the [r-package `arrow`](https://arrow.apache.org/docs/r/)). To use the on disc processing in R, the `arrow` packages interfaces directly with `dplyr`, so that one can do a lot of processing before retrieving the actual data into memory (see the section on [dplyr and arrow](https://r4ds.hadley.nz/arrow.html#using-dplyr-with-arrow) as well more general the [arrow chapter](https://r4ds.hadley.nz/arrow.html) in Hadley Wickham's [R for Data Science (2e)](https://r4ds.hadley.nz) book.
+The final format which is used in this package to save the retrieved data is the `parquet` format which is space efficient and allows on disc processing, therefore there is no need to load the complete data into memory (see [here](https://parquet.apache.org/docs/) for a detailed description of the format as well as the [r-package `arrow`](https://arrow.apache.org/docs/r/)). To use the on disc processing in R, the `arrow` packages interfaces directly with `dplyr`, so that one can do a lot of processing before retrieving the actual data into memory (see the section on [dplyr and arrow](https://r4ds.hadley.nz/arrow.html#using-dplyr-with-arrow) as well more general the [arrow chapter](https://r4ds.hadley.nz/arrow.html) in Hadley Wickham's [R for Data Science (2e)](https://r4ds.hadley.nz) book).
 
 # Snowball Searches
 

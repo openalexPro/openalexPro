@@ -7,7 +7,7 @@
 #' @param query_url Character string containing the fully constructed OpenAlex
 #'   PRO endpoint URL.
 #' @param api_key Character string API key or `NULL`. Defaults to
-#'   `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, the request is sent
+#'   `pro_api_key()`. If `NULL` or `""`, the request is sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
 #'
@@ -27,7 +27,7 @@
 #' }
 pro_count <- function(
   query_url,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   error_log = NULL
 ) {
   if (

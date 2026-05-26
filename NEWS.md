@@ -1,5 +1,109 @@
 # openalexPro (development)
 
+# openalexPro 0.9.0
+
+## New Features
+
+* **Rust backend via `extendr`.**  Core functions now delegate to a compiled
+  Rust library (`openalex-core` v0.5.0) for JSON→Parquet conversion, schema
+  inference, corpus indexing, and ID-based record lookup.  Pure-R `_R` variants
+  remain as fallbacks.  This eliminates the external `openalex-snapshot` binary
+  dependency for the main pipeline.
+
+* **`pro_rate_limit_status()`** — query your OpenAlex API rate-limit status
+  (daily budget, used, remaining, prepaid balance, reset time, per-endpoint
+  costs).  Returns a list invisibly; prints a formatted summary when
+  `verbose = TRUE`.
+
+* New debug option `openalexPro.ratelimit_check`: when set to `TRUE` via
+  `options(openalexPro.ratelimit_check = TRUE)`, every API call prints the
+  current rate-limit status (budget, usage, remaining, reset time) as a message
+  before the request is sent. Internally handled in `api_call()` using
+  `pro_rate_limit_status(verbose = TRUE)`. A recursion guard temporarily
+  disables the option during the nested rate-limit request.
+
+# openalexPro 0.8.1
+
+## Bug Fixes
+
+* `pro_request()` list method now respects the `overwrite` parameter. Previously,
+  when `query_url` was a list, the top-level `output` directory was neither
+  checked nor deleted regardless of `overwrite`. It now errors if the directory
+  exists and `overwrite = FALSE`, and deletes it upfront if `overwrite = TRUE`.
+
+* `pro_fetch()` now deletes all three subdirectories (`json`, `jsonl`, `parquet`)
+  upfront before the pipeline starts when `overwrite = TRUE`, rather than
+  delegating deletion to each sub-function individually. If any of the
+  subdirectories exist and `overwrite = FALSE`, the function now errors
+  immediately with a clear message listing which directories already exist.
+
+# openalexPro 0.8.0
+
+## New Features
+
+* `pro_request()`, `pro_request_jsonl()`, and `pro_request_jsonl_parquet()`
+  now accept **nested lists** of query URLs. Each nesting level is preserved
+  as a subdirectory in the output, and the parquet stage converts directory
+  depth into hive-style partition keys: depth 1 → `query=<name>`, depth 2 →
+  `query_l2=<name>`, depth 3 → `query_l3=<name>`, etc. The resulting dataset
+  is readable with `arrow::open_dataset()` and the partition columns appear
+  as regular columns. `pro_fetch()` inherits this behaviour automatically.
+  A new internal helper `collect_leaf_queries()` performs the recursive list
+  flattening.
+
+# openalexPro 0.7.0
+
+## Breaking Changes
+
+* `snapshot_to_parquet()` has a new signature. The old `snapshot_dir` and
+  `parquet_dir` parameters are replaced by a single `root_dir` parameter that
+  matches the directory layout used by the companion `openalex-snapshot` Rust
+  binary. The function now delegates to the binary rather than performing
+  conversion in R. **Migration:** replace
+  `snapshot_to_parquet(snapshot_dir = "...", parquet_dir = "...")` with
+  `snapshot_to_parquet(root_dir = "...")`.
+
+* `build_corpus_index()` has a new signature. The old `corpus_dir` parameter
+  is replaced by `root_dir`. The function now delegates to the
+  `openalex-snapshot` binary. **Migration:** replace
+  `build_corpus_index(corpus_dir = "...")` with
+  `build_corpus_index(root_dir = "...")`.
+
+* `lookup_by_id()` has a new signature. The old `index_file` and `output`
+  parameters are replaced by `root_dir` and `project_dir` (consistent with the
+  project-folder convention used by `pro_request()` and `pro_fetch()`). The
+  function now delegates to the `openalex-snapshot` binary. **Migration:**
+  replace `lookup_by_id(index_file = "...", output = "...")` with
+  `lookup_by_id(root_dir = "...", project_dir = "...")`.
+
+## New Features
+
+* Pure-R / DuckDB fallback variants are now exported as separate functions:
+  - `snapshot_to_parquet_R()` — original R implementation of snapshot
+    conversion (uses DuckDB + arrow, no external binary required)
+  - `build_corpus_index_R()` — original R implementation of index building
+  - `lookup_by_id_R()` — original R implementation of ID-based record lookup
+  
+  These retain the original parameter names and are useful when the
+  `openalex-snapshot` binary is unavailable.
+
+* `find_oas_binary()` and `run_oas()` are exported internal helpers for
+  resolving and invoking the `openalex-snapshot` binary. They support:
+  1. Explicit `oas_bin` argument
+  2. `options(openalexPro.oas_bin = "/path/to/binary")`
+  3. PATH search via `Sys.which("openalex-snapshot")`
+
+* `inst/Makefile.snapshot` updated to use the `openalex-snapshot` binary
+  directly (replacing `Rscript` invocations of the now-renamed R functions).
+
+## Dependencies
+
+* The `openalex-snapshot` Rust binary is now required for
+  `snapshot_to_parquet()`, `build_corpus_index()`, and `lookup_by_id()`.
+  Download from <https://github.com/rkrug/openalex-snapshot/releases> or build
+  with `cargo build --release`. The pure-R `*_R()` variants have no binary
+  dependency.
+
 # openalexPro 0.6.1
 
 ## Bug Fixes

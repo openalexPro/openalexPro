@@ -42,12 +42,12 @@ The function returns the output path invisibly.
 }
 \description{
 The function takes a directory of JSONL files as written from a call to
-\code{pro_request_jsonl(...)} and converts each file individually to a Parquet file.
+\code{pro_request_jsonl_R(...)} and converts each file individually to a Parquet file.
 The subfolder structure from the input is preserved in the output, so files
 in \verb{Chunk_1/} will be written to \verb{Chunk_1/} in the output directory.
 }
 \details{
-The \code{page} column (added by \code{\link[=pro_request_jsonl]{pro_request_jsonl()}}) is preserved as a regular
+The \code{page} column (added by \code{\link[=pro_request_jsonl_R]{pro_request_jsonl_R()}}) is preserved as a regular
 column in the Parquet data.
 
 When starting the conversion, a file \verb{00_in.progress} is created which is

@@ -1,12 +1,12 @@
 ---
-title: "Snapshot Conversion: Schema Inference and Parquet Writing"
+title: "Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks"
 format:
   html:
     toc: true
     toc-depth: 3
     embed-resources: true
 vignette: >
-  %\VignetteIndexEntry{Snapshot Conversion: Schema Inference and Parquet Writing}
+  %\VignetteIndexEntry{Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 execute:
@@ -23,228 +23,220 @@ knitr::opts_chunk$set(
 
 # Overview
 
-`snapshot_to_parquet()` converts the OpenAlex NDJSON snapshot (hundreds of
-gzip-compressed files) into a Parquet dataset. This vignette explains the
-internal mechanics in detail, focusing on the two-stage pipeline:
+`openalexPro` provides two implementations for every snapshot processing task:
 
-1. **Schema inference** — derive a single, consistent column specification from
-   a sample of source files.
-2. **Per-file conversion** — write each `.gz` file to a `.parquet` file using
-   that specification.
+| Task | Binary wrapper (preferred) | Pure-R fallback |
+|------|---------------------------|-----------------|
+| Convert JSON → Parquet | `snapshot_to_parquet()` | `snapshot_to_parquet_R()` |
+| Build ID lookup index | `build_corpus_index()` | `build_corpus_index_R()` |
+| Extract records by ID | `lookup_by_id()` | `lookup_by_id_R()` |
 
-Understanding these stages helps you tune parameters, interpret progress
-messages, manage the schema cache, and use `infer_json_schema()` directly in
-your own workflows.
+**Binary wrappers** delegate to the `openalex-snapshot` Rust CLI, which is
+faster, includes built-in verification and repair, and handles very large
+datasets with lower memory overhead.
 
-# Why a Unified Schema?
+**Pure-R fallbacks** (`*_R()` variants) implement the same logic entirely in
+R using DuckDB, with no external binary dependency. They are suitable when
+installing the binary is not possible, or for understanding implementation
+internals.
 
-The OpenAlex snapshot stores data as NDJSON (newline-delimited JSON), one
-record per line. JSON is schemaless: a field that appears as a number in one
-file may be absent (and thus typed differently by auto-inference) in another.
+Both sets of functions are exported and fully documented.
 
-DuckDB's `read_json_auto()` infers column types independently per file.
-When the inferred types differ across files, reading a collection of parquet
-files together with `arrow::open_dataset()` or DuckDB's `parquet_scan()`
-causes type-mismatch errors such as:
+# Binary Wrappers
 
+## Prerequisite — the `openalex-snapshot` Binary
+
+Download from [GitHub releases](https://github.com/rkrug/openalex-snapshot/releases)
+or build from source:
+
+```bash
+cargo build --release
 ```
-Unsupported cast from string to struct using function cast
-```
 
-The solution is to **infer once, apply everywhere**: run type inference on a
-sample of files, compute a single widened type for each column, and write every
-parquet file with that fixed schema. All files in the dataset then share an
-identical schema and can be read together without errors.
-
-# Stage 1 — Schema Inference
-
-## Entry Point
-
-`snapshot_to_parquet()` calls `infer_json_schema()` once per dataset before
-any conversion starts:
+Once installed, place the binary on your PATH, or provide its location via:
 
 ```{r}
-columns_clause <- infer_json_schema(
-  con             = con,            # shared DuckDB connection
-  files           = gz_files,       # all .gz files for this dataset
-  sample_size     = sample_size,    # how many files to sample (default 20)
-  extra_options   = ndjson_options, # dataset-specific DuckDB options
-  verbose         = TRUE,
-  schema_cache_dir = file.path(parquet_ds, ".schema_cache")
+# Option 1: set for the session
+options(openalexPro.oas_bin = "/path/to/openalex-snapshot")
+
+# Option 2: pass directly to each function call
+snapshot_to_parquet(root_dir = ".", oas_bin = "/path/to/openalex-snapshot")
+```
+
+## Root Directory Layout
+
+All three binary wrappers use a single `root_dir` parameter. The binary
+derives all paths from it:
+
+```
+<root_dir>/
+  openalex-snapshot/          # raw JSON .gz files (input)
+  parquet/                    # converted parquet files (output)
+  parquet/<dataset>_id_idx.parquet  # lookup index
+  .openalex-snapshot_metadata/      # metadata and checksums
+```
+
+If `root_dir = "."` (the default for the Makefile), the working directory is
+the root.
+
+## `snapshot_to_parquet()` — Convert JSON to Parquet
+
+```{r}
+library(openalexPro)
+
+# Convert all datasets (works, authors, institutions, ...)
+snapshot_to_parquet(
+  root_dir  = "/Volumes/openalex",
+  workers   = 4,
+  profile   = "balanced",     # "safe" | "balanced" | "fast"
+  max_memory_mb = 15000
+)
+
+# Convert a specific dataset only
+snapshot_to_parquet(
+  root_dir  = "/Volumes/openalex",
+  data_sets = "works",
+  workers   = 4
 )
 ```
 
-The result, `columns_clause`, is a string like:
+`data_sets = NULL` (default) processes all datasets. When a character vector
+is given, each dataset is passed to the binary in a separate call (the binary
+accepts one `--dataset` per invocation).
 
-```
-{'id': 'VARCHAR', 'display_name': 'VARCHAR', 'works_count': 'BIGINT', ...}
-```
+The function returns `invisible(root_dir)`.
 
-This is passed verbatim to DuckDB's `read_json()` during conversion:
+## `build_corpus_index()` — Build ID Lookup Indexes
 
-```sql
-COPY (SELECT * FROM read_json('file.gz', columns = {'id': 'VARCHAR', ...}))
-TO 'file.parquet' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE 100000)
-```
-
-## File Sampling
-
-If `sample_size` is positive and smaller than the total number of files, a
-random sample is drawn:
+After conversion, build an ID index for fast lookups:
 
 ```{r}
-if (!is.null(sample_size) && sample_size > 0 && length(files) > sample_size) {
-  files <- sample(files, sample_size)
-}
-```
-
-A larger sample catches more type variations at the cost of more DuckDB queries.
-For most datasets the default of 20 is sufficient; for `works` (1981 files with
-heterogeneous schema evolution), 100–500 is safer.
-
-## Per-File DESCRIBE
-
-For each sampled file, `infer_json_schema()` runs a single DuckDB `DESCRIBE`
-query:
-
-```sql
-DESCRIBE SELECT * FROM
-  read_json_auto(['file.gz'], union_by_name = true, ignore_errors = true)
-```
-
-`ignore_errors = true` prevents individual malformed records (e.g. works files
-containing `abstract_inverted_index` with duplicate case-variant JSON keys)
-from aborting the query. The result is a data frame with one row per column:
-
-| column_name   | column_type |
-|---------------|-------------|
-| id            | VARCHAR     |
-| display_name  | VARCHAR     |
-| works_count   | BIGINT      |
-| …             | …           |
-
-This is done **one file at a time** rather than in a bulk query across all
-sampled files, avoiding the out-of-memory crash that occurs when DuckDB opens
-hundreds of large `.gz` files simultaneously.
-
-## Schema Merging and Type Widening
-
-After all per-file schemas have been collected, `merge_schemas()` combines them
-into a single unified schema. It applies the following **type-widening rules**
-to each column, in order:
-
-### Rule 1 — All Identical
-
-If every sampled file agrees on the same type, that type is kept unchanged.
-
-```
-# All files: 'id' = VARCHAR → unified: VARCHAR
-```
-
-### Rule 2 — Complex Type Wins
-
-If a column is a `STRUCT`, `LIST`, or `MAP` in at least one file and a simpler
-type (e.g. `VARCHAR`, `BIGINT`) in others, the complex type is chosen. This
-handles fields that are `null` in some files (inferred as `VARCHAR` by DuckDB)
-but a structured object in others.
-
-```
-# Some files: 'apc_paid' = VARCHAR (nulls only)
-# Other files: 'apc_paid' = STRUCT(value BIGINT, currency VARCHAR, ...)
-# → unified: STRUCT(value BIGINT, currency VARCHAR, ...)
-```
-
-### Rule 3 — Richest STRUCT Wins
-
-When multiple files infer different `STRUCT` definitions for the same column
-(different number of fields), the STRUCT with the most fields is chosen. This
-captures the widest set of subfields.
-
-```
-# File A: 'location' = STRUCT(country VARCHAR)
-# File B: 'location' = STRUCT(country VARCHAR, city VARCHAR, lat DOUBLE)
-# → unified: STRUCT(country VARCHAR, city VARCHAR, lat DOUBLE)
-```
-
-### Rule 4 — Widest Numeric Wins
-
-For pure numeric conflicts, the widest type in the following order is chosen:
-
-```
-TINYINT < SMALLINT < INTEGER (= INT) < BIGINT < HUGEINT < FLOAT < DOUBLE
-```
-
-```
-# Some files: 'cited_by_count' = INTEGER
-# Other files: 'cited_by_count' = BIGINT
-# → unified: BIGINT
-```
-
-### Rule 5 — Fallback to VARCHAR
-
-Any conflict that does not match the above rules is resolved by falling back to
-`VARCHAR`. This is intentionally conservative: VARCHAR can hold any value and
-prevents conversion errors at the cost of losing type specificity.
-
-```
-# Some files: 'updated_date' = DATE
-# Other files: 'updated_date' = VARCHAR
-# → unified: VARCHAR
-```
-
-### Column Order
-
-Columns appear in **first-seen order** from the collected schemas (not
-alphabetically). This preserves the natural field order of the OpenAlex schema
-and maintains backward compatibility when the unified schema is reused across
-runs.
-
-## Special Case — `works` Dataset
-
-The `works` dataset has two specific workarounds applied after schema inference:
-
-### 1. Large object size
-
-Individual work records (particularly those with long author lists) can exceed
-DuckDB's default JSON object size limit. The `maximum_object_size` option is
-extended for schema inference and conversion:
-
-```{r}
-ndjson_options <- if (data_set == "works") {
-  ", maximum_object_size=1000000000"   # 1 GB
-} else {
-  ""
-}
-```
-
-### 2. `abstract_inverted_index` stored as VARCHAR
-
-OpenAlex encodes abstracts as an *inverted index*: a JSON object mapping each
-word to the list of its positions, e.g.
-`{"The": [0], "quick": [1], "as": [3], "As": [7]}`.
-
-JSON keys are case-sensitive, so `"as"` and `"As"` are distinct. DuckDB,
-however, folds struct field names to lowercase when auto-inferring `STRUCT`
-types, causing a collision:
-
-```
-Error: duplicate key "as"
-```
-
-After schema inference, `snapshot_to_parquet()` overrides the inferred type for
-this column to `VARCHAR`:
-
-```{r}
-columns_clause <- gsub(
-  "'abstract_inverted_index':\\s*'[^']*'",
-  "'abstract_inverted_index': 'VARCHAR'",
-  columns_clause
+build_corpus_index(
+  root_dir  = "/Volumes/openalex",
+  data_sets = NULL,          # NULL = all datasets
+  workers   = 8,
+  profile   = "balanced",
+  overwrite = FALSE          # TRUE = rebuild even if index exists
 )
 ```
 
-With type `VARCHAR`, DuckDB reads the entire JSON value as a raw text string
-without parsing its keys into struct fields, so no collision occurs. The data
-is fully preserved. To access individual entries, parse with `jsonlite`:
+This creates `<root_dir>/parquet/<dataset>_id_idx.parquet` for each dataset.
+Each index maps OpenAlex IDs to their physical location (file and row number),
+enabling fast record retrieval without scanning the full corpus.
+
+## `lookup_by_id()` — Extract Records by OpenAlex ID
+
+```{r}
+# Extract specific works into a project directory
+lookup_by_id(
+  root_dir    = "/Volumes/openalex",
+  ids         = c("W2741809807", "W2100837269", "W1234567890"),
+  project_dir = "my_project",
+  data_sets   = "works"       # NULL = search all datasets
+)
+# Extracted parquet files are written to my_project/snapshot_extract/
+```
+
+IDs can be in short form (`"W2741809807"`) or long form
+(`"https://openalex.org/W2741809807"`). Both are accepted and normalised
+automatically.
+
+The `project_dir` convention is consistent with `pro_fetch()` and
+`pro_request()`: the output directory identifies a project, and results
+accumulate inside it.
+
+The function returns `invisible(project_dir)`.
+
+## Performance Profiles
+
+The `profile` argument controls the binary's memory/speed trade-off:
+
+| Profile | Memory use | Speed | When to use |
+|---------|-----------|-------|-------------|
+| `"safe"` | Low | Slow | Shared machines, limited RAM |
+| `"balanced"` | Medium | Medium | Default for most workloads |
+| `"fast"` | High | Fast | Dedicated machines with ≥ 32 GB RAM |
+
+---
+
+# Pure-R Fallbacks
+
+The `*_R()` functions contain the original R + DuckDB implementations,
+preserved for environments where the binary is unavailable. They are
+slower than the binary wrappers but have no external dependencies beyond
+the `duckdb` and `arrow` R packages.
+
+## `snapshot_to_parquet_R()` — Convert JSON to Parquet (R)
+
+```{r}
+snapshot_to_parquet_R(
+  snapshot_dir   = "/Volumes/openalex/openalex-snapshot",
+  parquet_dir    = "/Volumes/openalex/parquet",
+  data_sets      = NULL,       # NULL = all; or e.g. c("works", "authors")
+  sample_size    = 100,        # number of .gz files to sample for schema inference
+  memory_limit   = "15GB",     # per-DuckDB-connection limit
+  temp_directory = "/tmp",     # DuckDB spill-to-disk location
+  workers        = 4           # parallel future workers
+)
+```
+
+Note that `snapshot_to_parquet_R()` takes **separate** `snapshot_dir` and
+`parquet_dir` parameters, unlike the binary wrapper which derives both from
+`root_dir`.
+
+### Two-Stage Pipeline
+
+**Stage 1 — Schema inference** (`infer_json_schema()`): runs `DESCRIBE SELECT *
+FROM read_json_auto(file)` on a random sample of `.gz` files, then merges the
+per-file schemas into a single widened schema using type-widening rules
+(complex types beat simple types; widest numeric wins; fallback to `VARCHAR`).
+Results are cached to `.schema_cache/` to support resume.
+
+**Stage 2 — Per-file conversion**: each `.gz` file is converted to `.parquet`
+using the unified schema from Stage 1. One DuckDB connection per worker; already-
+converted files are skipped (resume support).
+
+### Schema Cache
+
+Schema inference is the slowest sequential step. A two-level cache avoids
+repeating it:
+
+```
+parquet/works/.schema_cache/
+  unified_schema.csv        ← loaded first; if found, no DuckDB queries run
+  2024-01-15_part_000.csv   ← per-file cache; enables mid-run resume
+  2024-01-15_part_001.csv
+  ...
+```
+
+**To force re-inference**, delete `unified_schema.csv`:
+
+```bash
+rm parquet/works/.schema_cache/unified_schema.csv
+```
+
+**To pre-populate the cache** (e.g. after downloading an updated snapshot with
+the same schema), copy the file from a previous successful run:
+
+```bash
+mkdir -p parquet/works/.schema_cache
+cp ~/schemas/works_schema.csv parquet/works/.schema_cache/unified_schema.csv
+```
+
+### Special Case — `works` Dataset
+
+The `works` dataset has two workarounds applied automatically by
+`snapshot_to_parquet_R()`:
+
+1. **Large object size**: `maximum_object_size=1000000000` (1 GB) is passed to
+   DuckDB because individual work records with long author lists can exceed the
+   default limit.
+
+2. **`abstract_inverted_index` stored as VARCHAR**: OpenAlex encodes abstracts
+   as an inverted index — a JSON object whose keys are words. DuckDB
+   case-folds struct field names, causing a collision when the same word appears
+   with different capitalisation (e.g. `"as"` and `"As"`). Storing the column
+   as `VARCHAR` (raw JSON text) avoids the collision. To decode:
 
 ```{r}
 library(arrow)
@@ -254,248 +246,108 @@ works <- open_dataset("parquet/works")
 row   <- works |> filter(id == "W2741809807") |> collect()
 
 aii   <- fromJSON(row$abstract_inverted_index[1])
-# aii is now a named list: list("The" = 0, "quick" = 1, "as" = 3, "As" = 7)
+# aii is a named list: list("The" = 0, "quick" = 1, "as" = 3, "As" = 7)
 ```
 
-# The Schema Cache
-
-Schema inference is the slowest sequential step (~3 s per file × sample size).
-For large datasets it can take several minutes. A two-level cache avoids
-repeating this work.
-
-## Cache Location
-
-The cache lives in `<parquet_dir>/<dataset>/.schema_cache/`:
-
-```
-parquet/
-└── works/
-    ├── .schema_cache/
-    │   ├── unified_schema.csv        ← level 1
-    │   ├── 2024-01-15_part_000.csv   ← level 2 (one per sampled file)
-    │   ├── 2024-01-15_part_001.csv
-    │   └── ...
-    ├── updated_date=2024-01-15/
-    │   ├── part_000.parquet
-    │   └── ...
-    └── ...
-```
-
-Per-file cache filenames are derived from the source path: the `updated_date=`
-hive prefix is stripped from the parent directory, and the `.gz` extension is
-removed from the filename, giving names like `2024-01-15_part_000.csv`. This
-makes each cache file directly traceable to its source `.gz`.
-
-## Level 1 — Unified Schema Cache
-
-`unified_schema.csv` stores the final merged schema as a two-column CSV:
-
-```
-col_name,col_type
-id,VARCHAR
-display_name,VARCHAR
-works_count,BIGINT
-...
-```
-
-On any subsequent call to `infer_json_schema()` with the same cache directory,
-this file is loaded immediately and returned — **no DuckDB queries are
-executed**. A message is printed:
-
-```
-Loaded cached unified schema with 47 columns (delete .../unified_schema.csv to re-infer)
-```
-
-**To force re-inference**, delete `unified_schema.csv`:
-
-```bash
-rm parquet/works/.schema_cache/unified_schema.csv
-```
-
-## Level 2 — Per-File Schema Cache
-
-Each per-file `DESCRIBE` result is saved as a CSV immediately after being
-computed. On a restart, files whose CSVs already exist are loaded from disk
-instead of re-queried. This enables **mid-run resume**: if inference is
-interrupted after 60 of 100 files, only the remaining 40 are re-queried.
-
-## Pre-populating the Cache to Skip Inference
-
-Because `unified_schema.csv` is checked first and returned immediately when
-found, **you can place a known-good schema file in the cache directory before
-running `snapshot_to_parquet()`** to bypass inference entirely. This is useful
-when:
-
-- You have already inferred the schema in a previous run and the snapshot has
-  not changed structurally.
-- You want to apply a hand-edited or externally-supplied schema.
-- You are re-converting a subset of files and want to guarantee the same schema
-  as the full dataset.
-
-The simplest workflow is to copy the `unified_schema.csv` from a previous
-successful run:
-
-```bash
-# After a successful conversion, copy the schema to a safe location
-cp parquet/works/.schema_cache/unified_schema.csv ~/schemas/works_schema.csv
-
-# Start a new conversion (e.g. after downloading an updated snapshot)
-# but first restore the cached schema to skip inference:
-mkdir -p parquet/works/.schema_cache
-cp ~/schemas/works_schema.csv parquet/works/.schema_cache/unified_schema.csv
-
-# Now run conversion — schema inference will be skipped
-snapshot_to_parquet(
-  snapshot_dir  = "/Volumes/openalex/openalex-snapshot",
-  parquet_dir   = "/Volumes/openalex/parquet",
-  data_sets     = "works",
-  workers       = 4,
-  memory_limit  = "8GB"
-)
-```
-
-You can also construct or modify `unified_schema.csv` in R:
+## `build_corpus_index_R()` — Build ID Index (R)
 
 ```{r}
-schema <- read.csv("parquet/works/.schema_cache/unified_schema.csv")
-
-# Inspect the schema
-head(schema)
-#         col_name              col_type
-# 1             id               VARCHAR
-# 2   display_name               VARCHAR
-# 3    works_count                BIGINT
-# ...
-
-# Override a type if needed, e.g. force a column to VARCHAR
-schema$col_type[schema$col_name == "some_column"] <- "VARCHAR"
-
-# Write back — this will be loaded on the next run
-write.csv(schema, "parquet/works/.schema_cache/unified_schema.csv",
-          row.names = FALSE)
+# Build index for one dataset
+build_corpus_index_R(
+  corpus_dir   = "/Volumes/openalex/parquet/works",
+  memory_limit = "15GB",
+  workers      = 4
+)
+# Creates /Volumes/openalex/parquet/works_id_idx.parquet
 ```
 
-**Caution:** if the new snapshot added columns that are absent from the cached
-schema, those columns will be silently ignored during conversion. Delete
-`unified_schema.csv` and re-infer if you suspect the schema has changed.
+Note that `build_corpus_index_R()` takes a `corpus_dir` pointing to a
+single dataset directory (e.g. `parquet/works`), whereas the binary wrapper
+takes `root_dir` and an optional `data_sets` argument.
 
-## When to Delete the Cache
+### How the Index Works
 
-| Situation | Action |
-|-----------|--------|
-| Resuming an interrupted inference run | Do nothing — cache handles this automatically |
-| Skipping inference with a known schema | Place `unified_schema.csv` in `.schema_cache/` before running |
-| Forcing fresh inference (new snapshot) | Delete `unified_schema.csv` only |
-| Forcing inference from scratch | Delete the entire `.schema_cache/` directory |
-| Schema looks wrong / incomplete | Delete `unified_schema.csv` and increase `sample_size` |
+The index contains four columns:
 
-**The Makefile `parquet` target** runs `clean_parquet` first, which deletes the
-entire parquet directory including `.schema_cache/`. Every `make parquet` run
-therefore always re-infers the schema from scratch. The cache is most useful
-when calling `snapshot_to_parquet()` directly from R to resume an interrupted
-conversion, or to intentionally reuse a schema from a previous run.
+| Column | Description |
+|--------|-------------|
+| `id` | Full OpenAlex URL (e.g. `https://openalex.org/W2741809807`) |
+| `id_block` | `floor(numeric_id / 10000)` — used for block-based partitioning |
+| `parquet_file` | Relative path to the source parquet file |
+| `file_row_number` | 0-indexed row within that file |
 
-# Stage 2 — Per-File Conversion
+The `id_block` grouping allows the lookup function to filter the index to just
+the relevant partition before reading source files, avoiding a full index scan.
 
-Once the `columns_clause` is ready, `snapshot_to_parquet()` converts each `.gz`
-file individually using `convert_json_to_parquet()`:
+### Two-Stage Index Build
 
-```sql
-COPY (SELECT * FROM read_json('file.gz', columns = {'id': 'VARCHAR', ...}))
-TO 'file.parquet' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE 100000)
-```
+**Stage 1**: Each parquet file is indexed individually (one DuckDB connection
+per worker), writing a temporary per-file parquet to a staging directory.
 
-Key properties:
+**Stage 2**: The staging directory is merged into a single `*_id_idx.parquet`
+file using a sequential DuckDB connection. The staging directory is removed.
 
-- **One DuckDB connection per worker**: each `future` worker opens its own
-  connection, so there are no locking conflicts.
-- **Snappy compression**: a good balance of speed and size.
-- **Row group size of 100 000**: controls the granularity of predicate
-  pushdown and memory use during reads.
-- **Directory structure preserved**: output paths mirror the input hive
-  partition structure (`updated_date=2024-01-15/part_000.parquet`), so the
-  dataset is immediately usable with Arrow's partition-aware reader.
-- **Resume support**: already-present `.parquet` files are skipped before
-  conversion starts, so an interrupted run can be restarted.
-
-## Parallel Processing
-
-Set `workers` to use multiple `future::multisession` workers:
+## `lookup_by_id_R()` — Extract Records by ID (R)
 
 ```{r}
-snapshot_to_parquet(
-  snapshot_dir  = "/Volumes/openalex/openalex-snapshot",
-  parquet_dir   = "/Volumes/openalex/parquet",
-  data_sets     = "works",
-  workers       = 4,
-  memory_limit  = "8GB",
-  temp_directory = "/tmp"
+# Returns a data frame (in-memory mode)
+works <- lookup_by_id_R(
+  index_file = "/Volumes/openalex/parquet/works_id_idx.parquet",
+  ids        = c("W2741809807", "W2100837269")
+)
+
+# Writes to parquet files (out-of-memory mode, for millions of IDs)
+lookup_by_id_R(
+  index_file = "/Volumes/openalex/parquet/works_id_idx.parquet",
+  ids        = large_id_vector,
+  output     = "filtered_works",  # directory must not already exist
+  workers    = 3
 )
 ```
 
-Each worker gets its own DuckDB connection with the same `memory_limit` and
-`temp_directory` settings. Schema inference always runs sequentially on the
-main process (it uses a single shared connection).
+Note that `lookup_by_id_R()` takes `index_file` (path to the
+`*_id_idx.parquet` file) and returns either a data frame or writes to `output`.
+The binary wrapper uses `root_dir` + `project_dir` instead.
 
-# Using `infer_json_schema()` Directly
+### How Lookup Works
 
-`infer_json_schema()` is exported and can be used standalone for any set of
-NDJSON files, not just OpenAlex snapshots:
+1. IDs are normalised to long form (`https://openalex.org/...`).
+2. The index is filtered with `dplyr::filter(id %in% ids)` to find the source
+   file and row number for each match.
+3. Results are grouped by source parquet file (`parquet_file`).
+4. For each source file, a DuckDB query retrieves exactly the rows needed:
+   ```sql
+   SELECT * FROM read_parquet('file.parquet', file_row_number = true)
+   WHERE file_row_number IN (42, 107, 3891)
+   ```
+5. In `output` mode, each chunk is written directly to a parquet file without
+   loading into R memory.
 
-```{r}
-library(DBI)
-library(duckdb)
-library(openalexPro)
+---
 
-# Open a DuckDB connection and load the JSON extension
-con <- dbConnect(duckdb())
-dbExecute(con, "LOAD json")
+# Comparison Summary
 
-# Collect files
-files <- list.files(
-  "path/to/ndjson",
-  pattern    = "\\.gz$",
-  recursive  = TRUE,
-  full.names = TRUE
-)
+| Feature | Binary wrappers | Pure-R fallbacks (`*_R()`) |
+|---------|----------------|--------------------------|
+| External dependency | `openalex-snapshot` binary | None (duckdb + arrow only) |
+| Speed | Faster | Slower |
+| Verification & repair | Built in | Not available |
+| `root_dir` convention | Yes | No (separate `snapshot_dir`/`parquet_dir`/`corpus_dir`) |
+| Schema inference | Handled by binary | `infer_json_schema()` with caching |
+| `lookup_by_id` output | `project_dir` folder | data frame or `output` directory |
+| Resume support | Yes | Yes (per-file skip) |
+| Parallel workers | Yes | Yes (`future_lapply`) |
 
-# Infer schema from up to 50 files, cache in a dedicated directory
-columns_clause <- infer_json_schema(
-  con             = con,
-  files           = files,
-  sample_size     = 50,
-  verbose         = TRUE,
-  schema_cache_dir = "path/to/cache"
-)
+## When to Use Which
 
-cat(columns_clause)
-# {'id': 'VARCHAR', 'name': 'VARCHAR', 'count': 'BIGINT', ...}
+Use the **binary wrappers** when:
 
-# Use it in your own query
-sql <- sprintf(
-  "COPY (SELECT * FROM read_json('data.gz', columns = %s)) TO 'data.parquet'",
-  columns_clause
-)
-dbExecute(con, sql)
+- The binary is available on your PATH (or you can install it)
+- You need maximum throughput on large datasets
+- You want built-in verification after conversion
 
-dbDisconnect(con, shutdown = TRUE)
-```
+Use the **pure-R fallbacks** when:
 
-The `schema_cache_dir` argument accepts any writable directory. Per-file CSVs
-are named `<parent_dir>_<filename_without_gz>.csv`; if the parent directory
-does not follow the `updated_date=` convention the raw directory name is used.
-
-# Summary
-
-| Step | Function | Notes |
-|------|----------|-------|
-| Enumerate `.gz` files | `list.files()` | all files in dataset directory |
-| Skip converted files | internal | resume support |
-| Infer unified schema | `infer_json_schema()` | per-file `DESCRIBE`, R-side merge |
-| — check L1 cache | | `unified_schema.csv` → return immediately |
-| — check L2 cache | | per-file CSVs → skip DuckDB query |
-| — run DESCRIBE | | one query per sampled file |
-| — widen types | `merge_schemas()` | 5-rule precedence |
-| — save caches | | L2 per file, L1 after merge |
-| Apply works fix | `gsub()` in `snapshot_to_parquet()` | `abstract_inverted_index` → VARCHAR |
-| Convert files | `convert_json_to_parquet()` | one per worker, SNAPPY, RG=100000 |
+- You cannot install the binary (e.g. locked-down institutional systems)
+- You need to inspect or customise the schema inference step
+- You are building workflows that must work without any system-level installs

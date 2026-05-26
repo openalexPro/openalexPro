@@ -1,11 +1,8 @@
 library(testthat)
 
-# library(httptest)
-
 # Normal Search `biodiversity AND finance`-------------------------------------
 
 output_dir <- file.path(tempdir(), "project_folder")
-# output_dir = "~/Documents/GitHub/openalexPro/search"
 
 unlink(output_dir, recursive = TRUE, force = TRUE)
 
@@ -20,27 +17,30 @@ test_that("pro_fetch search `biodiversity AND fiance`", {
     )
   ) |>
     pro_fetch(
-      pages = 1,
+      pages        = 1,
       project_folder = output_dir,
-      verbose = FALSE,
-      progress = TRUE
+      delete_input = FALSE,
+      verbose      = FALSE,
+      progress     = TRUE
     )
 
-  # Check that the output file contains the expected data (platform-agnostic)
+  # JSON file written by pro_request() is still present (delete_input = FALSE
+  # is passed explicitly so the file survives for snapshot comparison).
+  expect_true(
+    file.exists(file.path(output_dir, "json", "results_page_1.json"))
+  )
+
+  # Check JSON content matches snapshot
   expect_snapshot_file(
     path = file.path(output_dir, "json", "results_page_1.json"),
     name = "json",
     compare = compare_json
   )
 
-  # Check that the output file contains the expected data (platform-agnostic)
-  expect_snapshot_file(
-    file.path(output_dir, "jsonl", "results_page_1.json"),
-    name = "jsonl",
-    compare = compare_jsonl
-  )
+  # No jsonl subdirectory — pro_fetch() now goes JSON → Parquet directly.
+  expect_false(dir.exists(file.path(output_dir, "jsonl")))
 
-  # Check that the output file exists
+  # At least one parquet file produced
   expect_true(
     length(
       list.files(
@@ -48,8 +48,7 @@ test_that("pro_fetch search `biodiversity AND fiance`", {
         "*.parquet",
         recursive = TRUE
       )
-    ) >=
-      1
+    ) >= 1
   )
 })
 

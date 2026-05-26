@@ -10,7 +10,7 @@
 # After recording, run devtools::test() normally (without the env var) to
 # verify all tests pass in playback mode.
 
-api_key <- Sys.getenv("openalexPro.apikey")
+api_key <- pro_api_key()
 if (!nzchar(api_key)) {
   stop(
     "openalexPro.apikey is not set.\n",
@@ -20,7 +20,10 @@ if (!nzchar(api_key)) {
 
 # Fail fast on invalid keys so we do not overwrite working cassettes with 401s
 key_ok <- tryCatch(
-  is.list(openalexPro::pro_rate_limit_status(api_key = api_key, verbose = FALSE)),
+  is.list(openalexPro::pro_rate_limit_status(
+    api_key = api_key,
+    verbose = FALSE
+  )),
   error = function(e) FALSE
 )
 if (!isTRUE(key_ok)) {
@@ -31,9 +34,15 @@ if (!isTRUE(key_ok)) {
 }
 
 cassette_dir <- file.path("tests", "fixtures", "vcr")
-cassettes    <- list.files(cassette_dir, pattern = "\\.yml$", full.names = TRUE)
+cassettes <- list.files(cassette_dir, pattern = "\\.yml$", full.names = TRUE)
 
-message("Deleting ", length(cassettes), " existing cassette(s) from ", cassette_dir, " ...")
+message(
+  "Deleting ",
+  length(cassettes),
+  " existing cassette(s) from ",
+  cassette_dir,
+  " ..."
+)
 file.remove(cassettes)
 
 message("Setting OPENALEXPRO_RECORD_CASSETTES=true ...")
@@ -43,8 +52,18 @@ on.exit(Sys.unsetenv("OPENALEXPRO_RECORD_CASSETTES"), add = TRUE)
 message("Running tests to record new cassettes ...")
 devtools::test()
 
-new_cassettes <- list.files(cassette_dir, pattern = "\\.yml$", full.names = TRUE)
-message("\nDone. ", length(new_cassettes), " cassette(s) written to ", cassette_dir, ".")
+new_cassettes <- list.files(
+  cassette_dir,
+  pattern = "\\.yml$",
+  full.names = TRUE
+)
+message(
+  "\nDone. ",
+  length(new_cassettes),
+  " cassette(s) written to ",
+  cassette_dir,
+  "."
+)
 
 # Post-process: replace the real API key with the placeholder used in
 # playback matching.  The helper_vcr.R skips filter_query_parameters during
@@ -54,7 +73,7 @@ message("Sanitizing real API key in cassettes ...")
 encoded_key <- utils::URLencode(api_key, reserved = TRUE)
 for (f in new_cassettes) {
   lines <- readLines(f, warn = FALSE)
-  lines <- gsub(api_key,     "<api-key>",    lines, fixed = TRUE)
+  lines <- gsub(api_key, "<api-key>", lines, fixed = TRUE)
   lines <- gsub(encoded_key, "%3Capi-key%3E", lines, fixed = TRUE)
   writeLines(lines, f)
 }

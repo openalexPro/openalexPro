@@ -9,7 +9,7 @@ pro_request(
   pages = 1e+05,
   output = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
@@ -28,11 +28,13 @@ all pages will be downloaded. Default: 100000.}
 \item{output}{directory where the JSON files are saved. Default is a
 temporary directory. Needs to be specified.}
 
-\item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted if it already
-exists.}
+\item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted before
+downloading. For a list \code{query_url}, the entire top-level \code{output}
+directory is removed upfront. If \code{FALSE} (the default) and \code{output}
+already exists, the function stops with an error.}
 
 \item{api_key}{Character string API key or \code{NULL}. Defaults to
-\code{Sys.getenv("openalexPro.apikey")}. If \code{NULL} or \code{""}, requests are sent
+\code{pro_api_key()}. If \code{NULL} or \code{""}, requests are sent
 without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{workers}{Number of parallel workers to use if \code{query_url} is a list. Defaults to 1.}

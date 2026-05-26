@@ -1,27 +1,32 @@
-SNAPSHOTDIR=./openalex-snapshot
-PARQUETDIR=./parquet
-MEMORY_LIMIT=15GB
+ROOTDIR=.
+MAX_MEMORY_MB=15000
 WORKERS=3
-SAMPLE_SIZE=100
-TEMP_DIR=/tmp
+PROFILE=balanced
+SNAPSHOTDIR=${ROOTDIR}/openalex-snapshot
+PARQUETDIR=${ROOTDIR}/parquet
 RELEASE_DATE:=$(shell grep -m1 '^RELEASE ' $(SNAPSHOTDIR)/RELEASE_NOTES.txt 2>/dev/null | awk '{print $$2}')
 
 help: ## Show this help message
 	@echo "Configuration variables:"
+	@echo "  ROOTDIR        = ${ROOTDIR}"
+	@echo "  MAX_MEMORY_MB  = ${MAX_MEMORY_MB}"
+	@echo "  WORKERS        = ${WORKERS}"
+	@echo "  PROFILE        = ${PROFILE}"
+	@echo "  RELEASE_DATE   = ${RELEASE_DATE}"
+	@echo ""
+	@echo "Derived paths:"
 	@echo "  SNAPSHOTDIR    = ${SNAPSHOTDIR}"
 	@echo "  PARQUETDIR     = ${PARQUETDIR}"
-	@echo "  MEMORY_LIMIT   = ${MEMORY_LIMIT}"
-	@echo "  WORKERS        = ${WORKERS}"
-	@echo "  SAMPLE_SIZE    = ${SAMPLE_SIZE}"
-	@echo "  TEMP_DIR       = ${TEMP_DIR}"
-	@echo "  RELEASE_DATE   = ${RELEASE_DATE}"
 	@echo ""
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 	@echo ""
-	@echo "Override variables on command line: make parquet MEMORY_LIMIT=20GB WORKERS=4 SAMPLE_SIZE=10000 TEMP_DIR=/tmp"
-	@echo "The conversion from snapshot to parquet is more memory intensive and needs lower WORKERS"
-	@echo "The indexing is less memory intensive and profits from higher number of workers WORKERS"
+	@echo "Override variables on command line:"
+	@echo "  make parquet MAX_MEMORY_MB=20000 WORKERS=4 PROFILE=fast"
+	@echo ""
+	@echo "Requires: openalex-snapshot binary in PATH"
+	@echo "  Download: https://github.com/rkrug/openalex-snapshot/releases"
+	@echo "  Or build: cargo build --release"
 
 all: clean snapshot parquet ## Clean, download snapshot, and convert to parquet
 
@@ -43,14 +48,24 @@ parquet_timestamp: ## Add date timestamp to parquet format snapshot
 		mv "${PARQUETDIR}" "${PARQUETDIR}-${RELEASE_DATE}"; \
 	fi
 
-parquet: clean_parquet ## Convert snapshot to parquet format after deleting the existing one first
-	Rscript -e 'options(cli.progress_show_after = 0, cli.progress_handlers_force = "cli"); openalexPro::snapshot_to_parquet(snapshot_dir = "'${SNAPSHOTDIR}'", parquet_dir = "'${PARQUETDIR}'", sample_size = '${SAMPLE_SIZE}', memory_limit = "'${MEMORY_LIMIT}'", temp_directory = "'${TEMP_DIR}'", workers = '${WORKERS}')' 2>&1
+parquet: clean_parquet ## Convert snapshot to parquet format (deletes existing parquet first)
+	openalex-snapshot convert \
+		--root-dir "${ROOTDIR}" \
+		--dataset all \
+		--profile ${PROFILE} \
+		--workers ${WORKERS} \
+		--max-memory-mb ${MAX_MEMORY_MB}
 
 parquet_index: ## Build ID indexes for all datasets
-	Rscript -e 'options(cli.progress_show_after = 0); invisible(lapply(grepv("_idx.parquet$$", list.dirs("'${PARQUETDIR}'", recursive = FALSE, full.names = TRUE), invert = TRUE), function(d) openalexPro::build_corpus_index(corpus_dir = d, memory_limit = "'${MEMORY_LIMIT}'", workers = '${WORKERS}')))' 2>&1
+	openalex-snapshot index \
+		--root-dir "${ROOTDIR}" \
+		--dataset all \
+		--profile ${PROFILE} \
+		--workers ${WORKERS} \
+		--max-memory-mb ${MAX_MEMORY_MB}
 
-clean_index: ## Remove index files (*_idx.parquet) from parquet directory
-	find ${PARQUETDIR} -maxdepth 1 -name '*_idx.parquet' -delete
+clean_index: ## Remove index files (*_id_idx.parquet) from parquet directory
+	find ${PARQUETDIR} -maxdepth 1 -name '*_id_idx.parquet' -delete
 
 clean_parquet: clean_index ## Remove parquet directory only (includes index files)
 	rm -rf ${PARQUETDIR}
@@ -58,6 +73,6 @@ clean_parquet: clean_index ## Remove parquet directory only (includes index file
 clean_snapshot: ## Remove snapshot directory only
 	rm -rf ${SNAPSHOTDIR}
 
-clean: clean_parquet clean_snapshot clean_index ## Remove both snapshot and parquet directories
+clean: clean_parquet clean_snapshot ## Remove both snapshot and parquet directories
 
 .PHONY: help all snapshot_info snapshot_timestamp snapshot parquet_timestamp parquet parquet_index clean_index clean_parquet clean_snapshot clean

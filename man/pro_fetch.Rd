@@ -2,17 +2,19 @@
 % Please edit documentation in R/pro_fetch.R
 \name{pro_fetch}
 \alias{pro_fetch}
-\title{Fetch and convert OpenAlex data}
+\title{Fetch and convert OpenAlex data to Parquet}
 \usage{
 pro_fetch(
   query_url,
   pages = 10000,
   project_folder = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
+  delete_input = TRUE,
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
+  enrich = TRUE,
   count_only,
   error_log = NULL
 )
@@ -25,17 +27,21 @@ pro_fetch(
 beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
 all pages will be downloaded. Default: 100000.}
 
-\item{project_folder}{Directory where all intermediate (\code{json},
-\code{jsonl}) and final (\code{parquet}) results are stored.
-If it does not exist, it is created. If \code{NULL}, a temporary
-directory is created.}
+\item{project_folder}{Directory where intermediate (\code{json}) and final
+(\code{parquet}) results are stored.  If it does not exist, it is created.
+If \code{NULL}, a temporary directory is created.}
 
-\item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted if it already
-exists.}
+\item{overwrite}{Logical. If \code{TRUE}, the \code{json} and
+\code{parquet} subdirectories are deleted from \code{project_folder}
+before the pipeline starts. If \code{FALSE} (the default) and any of
+those subdirectories already exist, the function stops with an error.}
 
 \item{api_key}{Character string API key or \code{NULL}. Defaults to
-\code{Sys.getenv("openalexPro.apikey")}. If \code{NULL} or \code{""}, requests are sent
+\code{pro_api_key()}. If \code{NULL} or \code{""}, requests are sent
 without an API key (subject to OpenAlex's unauthenticated limits).}
+
+\item{delete_input}{Logical. If \code{TRUE} (the default), the \code{json}
+subfolder is deleted after successful conversion to Parquet.}
 
 \item{workers}{Number of parallel workers to use if \code{query_url} is a list. Defaults to 1.}
 
@@ -43,36 +49,38 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{progress}{Logical indicating whether to show a progress bar. Default \code{TRUE}.}
 
-\item{count_only}{Do not use it here. The function will abort if it set to
-\code{TRUE} and give a warning if \code{FALSE}}
+\item{enrich}{Logical.  When \code{TRUE} (the default) and the inferred schema
+contains \code{abstract_inverted_index} / \code{authorships} / \code{publication_year},
+add \code{abstract} and \code{citation} computed columns.}
+
+\item{count_only}{Do not use it here. The function will abort if set to
+\code{TRUE} and give a warning if \code{FALSE}.}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
 }
 \value{
-Invisibly, the normalized path of the \code{parquet} subfolder
-inside \code{project_folder}, i.e. the value returned by
-\code{pro_request_jsonl_parquet()}.
+Invisibly, the normalised path of the \code{parquet} subfolder
+inside \code{project_folder}.
 }
 \description{
-Convenience wrapper around \code{\link{pro_request}},
-\code{\link{pro_request_jsonl}} and
-\code{\link{pro_request_jsonl_parquet}}.
+Convenience wrapper that downloads records from OpenAlex via
+\code{\link{pro_request}()} and converts them directly to an Apache Parquet
+dataset via \code{\link{pro_request_parquet}()} (Rust-backed, parallel via
+rayon).  No intermediate JSONL files are written.
 }
 \details{
 The function
 \itemize{
 \item downloads records from OpenAlex via \code{pro_request()} into a
-\code{"json"} subfolder of \code{project_folder},
-\item converts the JSON files to \code{jsonl} via
-\code{pro_request_jsonl()} into a \code{"jsonl"} subfolder, and
-\item converts the jsonl files to an Apache Parquet dataset via
-\code{pro_request_jsonl_parquet()} into a \code{"parquet"} subfolder.
+\code{"json"} subfolder of \code{project_folder}, and
+\item converts the JSON files to an Apache Parquet dataset via
+\code{pro_request_parquet()} into a \code{"parquet"} subfolder.
 }
 
-This is a high-level helper for the common workflow of going from an
-OpenAlex query URL to a local Parquet dataset in a single call.
-In most cases, this function should be sufficient, but if more control is needed,
-the individual functions have to be called separately.
-
 \strong{This function assumes \code{count_only == FALSE}}
+}
+\seealso{
+\code{\link[=pro_fetch_R]{pro_fetch_R()}} for the pure-R/DuckDB fallback,
+\code{\link[=pro_request]{pro_request()}} for the download step,
+\code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step.
 }

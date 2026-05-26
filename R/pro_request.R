@@ -18,10 +18,12 @@
 #'   all pages will be downloaded. Default: 100000.
 #' @param output directory where the JSON files are saved. Default is a
 #'   temporary directory. Needs to be specified.
-#' @param overwrite Logical. If `TRUE`, `output` will be deleted if it already
-#'   exists.
+#' @param overwrite Logical. If `TRUE`, `output` will be deleted before
+#'   downloading. For a list `query_url`, the entire top-level `output`
+#'   directory is removed upfront. If `FALSE` (the default) and `output`
+#'   already exists, the function stops with an error.
 #' @param api_key Character string API key or `NULL`. Defaults to
-#'   `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, requests are sent
+#'   `pro_api_key()`. If `NULL` or `""`, requests are sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
 #' @param workers Number of parallel workers to use if `query_url` is a list. Defaults to 1.
 #' @param verbose Logical indicating whether to show verbose messages.
@@ -49,17 +51,23 @@ pro_request <- function(
   pages = 100000,
   output = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL
 ) {
-  if (is.null(api_key) || (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))) {
+  if (
+    is.null(api_key) ||
+      (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
+  ) {
     api_key <- NULL
   } else if (!is.character(api_key) || length(api_key) != 1) {
-    stop("`api_key` must be NULL or a length-1 character string.", call. = FALSE)
+    stop(
+      "`api_key` must be NULL or a length-1 character string.",
+      call. = FALSE
+    )
   }
 
   if (!is.null(error_log)) {
@@ -79,29 +87,39 @@ pro_request <- function(
       future::plan(future::sequential)
     }
 
+    # Delete output directory upfront if overwrite requested
+    if (!is.null(output) && dir.exists(output)) {
+      if (!overwrite) {
+        stop(
+          "Directory ",
+          output,
+          " exists.\n",
+          "Either specify `overwrite = TRUE` or delete it."
+        )
+      }
+      unlink(output, recursive = TRUE)
+    }
+
+    # Flatten nested list to leaf (URL, path) pairs
+    leaf_queries <- collect_leaf_queries(query_url)
+    leaf_urls <- vapply(leaf_queries, `[[`, character(1), "url")
+    leaf_paths <- lapply(leaf_queries, `[[`, "path")
+
     # Handle count_only case
     if (count_only) {
       result <- future.apply::future_lapply(
-        seq_along(query_url),
+        seq_along(leaf_queries),
         function(i) {
           pro_count(
-            query_url = query_url[[i]],
+            query_url = leaf_urls[[i]],
             api_key = api_key
           )
         },
         future.seed = TRUE
       )
 
-      # Create names for each query
-      query_names <- if (is.null(names(query_url))) {
-        paste0("query_", seq_along(query_url))
-      } else {
-        names(query_url)
-      }
-
-      # Combine results into a single data.frame with query names
       out <- do.call(rbind, result)
-      out$query <- query_names
+      out$query <- vapply(leaf_paths, paste, character(1), collapse = "/")
 
       return(out)
     }
@@ -110,7 +128,7 @@ pro_request <- function(
     if (progress) {
       cli::cli_alert_info("Fetching query counts...")
       counts <- vapply(
-        query_url,
+        leaf_urls,
         function(url) {
           pro_count(url, api_key = api_key)$count
         },
@@ -139,16 +157,17 @@ pro_request <- function(
         }
 
         result <- future.apply::future_lapply(
-          seq_along(query_url),
+          seq_along(leaf_queries),
           function(i) {
-            nm <- names(query_url)[i]
-            if (is.null(nm) || identical(nm, "")) {
-              nm <- paste0("query_", i)
+            path_parts <- leaf_paths[[i]]
+            query_output <- if (is.null(output)) {
+              NULL
+            } else {
+              do.call(file.path, c(list(output), as.list(path_parts)))
             }
-            query_output <- if (is.null(output)) NULL else file.path(output, nm)
 
             fetch_query_pages(
-              query_url = query_url[[i]],
+              query_url = leaf_urls[[i]],
               pages = pages,
               output = query_output,
               overwrite = FALSE,
@@ -408,4 +427,30 @@ fetch_query_pages <- function(
   success <- TRUE
 
   output
+}
+
+
+#' Flatten a nested query list into (path, url) leaf pairs
+#'
+#' @param x A character URL or a (possibly nested) named list of URLs.
+#' @param path_parts Character vector of name segments accumulated so far.
+#' @return A flat list of `list(path = character, url = character)` entries.
+#' @keywords internal
+#' @noRd
+collect_leaf_queries <- function(x, path_parts = character(0)) {
+  if (is.character(x)) {
+    return(list(list(path = path_parts, url = x)))
+  }
+  nms <- names(x)
+  if (is.null(nms)) {
+    nms <- paste0("query_", seq_along(x))
+  } else {
+    unnamed <- !nzchar(nms)
+    nms[unnamed] <- paste0("query_", which(unnamed))
+  }
+  result <- list()
+  for (i in seq_along(x)) {
+    result <- c(result, collect_leaf_queries(x[[i]], c(path_parts, nms[i])))
+  }
+  result
 }

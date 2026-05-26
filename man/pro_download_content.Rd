@@ -9,7 +9,7 @@ pro_download_content(
   format = c("pdf", "grobid-xml"),
   output = ".",
   workers = 1L,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   endpoint = "https://content.openalex.org"
 )
 }

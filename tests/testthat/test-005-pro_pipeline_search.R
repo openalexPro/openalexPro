@@ -36,10 +36,10 @@ test_that("pro_request search `biodiversity AND fiance`", {
   )
 })
 
-test_that("pro_request_jsonl search `biodiversity AND finance`", {
+test_that("pro_request_jsonl_R search `biodiversity AND finance`", {
   # Convert to jsonl
   output_jsonl <- output_json |>
-    pro_request_jsonl(
+    pro_request_jsonl_R(
       output = output_jsonl,
       verbose = FALSE,
       progress = TRUE

@@ -22,6 +22,13 @@
 #'
 #' @return An \code{httr2} response object (on success, or per get_html_response rules), or aborts.
 #'
+#' @section Debug option:
+#' When \code{options(openalexPro.ratelimit_check = TRUE)}, \code{api_call()}
+#' calls \code{pro_rate_limit_status(verbose = TRUE)} before every request,
+#' printing the current API budget and usage as a message. The option is
+#' temporarily set to \code{FALSE} during the nested rate-limit call to prevent
+#' infinite recursion.
+#'
 #' @importFrom httr2 req_retry req_error req_perform resp_status resp_header
 #' @importFrom rlang caller_env abort
 #' @noRd
@@ -32,6 +39,15 @@ api_call <- function(
   error_log = NULL,
   get_html_response
 ) {
+  # Rate-limit debug check: print status before each call when option is set.
+  # Temporarily disabled during the nested pro_rate_limit_status() call to
+  # prevent infinite recursion (pro_rate_limit_status → api_call → ...).
+  if (isTRUE(getOption("openalexPro.ratelimit_check"))) {
+    options(openalexPro.ratelimit_check = FALSE)
+    on.exit(options(openalexPro.ratelimit_check = TRUE), add = TRUE)
+    pro_rate_limit_status(verbose = TRUE)
+  }
+
   # simple logger
   log_fun <- function(msg, log_file) {
     timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
@@ -106,15 +122,6 @@ api_call <- function(
       class = "unexpected_http_status"
     )
   } else if (is.null(get_html_response)) {
-    # returned for all non-200
-    log_fun(
-      paste0(
-        "\u26A0 HTTP ",
-        status,
-        " - returning response for caller inspection"
-      ),
-      error_log
-    )
     return(resp)
   } else if (is.numeric(get_html_response) && status == get_html_response) {
     ct <- httr2::resp_header(resp, "content-type")

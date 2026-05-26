@@ -5,54 +5,53 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Mon, 02 Mar 2026 12:54:10 GMT
+      date: Fri, 22 May 2026 12:24:19 GMT
       content-type: application/json
+      cf-ray: 9ffbcc12b89e1e6d-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
-      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
-        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
-        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       server: cloudflare
       via: 1.1 heroku-router
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type
       access-control-allow-methods: GET, HEAD, POST, OPTIONS
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1772456050"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=Jr%2FTJuSxGsXqp6DoowfFDDiHneUj9pm1YBX1MYqlSus%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1772456050"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999284'
-      x-ratelimit-remaining-usd: '199.9284'
-      x-ratelimit-reset: '39950'
+      x-ratelimit-remaining: '1998078'
+      x-ratelimit-remaining-usd: '199.8078'
+      x-ratelimit-reset: '41741'
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
       content-encoding: gzip
-      cf-ray: 9d608c6a4d0fcd00-ZRH
     body:
-      string: '{"meta": {"count": 145616, "db_response_time_ms": 32, "page": null,
-        "per_page": 200, "next_cursor": "InN1cHBsZW1lbnRhcnktbWF0ZXJpYWxzIg==", "groups_count":
-        18, "cost_usd": 0.0001}, "group_by": [{"key": "https://openalex.org/types/article",
-        "key_display_name": "article", "count": 129243}, {"key": "https://openalex.org/types/book",
-        "key_display_name": "book", "count": 3037}, {"key": "https://openalex.org/types/book-chapter",
-        "key_display_name": "book-chapter", "count": 6113}, {"key": "https://openalex.org/types/database",
+      string: '{"meta": {"count": 148174, "db_response_time_ms": 33, "page": null,
+        "per_page": 200, "next_cursor": "InN0YW5kYXJkIg==", "groups_count": 17, "cost_usd":
+        0.0001}, "group_by": [{"key": "https://openalex.org/types/article", "key_display_name":
+        "article", "count": 130804}, {"key": "https://openalex.org/types/book", "key_display_name":
+        "book", "count": 3073}, {"key": "https://openalex.org/types/book-chapter",
+        "key_display_name": "book-chapter", "count": 6220}, {"key": "https://openalex.org/types/database",
         "key_display_name": "database", "count": 1}, {"key": "https://openalex.org/types/dataset",
-        "key_display_name": "dataset", "count": 280}, {"key": "https://openalex.org/types/dissertation",
-        "key_display_name": "dissertation", "count": 2017}, {"key": "https://openalex.org/types/editorial",
-        "key_display_name": "editorial", "count": 170}, {"key": "https://openalex.org/types/erratum",
-        "key_display_name": "erratum", "count": 45}, {"key": "https://openalex.org/types/letter",
-        "key_display_name": "letter", "count": 318}, {"key": "https://openalex.org/types/libguides",
+        "key_display_name": "dataset", "count": 278}, {"key": "https://openalex.org/types/dissertation",
+        "key_display_name": "dissertation", "count": 2193}, {"key": "https://openalex.org/types/editorial",
+        "key_display_name": "editorial", "count": 219}, {"key": "https://openalex.org/types/erratum",
+        "key_display_name": "erratum", "count": 60}, {"key": "https://openalex.org/types/letter",
+        "key_display_name": "letter", "count": 663}, {"key": "https://openalex.org/types/libguides",
         "key_display_name": "libguides", "count": 22}, {"key": "https://openalex.org/types/other",
-        "key_display_name": "other", "count": 563}, {"key": "https://openalex.org/types/paratext",
-        "key_display_name": "paratext", "count": 184}, {"key": "https://openalex.org/types/preprint",
-        "key_display_name": "preprint", "count": 1392}, {"key": "https://openalex.org/types/reference-entry",
-        "key_display_name": "reference-entry", "count": 24}, {"key": "https://openalex.org/types/report",
-        "key_display_name": "report", "count": 310}, {"key": "https://openalex.org/types/review",
-        "key_display_name": "review", "count": 1895}, {"key": "https://openalex.org/types/standard",
-        "key_display_name": "standard", "count": 1}, {"key": "https://openalex.org/types/supplementary-materials",
-        "key_display_name": "supplementary-materials", "count": 1}]}'
-  recorded_at: 2026-03-02 12:54:10
-recorded_with: VCR-vcr/2.0.0
+        "key_display_name": "other", "count": 677}, {"key": "https://openalex.org/types/paratext",
+        "key_display_name": "paratext", "count": 188}, {"key": "https://openalex.org/types/preprint",
+        "key_display_name": "preprint", "count": 1396}, {"key": "https://openalex.org/types/reference-entry",
+        "key_display_name": "reference-entry", "count": 25}, {"key": "https://openalex.org/types/report",
+        "key_display_name": "report", "count": 411}, {"key": "https://openalex.org/types/review",
+        "key_display_name": "review", "count": 1943}, {"key": "https://openalex.org/types/standard",
+        "key_display_name": "standard", "count": 1}]}'
+  recorded_at: 2026-05-22 12:24:19
+recorded_with: VCR-vcr/2.1.0

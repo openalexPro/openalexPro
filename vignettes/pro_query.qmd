@@ -300,7 +300,7 @@ url <- pro_query(
 ```{r}
 url <- pro_query(
   entity = "institutions",
-  id = "ror:02mhbdp94"  # MIT
+  id = "ror:02mhbdp94" # MIT
 )
 ```
 
@@ -309,7 +309,7 @@ url <- pro_query(
 ```{r}
 url <- pro_query(
   entity = "sources",
-  id = "issn:0028-0836"  # Nature
+  id = "issn:0028-0836" # Nature
 )
 ```
 
@@ -619,9 +619,9 @@ filters:
 ```{r}
 # Find XPAC works with PDFs, then download them
 urls <- pro_query(
-  entity          = "works",
+  entity = "works",
   has_content.pdf = TRUE,
-  is_xpac         = TRUE,
+  is_xpac = TRUE,
   from_publication_date = "2024-01-01",
   options = list(include_xpac = TRUE)
 )
