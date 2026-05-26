@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pkgdown preview",
+      "runtimeExecutable": "Rscript",
+      "runtimeArgs": ["-e", "pkgdown::preview_site()"],
+      "port": 4321
+    }
+  ]
+}

@@ -1,7 +1,8 @@
-- [ ] Document all functions
+- [x] Document all functions
 - [x] Add `read_corpus()` function to read the parquet corpus and return the opened dataset https://github.com/rkrug/openalexPro/issues/1
 - [x] Implement abstract creation and author abbreviation when creating parquet dataset of corpus https://github.com/rkrug/openalexPro/issues/2
 - [ ] Add Badges to README https://github.com/rkrug/openalexPro/issues/3
 - [x] re-rwrite `api_request()` to use `httr2` https://github.com/rkrug/openalexPro/issues/4
 - [x] Add tests https://github.com/rkrug/openalexPro/issues/5
 - [x] Add Abstract and Citation function based on the corpus from `pro_request_json_to_parquet()`
+- [ ] decide if R implementation of convert and index should stay ore use openalex-snapshot

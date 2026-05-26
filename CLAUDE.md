@@ -2,28 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Commands
+## What This Package Does
 
-```bash
-# Load package during development
-Rscript -e 'devtools::load_all()'
+**openalexPro** is an R package for large-scale, on-disk bibliographic data retrieval from the [OpenAlex](https://openalex.org) API. Unlike the simpler `openalexR`, it processes data page-by-page rather than loading everything into RAM, enabling retrieval of millions of records without memory exhaustion.
 
-# Run all tests
-Rscript -e 'devtools::test()'
+## Common Commands
+
+```r
+devtools::load_all()      # Load package
+devtools::document()      # Regenerate roxygen2 docs and NAMESPACE
+devtools::test()          # Run all tests
+devtools::check()         # Full R CMD CHECK
 
 # Run a specific test file
-Rscript -e 'devtools::test(filter = "013")'   # snapshot_to_parquet
-Rscript -e 'devtools::test(filter = "011")'   # build_corpus_index
-Rscript -e 'devtools::test(filter = "012")'   # lookup_by_id
+devtools::test(filter = "013")       # snapshot_to_parquet
+devtools::test(filter = "011")       # build_corpus_index
+devtools::test(filter = "012")       # lookup_by_id
+```
 
-# Generate documentation (Rd files + NAMESPACE)
-Rscript -e 'devtools::document()'
+### Live API Tests
 
-# Full check (target: 0 errors, 0 warnings, 0 notes)
-Rscript -e 'devtools::check()'
+```r
+Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
+options(openalexPro.apikey = "<your-key>")
+devtools::test(filter = "900")
+```
 
-# Build pkgdown site
-Rscript -e 'pkgdown::build_site()'
+### Re-recording VCR Cassettes
+
+```r
+Sys.setenv(OPENALEXPRO_RECORD_CASSETTES = "true")
+source("inst/scripts/record_cassettes.R")
 ```
 
 ## Architecture
@@ -114,3 +123,15 @@ Each test file (`test-011`, `test-012`, `test-013`) has two sections:
 - Nested query lists produce hive-partitioned parquet: depth 1 → `query=<name>`, depth N → `query_lN=<name>`
 - VCR cassettes record/replay API calls; `api_key` is filtered to `<api-key>` in cassettes
 - `OPENALEXPRO_LIVE_TESTS=true` + a real API key enables live API tests in `test-900`
+
+### Key Design Decisions
+
+- **On-disk processing**: Each pipeline stage writes to disk before the next begins. This enables resume after crashes and avoids OOM for large datasets.
+- **One parquet file per gzip input file**: Enables parallelism, resume, and preserves hive partition structure.
+- **`abstract_inverted_index` stored as `VARCHAR`**: DuckDB folds STRUCT keys to lowercase. Stored as raw JSON string; parse with `jsonlite::fromJSON()` when needed.
+
+## Test Infrastructure
+
+- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses. API keys filtered to `<api-key>`; `helper_vcr.R` injects `"test-api-key"` on CI.
+- **Snapshot tests**: Custom comparators `compare_json()`, `compare_jsonl()`, `compare_json_ignore()` handle platform differences.
+- **Test numbering**: `test-000-*.R` through `test-900-*.R`; `test-900-*` are live API tests.
