@@ -1,6 +1,19 @@
 # openalexPro (development)
 
+# openalexPro 0.9.0
+
 ## New Features
+
+* **Rust backend via `extendr`.**  Core functions now delegate to a compiled
+  Rust library (`openalex-core` v0.5.0) for JSON→Parquet conversion, schema
+  inference, corpus indexing, and ID-based record lookup.  Pure-R `_R` variants
+  remain as fallbacks.  This eliminates the external `openalex-snapshot` binary
+  dependency for the main pipeline.
+
+* **`pro_rate_limit_status()`** — query your OpenAlex API rate-limit status
+  (daily budget, used, remaining, prepaid balance, reset time, per-endpoint
+  costs).  Returns a list invisibly; prints a formatted summary when
+  `verbose = TRUE`.
 
 * New debug option `openalexPro.ratelimit_check`: when set to `TRUE` via
   `options(openalexPro.ratelimit_check = TRUE)`, every API call prints the

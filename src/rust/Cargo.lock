@@ -1232,7 +1232,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 [[package]]
 name = "openalex-core"
 version = "0.5.0"
-source = "git+https://github.com/rkrug/openalex-snapshot?branch=claude/core-phase-b#2ecd2f5509f73e1f12f9bf9b79cdaf4e45a37181"
+source = "git+https://github.com/rkrug/openalex-snapshot?tag=v0.5.0#054cf26ae03c313a9c14060db498827fd4ef2ddc"
 dependencies = [
  "anyhow",
  "duckdb",
