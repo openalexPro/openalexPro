@@ -168,6 +168,26 @@ pro_request_parquet <- function(
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
       )
+      # Normalise OpenAlex source-struct fields that DuckDB infers as JSON
+      # when all sampled records have null values for those fields.  Using
+      # JSON as a scalar type for what is actually VARCHAR[] (e.g. "issn")
+      # causes read_parquet(union_by_name=true) to fail with
+      # "Can't change source type (VARCHAR[]) to target type (JSON)" when
+      # another page file correctly inferred the field as VARCHAR[].
+      #
+      # Fix: replace the known OpenAlex field types that DuckDB may wrongly
+      # infer as JSON / JSON[] with their correct specific types.
+      list_type <- gsub(
+        "\\bissn_l JSON\\b", "issn_l VARCHAR",  list_type
+      )
+      list_type <- gsub(
+        "(?<![_])\\bissn JSON\\b", "issn VARCHAR[]", list_type, perl = TRUE
+      )
+      list_type <- gsub(
+        "host_organization_lineage_names JSON\\[\\]",
+        "host_organization_lineage_names VARCHAR[]",
+        list_type, fixed = TRUE
+      )
     }
   } else {
     # Single-record case: bare JSON object.
