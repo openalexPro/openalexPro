@@ -12,7 +12,7 @@ pro_request(
   pages = 1e+05,
   output = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
@@ -42,14 +42,17 @@ pro_request(
 
 - overwrite:
 
-  Logical. If `TRUE`, `output` will be deleted if it already exists.
+  Logical. If `TRUE`, `output` will be deleted before downloading. For a
+  list `query_url`, the entire top-level `output` directory is removed
+  upfront. If `FALSE` (the default) and `output` already exists, the
+  function stops with an error.
 
 - api_key:
 
   Character string API key or `NULL`. Defaults to
-  `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, requests are
-  sent without an API key (subject to OpenAlex's unauthenticated
-  limits).
+  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  If `NULL` or `""`, requests are sent without an API key (subject to
+  OpenAlex's unauthenticated limits).
 
 - workers:
 

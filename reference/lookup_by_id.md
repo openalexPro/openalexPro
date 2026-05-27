@@ -1,97 +1,131 @@
-# Look up records by ID using a pre-built index
+# Look up records by OpenAlex ID
 
-This function retrieves specific records from a parquet corpus using an
-index built by
-[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md).
-It reads only the necessary files and rows, making it much faster than
-scanning the entire corpus.
+Uses a pre-built index (created by
+[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md))
+to locate records efficiently and extract them from the Parquet corpus.
 
 ## Usage
 
 ``` r
 lookup_by_id(
-  index_file,
+  root_dir = NULL,
   ids,
-  selected = NULL,
+  project_dir = NULL,
+  data_sets = NULL,
   workers = NULL,
-  output = NULL,
-  verbose = TRUE
+  progress = TRUE,
+  verbose = TRUE,
+  index_file = NULL,
+  selected = NULL,
+  output = NULL
 )
 ```
 
 ## Arguments
 
-- index_file:
+- root_dir:
 
-  Path to the index parquet file created by
+  Root directory containing `parquet/` and the dataset indexes produced
+  by
   [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md).
+  Index files are expected at
+  `<root_dir>/parquet/<dataset>_id_idx.parquet`.
 
 - ids:
 
-  Character vector of OpenAlex IDs to look up. Can be in long form
-  (e.g., `"https://openalex.org/W2741809807"`) or short form (e.g.,
+  Character vector of OpenAlex IDs to retrieve. Can be long form (e.g.
+  `"https://openalex.org/W2741809807"`) or short form (e.g.
   `"W2741809807"`).
 
-- selected:
+- project_dir:
 
-  Path to the parquet dataset containing the selected indices,
-  partitioned by `parquet_file` of the work. If `NULL`, not saved.
+  Project output directory. Extracted Parquet files are written to
+  `<project_dir>/snapshot_extract_<dataset>/`. Only used when `root_dir`
+  is provided.
+
+- data_sets:
+
+  Character vector of dataset names to search (e.g.
+  `c("works", "authors")`). `NULL` searches all indexed datasets under
+  `<root_dir>/parquet/`. Ignored when `index_file` is provided.
 
 - workers:
 
   Number of parallel workers for reading corpus files. Default is `NULL`
-  (sequential). If `> 1`, uses
-  [`future.apply::future_lapply()`](https://future.apply.futureverse.org/reference/future_lapply.html)
-  with
-  [future::multisession](https://future.futureverse.org/reference/multisession.html).
+  (sequential).
 
-- output:
+- progress:
 
-  Path to an output directory for writing results as parquet files. If
-  `NULL` (default), results are returned as a data frame. If set,
-  filtered records are written directly to parquet (one file per source
-  corpus file) without loading them into R memory. The directory must
-  not already exist.
+  Ignored (kept for backward compatibility).
 
 - verbose:
 
-  If `TRUE`, print progress messages. Default: `TRUE`
+  Print progress messages. Default is `TRUE`.
+
+- index_file:
+
+  Explicit path to an index parquet file created by
+  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md).
+  When provided, `root_dir`, `data_sets`, and `project_dir` are ignored.
+
+- selected:
+
+  Ignored in the Rust backend (kept for backward compatibility with the
+  pure-R implementation).
+
+- output:
+
+  Path to an output directory for writing results as Parquet files when
+  using `index_file` mode. If `NULL` (default), results are returned as
+  a data frame. Ignored when `root_dir` is used (use `project_dir`
+  instead).
 
 ## Value
 
-If `output` is `NULL`, a data frame containing the matching records. If
-`output` is set, the output directory path is returned invisibly.
+- `index_file` mode, `output` not `NULL`: invisibly returns `output`.
+
+- `index_file` mode, `output` is `NULL`: returns a data frame of
+  matching records.
+
+- `root_dir` mode: invisibly returns `project_dir`.
 
 ## Details
 
-The function first filters the index (a single parquet file) using
-[`arrow::open_dataset()`](https://arrow.apache.org/docs/r/reference/open_dataset.html)
-and
-[`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
-to find matching IDs. It then uses DuckDB to efficiently read only the
-specific rows needed from each corpus parquet file, avoiding full file
-scans.
+Paths can be supplied as a `root_dir` + `data_sets` pair (which
+automatically locates the correct index files and writes output into
+`project_dir`) or as an explicit `index_file` for direct use.
 
-When `output` is set, DuckDB writes the filtered rows directly to
-parquet files using `COPY ... TO`, so the data never enters R memory.
-This is essential for lookups involving millions of IDs.
+## See also
+
+[`lookup_by_id_R()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id_R.md)
+for the pure-R/DuckDB fallback,
+[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+for building the required index.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# Return results as data frame
-records <- lookup_by_id(
-  index_file = "works_id_index.parquet",
-  ids = c("W2741809807", "W1234567890")
+# root_dir mode (searches multiple datasets)
+lookup_by_id(
+  root_dir    = "/Volumes/openalex",
+  ids         = c("W2741809807", "W1234567890"),
+  project_dir = "my_project",
+  data_sets   = "works"
 )
 
-# Write results to parquet (for millions of IDs)
+# index_file mode (direct access, returns data frame)
+records <- lookup_by_id(
+  index_file = "works_id_index.parquet",
+  ids        = c("W2741809807", "W1234567890")
+)
+
+# index_file mode (write to parquet)
 lookup_by_id(
   index_file = "works_id_index.parquet",
-  ids = large_id_vector,
-  output = "filtered_works",
-  workers = 3
+  ids        = large_id_vector,
+  output     = "filtered_works",
+  workers    = 3
 )
 } # }
 ```

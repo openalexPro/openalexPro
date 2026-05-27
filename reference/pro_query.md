@@ -11,6 +11,7 @@ pro_query(
   entity = c("works", "authors", "venues", "institutions", "concepts", "publishers",
     "funders"),
   id = NULL,
+  doi = NULL,
   search = NULL,
   search.exact = NULL,
   search.semantic = NULL,
@@ -35,6 +36,12 @@ pro_query(
   Optional ID or vector of IDs (e.g., `"W1775749144"`). If a single ID
   is provided, fetches one entity directly. If multiple IDs are
   provided, they are automatically moved into the `ids.openalex` filter.
+
+- doi:
+
+  Optional DOI or vector of DOIs (e.g., `"10.1038/s41586-021-03819-2"`).
+  Values are moved into the `doi` filter and automatically chunked into
+  separate requests when the number of DOIs exceeds `chunk_limit`.
 
 - search:
 

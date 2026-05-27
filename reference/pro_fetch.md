@@ -1,10 +1,11 @@
-# Fetch and convert OpenAlex data
+# Fetch and convert OpenAlex data to Parquet
 
-Convenience wrapper around
-[`pro_request`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-[`pro_request_jsonl`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md)
-and
-[`pro_request_jsonl_parquet`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
+Convenience wrapper that downloads records from OpenAlex via
+[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+and converts them directly to an Apache Parquet dataset via
+[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+(Rust-backed, parallel via rayon). No intermediate JSONL files are
+written.
 
 ## Usage
 
@@ -14,10 +15,12 @@ pro_fetch(
   pages = 10000,
   project_folder = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
+  delete_input = TRUE,
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
+  enrich = TRUE,
   count_only,
   error_log = NULL
 )
@@ -39,20 +42,28 @@ pro_fetch(
 
 - project_folder:
 
-  Directory where all intermediate (`json`, `jsonl`) and final
-  (`parquet`) results are stored. If it does not exist, it is created.
-  If `NULL`, a temporary directory is created.
+  Directory where intermediate (`json`) and final (`parquet`) results
+  are stored. If it does not exist, it is created. If `NULL`, a
+  temporary directory is created.
 
 - overwrite:
 
-  Logical. If `TRUE`, `output` will be deleted if it already exists.
+  Logical. If `TRUE`, the `json` and `parquet` subdirectories are
+  deleted from `project_folder` before the pipeline starts. If `FALSE`
+  (the default) and any of those subdirectories already exist, the
+  function stops with an error.
 
 - api_key:
 
   Character string API key or `NULL`. Defaults to
-  `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, requests are
-  sent without an API key (subject to OpenAlex's unauthenticated
-  limits).
+  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  If `NULL` or `""`, requests are sent without an API key (subject to
+  OpenAlex's unauthenticated limits).
+
+- delete_input:
+
+  Logical. If `TRUE` (the default), the `json` subfolder is deleted
+  after successful conversion to Parquet.
 
 - workers:
 
@@ -67,10 +78,16 @@ pro_fetch(
 
   Logical indicating whether to show a progress bar. Default `TRUE`.
 
+- enrich:
+
+  Logical. When `TRUE` (the default) and the inferred schema contains
+  `abstract_inverted_index` / `authorships` / `publication_year`, add
+  `abstract` and `citation` computed columns.
+
 - count_only:
 
-  Do not use it here. The function will abort if it set to `TRUE` and
-  give a warning if `FALSE`
+  Do not use it here. The function will abort if set to `TRUE` and give
+  a warning if `FALSE`.
 
 - error_log:
 
@@ -78,9 +95,8 @@ pro_fetch(
 
 ## Value
 
-Invisibly, the normalized path of the `parquet` subfolder inside
-`project_folder`, i.e. the value returned by
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
+Invisibly, the normalised path of the `parquet` subfolder inside
+`project_folder`.
 
 ## Details
 
@@ -88,19 +104,19 @@ The function
 
 - downloads records from OpenAlex via
   [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
-  into a `"json"` subfolder of `project_folder`,
+  into a `"json"` subfolder of `project_folder`, and
 
-- converts the JSON files to `jsonl` via
-  [`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md)
-  into a `"jsonl"` subfolder, and
-
-- converts the jsonl files to an Apache Parquet dataset via
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+- converts the JSON files to an Apache Parquet dataset via
+  [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
   into a `"parquet"` subfolder.
 
-This is a high-level helper for the common workflow of going from an
-OpenAlex query URL to a local Parquet dataset in a single call. In most
-cases, this function should be sufficient, but if more control is
-needed, the individual functions have to be called separately.
-
 **This function assumes `count_only == FALSE`**
+
+## See also
+
+[`pro_fetch_R()`](https://rkrug.github.io/openalexPro/reference/pro_fetch_R.md)
+for the pure-R/DuckDB fallback,
+[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+for the download step,
+[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+for the conversion step.

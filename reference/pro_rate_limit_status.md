@@ -6,10 +6,7 @@ and remaining budget as a parsed list.
 ## Usage
 
 ``` r
-pro_rate_limit_status(
-  api_key = Sys.getenv("openalexPro.apikey"),
-  verbose = TRUE
-)
+pro_rate_limit_status(api_key = pro_api_key(), verbose = TRUE)
 ```
 
 ## Arguments
@@ -17,8 +14,9 @@ pro_rate_limit_status(
 - api_key:
 
   API key (character string) or \`NULL\`. Defaults to
-  `Sys.getenv("openalexPro.apikey")`. If \`NULL\` or \`""\`, this
-  function returns `FALSE` with an informational message.
+  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  If \`NULL\` or \`""\`, this function returns `FALSE` with an
+  informational message.
 
 - verbose:
 

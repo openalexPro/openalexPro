@@ -7,11 +7,7 @@ is requested and the first page is fetched to minimise API usage.
 ## Usage
 
 ``` r
-pro_count(
-  query_url,
-  api_key = Sys.getenv("openalexPro.apikey"),
-  error_log = NULL
-)
+pro_count(query_url, api_key = pro_api_key(), error_log = NULL)
 ```
 
 ## Arguments
@@ -23,10 +19,9 @@ pro_count(
 
 - api_key:
 
-  Character string API key or \`NULL\`. Defaults to
-  \`Sys.getenv("openalexPro.apikey")\`. If \`NULL\` or \`""\`, the
-  request is sent without an API key (subject to OpenAlex's
-  unauthenticated limits).
+  Character string API key or \`NULL\`. Defaults to \`pro_api_key()\`.
+  If \`NULL\` or \`""\`, the request is sent without an API key (subject
+  to OpenAlex's unauthenticated limits).
 
 - error_log:
 

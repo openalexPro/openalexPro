@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Snapshot Conversion: Schema Inference and Parquet Writing • openalexPro</title>
+<title>Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks • openalexPro</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="snapshot_conversion_files/libs/quarto-html/popper.min.js"></script><script src="snapshot_conversion_files/libs/quarto-html/tippy.umd.min.js"></script><link href="snapshot_conversion_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="snapshot_conversion_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Snapshot Conversion: Schema Inference and Parquet Writing">
+<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
     <li><a class="dropdown-item" href="../articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="../articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="../articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
-    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion: Schema Inference and Parquet Writing</a></li>
+    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</a></li>
     <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots</a></li>
   </ul>
 </li>
@@ -59,7 +59,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Snapshot Conversion: Schema Inference and Parquet Writing</h1>
+      <h1>Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</h1>
 
 
 
@@ -75,148 +75,195 @@
 
     <section class="section level2"><h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p><code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> converts the OpenAlex NDJSON snapshot (hundreds of gzip-compressed files) into a Parquet dataset. This vignette explains the internal mechanics in detail, focusing on the two-stage pipeline:</p>
-<ol type="1">
-<li>
-<strong>Schema inference</strong> — derive a single, consistent column specification from a sample of source files.</li>
-<li>
-<strong>Per-file conversion</strong> — write each <code>.gz</code> file to a <code>.parquet</code> file using that specification.</li>
-</ol>
-<p>Understanding these stages helps you tune parameters, interpret progress messages, manage the schema cache, and use <code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> directly in your own workflows.</p>
-</section><section class="section level2"><h2 id="why-a-unified-schema">Why a Unified Schema?<a class="anchor" aria-label="anchor" href="#why-a-unified-schema"></a>
-</h2>
-<p>The OpenAlex snapshot stores data as NDJSON (newline-delimited JSON), one record per line. JSON is schemaless: a field that appears as a number in one file may be absent (and thus typed differently by auto-inference) in another.</p>
-<p>DuckDB’s <code>read_json_auto()</code> infers column types independently per file. When the inferred types differ across files, reading a collection of parquet files together with <code><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">arrow::open_dataset()</a></code> or DuckDB’s <code>parquet_scan()</code> causes type-mismatch errors such as:</p>
-<pre><code>Unsupported cast from string to struct using function cast</code></pre>
-<p>The solution is to <strong>infer once, apply everywhere</strong>: run type inference on a sample of files, compute a single widened type for each column, and write every parquet file with that fixed schema. All files in the dataset then share an identical schema and can be read together without errors.</p>
-</section><section class="section level2"><h2 id="stage-1-schema-inference">Stage 1 — Schema Inference<a class="anchor" aria-label="anchor" href="#stage-1-schema-inference"></a>
-</h2>
-<section class="level2"><h3 id="entry-point">Entry Point<a class="anchor" aria-label="anchor" href="#entry-point"></a>
-</h3>
-<p><code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> calls <code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> once per dataset before any conversion starts:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">columns_clause</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infer_json_schema.html">infer_json_schema</a></span><span class="op">(</span></span>
-<span>  con             <span class="op">=</span> <span class="va">con</span>,            <span class="co"># shared DuckDB connection</span></span>
-<span>  files           <span class="op">=</span> <span class="va">gz_files</span>,       <span class="co"># all .gz files for this dataset</span></span>
-<span>  sample_size     <span class="op">=</span> <span class="va">sample_size</span>,    <span class="co"># how many files to sample (default 20)</span></span>
-<span>  extra_options   <span class="op">=</span> <span class="va">ndjson_options</span>, <span class="co"># dataset-specific DuckDB options</span></span>
-<span>  verbose         <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  schema_cache_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">parquet_ds</span>, <span class="st">".schema_cache"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>The result, <code>columns_clause</code>, is a string like:</p>
-<pre><code>{'id': 'VARCHAR', 'display_name': 'VARCHAR', 'works_count': 'BIGINT', ...}</code></pre>
-<p>This is passed verbatim to DuckDB’s <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/read_json.html" class="external-link">read_json()</a></code> during conversion:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_json(<span class="st">'file.gz'</span>, <span class="kw">columns</span> <span class="op">=</span> {<span class="st">'id'</span>: <span class="st">'VARCHAR'</span>, <span class="op">..</span>.}))</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">TO</span> <span class="st">'file.parquet'</span> (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE <span class="dv">100000</span>)</span></code></pre></div>
-</section><section class="level2"><h3 id="file-sampling">File Sampling<a class="anchor" aria-label="anchor" href="#file-sampling"></a>
-</h3>
-<p>If <code>sample_size</code> is positive and smaller than the total number of files, a random sample is drawn:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">sample_size</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="va">sample_size</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">sample_size</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">files</span>, <span class="va">sample_size</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-</div>
-<p>A larger sample catches more type variations at the cost of more DuckDB queries. For most datasets the default of 20 is sufficient; for <code>works</code> (1981 files with heterogeneous schema evolution), 100–500 is safer.</p>
-</section><section class="level2"><h3 id="per-file-describe">Per-File DESCRIBE<a class="anchor" aria-label="anchor" href="#per-file-describe"></a>
-</h3>
-<p>For each sampled file, <code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> runs a single DuckDB <code>DESCRIBE</code> query:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>DESCRIBE <span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  read_json_auto([<span class="st">'file.gz'</span>], union_by_name <span class="op">=</span> <span class="kw">true</span>, ignore_errors <span class="op">=</span> <span class="kw">true</span>)</span></code></pre></div>
-<p><code>ignore_errors = true</code> prevents individual malformed records (e.g. works files containing <code>abstract_inverted_index</code> with duplicate case-variant JSON keys) from aborting the query. The result is a data frame with one row per column:</p>
+<p><code>openalexPro</code> provides two implementations for every snapshot processing task:</p>
 <table class="table caption-top">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 54%">
+<col style="width: 34%">
+</colgroup>
 <thead><tr class="header">
-<th>column_name</th>
-<th>column_type</th>
+<th>Task</th>
+<th>Binary wrapper (preferred)</th>
+<th>Pure-R fallback</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>id</td>
-<td>VARCHAR</td>
+<td>Convert JSON → Parquet</td>
+<td><code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code></td>
+<td><code><a href="../reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code></td>
 </tr>
 <tr class="even">
-<td>display_name</td>
-<td>VARCHAR</td>
+<td>Build ID lookup index</td>
+<td><code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code></td>
+<td><code><a href="../reference/build_corpus_index_R.html">build_corpus_index_R()</a></code></td>
 </tr>
 <tr class="odd">
-<td>works_count</td>
-<td>BIGINT</td>
-</tr>
-<tr class="even">
-<td>…</td>
-<td>…</td>
+<td>Extract records by ID</td>
+<td><code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code></td>
+<td><code><a href="../reference/lookup_by_id_R.html">lookup_by_id_R()</a></code></td>
 </tr>
 </tbody>
 </table>
-<p>This is done <strong>one file at a time</strong> rather than in a bulk query across all sampled files, avoiding the out-of-memory crash that occurs when DuckDB opens hundreds of large <code>.gz</code> files simultaneously.</p>
-</section><section class="level2"><h3 id="schema-merging-and-type-widening">Schema Merging and Type Widening<a class="anchor" aria-label="anchor" href="#schema-merging-and-type-widening"></a>
+<p><strong>Binary wrappers</strong> delegate to the <code>openalex-snapshot</code> Rust CLI, which is faster, includes built-in verification and repair, and handles very large datasets with lower memory overhead.</p>
+<p><strong>Pure-R fallbacks</strong> (<code>*_R()</code> variants) implement the same logic entirely in R using DuckDB, with no external binary dependency. They are suitable when installing the binary is not possible, or for understanding implementation internals.</p>
+<p>Both sets of functions are exported and fully documented.</p>
+</section><section class="section level2"><h2 id="binary-wrappers">Binary Wrappers<a class="anchor" aria-label="anchor" href="#binary-wrappers"></a>
+</h2>
+<section class="level2"><h3 id="prerequisite-the-openalex-snapshot-binary">Prerequisite — the <code>openalex-snapshot</code> Binary<a class="anchor" aria-label="anchor" href="#prerequisite-the-openalex-snapshot-binary"></a>
 </h3>
-<p>After all per-file schemas have been collected, <code>merge_schemas()</code> combines them into a single unified schema. It applies the following <strong>type-widening rules</strong> to each column, in order:</p>
-<section class="level3"><h4 id="rule-1-all-identical">Rule 1 — All Identical<a class="anchor" aria-label="anchor" href="#rule-1-all-identical"></a>
-</h4>
-<p>If every sampled file agrees on the same type, that type is kept unchanged.</p>
-<pre><code><span><span class="co"># All files: 'id' = VARCHAR → unified: VARCHAR</span></span></code></pre>
-</section><section class="level3"><h4 id="rule-2-complex-type-wins">Rule 2 — Complex Type Wins<a class="anchor" aria-label="anchor" href="#rule-2-complex-type-wins"></a>
-</h4>
-<p>If a column is a <code>STRUCT</code>, <code>LIST</code>, or <code>MAP</code> in at least one file and a simpler type (e.g. <code>VARCHAR</code>, <code>BIGINT</code>) in others, the complex type is chosen. This handles fields that are <code>null</code> in some files (inferred as <code>VARCHAR</code> by DuckDB) but a structured object in others.</p>
-<pre><code><span><span class="co"># Some files: 'apc_paid' = VARCHAR (nulls only)</span></span>
-<span><span class="co"># Other files: 'apc_paid' = STRUCT(value BIGINT, currency VARCHAR, ...)</span></span>
-<span><span class="co"># → unified: STRUCT(value BIGINT, currency VARCHAR, ...)</span></span></code></pre>
-</section><section class="level3"><h4 id="rule-3-richest-struct-wins">Rule 3 — Richest STRUCT Wins<a class="anchor" aria-label="anchor" href="#rule-3-richest-struct-wins"></a>
-</h4>
-<p>When multiple files infer different <code>STRUCT</code> definitions for the same column (different number of fields), the STRUCT with the most fields is chosen. This captures the widest set of subfields.</p>
-<pre><code><span><span class="co"># File A: 'location' = STRUCT(country VARCHAR)</span></span>
-<span><span class="co"># File B: 'location' = STRUCT(country VARCHAR, city VARCHAR, lat DOUBLE)</span></span>
-<span><span class="co"># → unified: STRUCT(country VARCHAR, city VARCHAR, lat DOUBLE)</span></span></code></pre>
-</section><section class="level3"><h4 id="rule-4-widest-numeric-wins">Rule 4 — Widest Numeric Wins<a class="anchor" aria-label="anchor" href="#rule-4-widest-numeric-wins"></a>
-</h4>
-<p>For pure numeric conflicts, the widest type in the following order is chosen:</p>
-<pre><code>TINYINT &lt; SMALLINT &lt; INTEGER (= INT) &lt; BIGINT &lt; HUGEINT &lt; FLOAT &lt; DOUBLE</code></pre>
-<pre><code><span><span class="co"># Some files: 'cited_by_count' = INTEGER</span></span>
-<span><span class="co"># Other files: 'cited_by_count' = BIGINT</span></span>
-<span><span class="co"># → unified: BIGINT</span></span></code></pre>
-</section><section class="level3"><h4 id="rule-5-fallback-to-varchar">Rule 5 — Fallback to VARCHAR<a class="anchor" aria-label="anchor" href="#rule-5-fallback-to-varchar"></a>
-</h4>
-<p>Any conflict that does not match the above rules is resolved by falling back to <code>VARCHAR</code>. This is intentionally conservative: VARCHAR can hold any value and prevents conversion errors at the cost of losing type specificity.</p>
-<pre><code><span><span class="co"># Some files: 'updated_date' = DATE</span></span>
-<span><span class="co"># Other files: 'updated_date' = VARCHAR</span></span>
-<span><span class="co"># → unified: VARCHAR</span></span></code></pre>
-</section><section class="level3"><h4 id="column-order">Column Order<a class="anchor" aria-label="anchor" href="#column-order"></a>
-</h4>
-<p>Columns appear in <strong>first-seen order</strong> from the collected schemas (not alphabetically). This preserves the natural field order of the OpenAlex schema and maintains backward compatibility when the unified schema is reused across runs.</p>
-</section></section><section class="level2"><h3 id="special-case-works-dataset">Special Case — <code>works</code> Dataset<a class="anchor" aria-label="anchor" href="#special-case-works-dataset"></a>
-</h3>
-<p>The <code>works</code> dataset has two specific workarounds applied after schema inference:</p>
-<section class="level3"><h4 id="large-object-size">1. Large object size<a class="anchor" aria-label="anchor" href="#large-object-size"></a>
-</h4>
-<p>Individual work records (particularly those with long author lists) can exceed DuckDB’s default JSON object size limit. The <code>maximum_object_size</code> option is extended for schema inference and conversion:</p>
+<p>Download from <a href="https://github.com/rkrug/openalex-snapshot/releases" class="external-link">GitHub releases</a> or build from source:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> build <span class="at">--release</span></span></code></pre></div>
+<p>Once installed, place the binary on your PATH, or provide its location via:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ndjson_options</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">data_set</span> <span class="op">==</span> <span class="st">"works"</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="st">", maximum_object_size=1000000000"</span>   <span class="co"># 1 GB</span></span>
-<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="st">""</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Option 1: set for the session</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>openalexPro.oas_bin <span class="op">=</span> <span class="st">"/path/to/openalex-snapshot"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Option 2: pass directly to each function call</span></span>
+<span><span class="fu"><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet</a></span><span class="op">(</span>root_dir <span class="op">=</span> <span class="st">"."</span>, oas_bin <span class="op">=</span> <span class="st">"/path/to/openalex-snapshot"</span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h4 id="abstract_inverted_index-stored-as-varchar">2. <code>abstract_inverted_index</code> stored as VARCHAR<a class="anchor" aria-label="anchor" href="#abstract_inverted_index-stored-as-varchar"></a>
-</h4>
-<p>OpenAlex encodes abstracts as an <em>inverted index</em>: a JSON object mapping each word to the list of its positions, e.g. <code>{"The": [0], "quick": [1], "as": [3], "As": [7]}</code>.</p>
-<p>JSON keys are case-sensitive, so <code>"as"</code> and <code>"As"</code> are distinct. DuckDB, however, folds struct field names to lowercase when auto-inferring <code>STRUCT</code> types, causing a collision:</p>
-<pre><code>Error: duplicate key "as"</code></pre>
-<p>After schema inference, <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> overrides the inferred type for this column to <code>VARCHAR</code>:</p>
+</section><section class="level2"><h3 id="root-directory-layout">Root Directory Layout<a class="anchor" aria-label="anchor" href="#root-directory-layout"></a>
+</h3>
+<p>All three binary wrappers use a single <code>root_dir</code> parameter. The binary derives all paths from it:</p>
+<pre><code>&lt;root_dir&gt;/
+  openalex-snapshot/          # raw JSON .gz files (input)
+  parquet/                    # converted parquet files (output)
+  parquet/&lt;dataset&gt;_id_idx.parquet  # lookup index
+  .openalex-snapshot_metadata/      # metadata and checksums</code></pre>
+<p>If <code>root_dir = "."</code> (the default for the Makefile), the working directory is the root.</p>
+</section><section class="level2"><h3 id="snapshot_to_parquet-convert-json-to-parquet">
+<code>snapshot_to_parquet()</code> — Convert JSON to Parquet<a class="anchor" aria-label="anchor" href="#snapshot_to_parquet-convert-json-to-parquet"></a>
+</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">columns_clause</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span></span>
-<span>  <span class="st">"'abstract_inverted_index':\\s*'[^']*'"</span>,</span>
-<span>  <span class="st">"'abstract_inverted_index': 'VARCHAR'"</span>,</span>
-<span>  <span class="va">columns_clause</span></span>
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Convert all datasets (works, authors, institutions, ...)</span></span>
+<span><span class="fu"><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet</a></span><span class="op">(</span></span>
+<span>  root_dir  <span class="op">=</span> <span class="st">"/Volumes/openalex"</span>,</span>
+<span>  workers   <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  profile   <span class="op">=</span> <span class="st">"balanced"</span>,     <span class="co"># "safe" | "balanced" | "fast"</span></span>
+<span>  max_memory_mb <span class="op">=</span> <span class="fl">15000</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Convert a specific dataset only</span></span>
+<span><span class="fu"><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet</a></span><span class="op">(</span></span>
+<span>  root_dir  <span class="op">=</span> <span class="st">"/Volumes/openalex"</span>,</span>
+<span>  data_sets <span class="op">=</span> <span class="st">"works"</span>,</span>
+<span>  workers   <span class="op">=</span> <span class="fl">4</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>With type <code>VARCHAR</code>, DuckDB reads the entire JSON value as a raw text string without parsing its keys into struct fields, so no collision occurs. The data is fully preserved. To access individual entries, parse with <code>jsonlite</code>:</p>
+<p><code>data_sets = NULL</code> (default) processes all datasets. When a character vector is given, each dataset is passed to the binary in a separate call (the binary accepts one <code>--dataset</code> per invocation).</p>
+<p>The function returns <code>invisible(root_dir)</code>.</p>
+</section><section class="level2"><h3 id="build_corpus_index-build-id-lookup-indexes">
+<code>build_corpus_index()</code> — Build ID Lookup Indexes<a class="anchor" aria-label="anchor" href="#build_corpus_index-build-id-lookup-indexes"></a>
+</h3>
+<p>After conversion, build an ID index for fast lookups:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/build_corpus_index.html">build_corpus_index</a></span><span class="op">(</span></span>
+<span>  root_dir  <span class="op">=</span> <span class="st">"/Volumes/openalex"</span>,</span>
+<span>  data_sets <span class="op">=</span> <span class="cn">NULL</span>,          <span class="co"># NULL = all datasets</span></span>
+<span>  workers   <span class="op">=</span> <span class="fl">8</span>,</span>
+<span>  profile   <span class="op">=</span> <span class="st">"balanced"</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>          <span class="co"># TRUE = rebuild even if index exists</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>This creates <code>&lt;root_dir&gt;/parquet/&lt;dataset&gt;_id_idx.parquet</code> for each dataset. Each index maps OpenAlex IDs to their physical location (file and row number), enabling fast record retrieval without scanning the full corpus.</p>
+</section><section class="level2"><h3 id="lookup_by_id-extract-records-by-openalex-id">
+<code>lookup_by_id()</code> — Extract Records by OpenAlex ID<a class="anchor" aria-label="anchor" href="#lookup_by_id-extract-records-by-openalex-id"></a>
+</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Extract specific works into a project directory</span></span>
+<span><span class="fu"><a href="../reference/lookup_by_id.html">lookup_by_id</a></span><span class="op">(</span></span>
+<span>  root_dir    <span class="op">=</span> <span class="st">"/Volumes/openalex"</span>,</span>
+<span>  ids         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W2741809807"</span>, <span class="st">"W2100837269"</span>, <span class="st">"W1234567890"</span><span class="op">)</span>,</span>
+<span>  project_dir <span class="op">=</span> <span class="st">"my_project"</span>,</span>
+<span>  data_sets   <span class="op">=</span> <span class="st">"works"</span>       <span class="co"># NULL = search all datasets</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co"># Extracted parquet files are written to my_project/snapshot_extract/</span></span></code></pre></div>
+</div>
+<p>IDs can be in short form (<code>"W2741809807"</code>) or long form (<code>"https://openalex.org/W2741809807"</code>). Both are accepted and normalised automatically.</p>
+<p>The <code>project_dir</code> convention is consistent with <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> and <code><a href="../reference/pro_request.html">pro_request()</a></code>: the output directory identifies a project, and results accumulate inside it.</p>
+<p>The function returns <code>invisible(project_dir)</code>.</p>
+</section><section class="level2"><h3 id="performance-profiles">Performance Profiles<a class="anchor" aria-label="anchor" href="#performance-profiles"></a>
+</h3>
+<p>The <code>profile</code> argument controls the binary’s memory/speed trade-off:</p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th>Profile</th>
+<th>Memory use</th>
+<th>Speed</th>
+<th>When to use</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"safe"</code></td>
+<td>Low</td>
+<td>Slow</td>
+<td>Shared machines, limited RAM</td>
+</tr>
+<tr class="even">
+<td><code>"balanced"</code></td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Default for most workloads</td>
+</tr>
+<tr class="odd">
+<td><code>"fast"</code></td>
+<td>High</td>
+<td>Fast</td>
+<td>Dedicated machines with ≥ 32 GB RAM</td>
+</tr>
+</tbody>
+</table>
+<hr></section></section><section class="section level2"><h2 id="pure-r-fallbacks">Pure-R Fallbacks<a class="anchor" aria-label="anchor" href="#pure-r-fallbacks"></a>
+</h2>
+<p>The <code>*_R()</code> functions contain the original R + DuckDB implementations, preserved for environments where the binary is unavailable. They are slower than the binary wrappers but have no external dependencies beyond the <code>duckdb</code> and <code>arrow</code> R packages.</p>
+<section class="level2"><h3 id="snapshot_to_parquet_r-convert-json-to-parquet-r">
+<code>snapshot_to_parquet_R()</code> — Convert JSON to Parquet (R)<a class="anchor" aria-label="anchor" href="#snapshot_to_parquet_r-convert-json-to-parquet-r"></a>
+</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R</a></span><span class="op">(</span></span>
+<span>  snapshot_dir   <span class="op">=</span> <span class="st">"/Volumes/openalex/openalex-snapshot"</span>,</span>
+<span>  parquet_dir    <span class="op">=</span> <span class="st">"/Volumes/openalex/parquet"</span>,</span>
+<span>  data_sets      <span class="op">=</span> <span class="cn">NULL</span>,       <span class="co"># NULL = all; or e.g. c("works", "authors")</span></span>
+<span>  sample_size    <span class="op">=</span> <span class="fl">100</span>,        <span class="co"># number of .gz files to sample for schema inference</span></span>
+<span>  memory_limit   <span class="op">=</span> <span class="st">"15GB"</span>,     <span class="co"># per-DuckDB-connection limit</span></span>
+<span>  temp_directory <span class="op">=</span> <span class="st">"/tmp"</span>,     <span class="co"># DuckDB spill-to-disk location</span></span>
+<span>  workers        <span class="op">=</span> <span class="fl">4</span>           <span class="co"># parallel future workers</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Note that <code><a href="../reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code> takes <strong>separate</strong> <code>snapshot_dir</code> and <code>parquet_dir</code> parameters, unlike the binary wrapper which derives both from <code>root_dir</code>.</p>
+<section class="level3"><h4 id="two-stage-pipeline">Two-Stage Pipeline<a class="anchor" aria-label="anchor" href="#two-stage-pipeline"></a>
+</h4>
+<p><strong>Stage 1 — Schema inference</strong> (<code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code>): runs <code>DESCRIBE SELECT * FROM read_json_auto(file)</code> on a random sample of <code>.gz</code> files, then merges the per-file schemas into a single widened schema using type-widening rules (complex types beat simple types; widest numeric wins; fallback to <code>VARCHAR</code>). Results are cached to <code>.schema_cache/</code> to support resume.</p>
+<p><strong>Stage 2 — Per-file conversion</strong>: each <code>.gz</code> file is converted to <code>.parquet</code> using the unified schema from Stage 1. One DuckDB connection per worker; already- converted files are skipped (resume support).</p>
+</section><section class="level3"><h4 id="schema-cache">Schema Cache<a class="anchor" aria-label="anchor" href="#schema-cache"></a>
+</h4>
+<p>Schema inference is the slowest sequential step. A two-level cache avoids repeating it:</p>
+<pre><code>parquet/works/.schema_cache/
+  unified_schema.csv        ← loaded first; if found, no DuckDB queries run
+  2024-01-15_part_000.csv   ← per-file cache; enables mid-run resume
+  2024-01-15_part_001.csv
+  ...</code></pre>
+<p><strong>To force re-inference</strong>, delete <code>unified_schema.csv</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> parquet/works/.schema_cache/unified_schema.csv</span></code></pre></div>
+<p><strong>To pre-populate the cache</strong> (e.g. after downloading an updated snapshot with the same schema), copy the file from a previous successful run:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> parquet/works/.schema_cache</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> ~/schemas/works_schema.csv parquet/works/.schema_cache/unified_schema.csv</span></code></pre></div>
+</section><section class="level3"><h4 id="special-case-works-dataset">Special Case — <code>works</code> Dataset<a class="anchor" aria-label="anchor" href="#special-case-works-dataset"></a>
+</h4>
+<p>The <code>works</code> dataset has two workarounds applied automatically by <code><a href="../reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code>:</p>
+<ol type="1">
+<li><p><strong>Large object size</strong>: <code>maximum_object_size=1000000000</code> (1 GB) is passed to DuckDB because individual work records with long author lists can exceed the default limit.</p></li>
+<li><p><strong><code>abstract_inverted_index</code> stored as VARCHAR</strong>: OpenAlex encodes abstracts as an inverted index — a JSON object whose keys are words. DuckDB case-folds struct field names, causing a collision when the same word appears with different capitalisation (e.g. <code>"as"</code> and <code>"As"</code>). Storing the column as <code>VARCHAR</code> (raw JSON text) avoids the collision. To decode:</p></li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/apache/arrow/" class="external-link">arrow</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jeroen.r-universe.dev/jsonlite" class="external-link">jsonlite</a></span><span class="op">)</span></span>
 <span></span>
@@ -224,269 +271,167 @@
 <span><span class="va">row</span>   <span class="op">&lt;-</span> <span class="va">works</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">id</span> <span class="op">==</span> <span class="st">"W2741809807"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">collect</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">aii</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">fromJSON</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">abstract_inverted_index</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co"># aii is now a named list: list("The" = 0, "quick" = 1, "as" = 3, "As" = 7)</span></span></code></pre></div>
+<span><span class="co"># aii is a named list: list("The" = 0, "quick" = 1, "as" = 3, "As" = 7)</span></span></code></pre></div>
 </div>
-</section></section></section><section class="section level2"><h2 id="the-schema-cache">The Schema Cache<a class="anchor" aria-label="anchor" href="#the-schema-cache"></a>
-</h2>
-<p>Schema inference is the slowest sequential step (~3 s per file × sample size). For large datasets it can take several minutes. A two-level cache avoids repeating this work.</p>
-<section class="level2"><h3 id="cache-location">Cache Location<a class="anchor" aria-label="anchor" href="#cache-location"></a>
+</section></section><section class="level2"><h3 id="build_corpus_index_r-build-id-index-r">
+<code>build_corpus_index_R()</code> — Build ID Index (R)<a class="anchor" aria-label="anchor" href="#build_corpus_index_r-build-id-index-r"></a>
 </h3>
-<p>The cache lives in <code>&lt;parquet_dir&gt;/&lt;dataset&gt;/.schema_cache/</code>:</p>
-<pre><code>parquet/
-└── works/
-    ├── .schema_cache/
-    │   ├── unified_schema.csv        ← level 1
-    │   ├── 2024-01-15_part_000.csv   ← level 2 (one per sampled file)
-    │   ├── 2024-01-15_part_001.csv
-    │   └── ...
-    ├── updated_date=2024-01-15/
-    │   ├── part_000.parquet
-    │   └── ...
-    └── ...</code></pre>
-<p>Per-file cache filenames are derived from the source path: the <code>updated_date=</code> hive prefix is stripped from the parent directory, and the <code>.gz</code> extension is removed from the filename, giving names like <code>2024-01-15_part_000.csv</code>. This makes each cache file directly traceable to its source <code>.gz</code>.</p>
-</section><section class="level2"><h3 id="level-1-unified-schema-cache">Level 1 — Unified Schema Cache<a class="anchor" aria-label="anchor" href="#level-1-unified-schema-cache"></a>
-</h3>
-<p><code>unified_schema.csv</code> stores the final merged schema as a two-column CSV:</p>
-<pre><code>col_name,col_type
-id,VARCHAR
-display_name,VARCHAR
-works_count,BIGINT
-...</code></pre>
-<p>On any subsequent call to <code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> with the same cache directory, this file is loaded immediately and returned — <strong>no DuckDB queries are executed</strong>. A message is printed:</p>
-<pre><code>Loaded cached unified schema with 47 columns (delete .../unified_schema.csv to re-infer)</code></pre>
-<p><strong>To force re-inference</strong>, delete <code>unified_schema.csv</code>:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> parquet/works/.schema_cache/unified_schema.csv</span></code></pre></div>
-</section><section class="level2"><h3 id="level-2-per-file-schema-cache">Level 2 — Per-File Schema Cache<a class="anchor" aria-label="anchor" href="#level-2-per-file-schema-cache"></a>
-</h3>
-<p>Each per-file <code>DESCRIBE</code> result is saved as a CSV immediately after being computed. On a restart, files whose CSVs already exist are loaded from disk instead of re-queried. This enables <strong>mid-run resume</strong>: if inference is interrupted after 60 of 100 files, only the remaining 40 are re-queried.</p>
-</section><section class="level2"><h3 id="pre-populating-the-cache-to-skip-inference">Pre-populating the Cache to Skip Inference<a class="anchor" aria-label="anchor" href="#pre-populating-the-cache-to-skip-inference"></a>
-</h3>
-<p>Because <code>unified_schema.csv</code> is checked first and returned immediately when found, <strong>you can place a known-good schema file in the cache directory before running <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code></strong> to bypass inference entirely. This is useful when:</p>
-<ul>
-<li>You have already inferred the schema in a previous run and the snapshot has not changed structurally.</li>
-<li>You want to apply a hand-edited or externally-supplied schema.</li>
-<li>You are re-converting a subset of files and want to guarantee the same schema as the full dataset.</li>
-</ul>
-<p>The simplest workflow is to copy the <code>unified_schema.csv</code> from a previous successful run:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># After a successful conversion, copy the schema to a safe location</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> parquet/works/.schema_cache/unified_schema.csv ~/schemas/works_schema.csv</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Start a new conversion (e.g. after downloading an updated snapshot)</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co"># but first restore the cached schema to skip inference:</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> parquet/works/.schema_cache</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> ~/schemas/works_schema.csv parquet/works/.schema_cache/unified_schema.csv</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Now run conversion — schema inference will be skipped</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="ex">snapshot_to_parquet</span><span class="er">(</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">snapshot_dir</span>  = <span class="st">"/Volumes/openalex/openalex-snapshot"</span>,</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">parquet_dir</span>   = <span class="st">"/Volumes/openalex/parquet"</span>,</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="ex">data_sets</span>     = <span class="st">"works"</span>,</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="ex">workers</span>       = 4,</span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="ex">memory_limit</span>  = <span class="st">"8GB"</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="kw">)</span></span></code></pre></div>
-<p>You can also construct or modify <code>unified_schema.csv</code> in R:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">schema</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"parquet/works/.schema_cache/unified_schema.csv"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Inspect the schema</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">schema</span><span class="op">)</span></span>
-<span><span class="co">#         col_name              col_type</span></span>
-<span><span class="co"># 1             id               VARCHAR</span></span>
-<span><span class="co"># 2   display_name               VARCHAR</span></span>
-<span><span class="co"># 3    works_count                BIGINT</span></span>
-<span><span class="co"># ...</span></span>
-<span></span>
-<span><span class="co"># Override a type if needed, e.g. force a column to VARCHAR</span></span>
-<span><span class="va">schema</span><span class="op">$</span><span class="va">col_type</span><span class="op">[</span><span class="va">schema</span><span class="op">$</span><span class="va">col_name</span> <span class="op">==</span> <span class="st">"some_column"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"VARCHAR"</span></span>
-<span></span>
-<span><span class="co"># Write back — this will be loaded on the next run</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">schema</span>, <span class="st">"parquet/works/.schema_cache/unified_schema.csv"</span>,</span>
-<span>          row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Build index for one dataset</span></span>
+<span><span class="fu"><a href="../reference/build_corpus_index_R.html">build_corpus_index_R</a></span><span class="op">(</span></span>
+<span>  corpus_dir   <span class="op">=</span> <span class="st">"/Volumes/openalex/parquet/works"</span>,</span>
+<span>  memory_limit <span class="op">=</span> <span class="st">"15GB"</span>,</span>
+<span>  workers      <span class="op">=</span> <span class="fl">4</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co"># Creates /Volumes/openalex/parquet/works_id_idx.parquet</span></span></code></pre></div>
 </div>
-<p><strong>Caution:</strong> if the new snapshot added columns that are absent from the cached schema, those columns will be silently ignored during conversion. Delete <code>unified_schema.csv</code> and re-infer if you suspect the schema has changed.</p>
-</section><section class="level2"><h3 id="when-to-delete-the-cache">When to Delete the Cache<a class="anchor" aria-label="anchor" href="#when-to-delete-the-cache"></a>
-</h3>
+<p>Note that <code><a href="../reference/build_corpus_index_R.html">build_corpus_index_R()</a></code> takes a <code>corpus_dir</code> pointing to a single dataset directory (e.g. <code>parquet/works</code>), whereas the binary wrapper takes <code>root_dir</code> and an optional <code>data_sets</code> argument.</p>
+<section class="level3"><h4 id="how-the-index-works">How the Index Works<a class="anchor" aria-label="anchor" href="#how-the-index-works"></a>
+</h4>
+<p>The index contains four columns:</p>
 <table class="table caption-top">
 <colgroup>
-<col style="width: 57%">
-<col style="width: 42%">
+<col style="width: 38%">
+<col style="width: 61%">
 </colgroup>
 <thead><tr class="header">
-<th>Situation</th>
-<th>Action</th>
+<th>Column</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Resuming an interrupted inference run</td>
-<td>Do nothing — cache handles this automatically</td>
+<td><code>id</code></td>
+<td>Full OpenAlex URL (e.g. <code>https://openalex.org/W2741809807</code>)</td>
 </tr>
 <tr class="even">
-<td>Skipping inference with a known schema</td>
-<td>Place <code>unified_schema.csv</code> in <code>.schema_cache/</code> before running</td>
+<td><code>id_block</code></td>
+<td>
+<code>floor(numeric_id / 10000)</code> — used for block-based partitioning</td>
 </tr>
 <tr class="odd">
-<td>Forcing fresh inference (new snapshot)</td>
-<td>Delete <code>unified_schema.csv</code> only</td>
+<td><code>parquet_file</code></td>
+<td>Relative path to the source parquet file</td>
 </tr>
 <tr class="even">
-<td>Forcing inference from scratch</td>
-<td>Delete the entire <code>.schema_cache/</code> directory</td>
-</tr>
-<tr class="odd">
-<td>Schema looks wrong / incomplete</td>
-<td>Delete <code>unified_schema.csv</code> and increase <code>sample_size</code>
-</td>
+<td><code>file_row_number</code></td>
+<td>0-indexed row within that file</td>
 </tr>
 </tbody>
 </table>
-<p><strong>The Makefile <code>parquet</code> target</strong> runs <code>clean_parquet</code> first, which deletes the entire parquet directory including <code>.schema_cache/</code>. Every <code>make parquet</code> run therefore always re-infers the schema from scratch. The cache is most useful when calling <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> directly from R to resume an interrupted conversion, or to intentionally reuse a schema from a previous run.</p>
-</section></section><section class="section level2"><h2 id="stage-2-per-file-conversion">Stage 2 — Per-File Conversion<a class="anchor" aria-label="anchor" href="#stage-2-per-file-conversion"></a>
-</h2>
-<p>Once the <code>columns_clause</code> is ready, <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> converts each <code>.gz</code> file individually using <code>convert_json_to_parquet()</code>:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> (<span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_json(<span class="st">'file.gz'</span>, <span class="kw">columns</span> <span class="op">=</span> {<span class="st">'id'</span>: <span class="st">'VARCHAR'</span>, <span class="op">..</span>.}))</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">TO</span> <span class="st">'file.parquet'</span> (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE <span class="dv">100000</span>)</span></code></pre></div>
-<p>Key properties:</p>
-<ul>
-<li>
-<strong>One DuckDB connection per worker</strong>: each <code>future</code> worker opens its own connection, so there are no locking conflicts.</li>
-<li>
-<strong>Snappy compression</strong>: a good balance of speed and size.</li>
-<li>
-<strong>Row group size of 100 000</strong>: controls the granularity of predicate pushdown and memory use during reads.</li>
-<li>
-<strong>Directory structure preserved</strong>: output paths mirror the input hive partition structure (<code>updated_date=2024-01-15/part_000.parquet</code>), so the dataset is immediately usable with Arrow’s partition-aware reader.</li>
-<li>
-<strong>Resume support</strong>: already-present <code>.parquet</code> files are skipped before conversion starts, so an interrupted run can be restarted.</li>
-</ul>
-<section class="level2"><h3 id="parallel-processing">Parallel Processing<a class="anchor" aria-label="anchor" href="#parallel-processing"></a>
+<p>The <code>id_block</code> grouping allows the lookup function to filter the index to just the relevant partition before reading source files, avoiding a full index scan.</p>
+</section><section class="level3"><h4 id="two-stage-index-build">Two-Stage Index Build<a class="anchor" aria-label="anchor" href="#two-stage-index-build"></a>
+</h4>
+<p><strong>Stage 1</strong>: Each parquet file is indexed individually (one DuckDB connection per worker), writing a temporary per-file parquet to a staging directory.</p>
+<p><strong>Stage 2</strong>: The staging directory is merged into a single <code>*_id_idx.parquet</code> file using a sequential DuckDB connection. The staging directory is removed.</p>
+</section></section><section class="level2"><h3 id="lookup_by_id_r-extract-records-by-id-r">
+<code>lookup_by_id_R()</code> — Extract Records by ID (R)<a class="anchor" aria-label="anchor" href="#lookup_by_id_r-extract-records-by-id-r"></a>
 </h3>
-<p>Set <code>workers</code> to use multiple <code><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">future::multisession</a></code> workers:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet</a></span><span class="op">(</span></span>
-<span>  snapshot_dir  <span class="op">=</span> <span class="st">"/Volumes/openalex/openalex-snapshot"</span>,</span>
-<span>  parquet_dir   <span class="op">=</span> <span class="st">"/Volumes/openalex/parquet"</span>,</span>
-<span>  data_sets     <span class="op">=</span> <span class="st">"works"</span>,</span>
-<span>  workers       <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  memory_limit  <span class="op">=</span> <span class="st">"8GB"</span>,</span>
-<span>  temp_directory <span class="op">=</span> <span class="st">"/tmp"</span></span>
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Returns a data frame (in-memory mode)</span></span>
+<span><span class="va">works</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lookup_by_id_R.html">lookup_by_id_R</a></span><span class="op">(</span></span>
+<span>  index_file <span class="op">=</span> <span class="st">"/Volumes/openalex/parquet/works_id_idx.parquet"</span>,</span>
+<span>  ids        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W2741809807"</span>, <span class="st">"W2100837269"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Writes to parquet files (out-of-memory mode, for millions of IDs)</span></span>
+<span><span class="fu"><a href="../reference/lookup_by_id_R.html">lookup_by_id_R</a></span><span class="op">(</span></span>
+<span>  index_file <span class="op">=</span> <span class="st">"/Volumes/openalex/parquet/works_id_idx.parquet"</span>,</span>
+<span>  ids        <span class="op">=</span> <span class="va">large_id_vector</span>,</span>
+<span>  output     <span class="op">=</span> <span class="st">"filtered_works"</span>,  <span class="co"># directory must not already exist</span></span>
+<span>  workers    <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Each worker gets its own DuckDB connection with the same <code>memory_limit</code> and <code>temp_directory</code> settings. Schema inference always runs sequentially on the main process (it uses a single shared connection).</p>
-</section></section><section class="section level2"><h2 id="using-infer_json_schema-directly">Using <code>infer_json_schema()</code> Directly<a class="anchor" aria-label="anchor" href="#using-infer_json_schema-directly"></a>
-</h2>
-<p><code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> is exported and can be used standalone for any set of NDJSON files, not just OpenAlex snapshots:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dbi.r-dbi.org" class="external-link">DBI</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Open a DuckDB connection and load the JSON extension</span></span>
-<span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbExecute.html" class="external-link">dbExecute</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"LOAD json"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Collect files</span></span>
-<span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span></span>
-<span>  <span class="st">"path/to/ndjson"</span>,</span>
-<span>  pattern    <span class="op">=</span> <span class="st">"\\.gz$"</span>,</span>
-<span>  recursive  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  full.names <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Infer schema from up to 50 files, cache in a dedicated directory</span></span>
-<span><span class="va">columns_clause</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infer_json_schema.html">infer_json_schema</a></span><span class="op">(</span></span>
-<span>  con             <span class="op">=</span> <span class="va">con</span>,</span>
-<span>  files           <span class="op">=</span> <span class="va">files</span>,</span>
-<span>  sample_size     <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  verbose         <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  schema_cache_dir <span class="op">=</span> <span class="st">"path/to/cache"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">columns_clause</span><span class="op">)</span></span>
-<span><span class="co"># {'id': 'VARCHAR', 'name': 'VARCHAR', 'count': 'BIGINT', ...}</span></span>
-<span></span>
-<span><span class="co"># Use it in your own query</span></span>
-<span><span class="va">sql</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
-<span>  <span class="st">"COPY (SELECT * FROM read_json('data.gz', columns = %s)) TO 'data.parquet'"</span>,</span>
-<span>  <span class="va">columns_clause</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbExecute.html" class="external-link">dbExecute</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">sql</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span>, shutdown <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>The <code>schema_cache_dir</code> argument accepts any writable directory. Per-file CSVs are named <code>&lt;parent_dir&gt;_&lt;filename_without_gz&gt;.csv</code>; if the parent directory does not follow the <code>updated_date=</code> convention the raw directory name is used.</p>
-</section><section class="section level2"><h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+<p>Note that <code><a href="../reference/lookup_by_id_R.html">lookup_by_id_R()</a></code> takes <code>index_file</code> (path to the <code>*_id_idx.parquet</code> file) and returns either a data frame or writes to <code>output</code>. The binary wrapper uses <code>root_dir</code> + <code>project_dir</code> instead.</p>
+<section class="level3"><h4 id="how-lookup-works">How Lookup Works<a class="anchor" aria-label="anchor" href="#how-lookup-works"></a>
+</h4>
+<ol type="1">
+<li><p>IDs are normalised to long form (<code>https://openalex.org/...</code>).</p></li>
+<li><p>The index is filtered with <code>dplyr::filter(id %in% ids)</code> to find the source file and row number for each match.</p></li>
+<li><p>Results are grouped by source parquet file (<code>parquet_file</code>).</p></li>
+<li>
+<p>For each source file, a DuckDB query retrieves exactly the rows needed:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_parquet(<span class="st">'file.parquet'</span>, file_row_number <span class="op">=</span> <span class="kw">true</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> file_row_number <span class="kw">IN</span> (<span class="dv">42</span>, <span class="dv">107</span>, <span class="dv">3891</span>)</span></code></pre></div>
+</li>
+<li><p>In <code>output</code> mode, each chunk is written directly to a parquet file without loading into R memory.</p></li>
+</ol>
+<hr></section></section></section><section class="section level2"><h2 id="comparison-summary">Comparison Summary<a class="anchor" aria-label="anchor" href="#comparison-summary"></a>
 </h2>
 <table class="table caption-top">
 <colgroup>
-<col style="width: 26%">
-<col style="width: 43%">
-<col style="width: 30%">
+<col style="width: 17%">
+<col style="width: 31%">
+<col style="width: 50%">
 </colgroup>
 <thead><tr class="header">
-<th>Step</th>
-<th>Function</th>
-<th>Notes</th>
+<th>Feature</th>
+<th>Binary wrappers</th>
+<th>Pure-R fallbacks (<code>*_R()</code>)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Enumerate <code>.gz</code> files</td>
-<td><code><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files()</a></code></td>
-<td>all files in dataset directory</td>
-</tr>
-<tr class="even">
-<td>Skip converted files</td>
-<td>internal</td>
-<td>resume support</td>
-</tr>
-<tr class="odd">
-<td>Infer unified schema</td>
-<td><code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code></td>
-<td>per-file <code>DESCRIBE</code>, R-side merge</td>
-</tr>
-<tr class="even">
-<td>— check L1 cache</td>
-<td></td>
+<td>External dependency</td>
 <td>
-<code>unified_schema.csv</code> → return immediately</td>
-</tr>
-<tr class="odd">
-<td>— check L2 cache</td>
-<td></td>
-<td>per-file CSVs → skip DuckDB query</td>
+<code>openalex-snapshot</code> binary</td>
+<td>None (duckdb + arrow only)</td>
 </tr>
 <tr class="even">
-<td>— run DESCRIBE</td>
-<td></td>
-<td>one query per sampled file</td>
+<td>Speed</td>
+<td>Faster</td>
+<td>Slower</td>
 </tr>
 <tr class="odd">
-<td>— widen types</td>
-<td><code>merge_schemas()</code></td>
-<td>5-rule precedence</td>
+<td>Verification &amp; repair</td>
+<td>Built in</td>
+<td>Not available</td>
 </tr>
 <tr class="even">
-<td>— save caches</td>
-<td></td>
-<td>L2 per file, L1 after merge</td>
-</tr>
-<tr class="odd">
-<td>Apply works fix</td>
 <td>
-<code><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub()</a></code> in <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code>
-</td>
+<code>root_dir</code> convention</td>
+<td>Yes</td>
+<td>No (separate <code>snapshot_dir</code>/<code>parquet_dir</code>/<code>corpus_dir</code>)</td>
+</tr>
+<tr class="odd">
+<td>Schema inference</td>
+<td>Handled by binary</td>
 <td>
-<code>abstract_inverted_index</code> → VARCHAR</td>
+<code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> with caching</td>
 </tr>
 <tr class="even">
-<td>Convert files</td>
-<td><code>convert_json_to_parquet()</code></td>
-<td>one per worker, SNAPPY, RG=100000</td>
+<td>
+<code>lookup_by_id</code> output</td>
+<td>
+<code>project_dir</code> folder</td>
+<td>data frame or <code>output</code> directory</td>
+</tr>
+<tr class="odd">
+<td>Resume support</td>
+<td>Yes</td>
+<td>Yes (per-file skip)</td>
+</tr>
+<tr class="even">
+<td>Parallel workers</td>
+<td>Yes</td>
+<td>Yes (<code>future_lapply</code>)</td>
 </tr>
 </tbody>
-</table></section><script id="quarto-html-after-body" type="application/javascript">
+</table>
+<section class="level2"><h3 id="when-to-use-which">When to Use Which<a class="anchor" aria-label="anchor" href="#when-to-use-which"></a>
+</h3>
+<p>Use the <strong>binary wrappers</strong> when:</p>
+<ul>
+<li>The binary is available on your PATH (or you can install it)</li>
+<li>You need maximum throughput on large datasets</li>
+<li>You want built-in verification after conversion</li>
+</ul>
+<p>Use the <strong>pure-R fallbacks</strong> when:</p>
+<ul>
+<li>You cannot install the binary (e.g. locked-down institutional systems)</li>
+<li>You need to inspect or customise the schema inference step</li>
+<li>You are building workflows that must work without any system-level installs</li>
+</ul></section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

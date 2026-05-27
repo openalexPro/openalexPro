@@ -40,6 +40,15 @@ adds another 100-200 GB depending on compression settings.
 - **AWS CLI**: For downloading from S3
 - **GNU Make**: For running the Makefile targets
 - **openalexPro**: This package
+- **openalex-snapshot** binary: Required for
+  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
+  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+  and
+  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md).
+  Download from [GitHub
+  releases](https://github.com/rkrug/openalex-snapshot/releases) or
+  build with `cargo build --release`. Alternatively, use the pure-R
+  `*_R()` variants.
 
 #### Installing AWS CLI
 
@@ -69,6 +78,7 @@ The easiest way to get started is using
 [`prepare_snapshot()`](https://rkrug.github.io/openalexPro/reference/prepare_snapshot.md):
 
 ``` r
+
 library(openalexPro)
 
 # Prepare a directory for your snapshot
@@ -105,6 +115,7 @@ make parquet_index
 Choose a location with sufficient disk space:
 
 ``` r
+
 library(openalexPro)
 
 # Create and prepare the snapshot directory
@@ -166,27 +177,23 @@ parquet format provides:
 - **Type safety**: Proper data types for each field
 
 ``` bash
-make parquet MEMORY_LIMIT=20GB WORKERS=4 SAMPLE_SIZE=10000
+make parquet MAX_MEMORY_MB=20000 WORKERS=4 PROFILE=balanced
 ```
 
-This runs
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
-which:
+This invokes the `openalex-snapshot convert` command which:
 
 1.  **Deletes** the existing parquet directory first (depends on
     `clean_parquet`)
-2.  Infers a unified schema by sampling up to `SAMPLE_SIZE` `.gz` files
-    from each entity type
-3.  Converts each `.gz` file individually to a `.parquet` file using
-    DuckDB
-4.  Supports parallel processing via `WORKERS` (number of parallel
-    `future` workers)
+2.  Converts the JSON snapshot to parquet, using the specified worker
+    count and memory limit
+3.  Supports `PROFILE` values: `safe`, `balanced` (default), `fast`
 
-**NB:** Set `MEMORY_LIMIT` (per-worker DuckDB limit), `WORKERS` (number
-of parallel workers), and `SAMPLE_SIZE` (files to sample for schema
-inference) to values that work with your system. Since `parquet`
-unconditionally deletes the existing parquet directory, use
+**NB:** Set `MAX_MEMORY_MB` (memory cap in MB), `WORKERS`, and `PROFILE`
+to values that work with your system. Since `parquet` unconditionally
+deletes the existing parquet directory, call
 [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+(or
+[`snapshot_to_parquet_R()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet_R.md))
 directly in R if you want resume behaviour.
 
 **Expected time**: 2-8 hours depending on CPU and disk speed.
@@ -235,20 +242,30 @@ parquet files, use `make clean_index` followed by `make parquet_index`.
 ### Looking Up Records by ID
 
 ``` r
+
 library(openalexPro)
 
-# Look up specific works by OpenAlex ID (returns data frame)
-works <- lookup_by_id(
-  index_file = "/Volumes/external-drive/openalex/parquet/works_id_idx.parquet",
-  ids = c("W2741809807", "W2100837269")
+# Look up specific works by OpenAlex ID using the binary wrapper
+# Records are written to <project_dir>/snapshot_extract/
+lookup_by_id(
+  root_dir    = "/Volumes/external-drive/openalex",
+  ids         = c("W2741809807", "W2100837269"),
+  project_dir = "my_project",
+  data_sets   = "works"
 )
 
-# For millions of IDs, write directly to parquet instead of loading into memory
-lookup_by_id(
+# Pure-R fallback (no binary required) — returns a data frame
+works <- lookup_by_id_R(
   index_file = "/Volumes/external-drive/openalex/parquet/works_id_idx.parquet",
-  ids = large_id_vector,
-  output = "filtered_works",
-  workers = 3
+  ids        = c("W2741809807", "W2100837269")
+)
+
+# Pure-R fallback: write directly to parquet for millions of IDs
+lookup_by_id_R(
+  index_file = "/Volumes/external-drive/openalex/parquet/works_id_idx.parquet",
+  ids        = large_id_vector,
+  output     = "filtered_works",
+  workers    = 3
 )
 ```
 
@@ -257,6 +274,7 @@ lookup_by_id(
 For complex analytical queries, use DuckDB directly:
 
 ``` r
+
 library(duckdb)
 library(DBI)
 
@@ -321,7 +339,7 @@ make snapshot
 make parquet_timestamp
 
 # 4. Re-convert to parquet (deletes parquet dir first, then converts)
-make parquet SAMPLE_SIZE=10000
+make parquet MAX_MEMORY_MB=20000 WORKERS=4
 
 # 5. Rebuild indexes
 make parquet_index
@@ -352,38 +370,28 @@ starting.
 command line:
 
 ``` bash
-make parquet MEMORY_LIMIT=4GB WORKERS=1
+make parquet MAX_MEMORY_MB=4000 WORKERS=1 PROFILE=safe
 ```
 
-**DuckDB temp file errors**
-(`IO Error: Could not read enough bytes from file ".tmp/..."`): DuckDB
-spills temporary data to disk. By default it writes to `.tmp/` in the
-current directory. If that location runs out of space or is on a slow
-filesystem, point it elsewhere:
-
-``` bash
-make parquet TEMP_DIR=/tmp
-```
-
-**DuckDB errors**: Ensure you have the latest version of the `duckdb` R
-package.
+**DuckDB errors** (when using `*_R()` fallback functions): Ensure you
+have the latest version of the `duckdb` R package.
 
 ## Makefile Reference
 
-| Target               | Description                                                 |
-|----------------------|-------------------------------------------------------------|
-| `help`               | Show available targets and current variable values          |
-| `all`                | Clean, download snapshot, and convert to parquet            |
-| `snapshot_info`      | Display S3 bucket size and file count                       |
-| `snapshot_timestamp` | Rename existing snapshot directory with its release date    |
-| `snapshot`           | Download/sync snapshot from S3                              |
-| `parquet_timestamp`  | Rename existing parquet directory with its release date     |
-| `parquet`            | Delete parquet dir then convert snapshot to parquet         |
-| `parquet_index`      | Build ID indexes for all datasets                           |
-| `clean_index`        | Remove index files (`*_idx.parquet`) from parquet directory |
-| `clean_parquet`      | Remove parquet directory (includes index files)             |
-| `clean_snapshot`     | Remove snapshot directory                                   |
-| `clean`              | Remove both snapshot and parquet directories                |
+| Target | Description |
+|----|----|
+| `help` | Show available targets and current variable values |
+| `all` | Clean, download snapshot, and convert to parquet |
+| `snapshot_info` | Display S3 bucket size and file count |
+| `snapshot_timestamp` | Rename existing snapshot directory with its release date |
+| `snapshot` | Download/sync snapshot from S3 |
+| `parquet_timestamp` | Rename existing parquet directory with its release date |
+| `parquet` | Delete parquet dir then convert snapshot to parquet |
+| `parquet_index` | Build ID indexes for all datasets |
+| `clean_index` | Remove index files (`*_idx.parquet`) from parquet directory |
+| `clean_parquet` | Remove parquet directory (includes index files) |
+| `clean_snapshot` | Remove snapshot directory |
+| `clean` | Remove both snapshot and parquet directories |
 
 ### Customizing the Makefile
 
@@ -391,18 +399,16 @@ Variables can be overridden on the command line or by editing the
 defaults at the top of the Makefile:
 
 ``` makefile
-SNAPSHOTDIR=./openalex-snapshot  # Where to download JSON
-PARQUETDIR=./parquet             # Where to write parquet
-MEMORY_LIMIT=15GB                # DuckDB memory limit per worker
-WORKERS=3                        # Number of parallel workers
-SAMPLE_SIZE=100                  # Files sampled for schema inference
-TEMP_DIR=/tmp                    # DuckDB temporary directory (spill-to-disk)
+ROOTDIR=.          # Root directory (snapshot at <ROOTDIR>/openalex-snapshot, parquet at <ROOTDIR>/parquet)
+MAX_MEMORY_MB=15000  # Memory cap per worker (in MB)
+WORKERS=3            # Number of parallel workers
+PROFILE=balanced     # Performance profile: safe / balanced / fast
 ```
 
 Override on the command line without editing the file:
 
 ``` bash
-make parquet MEMORY_LIMIT=20GB WORKERS=4 SAMPLE_SIZE=10000 TEMP_DIR=/tmp
+make parquet MAX_MEMORY_MB=20000 WORKERS=4 PROFILE=fast
 ```
 
 ## Additional Resources

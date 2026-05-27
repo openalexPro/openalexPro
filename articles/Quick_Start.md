@@ -35,6 +35,7 @@ flowchart LR
 ## Installation
 
 ``` r
+
 # Install stable version from r-universe (recommended)
 install.packages(
   "openalexPro",
@@ -53,6 +54,7 @@ should configure `openalexPro.apikey`. Get a key at
 [openalex.org](https://openalex.org).
 
 ``` r
+
 # Add to your .Renviron file (recommended)
 # Run: usethis::edit_r_environ()
 # Then add these lines:
@@ -74,6 +76,7 @@ pro_rate_limit_status()
 ### Step 1: Build Your Query
 
 ``` r
+
 library(openalexPro)
 
 # Search for works about climate change in 2023
@@ -90,6 +93,7 @@ url <- pro_query(
 ### Step 2: Check the Size (Optional but Recommended)
 
 ``` r
+
 # See how many results before downloading
 count <- pro_count(url)
 count$count
@@ -99,6 +103,7 @@ count$count
 ### Step 3: Fetch Everything with `pro_fetch()`
 
 ``` r
+
 # Download, transform, and convert to Parquet in one step!
 parquet_path <- pro_fetch(
  query_url = url,
@@ -132,6 +137,7 @@ flowchart TD
 ## Analysis Example: Analyse with DuckDB
 
 ``` r
+
 library(duckdb)
 library(DBI)
 
@@ -156,6 +162,7 @@ dbDisconnect(con)
 ### Search by Author
 
 ``` r
+
 # Find works by a specific author
 url <- pro_query(
   entity = "works",
@@ -169,6 +176,7 @@ pro_fetch(query_url = url, project_folder = "author_works")
 ### Search by Institution
 
 ``` r
+
 # Find recent articles from MIT
 url <- pro_query(
   entity = "works",
@@ -184,6 +192,7 @@ pro_fetch(query_url = url, project_folder = "mit_articles")
 ### Bulk DOI Lookup
 
 ``` r
+
 # Look up a list of DOIs
 dois <- c(
   "10.1038/nature12373",
@@ -203,6 +212,7 @@ pro_fetch(query_url = url, project_folder = "my_dois")
 ### Open Access Articles Only
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "machine learning healthcare",
@@ -220,12 +230,12 @@ pro_fetch(query_url = url, project_folder = "ml_healthcare_oa")
 The Parquet files contain your selected fields plus some extras added
 during processing:
 
-| Field                | Description                                             |
-|----------------------|---------------------------------------------------------|
-| Your selected fields | Whatever you specified in `select`                      |
-| `abstract`           | Reconstructed from `abstract_inverted_index`            |
-| `citation`           | Generated citation string (e.g., “Smith et al. (2023)”) |
-| `page`               | Data provenance tracking                                |
+| Field | Description |
+|----|----|
+| Your selected fields | Whatever you specified in `select` |
+| `abstract` | Reconstructed from `abstract_inverted_index` |
+| `citation` | Generated citation string (e.g., “Smith et al. (2023)”) |
+| `page` | Data provenance tracking |
 
 ## Next Steps
 
@@ -235,8 +245,7 @@ covers:
 
 - Using
   [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md),
-  and
+  `pro_request_jsonl()`, and
   [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   separately
 - Parallel processing with multiple workers
@@ -255,15 +264,15 @@ For detailed technical documentation, see:
 
 ## Function Reference
 
-| Function                                                                                                  | Purpose                                             |
-|-----------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)                               | Build OpenAlex API query URLs                       |
-| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)                               | **One-step download + transform + convert**         |
-| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)                               | Get result count without downloading                |
-| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) | Test your API credentials                           |
-| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)       | Check current rate limit usage and remaining budget |
-| [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)                 | List available filter names                         |
-| [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)               | List available select fields                        |
+| Function | Purpose |
+|----|----|
+| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) | Build OpenAlex API query URLs |
+| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | **One-step download + transform + convert** |
+| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) | Get result count without downloading |
+| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) | Test your API credentials |
+| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check current rate limit usage and remaining budget |
+| [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md) | List available filter names |
+| [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md) | List available select fields |
 
 ## Getting Help
 

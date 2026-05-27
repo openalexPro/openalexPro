@@ -1,7 +1,7 @@
 # Convert JSON files to Apache Parquet files
 
 The function takes a directory of JSONL files as written from a call to
-`pro_request_jsonl(...)` and converts each file individually to a
+`pro_request_jsonl_R(...)` and converts each file individually to a
 Parquet file. The subfolder structure from the input is preserved in the
 output, so files in `Chunk_1/` will be written to `Chunk_1/` in the
 output directory.
@@ -66,7 +66,7 @@ The function returns the output path invisibly.
 ## Details
 
 The `page` column (added by
-[`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md))
+[`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md))
 is preserved as a regular column in the Parquet data.
 
 When starting the conversion, a file `00_in.progress` is created which

@@ -5,10 +5,7 @@ Makes a minimal API request to verify that the api_key is valid.
 ## Usage
 
 ``` r
-pro_validate_credentials(
-  api_key = Sys.getenv("openalexPro.apikey"),
-  show_credentials = FALSE
-)
+pro_validate_credentials(api_key = pro_api_key(), show_credentials = FALSE)
 ```
 
 ## Arguments

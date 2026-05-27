@@ -63,6 +63,7 @@ columns specified in `select` (or all columns if `select` is `NULL`).
 
 The function delegates to the following SQL pattern (simplified):
 
+
     SELECT [columns]
     FROM parquet_scan('path/to/files/*.parquet')
     USING SAMPLE reservoir(n ROWS)

@@ -87,17 +87,17 @@ flowchart LR
 
 ## Function Parameters Reference
 
-| Parameter     | Type             | Default                    | Description                                                                                                                      |
-|---------------|------------------|----------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `entity`      | character        | required                   | Entity type: “works”, “authors”, “venues”, “institutions”, “concepts”, “publishers”, “funders”                                   |
-| `id`          | character        | NULL                       | Single entity ID for direct retrieval. Multiple IDs are moved to `ids.openalex` filter                                           |
-| `search`      | character        | NULL                       | Full-text search string                                                                                                          |
-| `group_by`    | character        | NULL                       | Field to group by for faceted counts                                                                                             |
-| `select`      | character vector | NULL                       | Fields to return (validated against [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)) |
-| `options`     | named list       | NULL                       | Additional query parameters (per_page, sort, cursor, sample)                                                                     |
-| `endpoint`    | character        | “https://api.openalex.org” | Base API URL                                                                                                                     |
-| `chunk_limit` | integer          | 50                         | Maximum items per chunk for chunkable filters                                                                                    |
-| `...`         | named arguments  | \-                         | Filters (validated against [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md))            |
+| Parameter | Type | Default | Description |
+|----|----|----|----|
+| `entity` | character | required | Entity type: “works”, “authors”, “venues”, “institutions”, “concepts”, “publishers”, “funders” |
+| `id` | character | NULL | Single entity ID for direct retrieval. Multiple IDs are moved to `ids.openalex` filter |
+| `search` | character | NULL | Full-text search string |
+| `group_by` | character | NULL | Field to group by for faceted counts |
+| `select` | character vector | NULL | Fields to return (validated against [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)) |
+| `options` | named list | NULL | Additional query parameters (per_page, sort, cursor, sample) |
+| `endpoint` | character | “https://api.openalex.org” | Base API URL |
+| `chunk_limit` | integer | 50 | Maximum items per chunk for chunkable filters |
+| `...` | named arguments | \- | Filters (validated against [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)) |
 
 ## Basic Usage
 
@@ -106,6 +106,7 @@ flowchart LR
 The most basic query requires only an entity type:
 
 ``` r
+
 library(openalexPro)
 
 # Query for works
@@ -120,11 +121,11 @@ url
 supports three mutually exclusive search parameters, each with different
 matching behaviour and cost:
 
-| Parameter         | Matching                                    | Max results | Cost          |
-|-------------------|---------------------------------------------|-------------|---------------|
-| `search`          | Stemmed keyword (stop-words removed)        | Unlimited   | \$0.0001/call |
-| `search.exact`    | Unstemmed, supports boolean/phrase/wildcard | Unlimited   | \$0.0001/call |
-| `search.semantic` | AI embedding similarity                     | 50 per call | \$0.001/call  |
+| Parameter | Matching | Max results | Cost |
+|----|----|----|----|
+| `search` | Stemmed keyword (stop-words removed) | Unlimited | \$0.0001/call |
+| `search.exact` | Unstemmed, supports boolean/phrase/wildcard | Unlimited | \$0.0001/call |
+| `search.semantic` | AI embedding similarity | 50 per call | \$0.001/call |
 
 #### `search` — Standard Keyword Search
 
@@ -133,6 +134,7 @@ removal. Supports the same boolean/phrase syntax as `search.exact` but
 also applies stemming (e.g. “run” also matches “running”, “ran”):
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "climate change biodiversity"
@@ -151,6 +153,7 @@ Searches without stemming or stop-word removal. Supports:
 - Wildcards: `microbio*`
 
 ``` r
+
 # Exact phrase search
 url <- pro_query(
   entity = "works",
@@ -181,6 +184,7 @@ feature.
 - Pass a sentence or short paragraph — not just a keyword.
 
 ``` r
+
 # Find works conceptually similar to an abstract or research question
 url <- pro_query(
   entity = "works",
@@ -210,6 +214,7 @@ Use the `select` parameter to specify which fields to return. This
 reduces response size and improves performance:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "machine learning",
@@ -226,6 +231,7 @@ Use
 to see all available fields:
 
 ``` r
+
 opt_select_fields()
 # [1] "abstract_inverted_index" "authorships"
 # [3] "biblio"                  "cited_by_count"
@@ -238,6 +244,7 @@ opt_select_fields()
 Fetch a specific entity by its OpenAlex ID:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   id = "W2741809807"
@@ -260,6 +267,7 @@ the OpenAlex ID. The API accepts three formats:
 **Works** — DOI:
 
 ``` r
+
 # By DOI (full URL format)
 url <- pro_query(
   entity = "works",
@@ -276,6 +284,7 @@ url <- pro_query(
 **Authors** — ORCID:
 
 ``` r
+
 url <- pro_query(
   entity = "authors",
   id = "orcid:0000-0003-1613-5981"
@@ -285,18 +294,20 @@ url <- pro_query(
 **Institutions** — ROR:
 
 ``` r
+
 url <- pro_query(
   entity = "institutions",
-  id = "ror:02mhbdp94"  # MIT
+  id = "ror:02mhbdp94" # MIT
 )
 ```
 
 **Sources (journals)** — ISSN:
 
 ``` r
+
 url <- pro_query(
   entity = "sources",
-  id = "issn:0028-0836"  # Nature
+  id = "issn:0028-0836" # Nature
 )
 ```
 
@@ -342,6 +353,7 @@ flowchart TD
 Filters use AND logic between different filter types:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   from_publication_date = "2020-01-01",
@@ -357,6 +369,7 @@ url
 Pass a vector to express OR logic within a single filter:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   language = c("en", "de", "fr"), # English OR German OR French
@@ -371,6 +384,7 @@ url
 #### Date Ranges
 
 ``` r
+
 # Works from 2020 onwards
 pro_query(entity = "works", from_publication_date = "2020-01-01")
 
@@ -388,6 +402,7 @@ pro_query(
 #### Citation Counts
 
 ``` r
+
 # Highly cited works (100+ citations)
 pro_query(entity = "works", from_cited_by_count = 100)
 
@@ -402,6 +417,7 @@ pro_query(
 #### Open Access
 
 ``` r
+
 # Only open access works
 pro_query(entity = "works", is_oa = TRUE)
 
@@ -413,6 +429,7 @@ pro_query(entity = "works", oa_status = c("gold", "green"))
 #### By Author or Institution
 
 ``` r
+
 # Works by a specific author (use backticks for dots)
 pro_query(entity = "works", `author.id` = "A2208157607")
 
@@ -426,6 +443,7 @@ pro_query(entity = "works", `institutions.country_code` = "US")
 #### By Concept/Topic
 
 ``` r
+
 # Works about machine learning
 pro_query(entity = "works", `concepts.id` = "C119857082")
 
@@ -435,24 +453,24 @@ pro_query(entity = "works", `concepts.id` = c("C119857082", "C41008148"))
 
 ### Filter Reference Table
 
-| Filter                  | Description               | Example Values                      |
-|-------------------------|---------------------------|-------------------------------------|
-| `publication_year`      | Exact year                | 2023                                |
-| `from_publication_date` | Start date                | “2020-01-01”                        |
-| `to_publication_date`   | End date                  | “2023-12-31”                        |
-| `type`                  | Work type                 | “article”, “book”, “dataset”        |
-| `language`              | ISO language code         | “en”, “de”, “fr”                    |
-| `is_oa`                 | Open access status        | TRUE, FALSE                         |
-| `oa_status`             | OA type                   | “gold”, “green”, “hybrid”, “bronze” |
-| `from_cited_by_count`   | Minimum citations         | 100                                 |
-| `to_cited_by_count`     | Maximum citations         | 1000                                |
-| `doi`                   | Digital Object Identifier | “10.1234/example”                   |
-| `openalex`              | OpenAlex ID               | “W2741809807”                       |
-| `author.id`             | Author OpenAlex ID        | “A2208157607”                       |
-| `institutions.id`       | Institution ID            | “I4200000001”                       |
-| `concepts.id`           | Concept ID                | “C119857082”                        |
-| `cites`                 | Works that cite this ID   | “W2741809807”                       |
-| `cited_by`              | Works cited by this ID    | “W2741809807”                       |
+| Filter | Description | Example Values |
+|----|----|----|
+| `publication_year` | Exact year | 2023 |
+| `from_publication_date` | Start date | “2020-01-01” |
+| `to_publication_date` | End date | “2023-12-31” |
+| `type` | Work type | “article”, “book”, “dataset” |
+| `language` | ISO language code | “en”, “de”, “fr” |
+| `is_oa` | Open access status | TRUE, FALSE |
+| `oa_status` | OA type | “gold”, “green”, “hybrid”, “bronze” |
+| `from_cited_by_count` | Minimum citations | 100 |
+| `to_cited_by_count` | Maximum citations | 1000 |
+| `doi` | Digital Object Identifier | “10.1234/example” |
+| `openalex` | OpenAlex ID | “W2741809807” |
+| `author.id` | Author OpenAlex ID | “A2208157607” |
+| `institutions.id` | Institution ID | “I4200000001” |
+| `concepts.id` | Concept ID | “C119857082” |
+| `cites` | Works that cite this ID | “W2741809807” |
+| `cited_by` | Works cited by this ID | “W2741809807” |
 
 Use
 [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
@@ -465,6 +483,7 @@ to see all available filters.
 Use `group_by` to get aggregate counts instead of individual records:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "artificial intelligence",
@@ -506,6 +525,7 @@ Append `:include_unknown` to expose them as a separate group with
 `key = "unknown"`:
 
 ``` r
+
 # Count works by OA status, including works with unknown status
 url <- pro_query(
   entity = "works",
@@ -519,6 +539,7 @@ url <- pro_query(
 The `options` parameter accepts additional query parameters:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "quantum computing",
@@ -544,6 +565,7 @@ url <- pro_query(
 #### Sorting Options
 
 ``` r
+
 # Sort by publication date (newest first)
 pro_query(entity = "works", options = list(sort = "publication_date:desc"))
 
@@ -571,6 +593,7 @@ Enable XPAC by passing `include_xpac = TRUE` via the `options`
 parameter:
 
 ``` r
+
 # Include XPAC works in results (~470 M total instead of ~278 M)
 url <- pro_query(
   entity = "works",
@@ -583,6 +606,7 @@ To retrieve **only** XPAC works (excluding standard works), combine
 `include_xpac = TRUE` with the `is_xpac` filter:
 
 ``` r
+
 # Query XPAC-only works (must also set include_xpac = TRUE)
 url <- pro_query(
   entity = "works",
@@ -596,6 +620,7 @@ XPAC works can be combined with any other filter or search mode,
 including semantic search:
 
 ``` r
+
 # Semantic search across the full XPAC-inclusive corpus
 url <- pro_query(
   entity = "works",
@@ -611,11 +636,12 @@ download time. To find XPAC works that also have downloadable full-text,
 combine the filters:
 
 ``` r
+
 # Find XPAC works with PDFs, then download them
 urls <- pro_query(
-  entity          = "works",
+  entity = "works",
   has_content.pdf = TRUE,
-  is_xpac         = TRUE,
+  is_xpac = TRUE,
   from_publication_date = "2024-01-01",
   options = list(include_xpac = TRUE)
 )
@@ -680,6 +706,7 @@ The following filters trigger automatic chunking when they exceed
 #### Basic Chunking
 
 ``` r
+
 # Create a list of 120 DOIs
 dois <- paste0("10.1234/example", 1:120)
 
@@ -699,6 +726,7 @@ class(urls) # "list"
 #### Custom Chunk Size
 
 ``` r
+
 urls <- pro_query(
   entity = "works",
   doi = dois,
@@ -714,6 +742,7 @@ When multiple chunkable filters exceed the limit, chunking creates a
 cross-product:
 
 ``` r
+
 # Both DOI and cites will be chunked
 urls <- pro_query(
   entity = "works",
@@ -774,6 +803,7 @@ When passing multiple IDs to the `id` parameter, they are automatically
 moved to `ids.openalex` filter:
 
 ``` r
+
 # Multiple IDs are converted to filter
 urls <- pro_query(
   entity = "works",
@@ -789,6 +819,7 @@ urls <- pro_query(
 Scholarly documents including articles, books, datasets, and more:
 
 ``` r
+
 pro_query(entity = "works", search = "CRISPR gene editing")
 pro_query(
   entity = "works",
@@ -802,6 +833,7 @@ pro_query(
 Researchers and their metadata:
 
 ``` r
+
 pro_query(entity = "authors", search = "Marie Curie")
 pro_query(entity = "authors", `last_known_institution.id` = "I4200000001")
 ```
@@ -811,6 +843,7 @@ pro_query(entity = "authors", `last_known_institution.id` = "I4200000001")
 Universities, research organizations, companies:
 
 ``` r
+
 pro_query(entity = "institutions", search = "MIT")
 pro_query(entity = "institutions", type = "education", country_code = "US")
 ```
@@ -820,6 +853,7 @@ pro_query(entity = "institutions", type = "education", country_code = "US")
 Journals, repositories, conferences:
 
 ``` r
+
 pro_query(entity = "venues", search = "Nature")
 pro_query(entity = "venues", is_oa = TRUE, type = "journal")
 ```
@@ -829,6 +863,7 @@ pro_query(entity = "venues", is_oa = TRUE, type = "journal")
 Topics and fields of study:
 
 ``` r
+
 pro_query(entity = "concepts", search = "machine learning")
 pro_query(entity = "concepts", level = 0) # Top-level concepts only
 ```
@@ -838,6 +873,7 @@ pro_query(entity = "concepts", level = 0) # Top-level concepts only
 Organizations that publish venues:
 
 ``` r
+
 pro_query(entity = "publishers", search = "Springer")
 pro_query(entity = "publishers", country_codes = "US")
 ```
@@ -847,6 +883,7 @@ pro_query(entity = "publishers", country_codes = "US")
 Organizations that fund research:
 
 ``` r
+
 pro_query(entity = "funders", search = "NSF")
 pro_query(entity = "funders", country_code = "US")
 ```
@@ -892,6 +929,7 @@ Filter names are validated against
 [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md):
 
 ``` r
+
 # This will error with suggestions
 try(
   pro_query(
@@ -910,6 +948,7 @@ Select fields are validated against
 [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md):
 
 ``` r
+
 # This will error with suggestions
 try(
   pro_query(
@@ -928,6 +967,7 @@ Entity type is validated using
 [`match.arg()`](https://rdrr.io/r/base/match.arg.html):
 
 ``` r
+
 try(pro_query(entity = "paper"))
 # Error: 'arg' should be one of "works", "authors", "venues",
 #        "institutions", "concepts", "publishers", "funders"
@@ -1074,6 +1114,7 @@ The function uses several internal helpers for clean, maintainable code.
 Checks if an object is NULL or has zero length:
 
 ``` r
+
 .is_empty(NULL) # TRUE
 .is_empty(character()) # TRUE
 .is_empty(list()) # TRUE
@@ -1084,6 +1125,7 @@ Checks if an object is NULL or has zero length:
 **Implementation:**
 
 ``` r
+
 .is_empty <- function(x) {
   is.null(x) || !length(x)
 }
@@ -1094,6 +1136,7 @@ Checks if an object is NULL or has zero length:
 Collapses vectors into pipe-separated strings for the OpenAlex API:
 
 ``` r
+
 .oa_collapse(c("en", "de", "fr")) # "en|de|fr"
 .oa_collapse("single") # "single"
 .oa_collapse(c(TRUE, FALSE)) # "true|false"
@@ -1133,6 +1176,7 @@ flowchart TD
 Constructs the filter query string from a named list:
 
 ``` r
+
 filters <- list(
   from_publication_date = "2020-01-01",
   language = c("en", "de"),
@@ -1174,6 +1218,7 @@ Provides spelling suggestions for invalid field names using Levenshtein
 edit distance:
 
 ``` r
+
 .fuzzy_suggest("titel", c("title", "author", "year"))
 # "title" (edit distance 1)
 
@@ -1213,6 +1258,7 @@ flowchart TD
 Constructs helpful error messages with fuzzy suggestions:
 
 ``` r
+
 .build_validation_error(
   bad = c("id", "titel"),
   allowed = opt_select_fields(),
@@ -1231,6 +1277,7 @@ Constructs helpful error messages with fuzzy suggestions:
 #### Invalid Entity
 
 ``` r
+
 try(pro_query(entity = "paper"))
 # Error: 'arg' should be one of "works", "authors", "venues",
 #        "institutions", "concepts", "publishers", "funders"
@@ -1241,6 +1288,7 @@ try(pro_query(entity = "paper"))
 #### Invalid Filter Name
 
 ``` r
+
 try(pro_query(entity = "works", invalid_filter = "value"))
 # Error: Invalid filter name(s): invalid_filter.
 # Valid filter names are defined in `opt_filter_names()`.
@@ -1253,6 +1301,7 @@ for valid filter names.
 #### Invalid Select Field
 
 ``` r
+
 try(pro_query(entity = "works", select = c("id", "titel")))
 # Error: Invalid select field(s): id, titel.
 # Did you mean: id → ids, titel → title?
@@ -1270,6 +1319,7 @@ prevents this through automatic chunking, but if you manually construct
 very long URLs:
 
 ``` r
+
 # This would fail at the API level
 very_long_url <- pro_query(
   entity = "works",
@@ -1288,6 +1338,7 @@ very_long_url <- pro_query(
 Reduce response size and improve performance:
 
 ``` r
+
 # Good: Only request needed fields
 pro_query(
   entity = "works",
@@ -1304,6 +1355,7 @@ pro_query(entity = "works", search = "climate")
 Narrow down results to manageable sizes:
 
 ``` r
+
 # Good: Filtered by date
 pro_query(
   entity = "works",
@@ -1322,6 +1374,7 @@ Use
 to check query size:
 
 ``` r
+
 url <- pro_query(entity = "works", search = "CRISPR")
 count <- pro_count(url)
 count$count
@@ -1335,6 +1388,7 @@ Let
 handle large ID lists:
 
 ``` r
+
 # Good: Automatic chunking
 urls <- pro_query(entity = "works", doi = large_doi_vector)
 # Returns list of manageable URLs
@@ -1348,6 +1402,7 @@ pro_request(query_url = urls, output = "data/json")
 Check your parameters before long-running downloads:
 
 ``` r
+
 # Check available filters
 head(opt_filter_names(), 20)
 
@@ -1367,6 +1422,7 @@ test_url <- pro_query(
 ### Finding Recent Publications in a Field
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "CRISPR gene therapy",
@@ -1390,6 +1446,7 @@ url <- pro_query(
 ### Analyzing Highly Cited Works
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   from_cited_by_count = 1000,
@@ -1412,6 +1469,7 @@ url <- pro_query(
 ### Author Publication List
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   `author.id` = "A2208157607",
@@ -1423,6 +1481,7 @@ url <- pro_query(
 ### Institution Research Output
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   `institutions.id` = "I4200000001",
@@ -1435,6 +1494,7 @@ url <- pro_query(
 ### Bulk DOI Lookup
 
 ``` r
+
 # Read DOIs from file
 dois <- readLines("my_dois.txt")
 
@@ -1452,6 +1512,7 @@ pro_request(query_url = urls, output = "data/json")
 ### Citation Network Analysis
 
 ``` r
+
 # Find works that cite a specific paper
 url_citing <- pro_query(
   entity = "works",
@@ -1470,6 +1531,7 @@ url_cited <- pro_query(
 ### Publication Year Distribution
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "artificial intelligence",
@@ -1489,6 +1551,7 @@ limits can also be purchased.
 `openalexPro` uses environment variables for credentials (recommended):
 
 ``` r
+
 # Set credentials (typically in your .Renviron file)
 Sys.setenv(openalexPro.apikey = "your-api-key-here")
 
@@ -1548,6 +1611,7 @@ flowchart LR
 ### Complete Example
 
 ``` r
+
 library(openalexPro)
 
 # Step 1: Build query
@@ -1611,8 +1675,7 @@ dbDisconnect(con)
   Get count of results without downloading
 - [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) -
   Execute API requests and save results
-- [`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md) -
-  Convert JSON to JSONL format
+- `pro_request_jsonl()` - Convert JSON to JSONL format
 - [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) -
   Convert JSONL to Parquet format (with schema harmonization)
 

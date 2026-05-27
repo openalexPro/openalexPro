@@ -17,9 +17,7 @@ and related functions, including:
 - Progress bars and parallel processing
 - The complete data pipeline
   ([`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
-  →
-  [`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md)
-  →
+  → `pro_request_jsonl()` →
   [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
 - Internal architecture and flow diagrams
 - Error handling and retry logic
@@ -34,6 +32,7 @@ limits can also be purchased.
 `openalexPro` uses environment variables for credentials (recommended):
 
 ``` r
+
 # Set credentials (typically in your .Renviron file)
 Sys.setenv(openalexPro.apikey = "your-api-key-here")
 
@@ -44,6 +43,7 @@ pro_validate_credentials()
 You can also pass credentials directly to functions:
 
 ``` r
+
 pro_request(
   query_url = url,
   output = "data/json",
@@ -55,6 +55,7 @@ To force unauthenticated mode for a call, pass `api_key = NULL` (or
 `""`):
 
 ``` r
+
 pro_request(
   query_url = url,
   output = "data/json",
@@ -71,6 +72,7 @@ The most basic usage requires a query URL (from
 and an output directory:
 
 ``` r
+
 library(openalexPro)
 
 # Build query
@@ -92,6 +94,7 @@ pro_request(
 To check how many results a query returns without downloading:
 
 ``` r
+
 # Get count for a single query
 count <- pro_request(
   query_url = url,
@@ -112,6 +115,7 @@ meta
 Progress bars are enabled by default:
 
 ``` r
+
 pro_request(
   query_url = url,
   output = "data/json",
@@ -130,6 +134,7 @@ downloads up to 10,000 pages (2 million records at 200 per page). You
 can adjust this:
 
 ``` r
+
 # Download only first 100 pages (20,000 records)
 pro_request(
   query_url = url,
@@ -154,6 +159,7 @@ returns a list of URLs (due to automatic chunking of large ID lists),
 handles them seamlessly:
 
 ``` r
+
 # Query with many DOIs triggers automatic chunking
 dois <- paste0("10.1234/example", 1:150)
 urls <- pro_query(entity = "works", doi = dois)
@@ -169,11 +175,65 @@ pro_request(
 # Creates: data/json/chunk_1/, data/json/chunk_2/, data/json/chunk_3/
 ```
 
+### Nested List Queries
+
+[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+also accepts **nested lists** of URLs. Each nesting level is preserved
+as a subdirectory, and
+[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+converts the directory depth to hive-style partition keys:
+
+| Directory depth | Partition key     |
+|-----------------|-------------------|
+| 1               | `query=<name>`    |
+| 2               | `query_l2=<name>` |
+| 3               | `query_l3=<name>` |
+
+``` r
+
+# Build a nested query list manually
+queries <- list(
+  year_2022 = pro_query(entity = "works", publication_year = 2022),
+  year_2023 = pro_query(entity = "works", publication_year = 2023),
+  institutions = list(
+    usa = pro_query(entity = "institutions", country_code = "US"),
+    uk  = pro_query(entity = "institutions", country_code = "GB")
+  )
+)
+
+# Download: creates nested subdirectory structure
+pro_request(
+  query_url = queries,
+  output    = "data/json"
+)
+# Creates:
+#   data/json/year_2022/
+#   data/json/year_2023/
+#   data/json/institutions/usa/
+#   data/json/institutions/uk/
+
+# After jsonl + parquet conversion the dataset is hive-partitioned:
+#   data/parquet/query=year_2022/
+#   data/parquet/query=year_2023/
+#   data/parquet/query=institutions/query_l2=usa/
+#   data/parquet/query=institutions/query_l2=uk/
+
+# Filter by partition
+ds <- arrow::open_dataset("data/parquet")
+ds |> dplyr::filter(query == "year_2022")
+ds |> dplyr::filter(query == "institutions", query_l2 == "usa")
+```
+
+[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+inherits nested list support automatically — you can pass a nested list
+directly as `query_url`.
+
 ### Parallel Downloads
 
 For chunked queries, enable parallel processing:
 
 ``` r
+
 pro_request(
   query_url = urls,
   output = "data/json",
@@ -183,18 +243,18 @@ pro_request(
 
 ## Function Parameters Reference
 
-| Parameter    | Type           | Default  | Description                                                                                          |
-|--------------|----------------|----------|------------------------------------------------------------------------------------------------------|
-| `query_url`  | character/list | required | URL or list of URLs from [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) |
-| `pages`      | integer/NULL   | 10000    | Max pages to download. `NULL` = all pages                                                            |
-| `output`     | character      | required | Directory for JSON output files                                                                      |
-| `overwrite`  | logical        | FALSE    | Delete existing output directory if it exists                                                        |
-| `api_key`    | character/NULL | env var  | Optional API key. If `NULL` or `""`, requests are sent without key.                                  |
-| `workers`    | integer        | 1        | Parallel workers for list queries                                                                    |
-| `verbose`    | logical        | FALSE    | Show detailed messages                                                                               |
-| `progress`   | logical        | TRUE     | Show progress bar                                                                                    |
-| `count_only` | logical        | FALSE    | Return count without downloading                                                                     |
-| `error_log`  | character/NULL | NULL     | Path for error log file                                                                              |
+| Parameter | Type | Default | Description |
+|----|----|----|----|
+| `query_url` | character/list | required | URL or list of URLs from [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) |
+| `pages` | integer/NULL | 10000 | Max pages to download. `NULL` = all pages |
+| `output` | character | required | Directory for JSON output files |
+| `overwrite` | logical | FALSE | Delete existing output directory if it exists |
+| `api_key` | character/NULL | env var | Optional API key. If `NULL` or `""`, requests are sent without key. |
+| `workers` | integer | 1 | Parallel workers for list queries |
+| `verbose` | logical | FALSE | Show detailed messages |
+| `progress` | logical | TRUE | Show progress bar |
+| `count_only` | logical | FALSE | Return count without downloading |
+| `error_log` | character/NULL | NULL | Path for error log file |
 
 ## pro_request() Architecture
 
@@ -405,6 +465,7 @@ flowchart LR
 ### Complete Example
 
 ``` r
+
 library(openalexPro)
 
 # Step 1: Build query
@@ -471,6 +532,7 @@ conversion, it also:
 ### Function Signature
 
 ``` r
+
 pro_request_jsonl(
   input_json = NULL,
   output = NULL,
@@ -485,16 +547,16 @@ pro_request_jsonl(
 
 ### Parameters
 
-| Parameter      | Type      | Default                                      | Description                                                                                                  |
-|----------------|-----------|----------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| `input_json`   | character | required                                     | Directory of JSON files from [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) |
-| `output`       | character | required                                     | Output directory for JSONL files                                                                             |
-| `add_columns`  | list      | [`list()`](https://rdrr.io/r/base/list.html) | Named list of additional columns to add                                                                      |
-| `overwrite`    | logical   | FALSE                                        | Overwrite existing output                                                                                    |
-| `verbose`      | logical   | TRUE                                         | Show detailed messages                                                                                       |
-| `progress`     | logical   | TRUE                                         | Show progress bar                                                                                            |
-| `delete_input` | logical   | FALSE                                        | Delete input JSON after conversion                                                                           |
-| `workers`      | integer   | 1                                            | Number of parallel workers                                                                                   |
+| Parameter | Type | Default | Description |
+|----|----|----|----|
+| `input_json` | character | required | Directory of JSON files from [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) |
+| `output` | character | required | Output directory for JSONL files |
+| `add_columns` | list | [`list()`](https://rdrr.io/r/base/list.html) | Named list of additional columns to add |
+| `overwrite` | logical | FALSE | Overwrite existing output |
+| `verbose` | logical | TRUE | Show detailed messages |
+| `progress` | logical | TRUE | Show progress bar |
+| `delete_input` | logical | FALSE | Delete input JSON after conversion |
+| `workers` | integer | 1 | Number of parallel workers |
 
 ### Internal Flow
 
@@ -642,6 +704,7 @@ queries. Key features:
 ### Function Signature
 
 ``` r
+
 pro_request_jsonl_parquet(
   input_jsonl = NULL,
   output = NULL,
@@ -754,19 +817,39 @@ flowchart LR
 
 ### Output Structure
 
-The Parquet dataset is partitioned by the `page` field:
+For a flat (single-URL) input:
 
     data/parquet/
-    ├── page=chunk_1_1/
-    │   └── data_0.parquet
-    ├── page=chunk_1_2/
-    │   └── data_0.parquet
-    ├── page=chunk_2_1/
-    │   └── data_0.parquet
+    ├── results_page_1.parquet
+    ├── results_page_2.parquet
     └── ...
 
-This partitioning enables efficient filtering when querying subsets of
-the data.
+For a flat list of URLs (e.g. `chunk_1`, `chunk_2` from auto-chunking):
+
+    data/parquet/
+    ├── query=chunk_1/
+    │   ├── results_page_1.parquet
+    │   └── results_page_2.parquet
+    └── query=chunk_2/
+        └── results_page_1.parquet
+
+For a two-level nested list:
+
+    data/parquet/
+    ├── query=year_2022/
+    │   └── results_page_1.parquet
+    ├── query=year_2023/
+    │   └── results_page_1.parquet
+    └── query=institutions/
+        ├── query_l2=usa/
+        │   └── results_page_1.parquet
+        └── query_l2=uk/
+            └── results_page_1.parquet
+
+The hive partition columns (`query`, `query_l2`, …) become regular
+columns when you open the dataset with
+[`arrow::open_dataset()`](https://arrow.apache.org/docs/r/reference/open_dataset.html),
+enabling efficient predicate pushdown.
 
 ------------------------------------------------------------------------
 
@@ -777,6 +860,7 @@ the data.
 #### Output Directory Exists
 
 ``` r
+
 pro_request(query_url = url, output = "data/json")
 # Error: Directory data/json exists.
 # Either specify `overwrite = TRUE` or delete it.
@@ -788,6 +872,7 @@ pro_request(query_url = url, output = "data/json", overwrite = TRUE)
 #### No Output Specified
 
 ``` r
+
 pro_request(query_url = url)
 # Error: No `output` specified!
 ```
@@ -805,6 +890,7 @@ You can check your current budget and remaining allowance at any time
 with:
 
 ``` r
+
 pro_rate_limit_status()
 ```
 
@@ -816,6 +902,7 @@ amount used, remaining balance, and seconds until the daily reset.
 OpenAlex has a maximum request size of 4094 characters. If exceeded:
 
 ``` r
+
 meta <- pro_count(query_url = very_long_url)
 meta$count
 # [1] -4195  # Negative indicates error
@@ -835,6 +922,7 @@ with chunking (it handles this automatically).
 Progress bars help monitor long downloads and estimate completion:
 
 ``` r
+
 pro_request(url, output = "data", progress = TRUE)
 ```
 
@@ -843,6 +931,7 @@ pro_request(url, output = "data", progress = TRUE)
 Start with smaller page limits during development:
 
 ``` r
+
 # Development: small sample
 pro_request(url, output = "test", pages = 10)
 
@@ -853,6 +942,7 @@ pro_request(url, output = "data", pages = 10000)
 ### 3. Enable Error Logging for Large Jobs
 
 ``` r
+
 pro_request(
   query_url = urls,
   output = "data/json",
@@ -865,6 +955,7 @@ pro_request(
 Use `delete_input = TRUE` to save disk space:
 
 ``` r
+
 # Convert and delete JSON
 pro_request_jsonl(
   input_json = "data/json",
@@ -885,6 +976,7 @@ pro_request_jsonl_parquet(
 More workers isn’t always better:
 
 ``` r
+
 # Good for many small chunks
 pro_request(urls, output = "data", workers = 4)
 

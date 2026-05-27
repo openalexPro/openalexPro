@@ -1,51 +1,84 @@
-# Build a Parquet index for fast ID lookups in a parquet corpus
+# Build a Parquet ID-lookup index
 
-This function creates a Parquet index that maps OpenAlex IDs to their
-physical location in the parquet corpus. This enables fast random access
-to specific records without scanning entire partitions.
+Builds a `<dataset>_id_idx.parquet` index from the Parquet corpus
+produced by
+[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
+enabling fast record retrieval by OpenAlex ID using
+[`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md).
 
 ## Usage
 
 ``` r
-build_corpus_index(corpus_dir, memory_limit = NULL, workers = NULL)
+build_corpus_index(
+  root_dir = NULL,
+  data_sets = NULL,
+  workers = NULL,
+  memory_limit = NULL,
+  overwrite = FALSE,
+  verbose = TRUE,
+  corpus_dir = NULL
+)
 ```
 
 ## Arguments
 
-- corpus_dir:
+- root_dir:
 
-  Path to the parquet corpus directory.
+  Root directory containing a `parquet/` subdirectory produced by
+  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md).
+  If provided, the index for each dataset in `data_sets` is created at
+  `<root_dir>/parquet/<dataset>_id_idx.parquet`.
 
-- memory_limit:
+- data_sets:
 
-  DuckDB memory limit (e.g., "20GB"). Default is `NULL`.
+  Character vector of dataset names to index (e.g.
+  `c("works", "authors")`). `NULL` indexes all datasets found under
+  `<root_dir>/parquet/`. Ignored when `corpus_dir` is provided.
 
 - workers:
 
-  Number of parallel workers for Stage 1 indexing and DuckDB threads for
-  Stage 2. Default is `NULL` (use all cores).
+  Number of parallel workers for Stage 1 indexing. Default is `NULL`
+  (sequential).
+
+- memory_limit:
+
+  DuckDB memory limit (e.g., `"20GB"`). Default is `NULL`.
+
+- overwrite:
+
+  If `TRUE`, rebuilds existing indexes. Default is `FALSE` (skip if the
+  index already exists).
+
+- verbose:
+
+  Print progress messages. Default is `TRUE`.
+
+- corpus_dir:
+
+  Explicit path to a single dataset Parquet directory (e.g.
+  `"/Volumes/openalex/parquet/works"`). The index is written as a
+  sibling file: `<parent>/<basename>_id_idx.parquet`. When this is
+  provided, `root_dir` and `data_sets` are ignored.
 
 ## Value
 
-Invisibly returns the path to the created index.
+When `corpus_dir` is provided, invisibly returns the path to the created
+index file. When `root_dir` is used, invisibly returns `root_dir`.
 
 ## Details
 
-The index file will be created in the same directory as the `corpus_dir`
-and has to stay there for the lookup to function. Together with the
-`corpus_dir`, the index file can be moved to any location.
+The function uses a two-stage approach:
 
-The function is memory-efficient and can handle 300M+ records by using a
-two-stage approach: first indexing each parquet file individually
-(bounded memory per file), then combining into a single parquet index
-file. This avoids loading the entire dataset at once. Stage 1 is
-parallelized using
-[`future.apply::future_lapply()`](https://future.apply.futureverse.org/reference/future_lapply.html)
-and supports resuming if interrupted. On macOS, a
-`.metadata_never_index` file is created in the temporary directory to
-prevent Spotlight from indexing the parquet files during building.
+1.  Index each parquet file individually (bounded memory, parallel via
+    rayon, with resume support).
 
-The index contains the following columns:
+2.  Combine the per-file shard indexes into a single parquet index.
+
+Paths can be supplied as a single `root_dir` (which iterates over all
+requested `data_sets`) or as an explicit `corpus_dir` pointing to a
+single dataset directory.
+
+The index contains columns:
 
 - id:
 
@@ -57,19 +90,34 @@ The index contains the following columns:
 
 - parquet_file:
 
-  Relative path to the parquet file in the corpus
+  Relative path to the Parquet file in the corpus
 
 - file_row_number:
 
   Row number within the file (0-indexed)
 
+## See also
+
+[`build_corpus_index_R()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index_R.md)
+for the pure-R/DuckDB fallback,
+[`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+for ID-based record retrieval.
+
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# Build partitioned index for OpenAlex IDs (fast O(1) lookup)
+build_corpus_index(root_dir = "/Volumes/openalex")
+
 build_corpus_index(
-  corpus_dir = "/Volumes/openalex/parquet/works",
+  root_dir  = "/Volumes/openalex",
+  data_sets = "works",
+  workers   = 4
+)
+
+# Single explicit directory:
+build_corpus_index(
+  corpus_dir   = "/Volumes/openalex/parquet/works",
   memory_limit = "20GB"
 )
 } # }

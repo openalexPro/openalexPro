@@ -60,11 +60,11 @@ flowchart TD
     style AC    fill:#cce5ff,stroke:#0066cc,stroke-width:2px
 ```
 
-| Colour     | Meaning                                                                 |
-|------------|-------------------------------------------------------------------------|
-| Blue       | OpenAlex online resource                                                |
-| Orange     | OpenAlex Snapshot (local bulk input)                                    |
-| Green      | Output data (Parquet dataset, PDF/XML files)                            |
+| Colour | Meaning |
+|----|----|
+| Blue | OpenAlex online resource |
+| Orange | OpenAlex Snapshot (local bulk input) |
+| Green | Output data (Parquet dataset, PDF/XML files) |
 | Light blue | `api_call()` — internal HTTP helper shared by all API-calling functions |
 
 ## Two Approaches
@@ -85,10 +85,10 @@ flowchart TD
     style Advanced fill:#cce5ff
 ```
 
-| Approach                                                                                | When to Use                                                              |
-|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| **Simple**: [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | Quick analysis, standard workflow, getting started                       |
-| **Advanced**: Individual functions                                                      | Custom processing from downloaded json, more control, advanced workflows |
+| Approach | When to Use |
+|----|----|
+| **Simple**: [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | Quick analysis, standard workflow, getting started |
+| **Advanced**: Individual functions | Custom processing from downloaded json, more control, advanced workflows |
 
 ## Simple Approach: `pro_fetch()`
 
@@ -125,6 +125,7 @@ flowchart LR
 ### Example
 
 ``` r
+
 library(openalexPro)
 
 # Build query
@@ -208,6 +209,7 @@ flowchart TD
 ### Step 1: Build and Validate Query
 
 ``` r
+
 library(openalexPro)
 
 # Build the query URL
@@ -236,6 +238,7 @@ print(paste("Results:", count$count))
 ### Step 2: Download JSON from API
 
 ``` r
+
 # Download with progress bar
 pro_request(
   query_url = url,
@@ -258,6 +261,7 @@ pro_request(
 ### Step 3: Transform to JSONL
 
 ``` r
+
 # Convert JSON to JSONL with parallel processing
 pro_request_jsonl(
   input_json = "data/json",
@@ -302,6 +306,7 @@ flowchart LR
 ### Step 4: Convert to Parquet
 
 ``` r
+
 # Convert JSONL to Parquet with schema harmonization
 pro_request_jsonl_parquet(
   input_jsonl = "data/jsonl",
@@ -349,6 +354,7 @@ flowchart TD
 ### Step 5: Analyze with DuckDB
 
 ``` r
+
 library(duckdb)
 library(DBI)
 
@@ -428,6 +434,7 @@ flowchart TD
 ```
 
 ``` r
+
 # Large DOI list - automatically chunked
 dois <- readLines("my_dois.txt") # 1000+ DOIs
 
@@ -459,6 +466,7 @@ pro_request_jsonl(
 For very large datasets, delete intermediate files:
 
 ``` r
+
 # Delete JSON after JSONL conversion
 pro_request_jsonl(
   input_json = "data/json",
@@ -493,6 +501,7 @@ flowchart LR
 Check if processing completed:
 
 ``` r
+
 # Check if download is complete
 if (file.exists("data/json/00_in.progress")) {
   message("Download still in progress or was interrupted!")
@@ -508,6 +517,7 @@ if (file.exists("data/json/00_in.progress")) {
 Analyze research output from multiple institutions:
 
 ``` r
+
 # MIT, Stanford, Harvard
 institutions <- c("I63966007", "I97018004", "I136199984")
 
@@ -567,6 +577,7 @@ dbDisconnect(con)
 Build a citation network for a set of papers:
 
 ``` r
+
 # Start with seed papers
 seed_dois <- c(
   "10.1038/nature12373",
@@ -605,6 +616,7 @@ for (doi in seed_dois) {
 Track research trends over time:
 
 ``` r
+
 # Get publication counts by year using group_by
 url <- pro_query(
   entity = "works",
@@ -628,6 +640,7 @@ pro_request(
 Analyze which concepts appear together:
 
 ``` r
+
 url <- pro_query(
   entity = "works",
   search = "climate change",
@@ -677,6 +690,7 @@ works) via `content.openalex.org`. Use
 to retrieve them. Each file costs **\$0.01**.
 
 ``` r
+
 # Step 1: find works that have a PDF available
 url <- pro_query(
   entity = "works",
@@ -723,6 +737,7 @@ identify any files that need retrying.
 For TEI XML (structured full text parsed by Grobid):
 
 ``` r
+
 results_xml <- pro_download_content(
   ids    = ids,
   output = "oa_works/xml",
@@ -793,17 +808,17 @@ flowchart TD
 
 ## Function Quick Reference
 
-| Function                                                                                                    | Purpose                                   | Key Parameters                    |
-|-------------------------------------------------------------------------------------------------------------|-------------------------------------------|-----------------------------------|
-| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)                                 | Build API URL                             | entity, search, filters, select   |
-| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)                                 | Get result count                          | query_url                         |
-| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)                                 | **All-in-one download**                   | query_url, project_folder         |
-| [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)                             | Download JSON                             | query_url, output, pages, workers |
-| [`pro_request_jsonl()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl.md)                 | Convert to JSONL                          | input_json, output, workers       |
-| [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) | Convert to Parquet                        | input_jsonl, output, sample_size  |
-| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)   | Test credentials (optional helper)        | api_key                           |
-| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)         | Check rate limit usage & remaining budget | api_key, verbose                  |
-| [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)           | Download full-text PDFs or TEI XML        | ids, output, format, workers      |
+| Function | Purpose | Key Parameters |
+|----|----|----|
+| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) | Build API URL | entity, search, filters, select |
+| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) | Get result count | query_url |
+| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | **All-in-one download** | query_url, project_folder |
+| [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) | Download JSON | query_url, output, pages, workers |
+| `pro_request_jsonl()` | Convert to JSONL | input_json, output, workers |
+| [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) | Convert to Parquet | input_jsonl, output, sample_size |
+| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) | Test credentials (optional helper) | api_key |
+| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check rate limit usage & remaining budget | api_key, verbose |
+| [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md) | Download full-text PDFs or TEI XML | ids, output, format, workers |
 
 ## See Also
 

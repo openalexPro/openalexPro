@@ -10,7 +10,7 @@
   Documentation](https://rkrug.github.io/openalexPro/articles/pro_query.md):
 - [\`pro_request()\` - Background and Technical
   Documentation](https://rkrug.github.io/openalexPro/articles/pro_request.md):
-- [Snapshot Conversion: Schema Inference and Parquet
-  Writing](https://rkrug.github.io/openalexPro/articles/snapshot_conversion.md):
+- [Snapshot Conversion: Binary Wrapper and Pure-R
+  Fallbacks](https://rkrug.github.io/openalexPro/articles/snapshot_conversion.md):
 - [Working with OpenAlex
   Snapshots](https://rkrug.github.io/openalexPro/articles/snapshot.md):
