@@ -2,67 +2,20 @@
 % Please edit documentation in R/build_corpus_index.R
 \name{build_corpus_index}
 \alias{build_corpus_index}
-\title{Build a Parquet ID-lookup index via openalex-snapshot}
+\title{Build a Parquet ID-lookup index}
 \usage{
-build_corpus_index(
-  root_dir,
-  data_sets = NULL,
-  workers = NULL,
-  profile = c("balanced", "safe", "fast"),
-  max_memory_mb = NULL,
-  overwrite = FALSE,
-  progress = TRUE,
-  oas_bin = NULL
-)
+build_corpus_index(...)
 }
 \arguments{
-\item{root_dir}{Root directory containing the \code{parquet/} subdirectory
-produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}.}
-
-\item{data_sets}{Character vector of dataset names to index (e.g.
-\code{c("works", "authors")}). \code{NULL} indexes all datasets.}
-
-\item{workers}{Number of parallel worker threads. \code{NULL} uses the
-binary's default (4).}
-
-\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
-(default), or \code{"fast"}.}
-
-\item{max_memory_mb}{Optional per-worker memory cap in MB.}
-
-\item{overwrite}{If \code{TRUE}, rebuilds existing indexes. Default is
-\code{FALSE} (skip if index already exists).}
-
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
-
-\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
-(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
-}
-\value{
-Invisibly returns \code{root_dir}.
+\item{...}{Ignored.}
 }
 \description{
-Delegates index creation to the external \code{openalex-snapshot} binary.
-The binary builds \code{<dataset>_id_idx.parquet} inside
-\code{<root_dir>/parquet/}, enabling fast record retrieval by OpenAlex ID
-using \code{\link[=lookup_by_id]{lookup_by_id()}}.
-}
-\details{
-The pure-R fallback is available as \code{\link[=build_corpus_index_R]{build_corpus_index_R()}}.
-}
-\examples{
-\dontrun{
-build_corpus_index(root_dir = "/Volumes/openalex")
+**Moved to the \pkg{openalexSnapshot} package.**
 
-build_corpus_index(
-  root_dir  = "/Volumes/openalex",
-  data_sets = "works",
-  workers   = 4
-)
-}
-
+This function has been removed from \pkg{openalexPro}.
+Please install the \pkg{openalexSnapshot} package and call
+`openalexSnapshot::build_corpus_index()` instead.
 }
 \seealso{
-\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} for the pure-R fallback,
-\code{\link[=lookup_by_id]{lookup_by_id()}} for ID-based record retrieval.
+\url{https://github.com/rkrug/openalexSnapshot}
 }

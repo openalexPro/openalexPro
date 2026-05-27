@@ -58,7 +58,7 @@
 #'
 #' @export
 
-pro_request_jsonl <- function(
+pro_request_jsonl_R <- function(
   input_json = NULL,
   output = NULL,
   add_columns = list(),
@@ -68,6 +68,15 @@ pro_request_jsonl <- function(
   delete_input = FALSE,
   workers = 1
 ) {
+  .Deprecated(
+    new = "pro_request_parquet",
+    msg = paste0(
+      "`pro_request_jsonl_R()` + `pro_request_jsonl_parquet()` are deprecated.\n",
+      "Use `pro_request_parquet()` instead: it converts JSON directly to Parquet\n",
+      "in one step with no intermediate JSONL files on disk."
+    )
+  )
+
   # Argument checks --------------------------------------------------------
 
   if (is.null(output)) {

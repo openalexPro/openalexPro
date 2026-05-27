@@ -2,76 +2,20 @@
 % Please edit documentation in R/snapshot_to_parquet.R
 \name{snapshot_to_parquet}
 \alias{snapshot_to_parquet}
-\title{Convert OA snapshot to Parquet format via openalex-snapshot}
+\title{Convert OA snapshot to Parquet format}
 \usage{
-snapshot_to_parquet(
-  root_dir,
-  data_sets = NULL,
-  workers = NULL,
-  profile = c("balanced", "safe", "fast"),
-  max_memory_mb = NULL,
-  sample_size = 100L,
-  refresh_cache = FALSE,
-  progress = TRUE,
-  oas_bin = NULL
-)
+snapshot_to_parquet(...)
 }
 \arguments{
-\item{root_dir}{Root directory containing the snapshot and parquet
-subdirectories (see Details).}
-
-\item{data_sets}{Character vector of dataset names to convert (e.g.
-\code{c("works", "authors")}). \code{NULL} converts all datasets.}
-
-\item{workers}{Number of parallel worker threads. \code{NULL} uses the
-binary's default (4).}
-
-\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
-(default), or \code{"fast"}.}
-
-\item{max_memory_mb}{Optional per-worker memory cap in MB.}
-
-\item{sample_size}{Number of source files to sample for schema inference.
-Default is \code{100}.}
-
-\item{refresh_cache}{If \code{TRUE}, forces re-inference of the schema
-(ignores cached schema). Default is \code{FALSE}.}
-
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
-
-\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
-(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
-}
-\value{
-Invisibly returns \code{root_dir}.
+\item{...}{Ignored.}
 }
 \description{
-Delegates conversion of OpenAlex snapshot \code{.json.gz} files to Parquet to the
-external \code{openalex-snapshot} binary (the companion Rust CLI tool).
-The binary derives all paths from a single root directory:
-\describe{
-\item{\code{<root_dir>/openalex-snapshot/}}{Source snapshot data}
-\item{\code{<root_dir>/parquet/}}{Parquet output}
-\item{\code{<root_dir>/.openalex-snapshot_metadata/}}{Logs, schema cache, reports}
-}
-}
-\details{
-The pure-R fallback implementation is available as \code{\link[=snapshot_to_parquet_R]{snapshot_to_parquet_R()}}.
-}
-\examples{
-\dontrun{
-snapshot_to_parquet(root_dir = "/Volumes/openalex")
+**Moved to the \pkg{openalexSnapshot} package.**
 
-snapshot_to_parquet(
-  root_dir  = "/Volumes/openalex",
-  data_sets = c("authors", "works"),
-  workers   = 4,
-  profile   = "safe"
-)
-}
-
+This function has been removed from \pkg{openalexPro}.
+Please install the \pkg{openalexSnapshot} package and call
+`openalexSnapshot::snapshot_to_parquet()` instead.
 }
 \seealso{
-\code{\link[=snapshot_to_parquet_R]{snapshot_to_parquet_R()}} for the pure-R fallback,
-\code{\link[=build_corpus_index]{build_corpus_index()}} for indexing the resulting Parquet files.
+\url{https://github.com/rkrug/openalexSnapshot}
 }

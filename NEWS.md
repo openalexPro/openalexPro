@@ -1,6 +1,36 @@
 # openalexPro (development)
 
+## Breaking Changes
+
+* `snapshot_to_parquet()`, `build_corpus_index()`, and `lookup_by_id()` have
+  moved to the **openalexSnapshot** package. Calling them in `openalexPro` now
+  raises an informative error. Their `_R` variants have been removed entirely.
+
+* `pro_request_parquet_R()` and `pro_fetch_R()` removed. `pro_request_parquet()`
+  and `pro_fetch()` are now the single pure-R/DuckDB implementations.
+
+## Internal Changes
+
+* Rust/Cargo build dependency removed; `openalexPro` is now a pure-R package.
+  No Rust toolchain is required to install or use it.
+
+* `oa_works_abstract_sql()`, `oa_works_citation_sql()`, and
+  `oa_normalize_duckdb_type()` are now implemented in R (behaviour unchanged).
+
+# openalexPro 0.9.0
+
 ## New Features
+
+* **Rust backend via `extendr`.**  Core functions now delegate to a compiled
+  Rust library (`openalex-core` v0.5.0) for JSON→Parquet conversion, schema
+  inference, corpus indexing, and ID-based record lookup.  Pure-R `_R` variants
+  remain as fallbacks.  This eliminates the external `openalex-snapshot` binary
+  dependency for the main pipeline.
+
+* **`pro_rate_limit_status()`** — query your OpenAlex API rate-limit status
+  (daily budget, used, remaining, prepaid balance, reset time, per-endpoint
+  costs).  Returns a list invisibly; prints a formatted summary when
+  `verbose = TRUE`.
 
 * New debug option `openalexPro.ratelimit_check`: when set to `TRUE` via
   `options(openalexPro.ratelimit_check = TRUE)`, every API call prints the

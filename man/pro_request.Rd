@@ -9,7 +9,7 @@ pro_request(
   pages = 1e+05,
   output = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
@@ -34,7 +34,7 @@ directory is removed upfront. If \code{FALSE} (the default) and \code{output}
 already exists, the function stops with an error.}
 
 \item{api_key}{Character string API key or \code{NULL}. Defaults to
-\code{Sys.getenv("openalexPro.apikey")}. If \code{NULL} or \code{""}, requests are sent
+\code{pro_api_key()}. If \code{NULL} or \code{""}, requests are sent
 without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{workers}{Number of parallel workers to use if \code{query_url} is a list. Defaults to 1.}

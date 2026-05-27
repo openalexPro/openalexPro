@@ -13,7 +13,7 @@ skip_if_not_live_openalex <- function() {
     )
   }
 
-  api_key <- Sys.getenv("openalexPro.apikey", unset = "")
+  api_key <- pro_api_key()
   if (!nzchar(api_key) || identical(api_key, "test-api-key")) {
     testthat::skip(
       "No real API key found. Set openalexPro.apikey to run live OpenAlex tests."

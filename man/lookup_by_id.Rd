@@ -2,69 +2,20 @@
 % Please edit documentation in R/lookup_by_id.R
 \name{lookup_by_id}
 \alias{lookup_by_id}
-\title{Look up records by ID and extract them into a project directory}
+\title{Look up records by OpenAlex ID}
 \usage{
-lookup_by_id(
-  root_dir,
-  ids,
-  project_dir,
-  data_sets = NULL,
-  workers = NULL,
-  profile = c("balanced", "safe", "fast"),
-  progress = TRUE,
-  oas_bin = NULL
-)
+lookup_by_id(...)
 }
 \arguments{
-\item{root_dir}{Root directory containing \code{parquet/} and the dataset
-indexes produced by \code{\link[=build_corpus_index]{build_corpus_index()}}.}
-
-\item{ids}{Character vector of OpenAlex IDs to retrieve. Can be long form
-(e.g. \code{"https://openalex.org/W2741809807"}) or short form
-(e.g. \code{"W2741809807"}).}
-
-\item{project_dir}{Project output directory. Extracted Parquet files are
-written to \code{<project_dir>/snapshot_extract_<dataset>.parquet},
-consistent with the project-folder convention used by \code{\link[=pro_request]{pro_request()}} and
-\code{\link[=pro_fetch]{pro_fetch()}}.}
-
-\item{data_sets}{Character vector of dataset names to search (e.g.
-\code{c("works", "authors")}). \code{NULL} searches all datasets.}
-
-\item{workers}{Number of parallel worker threads. \code{NULL} uses the
-binary's default (4).}
-
-\item{profile}{Performance/memory profile: \code{"safe"}, \code{"balanced"}
-(default), or \code{"fast"}.}
-
-\item{progress}{Show progress bars. Default is \code{TRUE}.}
-
-\item{oas_bin}{Path to the \code{openalex-snapshot} binary. If \code{NULL}
-(default), checks \code{getOption("openalexPro.oas_bin")} then PATH.}
-}
-\value{
-Invisibly returns \code{project_dir}.
+\item{...}{Ignored.}
 }
 \description{
-Delegates ID-based record extraction to the external
-\code{openalex-snapshot} binary. The binary uses the pre-built index
-(created by \code{\link[=build_corpus_index]{build_corpus_index()}}) to locate records efficiently and writes
-them as Parquet files into \code{<project_dir>/snapshot_extract/}.
-}
-\details{
-The pure-R fallback is available as \code{\link[=lookup_by_id_R]{lookup_by_id_R()}}.
-}
-\examples{
-\dontrun{
-lookup_by_id(
-  root_dir    = "/Volumes/openalex",
-  ids         = c("W2741809807", "W1234567890"),
-  project_dir = "my_project"
-)
-}
+**Moved to the \pkg{openalexSnapshot} package.**
 
+This function has been removed from \pkg{openalexPro}.
+Please install the \pkg{openalexSnapshot} package and call
+`openalexSnapshot::lookup_by_id()` instead.
 }
 \seealso{
-\code{\link[=lookup_by_id_R]{lookup_by_id_R()}} for the pure-R fallback,
-\code{\link[=build_corpus_index]{build_corpus_index()}} for building the required index.
+\url{https://github.com/rkrug/openalexSnapshot}
 }

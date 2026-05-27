@@ -23,7 +23,7 @@
 #'   directory is removed upfront. If `FALSE` (the default) and `output`
 #'   already exists, the function stops with an error.
 #' @param api_key Character string API key or `NULL`. Defaults to
-#'   `Sys.getenv("openalexPro.apikey")`. If `NULL` or `""`, requests are sent
+#'   `pro_api_key()`. If `NULL` or `""`, requests are sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
 #' @param workers Number of parallel workers to use if `query_url` is a list. Defaults to 1.
 #' @param verbose Logical indicating whether to show verbose messages.
@@ -51,17 +51,23 @@ pro_request <- function(
   pages = 100000,
   output = NULL,
   overwrite = FALSE,
-  api_key = Sys.getenv("openalexPro.apikey"),
+  api_key = pro_api_key(),
   workers = 1,
   verbose = FALSE,
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL
 ) {
-  if (is.null(api_key) || (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))) {
+  if (
+    is.null(api_key) ||
+      (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
+  ) {
     api_key <- NULL
   } else if (!is.character(api_key) || length(api_key) != 1) {
-    stop("`api_key` must be NULL or a length-1 character string.", call. = FALSE)
+    stop(
+      "`api_key` must be NULL or a length-1 character string.",
+      call. = FALSE
+    )
   }
 
   if (!is.null(error_log)) {
@@ -85,7 +91,9 @@ pro_request <- function(
     if (!is.null(output) && dir.exists(output)) {
       if (!overwrite) {
         stop(
-          "Directory ", output, " exists.\n",
+          "Directory ",
+          output,
+          " exists.\n",
           "Either specify `overwrite = TRUE` or delete it."
         )
       }
@@ -94,8 +102,8 @@ pro_request <- function(
 
     # Flatten nested list to leaf (URL, path) pairs
     leaf_queries <- collect_leaf_queries(query_url)
-    leaf_urls    <- vapply(leaf_queries, `[[`, character(1), "url")
-    leaf_paths   <- lapply(leaf_queries, `[[`, "path")
+    leaf_urls <- vapply(leaf_queries, `[[`, character(1), "url")
+    leaf_paths <- lapply(leaf_queries, `[[`, "path")
 
     # Handle count_only case
     if (count_only) {

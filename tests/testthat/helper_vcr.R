@@ -3,7 +3,9 @@ library("vcr")
 # Normalize numeric types recursively (integer -> numeric)
 # This handles the 0 vs 0.0 difference across platforms
 normalize_numerics <- function(obj) {
-  if (is.null(obj)) return(obj)
+  if (is.null(obj)) {
+    return(obj)
+  }
   if (is.list(obj)) {
     return(lapply(obj, normalize_numerics))
   }
@@ -16,8 +18,14 @@ normalize_numerics <- function(obj) {
 # Platform-agnostic JSON comparison for expect_snapshot_file()
 # Parses JSON and compares as R objects, ignoring formatting differences
 compare_json <- function(old, new) {
-  old_parsed <- normalize_numerics(jsonlite::read_json(old, simplifyVector = FALSE))
-  new_parsed <- normalize_numerics(jsonlite::read_json(new, simplifyVector = FALSE))
+  old_parsed <- normalize_numerics(jsonlite::read_json(
+    old,
+    simplifyVector = FALSE
+  ))
+  new_parsed <- normalize_numerics(jsonlite::read_json(
+    new,
+    simplifyVector = FALSE
+  ))
   identical(old_parsed, new_parsed)
 }
 
@@ -38,7 +46,9 @@ compare_jsonl <- function(old, new) {
 # Usage: compare = compare_json_ignore(c("db_response_time_ms", "updated_date"))
 compare_json_ignore <- function(ignore_fields) {
   remove_fields <- function(obj, fields) {
-    if (is.null(obj) || length(fields) == 0) return(obj)
+    if (is.null(obj) || length(fields) == 0) {
+      return(obj)
+    }
     if (is.list(obj)) {
       obj <- obj[!names(obj) %in% fields]
       obj <- lapply(obj, remove_fields, fields = fields)
@@ -46,8 +56,14 @@ compare_json_ignore <- function(ignore_fields) {
     obj
   }
   function(old, new) {
-    old_parsed <- normalize_numerics(jsonlite::read_json(old, simplifyVector = FALSE))
-    new_parsed <- normalize_numerics(jsonlite::read_json(new, simplifyVector = FALSE))
+    old_parsed <- normalize_numerics(jsonlite::read_json(
+      old,
+      simplifyVector = FALSE
+    ))
+    new_parsed <- normalize_numerics(jsonlite::read_json(
+      new,
+      simplifyVector = FALSE
+    ))
     old_clean <- remove_fields(old_parsed, ignore_fields)
     new_clean <- remove_fields(new_parsed, ignore_fields)
     identical(old_clean, new_clean)
@@ -59,7 +75,11 @@ vcr::vcr_configure_log(file = file.path(vcr_dir, "vcr.log"))
 
 # "all" re-records every cassette; triggered by record_cassettes.R script.
 # "new_episodes" is the normal mode: replay existing, record only missing.
-vcr_record_mode <- if (nzchar(Sys.getenv("OPENALEXPRO_RECORD_CASSETTES"))) "all" else "new_episodes"
+vcr_record_mode <- if (nzchar(Sys.getenv("OPENALEXPRO_RECORD_CASSETTES"))) {
+  "all"
+} else {
+  "new_episodes"
+}
 
 if (vcr_record_mode == "all") {
   # During recording: no query-parameter filtering so the real API key is sent
@@ -75,14 +95,17 @@ if (vcr_record_mode == "all") {
   invisible(vcr::vcr_configure(
     dir = vcr_dir,
     record = vcr_record_mode,
-    filter_request_headers  = list(api_key = "<api-key>"),
+    filter_request_headers = list(api_key = "<api-key>"),
     filter_query_parameters = list(api_key = "<api-key>")
   ))
 }
 
-# Ensure a dummy API key is set so validation passes during VCR-recorded tests
-if (!nzchar(Sys.getenv("openalexPro.apikey"))) {
-  Sys.setenv(openalexPro.apikey = "test-api-key")
+# Ensure a dummy API key is set so validation passes during VCR-recorded tests.
+# Note: pro_api_key() reads Sys.getenv("openalexPro.api_key"); use that exact
+# name here so CI (which has no real key) still sends api_key=test-api-key and
+# VCR's filter_query_parameters can normalise it to <api-key> before matching.
+if (is.null(pro_api_key())) {
+  Sys.setenv(openalexPro.api_key = "test-api-key")
 }
 
 # try(

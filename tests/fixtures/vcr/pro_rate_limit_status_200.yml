@@ -5,10 +5,21 @@ http_interactions:
   response:
     status: 200
     headers:
+      date: Fri, 22 May 2026 12:25:31 GMT
       content-type: application/json
       access-control-allow-origin: '*'
+      cache-control: no-store
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type
+      access-control-allow-methods: GET, HEAD, POST, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+      content-encoding: gzip
       server: cloudflare
+      cf-ray: 9ffbcdd32ad30395-ZRH
     body:
-      string: '{"api_key":"<api-key>","rate_limit":{"daily_budget_usd":1.0,"daily_used_usd":0.002,"daily_remaining_usd":0.998,"prepaid_balance_usd":10.0,"prepaid_remaining_usd":9.998,"resets_at":"2026-03-03T00:00:00Z","resets_in_seconds":3600,"endpoint_costs_usd":{"singleton":0.0001,"list":0.0001,"search":0.0005,"semantic":0.001,"content":0.005,"text":0.01}}}'
-  recorded_at: 2026-03-02 12:00:00
-recorded_with: VCR-vcr/2.0.0
+      string: '{"api_key":"uGr...ei5","is_grandfathered":true,"rate_limit":{"daily_budget_usd":200,"daily_used_usd":0.2238,"daily_remaining_usd":199.7762,"prepaid_balance_usd":0,"prepaid_remaining_usd":0,"prepaid_expires_at":null,"resets_at":"2026-05-23T00:00:00.000Z","resets_in_seconds":41669,"endpoint_costs_usd":{"singleton":0,"list":0.0001,"search":0.0001,"content":0.01,"semantic":0.001,"text":0.01},"credits_limit":2000000,"credits_used":2238,"credits_remaining":1997762,"onetime_credits_balance":0,"onetime_credits_remaining":0,"onetime_credits_expires_at":null,"credit_costs":{"singleton":0,"list":1,"search":1,"content":100,"semantic":10,"text":100}}}'
+  recorded_at: 2026-05-22 12:25:31
+recorded_with: VCR-vcr/2.1.0
