@@ -3,8 +3,7 @@
 #' Single-step replacement for the two-step
 #' `pro_request_jsonl_R()` + `pro_request_jsonl_parquet()` pipeline.
 #' Reads the JSON files written by [pro_request()] and converts each one to a
-#' Parquet file using the Rust backend (parallel via rayon), with no
-#' intermediate JSONL on disk.
+#' Parquet file using DuckDB, with no intermediate JSONL on disk.
 #'
 #' For works entities the function detects the presence of
 #' `abstract_inverted_index`, `authorships`, and `publication_year` in the
@@ -37,16 +36,14 @@
 #' @param overwrite Logical.  Overwrite `output` if it already exists.
 #'   Default `FALSE`.
 #' @param verbose Logical.  Show progress messages.  Default `TRUE`.
-#' @param progress Logical.  Ignored (kept for backward compatibility; progress
-#'   is reported to stderr by the Rust backend).
+#' @param progress Logical.  Show a progress bar.  Default `TRUE`.
 #' @param delete_input Logical.  Delete `input_json` after a successful
 #'   conversion.  Default `FALSE`.
 #' @param sample_size Integer.  Number of records per file passed to DuckDB's
 #'   `sample_size` option during schema inference.  Use `-1` to read all
 #'   records (accurate but slow for large files).  Default `1000`.
-#' @param workers Integer.  Number of parallel workers for
-#'   [oa_api_files_to_parquet()].  `NULL` or `1` runs sequentially.
-#'   Default `NULL`.
+#' @param workers Integer.  Number of parallel workers.
+#'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
 #'   contains `abstract_inverted_index` / `authorships` / `publication_year`,
 #'   add `abstract` and `citation` computed columns.
@@ -54,207 +51,8 @@
 #' @return Output directory path (invisibly).
 #'
 #' @seealso [pro_request()] to download the JSON files,
-#'   [pro_request_parquet_R()] for the pure-R/DuckDB fallback,
 #'   [pro_request_jsonl_R()] and [pro_request_jsonl_parquet()] for the older
 #'   two-step pipeline (now deprecated).
-#'
-#' @importFrom cli cli_alert_info
-#'
-#' @md
-#'
-#' @export
-pro_request_parquet <- function(
-  input_json = NULL,
-  output = NULL,
-  add_columns = list(),
-  overwrite = FALSE,
-  verbose = TRUE,
-  progress = TRUE,
-  delete_input = FALSE,
-  sample_size = 1000,
-  workers = NULL,
-  enrich = TRUE
-) {
-  # ── Argument checks ──────────────────────────────────────────────────────────
-  if (is.null(input_json)) stop("No `input_json` specified!")
-  if (is.null(output))     stop("No `output` specified!")
-
-  # ── Output directory ─────────────────────────────────────────────────────────
-  if (file.exists(output)) {
-    if (!overwrite) {
-      stop(
-        "output ", output, " exists.\n",
-        "Either specify `overwrite = TRUE` or delete it."
-      )
-    }
-    unlink(output, recursive = TRUE, force = TRUE)
-  }
-  dir.create(output, recursive = TRUE, showWarnings = FALSE)
-  progress_file <- file.path(output, "00_in.progress")
-  file.create(progress_file)
-  success <- FALSE
-  on.exit({ if (isTRUE(success)) unlink(progress_file) }, add = TRUE)
-
-  # ── Discover JSON files ──────────────────────────────────────────────────────
-  jsons <- list.files(
-    input_json, pattern = "\\.json$", full.names = TRUE, recursive = TRUE
-  )
-  # Sort by trailing page number so pages convert in order
-  jsons <- jsons[order(as.numeric(
-    sub(".*_([0-9]+)\\.json$", "\\1", jsons)
-  ))]
-  if (length(jsons) == 0) stop("No JSON files found in `input_json`!")
-  has_subdirs <- length(list.dirs(input_json, recursive = FALSE)) > 0
-
-  # Determine format from filename prefix
-  types <- unique(vapply(
-    basename(jsons),
-    function(b) strsplit(b, "_")[[1L]][1L],
-    character(1L)
-  ))
-  if (length(types) > 1L) stop("Mixed entity types found in `input_json`!")
-  entity_type <- if (identical(types, "group")) "group_by" else types
-  # array_field: the JSON key containing the records array; NULL for single records
-  array_field <- switch(entity_type, results = "results", group_by = "group_by", NULL)
-
-  # ── Schema inference (via Rust) ───────────────────────────────────────────────
-  # Delegate to openalex-core: runs DESCRIBE with ignore_errors=true and forces
-  # abstract_inverted_index to VARCHAR.  Returns list(list_type, columns).
-  infer_files     <- if (length(jsons) > 20L) sample(jsons, 20L) else jsons
-  array_field_str <- if (is.null(array_field)) "" else array_field
-
-  if (verbose) message("Inferring schema from ", length(infer_files), " sampled file(s)...")
-  schema        <- oa_infer_api_list_type(infer_files, array_field_str, as.integer(sample_size))
-  list_type_str <- schema$list_type
-  present_cols  <- schema$columns
-
-  # Decide which enrichment columns to add
-  add_abstract  <- enrich && "abstract_inverted_index" %in% present_cols
-  add_citation  <- enrich && all(c("authorships", "publication_year") %in% present_cols)
-
-  # Pre-compute SQL strings from openalex-core (via extendr Rust binding).
-  abstract_sql <- if (add_abstract) oa_works_abstract_sql() else NULL
-  citation_sql <- if (add_citation) oa_works_citation_sql() else NULL
-
-  # ── Compute output file paths ─────────────────────────────────────────────────
-  # Mirror input subdirectory structure using hive-partition naming
-  input_depth <- length(strsplit(gsub("\\\\", "/", input_json), "/")[[1L]])
-  hive_key    <- function(depth) if (depth == 1L) "query" else paste0("query_l", depth)
-
-  output_files <- vapply(jsons, function(f) {
-    f_parts   <- strsplit(gsub("\\\\", "/", f), "/")[[1L]]
-    fname     <- sub("\\.json$", ".parquet", basename(f))
-    rel_parts <- if (length(f_parts) > input_depth + 1L) {
-      f_parts[seq(input_depth + 1L, length(f_parts) - 1L)]
-    } else {
-      character(0L)
-    }
-    if (length(rel_parts) > 0L) {
-      hive_dirs <- mapply(
-        function(d, v) paste0(hive_key(d), "=", v),
-        seq_along(rel_parts), rel_parts,
-        SIMPLIFY = TRUE
-      )
-      do.call(file.path, c(list(output), as.list(hive_dirs), list(fname)))
-    } else {
-      file.path(output, fname)
-    }
-  }, character(1L), USE.NAMES = FALSE)
-
-  # ── Build extra SELECT fragment ───────────────────────────────────────────────
-  # Compute page identifiers per file
-  page_ids <- vapply(jsons, function(fn) {
-    if (has_subdirs) {
-      basename(dirname(fn))
-    } else {
-      sub(".*_([0-9]+)\\.json$", "\\1", basename(fn))
-    }
-  }, character(1L), USE.NAMES = FALSE)
-
-  # Build per-file extra_select strings (they differ in the page value)
-  extra_selects <- vapply(page_ids, function(pn) {
-    extras <- character(0L)
-    if (!is.null(abstract_sql)) {
-      extras <- c(extras, paste0(abstract_sql, " AS abstract"))
-    }
-    if (!is.null(citation_sql)) {
-      extras <- c(extras, paste0(citation_sql, " AS citation"))
-    }
-    extras <- c(extras, sprintf("'%s' AS page", pn))
-    if (length(add_columns) > 0L) {
-      extras <- c(
-        extras,
-        sprintf("'%s' AS %s", as.character(add_columns), names(add_columns))
-      )
-    }
-    if (length(extras) > 0L) {
-      paste(",", paste(extras, collapse = ",\n          "))
-    } else {
-      ""
-    }
-  }, character(1L), USE.NAMES = FALSE)
-
-  # ── Parallel conversion via Rust ─────────────────────────────────────────────
-  if (verbose) cli::cli_alert_info("Converting {length(jsons)} JSON file{?s} to Parquet")
-
-  # Create output directories up front (Rust creates parents, but hive dirs
-  # may be nested and it's cleaner to do it here)
-  for (out_fn in unique(dirname(output_files))) {
-    dir.create(out_fn, recursive = TRUE, showWarnings = FALSE)
-  }
-
-  workers_int <- as.integer(if (is.null(workers)) 1L else workers)
-
-  # When all extra_select strings are identical (no per-file page variation in
-  # subdirectory mode), we can call oa_api_files_to_parquet once for all files.
-  # Otherwise we must call it per unique extra_select group.
-  unique_extras <- unique(extra_selects)
-
-  if (length(unique_extras) == 1L) {
-    # Fast path: single batch call
-    oa_api_files_to_parquet(
-      input_files  = jsons,
-      output_files = output_files,
-      array_field  = array_field_str,
-      list_type    = list_type_str,
-      extra_select = unique_extras,
-      workers      = workers_int,
-      verbose      = isTRUE(verbose)
-    )
-  } else {
-    # Slow path: group by extra_select and call once per group
-    for (es in unique_extras) {
-      mask <- extra_selects == es
-      oa_api_files_to_parquet(
-        input_files  = jsons[mask],
-        output_files = output_files[mask],
-        array_field  = array_field_str,
-        list_type    = list_type_str,
-        extra_select = es,
-        workers      = workers_int,
-        verbose      = isTRUE(verbose)
-      )
-    }
-  }
-
-  if (delete_input) unlink(input_json, recursive = TRUE, force = TRUE)
-
-  success <- TRUE
-  invisible(normalizePath(output))
-}
-
-
-#' Convert JSON files from pro_request() directly to Apache Parquet (pure-R)
-#'
-#' Pure-R/DuckDB fallback for [pro_request_parquet()].  Use this variant in
-#' environments where the compiled Rust library is not available.  Both
-#' functions share the same argument signature.
-#'
-#' @inheritParams pro_request_parquet
-#'
-#' @return Output directory path (invisibly).
-#'
-#' @seealso [pro_request_parquet()]
 #'
 #' @importFrom duckdb duckdb
 #' @importFrom DBI dbConnect dbDisconnect dbExecute dbGetQuery
@@ -266,7 +64,7 @@ pro_request_parquet <- function(
 #' @md
 #'
 #' @export
-pro_request_parquet_R <- function(
+pro_request_parquet <- function(
   input_json = NULL,
   output = NULL,
   add_columns = list(),
@@ -342,8 +140,9 @@ pro_request_parquet_R <- function(
     # Paginated case: {"results":[...], "meta":{...}}
     # ignore_errors=true: OpenAlex works abstract_inverted_index can contain
     # duplicate struct keys (e.g. "the"/"The"); DuckDB struct auto-detection
-    # rejects these.  abstract_inverted_index is then forced to VARCHAR to
-    # store as raw JSON, avoiding the same error in the COPY step.
+    # rejects these.  With ignore_errors=true DuckDB infers
+    # abstract_inverted_index as MAP(VARCHAR, BIGINT[]) which handles duplicate
+    # keys correctly and works with map_entries() in oa_works_abstract_sql().
     schema_sql <- sprintf(
       "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s, ignore_errors = true%s))",
       array_field, files_sql, sample_opt
@@ -356,9 +155,6 @@ pro_request_parquet_R <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
-      # Note: ignore_errors=true causes DuckDB to infer abstract_inverted_index
-      # as MAP(VARCHAR, BIGINT[]) rather than STRUCT, so duplicate-cased keys
-      # (e.g. "the"/"The") are handled correctly and no override is needed.
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
@@ -383,7 +179,6 @@ pro_request_parquet_R <- function(
   add_abstract  <- enrich && "abstract_inverted_index" %in% present_cols
   add_citation  <- enrich && all(c("authorships", "publication_year") %in% present_cols)
 
-  # Pre-compute SQL strings from openalex-core (via extendr Rust binding).
   abstract_sql <- if (add_abstract) oa_works_abstract_sql() else NULL
   citation_sql <- if (add_citation) oa_works_citation_sql() else NULL
 

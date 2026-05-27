@@ -4,92 +4,18 @@
 \alias{build_corpus_index}
 \title{Build a Parquet ID-lookup index}
 \usage{
-build_corpus_index(
-  root_dir = NULL,
-  data_sets = NULL,
-  workers = NULL,
-  memory_limit = NULL,
-  overwrite = FALSE,
-  verbose = TRUE,
-  corpus_dir = NULL
-)
+build_corpus_index(...)
 }
 \arguments{
-\item{root_dir}{Root directory containing a \code{parquet/} subdirectory
-produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}. If provided, the index for each
-dataset in \code{data_sets} is created at
-\code{<root_dir>/parquet/<dataset>_id_idx.parquet}.}
-
-\item{data_sets}{Character vector of dataset names to index (e.g.
-\code{c("works", "authors")}). \code{NULL} indexes all datasets found
-under \code{<root_dir>/parquet/}. Ignored when \code{corpus_dir} is
-provided.}
-
-\item{workers}{Number of parallel workers for Stage 1 indexing.
-Default is \code{NULL} (sequential).}
-
-\item{memory_limit}{DuckDB memory limit (e.g., \code{"20GB"}).
-Default is \code{NULL}.}
-
-\item{overwrite}{If \code{TRUE}, rebuilds existing indexes. Default is
-\code{FALSE} (skip if the index already exists).}
-
-\item{verbose}{Print progress messages. Default is \code{TRUE}.}
-
-\item{corpus_dir}{Explicit path to a single dataset Parquet directory (e.g.
-\code{"/Volumes/openalex/parquet/works"}). The index is written as a
-sibling file: \code{<parent>/<basename>_id_idx.parquet}. When this is
-provided, \code{root_dir} and \code{data_sets} are ignored.}
-}
-\value{
-When \code{corpus_dir} is provided, invisibly returns the path to the
-created index file. When \code{root_dir} is used, invisibly returns
-\code{root_dir}.
+\item{...}{Ignored.}
 }
 \description{
-Builds a \code{<dataset>_id_idx.parquet} index from the Parquet corpus
-produced by \code{\link[=snapshot_to_parquet]{snapshot_to_parquet()}}, enabling fast record retrieval by
-OpenAlex ID using \code{\link[=lookup_by_id]{lookup_by_id()}}.
-}
-\details{
-The function uses a two-stage approach:
-\enumerate{
-\item Index each parquet file individually (bounded memory, parallel via
-rayon, with resume support).
-\item Combine the per-file shard indexes into a single parquet index.
-}
+**Moved to the \pkg{openalexSnapshot} package.**
 
-Paths can be supplied as a single \code{root_dir} (which iterates over all
-requested \code{data_sets}) or as an explicit \code{corpus_dir} pointing to
-a single dataset directory.
-
-The index contains columns:
-\describe{
-\item{id}{The OpenAlex ID}
-\item{id_block}{Block number computed as \code{floor(numeric_id / 10000)}}
-\item{parquet_file}{Relative path to the Parquet file in the corpus}
-\item{file_row_number}{Row number within the file (0-indexed)}
-}
-}
-\examples{
-\dontrun{
-build_corpus_index(root_dir = "/Volumes/openalex")
-
-build_corpus_index(
-  root_dir  = "/Volumes/openalex",
-  data_sets = "works",
-  workers   = 4
-)
-
-# Single explicit directory:
-build_corpus_index(
-  corpus_dir   = "/Volumes/openalex/parquet/works",
-  memory_limit = "20GB"
-)
-}
-
+This function has been removed from \pkg{openalexPro}.
+Please install the \pkg{openalexSnapshot} package and call
+`openalexSnapshot::build_corpus_index()` instead.
 }
 \seealso{
-\code{\link[=build_corpus_index_R]{build_corpus_index_R()}} for the pure-R/DuckDB fallback,
-\code{\link[=lookup_by_id]{lookup_by_id()}} for ID-based record retrieval.
+\url{https://github.com/rkrug/openalexSnapshot}
 }

@@ -83,8 +83,7 @@
 #' }
 #'
 #' @export
-#' @importFrom httr2 request req_url_query req_user_agent req_perform
-#'   resp_body_raw resp_body_string resp_status
+#' @importFrom httr2 request req_url_query req_user_agent req_perform resp_body_raw resp_body_string resp_status
 #' @importFrom future plan multisession sequential
 #' @importFrom future.apply future_lapply
 #' @importFrom progressr with_progress progressor handlers
