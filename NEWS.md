@@ -6,8 +6,8 @@
   moved to the **openalexSnapshot** package. Calling them in `openalexPro` now
   raises an informative error. Their `_R` variants have been removed entirely.
 
-* `pro_request_parquet_R()` removed. `pro_request_parquet()` is now the single
-  pure-R/DuckDB implementation.
+* `pro_request_parquet_R()` and `pro_fetch_R()` removed. `pro_request_parquet()`
+  and `pro_fetch()` are now the single pure-R/DuckDB implementations.
 
 ## Internal Changes
 

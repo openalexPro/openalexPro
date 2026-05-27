@@ -1,14 +1,11 @@
 # pro_fetch --------------------------------------------------------------------
-#
-# Both pro_fetch() and pro_fetch_R() use pro_request_parquet() for the
-# JSON → Parquet conversion step.  pro_fetch_R() is kept as an alias for
-# backwards compatibility.
 
 #' Fetch and convert OpenAlex data to Parquet
 #'
 #' Convenience wrapper that downloads records from OpenAlex via
 #' \code{\link{pro_request}()} and converts them directly to an Apache Parquet
-#' dataset via \code{\link{pro_request_parquet}()}.  No intermediate JSONL files are written.
+#' dataset via \code{\link{pro_request_parquet}()}.  No intermediate JSONL
+#' files are written.
 #'
 #' The function
 #' \itemize{
@@ -38,8 +35,7 @@
 #' @return Invisibly, the normalised path of the \code{parquet} subfolder
 #'   inside \code{project_folder}.
 #'
-#' @seealso [pro_fetch_R()] for the pure-R/DuckDB fallback,
-#'   [pro_request()] for the download step,
+#' @seealso [pro_request()] for the download step,
 #'   [pro_request_parquet()] for the conversion step.
 #'
 #' @md
@@ -72,98 +68,6 @@ pro_fetch <- function(
     warning("`count_only` is set but will be assumed to be `FALSE`")
     if (count_only) {
       stop("Setting `count_only = TRUE` is not supported in `pro_fetch()`")
-    }
-  }
-
-  if (is.null(project_folder)) {
-    project_folder <- tempdir()
-  }
-  dir.create(project_folder, recursive = TRUE, showWarnings = FALSE)
-
-  subdirs  <- c("json", "parquet")
-  existing <- subdirs[dir.exists(file.path(project_folder, subdirs))]
-  if (length(existing) > 0) {
-    if (!overwrite) {
-      stop(
-        "The following subdirectories already exist in '",
-        project_folder, "': ",
-        paste(existing, collapse = ", "),
-        ".\nEither specify `overwrite = TRUE` or delete them.",
-        call. = FALSE
-      )
-    }
-    for (d in existing) {
-      unlink(file.path(project_folder, d), recursive = TRUE)
-    }
-  }
-
-  pro_request(
-    query_url  = query_url,
-    pages      = pages,
-    output     = file.path(project_folder, "json"),
-    overwrite  = FALSE,
-    api_key    = api_key,
-    workers    = workers,
-    verbose    = verbose,
-    progress   = progress,
-    count_only = FALSE,
-    error_log  = error_log
-  ) |>
-    pro_request_parquet(
-      output       = file.path(project_folder, "parquet"),
-      overwrite    = FALSE,
-      verbose      = verbose,
-      progress     = progress,
-      delete_input = delete_input,
-      workers      = workers,
-      enrich       = enrich
-    )
-}
-
-
-#' Fetch and convert OpenAlex data to Parquet (pure-R implementation)
-#'
-#' Alias for [pro_fetch()], kept for backwards compatibility.  Both functions
-#' share the same argument signature and produce identical output via
-#' \code{\link{pro_request_parquet}()}.
-#'
-#' @inheritParams pro_fetch
-#'
-#' @return Invisibly, the normalised path of the \code{parquet} subfolder
-#'   inside \code{project_folder}.
-#'
-#' @seealso [pro_fetch()]
-#'
-#' @md
-#'
-#' @export
-pro_fetch_R <- function(
-  query_url,
-  pages          = 10000,
-  project_folder = NULL,
-  overwrite      = FALSE,
-  api_key        = pro_api_key(),
-  delete_input   = TRUE,
-  workers        = 1,
-  verbose        = FALSE,
-  progress       = TRUE,
-  enrich         = TRUE,
-  count_only,
-  error_log      = NULL
-) {
-  if (
-    is.null(api_key) ||
-    (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
-  ) {
-    api_key <- NULL
-  } else if (!is.character(api_key) || length(api_key) != 1) {
-    stop("`api_key` must be NULL or a length-1 character string.", call. = FALSE)
-  }
-
-  if (!missing(count_only)) {
-    warning("`count_only` is set but will be assumed to be `FALSE`")
-    if (count_only) {
-      stop("Setting `count_only = TRUE` is not supported in `pro_fetch_R()`")
     }
   }
 
