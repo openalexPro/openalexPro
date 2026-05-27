@@ -139,9 +139,12 @@ pro_request_parquet <- function(
 
   if (!is.null(array_field)) {
     # Paginated case: {"results":[...], "meta":{...}}
-    # Describe the schema of items inside the array
+    # Describe the schema of items inside the array.
+    # ignore_errors=true is required for OpenAlex works data: abstract_inverted_index
+    # can contain duplicate struct keys (e.g. "the" and "The") which DuckDB's
+    # struct auto-detection rejects. We override the type to VARCHAR below.
     schema_sql <- sprintf(
-      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s%s))",
+      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s, ignore_errors = true%s))",
       array_field, files_sql, sample_opt
     )
     schema_df <- tryCatch(
@@ -152,6 +155,12 @@ pro_request_parquet <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      # Store abstract_inverted_index as raw VARCHAR (same as snapshot pipeline).
+      # DuckDB folds STRUCT field names to lowercase, so duplicate-cased words
+      # (e.g. "the"/"The") cause parse errors. Storing as VARCHAR avoids this;
+      # works_abstract_expr() reads the VARCHAR field via map_entries().
+      aii_row <- schema_df$column_name == "abstract_inverted_index"
+      if (any(aii_row)) schema_df$column_type[aii_row] <- "VARCHAR"
       # Build STRUCT(...) item type and wrap as LIST
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
@@ -160,11 +169,19 @@ pro_request_parquet <- function(
     }
   } else {
     # Single-record case: bare JSON object
-    schema_sql <- sprintf("DESCRIBE SELECT * FROM read_json(%s%s)", files_sql, sample_opt)
+    # ignore_errors=true for the same duplicate-key reason as above.
+    schema_sql <- sprintf(
+      "DESCRIBE SELECT * FROM read_json(%s, ignore_errors = true%s)",
+      files_sql, sample_opt
+    )
     schema_df <- tryCatch(
       DBI::dbGetQuery(con, schema_sql),
       error = function(e) NULL
     )
+    if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      aii_row <- schema_df$column_name == "abstract_inverted_index"
+      if (any(aii_row)) schema_df$column_type[aii_row] <- "VARCHAR"
+    }
   }
 
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -384,8 +401,10 @@ pro_request_parquet_R <- function(
 
   if (!is.null(array_field)) {
     # Paginated case: {"results":[...], "meta":{...}}
+    # ignore_errors=true: OpenAlex works abstract_inverted_index can have duplicate
+    # struct keys (e.g. "the"/"The"); DuckDB struct detection rejects these.
     schema_sql <- sprintf(
-      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s%s))",
+      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s, ignore_errors = true%s))",
       array_field, files_sql, sample_opt
     )
     schema_df <- tryCatch(
@@ -396,17 +415,28 @@ pro_request_parquet_R <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      # Store abstract_inverted_index as VARCHAR to avoid duplicate-key struct errors.
+      aii_row <- schema_df$column_name == "abstract_inverted_index"
+      if (any(aii_row)) schema_df$column_type[aii_row] <- "VARCHAR"
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
       )
     }
   } else {
-    schema_sql <- sprintf("DESCRIBE SELECT * FROM read_json(%s%s)", files_sql, sample_opt)
+    # ignore_errors=true for the same duplicate-key reason as above.
+    schema_sql <- sprintf(
+      "DESCRIBE SELECT * FROM read_json(%s, ignore_errors = true%s)",
+      files_sql, sample_opt
+    )
     schema_df <- tryCatch(
       DBI::dbGetQuery(con, schema_sql),
       error = function(e) NULL
     )
+    if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      aii_row <- schema_df$column_name == "abstract_inverted_index"
+      if (any(aii_row)) schema_df$column_type[aii_row] <- "VARCHAR"
+    }
   }
 
   DBI::dbDisconnect(con, shutdown = TRUE)
