@@ -155,6 +155,15 @@ pro_request_parquet <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      # Force abstract_inverted_index to MAP(VARCHAR, BIGINT[]).
+      # When a sampled page has no duplicate-cased keys DuckDB infers the
+      # column as STRUCT(...) rather than MAP, which breaks map_entries() in
+      # oa_works_abstract_sql().  Pinning the type here ensures read_json()
+      # always parses it as MAP regardless of the sample contents.
+      aii_idx <- which(schema_df$column_name == "abstract_inverted_index")
+      if (length(aii_idx) == 1L) {
+        schema_df$column_type[aii_idx] <- "MAP(VARCHAR, BIGINT[])"
+      }
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
