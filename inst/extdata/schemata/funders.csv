@@ -1,0 +1,18 @@
+col_name,col_type
+alternate_titles,VARCHAR[]
+awards_count,BIGINT
+cited_by_count,BIGINT
+country_code,VARCHAR
+counts_by_year,"STRUCT(""year"" BIGINT, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]"
+created_date,TIMESTAMP
+description,VARCHAR
+display_name,VARCHAR
+homepage_url,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, ror VARCHAR, wikidata VARCHAR, crossref BIGINT, doi VARCHAR)"
+image_thumbnail_url,VARCHAR
+image_url,VARCHAR
+roles,"STRUCT(""role"" VARCHAR, id VARCHAR, works_count BIGINT)[]"
+summary_stats,"STRUCT(""2yr_mean_citedness"" DOUBLE, h_index BIGINT, i10_index BIGINT)"
+updated_date,DATE
+works_count,BIGINT

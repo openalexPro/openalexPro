@@ -1,0 +1,22 @@
+col_name,col_type
+alpha_3,VARCHAR
+authors_api_url,VARCHAR
+cited_by_count,VARCHAR
+continent,"STRUCT(id VARCHAR, display_name VARCHAR)"
+continent_id,BIGINT
+country_code,VARCHAR
+created_date,TIMESTAMP
+description,VARCHAR
+display_name,VARCHAR
+display_name_alternatives,VARCHAR
+full_name,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, iso VARCHAR, wikidata VARCHAR, wikipedia VARCHAR)"
+institutions_api_url,VARCHAR
+is_global_south,BOOLEAN
+numeric,BIGINT
+updated_date,DATE
+wikidata_url,VARCHAR
+wikipedia_url,VARCHAR
+works_api_url,VARCHAR
+works_count,VARCHAR

@@ -1,0 +1,10 @@
+col_name,col_type
+cited_by_count,BIGINT
+created_date,TIMESTAMP
+description,VARCHAR
+display_name,VARCHAR
+id,VARCHAR
+updated_date,DATE
+url,VARCHAR
+works_api_url,VARCHAR
+works_count,BIGINT

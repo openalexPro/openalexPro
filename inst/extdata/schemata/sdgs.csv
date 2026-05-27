@@ -1,0 +1,12 @@
+col_name,col_type
+cited_by_count,BIGINT
+created_date,TIMESTAMP
+description,VARCHAR
+display_name,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, un VARCHAR, wikidata VARCHAR)"
+image_thumbnail_url,VARCHAR
+image_url,VARCHAR
+updated_date,DATE
+works_api_url,VARCHAR
+works_count,BIGINT
