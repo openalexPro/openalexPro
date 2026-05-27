@@ -65,8 +65,8 @@ inside \code{project_folder}.
 \description{
 Convenience wrapper that downloads records from OpenAlex via
 \code{\link{pro_request}()} and converts them directly to an Apache Parquet
-dataset via \code{\link{pro_request_parquet}()} (Rust-backed, parallel via
-rayon).  No intermediate JSONL files are written.
+dataset via \code{\link{pro_request_parquet}()}.  No intermediate JSONL
+files are written.
 }
 \details{
 The function
@@ -80,7 +80,6 @@ The function
 \strong{This function assumes \code{count_only == FALSE}}
 }
 \seealso{
-\code{\link[=pro_fetch_R]{pro_fetch_R()}} for the pure-R/DuckDB fallback,
 \code{\link[=pro_request]{pro_request()}} for the download step,
 \code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step.
 }

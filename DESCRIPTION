@@ -1,7 +1,7 @@
 Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
-Version: 0.9.0
+Version: 0.10.0
 Author: Rainer M Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
 Description: More about what it does (maybe more than one line).
@@ -39,6 +39,3 @@ Encoding: UTF-8
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
-Config/rextendr/version: 0.5.0
-SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0,
-    cmake (>= 3.15), C++14 compiler (required to build bundled DuckDB), xz
