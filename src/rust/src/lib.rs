@@ -88,11 +88,48 @@ fn oa_snapshot_to_parquet(
     .map_err(|e| extendr_api::Error::Other(e.to_string()))
 }
 
+/// Infer the DuckDB schema for OpenAlex API JSON response files.
+///
+/// Runs a `DESCRIBE` query with `ignore_errors = true` on a sample of
+/// `files` and returns the inferred schema.  `abstract_inverted_index` is
+/// always stored as `VARCHAR` (raw JSON string) to avoid DuckDB's
+/// case-folding collision on duplicate JSON keys (e.g. `"the"` / `"The"`).
+///
+/// @param files        Character vector of JSON file paths to sample
+///   (at most 20 are used).
+/// @param array_field  Name of the JSON array key (`"results"`, `"group_by"`),
+///   or `""` for single-record files.
+/// @param sample_size  Records per file for DuckDB's `sample_size` option.
+///   Use `0L` to read all records.  Default `1000L`.
+/// @return A named list:
+///   \describe{
+///     \item{`list_type`}{`"STRUCT(...)[]"` string for paginated files, or
+///       `""` for single-record files and on inference failure.}
+///     \item{`columns`}{Character vector of inferred column names.}
+///   }
+/// @export
+#[extendr]
+fn oa_infer_api_list_type(
+    files: Vec<String>,
+    array_field: &str,
+    sample_size: i32,
+) -> extendr_api::Result<List> {
+    let (list_type, columns) = openalex_core::infer_api_list_type(
+        &files,
+        array_field,
+        sample_size.max(0) as usize,
+    );
+    Ok(list!(list_type = list_type, columns = columns))
+}
+
 /// Parallel per-file conversion for OpenAlex API JSON responses.
 ///
-/// Schema inference (including type normalisation) is performed in R and the
-/// result is passed as pre-computed SQL fragments.  This function handles only
-/// the parallel execution of COPY statements via rayon.
+/// When `list_type` is `""` and `array_field` is non-empty, schema inference
+/// is performed internally in Rust (up to 20 sampled files, 1000 records
+/// each, `ignore_errors = true`, `abstract_inverted_index` forced to
+/// `VARCHAR`).  For best performance, pre-compute `list_type` via
+/// [oa_infer_api_list_type()] so that schema inference runs only once and
+/// its result can also be used to decide which enrichment columns to add.
 ///
 /// @param input_files  Character vector of input JSON file paths.
 /// @param output_files Character vector of output Parquet file paths
@@ -100,7 +137,8 @@ fn oa_snapshot_to_parquet(
 /// @param array_field  Name of the JSON array key (`"results"`, `"group_by"`),
 ///   or `""` for single-record files.
 /// @param list_type    DuckDB STRUCT type string for array items, e.g.
-///   `"STRUCT(id VARCHAR, title VARCHAR)[]"`.  `""` = use `read_json_auto`.
+///   `"STRUCT(id VARCHAR, title VARCHAR)[]"`.  `""` = infer internally
+///   (paginated) or fall back to `read_json_auto` (single-record).
 /// @param extra_select SQL fragment appended after `SELECT *`, e.g.
 ///   `", abstract_expr AS abstract, 'p1' AS page"`.
 /// @param workers      Number of parallel workers.
@@ -202,6 +240,7 @@ extendr_module! {
     fn oa_works_citation_sql;
     fn oa_normalize_duckdb_type;
     fn oa_snapshot_to_parquet;
+    fn oa_infer_api_list_type;
     fn oa_api_files_to_parquet;
     fn oa_build_corpus_index;
     fn oa_lookup_by_id;

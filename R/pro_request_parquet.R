@@ -58,8 +58,6 @@
 #'   [pro_request_jsonl_R()] and [pro_request_jsonl_parquet()] for the older
 #'   two-step pipeline (now deprecated).
 #'
-#' @importFrom duckdb duckdb
-#' @importFrom DBI dbConnect dbDisconnect dbExecute dbGetQuery
 #' @importFrom cli cli_alert_info
 #'
 #' @md
@@ -119,58 +117,18 @@ pro_request_parquet <- function(
   # array_field: the JSON key containing the records array; NULL for single records
   array_field <- switch(entity_type, results = "results", group_by = "group_by", NULL)
 
-  # ── Schema inference ─────────────────────────────────────────────────────────
-  sample_opt <- if (isTRUE(sample_size > 0)) {
-    sprintf(", sample_size = %d", as.integer(sample_size))
-  } else {
-    ""
-  }
-  # Use at most 20 files for inference to keep it fast
-  infer_files <- if (length(jsons) > 20L) sample(jsons, 20L) else jsons
-  files_sql   <- paste0("[", paste0("'", infer_files, "'", collapse = ", "), "]")
-
-  schema_df <- NULL
-  list_type <- NULL  # STRUCT(...)[] type for the array items
+  # ── Schema inference (via Rust) ───────────────────────────────────────────────
+  # Delegate to openalex-core: runs DESCRIBE with ignore_errors=true and forces
+  # abstract_inverted_index to VARCHAR.  Returns list(list_type, columns).
+  infer_files     <- if (length(jsons) > 20L) sample(jsons, 20L) else jsons
+  array_field_str <- if (is.null(array_field)) "" else array_field
 
   if (verbose) message("Inferring schema from ", length(infer_files), " sampled file(s)...")
-
-  con <- DBI::dbConnect(duckdb::duckdb())
-  DBI::dbExecute(con, "INSTALL json; LOAD json;")
-
-  if (!is.null(array_field)) {
-    # Paginated case: {"results":[...], "meta":{...}}
-    # Describe the schema of items inside the array
-    schema_sql <- sprintf(
-      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s%s))",
-      array_field, files_sql, sample_opt
-    )
-    schema_df <- tryCatch(
-      DBI::dbGetQuery(con, schema_sql),
-      error = function(e) {
-        if (verbose) message("Schema inference failed: ", conditionMessage(e))
-        NULL
-      }
-    )
-    if (!is.null(schema_df) && nrow(schema_df) > 0L) {
-      # Build STRUCT(...) item type and wrap as LIST
-      struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
-      list_type <- paste0(
-        "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
-      )
-    }
-  } else {
-    # Single-record case: bare JSON object
-    schema_sql <- sprintf("DESCRIBE SELECT * FROM read_json(%s%s)", files_sql, sample_opt)
-    schema_df <- tryCatch(
-      DBI::dbGetQuery(con, schema_sql),
-      error = function(e) NULL
-    )
-  }
-
-  DBI::dbDisconnect(con, shutdown = TRUE)
+  schema        <- oa_infer_api_list_type(infer_files, array_field_str, as.integer(sample_size))
+  list_type_str <- schema$list_type
+  present_cols  <- schema$columns
 
   # Decide which enrichment columns to add
-  present_cols  <- if (!is.null(schema_df)) schema_df$column_name else character(0L)
   add_abstract  <- enrich && "abstract_inverted_index" %in% present_cols
   add_citation  <- enrich && all(c("authorships", "publication_year") %in% present_cols)
 
@@ -246,8 +204,6 @@ pro_request_parquet <- function(
   }
 
   workers_int <- as.integer(if (is.null(workers)) 1L else workers)
-  array_field_str <- if (is.null(array_field)) "" else array_field
-  list_type_str   <- if (is.null(list_type))   "" else list_type
 
   # When all extra_select strings are identical (no per-file page variation in
   # subdirectory mode), we can call oa_api_files_to_parquet once for all files.
@@ -384,8 +340,12 @@ pro_request_parquet_R <- function(
 
   if (!is.null(array_field)) {
     # Paginated case: {"results":[...], "meta":{...}}
+    # ignore_errors=true: OpenAlex works abstract_inverted_index can contain
+    # duplicate struct keys (e.g. "the"/"The"); DuckDB struct auto-detection
+    # rejects these.  abstract_inverted_index is then forced to VARCHAR to
+    # store as raw JSON, avoiding the same error in the COPY step.
     schema_sql <- sprintf(
-      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s%s))",
+      "DESCRIBE SELECT r.* FROM (SELECT unnest(%s) AS r FROM read_json(%s, ignore_errors = true%s))",
       array_field, files_sql, sample_opt
     )
     schema_df <- tryCatch(
@@ -396,13 +356,20 @@ pro_request_parquet_R <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      # Note: ignore_errors=true causes DuckDB to infer abstract_inverted_index
+      # as MAP(VARCHAR, BIGINT[]) rather than STRUCT, so duplicate-cased keys
+      # (e.g. "the"/"The") are handled correctly and no override is needed.
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
       )
     }
   } else {
-    schema_sql <- sprintf("DESCRIBE SELECT * FROM read_json(%s%s)", files_sql, sample_opt)
+    # Single-record case: bare JSON object.
+    schema_sql <- sprintf(
+      "DESCRIBE SELECT * FROM read_json(%s, ignore_errors = true%s)",
+      files_sql, sample_opt
+    )
     schema_df <- tryCatch(
       DBI::dbGetQuery(con, schema_sql),
       error = function(e) NULL

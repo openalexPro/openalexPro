@@ -24,7 +24,8 @@ oa_api_files_to_parquet(
 or `""` for single-record files.}
 
 \item{list_type}{DuckDB STRUCT type string for array items, e.g.
-`"STRUCT(id VARCHAR, title VARCHAR)[]"`.  `""` = use `read_json_auto`.}
+`"STRUCT(id VARCHAR, title VARCHAR)[]"`.  `""` = infer internally
+(paginated) or fall back to `read_json_auto` (single-record).}
 
 \item{extra_select}{SQL fragment appended after `SELECT *`, e.g.
 `", abstract_expr AS abstract, 'p1' AS page"`.}
@@ -37,7 +38,10 @@ or `""` for single-record files.}
 Invisibly returns `NULL`.
 }
 \description{
-Schema inference (including type normalisation) is performed in R and the
-result is passed as pre-computed SQL fragments.  This function handles only
-the parallel execution of COPY statements via rayon.
+When `list_type` is `""` and `array_field` is non-empty, schema inference
+is performed internally in Rust (up to 20 sampled files, 1000 records
+each, `ignore_errors = true`, `abstract_inverted_index` forced to
+`VARCHAR`).  For best performance, pre-compute `list_type` via
+[oa_infer_api_list_type()] so that schema inference runs only once and
+its result can also be used to decide which enrichment columns to add.
 }
