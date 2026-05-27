@@ -65,8 +65,7 @@ inside \code{project_folder}.
 \description{
 Convenience wrapper that downloads records from OpenAlex via
 \code{\link{pro_request}()} and converts them directly to an Apache Parquet
-dataset via \code{\link{pro_request_parquet}()} (Rust-backed, parallel via
-rayon).  No intermediate JSONL files are written.
+dataset via \code{\link{pro_request_parquet}()}.  No intermediate JSONL files are written.
 }
 \details{
 The function

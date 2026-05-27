@@ -63,10 +63,9 @@ Invisibly, the normalised path of the \code{parquet} subfolder
 inside \code{project_folder}.
 }
 \description{
-Pure-R/DuckDB fallback for \code{\link[=pro_fetch]{pro_fetch()}}.  Uses
-\code{\link{pro_request_parquet_R}()} for the conversion step instead of
-the Rust-backed \code{\link{pro_request_parquet}()}.  Both functions share
-the same argument signature and produce identical output.
+Alias for \code{\link[=pro_fetch]{pro_fetch()}}, kept for backwards compatibility.  Both functions
+share the same argument signature and produce identical output via
+\code{\link{pro_request_parquet}()}.
 }
 \seealso{
 \code{\link[=pro_fetch]{pro_fetch()}}

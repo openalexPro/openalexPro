@@ -1,15 +1,14 @@
 # pro_fetch --------------------------------------------------------------------
 #
-# Main function uses the direct JSON → Parquet pipeline (Rust-backed via
-# pro_request_parquet()).  pro_fetch_R() is the standalone pure-R fallback
-# using pro_request_parquet_R(), with an identical argument signature.
+# Both pro_fetch() and pro_fetch_R() use pro_request_parquet() for the
+# JSON → Parquet conversion step.  pro_fetch_R() is kept as an alias for
+# backwards compatibility.
 
 #' Fetch and convert OpenAlex data to Parquet
 #'
 #' Convenience wrapper that downloads records from OpenAlex via
 #' \code{\link{pro_request}()} and converts them directly to an Apache Parquet
-#' dataset via \code{\link{pro_request_parquet}()} (Rust-backed, parallel via
-#' rayon).  No intermediate JSONL files are written.
+#' dataset via \code{\link{pro_request_parquet}()}.  No intermediate JSONL files are written.
 #'
 #' The function
 #' \itemize{
@@ -124,10 +123,9 @@ pro_fetch <- function(
 
 #' Fetch and convert OpenAlex data to Parquet (pure-R implementation)
 #'
-#' Pure-R/DuckDB fallback for [pro_fetch()].  Uses
-#' \code{\link{pro_request_parquet_R}()} for the conversion step instead of
-#' the Rust-backed \code{\link{pro_request_parquet}()}.  Both functions share
-#' the same argument signature and produce identical output.
+#' Alias for [pro_fetch()], kept for backwards compatibility.  Both functions
+#' share the same argument signature and produce identical output via
+#' \code{\link{pro_request_parquet}()}.
 #'
 #' @inheritParams pro_fetch
 #'
@@ -203,7 +201,7 @@ pro_fetch_R <- function(
     count_only = FALSE,
     error_log  = error_log
   ) |>
-    pro_request_parquet_R(
+    pro_request_parquet(
       output       = file.path(project_folder, "parquet"),
       overwrite    = FALSE,
       verbose      = verbose,
