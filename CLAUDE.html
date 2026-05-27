@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,8 +22,8 @@
     <li><a class="dropdown-item" href="articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
-    <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</a></li>
-    <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots</a></li>
+    <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
+    <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -54,12 +54,7 @@
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span>      <span class="co"># Load package</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span>      <span class="co"># Regenerate roxygen2 docs and NAMESPACE</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span>          <span class="co"># Run all tests</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span>         <span class="co"># Full R CMD CHECK</span></span>
-<span></span>
-<span><span class="co"># Run a specific test file</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span>filter <span class="op">=</span> <span class="st">"013"</span><span class="op">)</span>       <span class="co"># snapshot_to_parquet</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span>filter <span class="op">=</span> <span class="st">"011"</span><span class="op">)</span>       <span class="co"># build_corpus_index</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span>filter <span class="op">=</span> <span class="st">"012"</span><span class="op">)</span>       <span class="co"># lookup_by_id</span></span></code></pre></div>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span>         <span class="co"># Full R CMD CHECK</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="live-api-tests">Live API Tests<a class="anchor" aria-label="anchor" href="#live-api-tests"></a></h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -76,16 +71,19 @@
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
-<p>The package has two functional areas:</p>
+<p>The package has one functional area: <strong>OpenAlex API access</strong>.</p>
+<p>Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the <strong><code>openalexSnapshot</code></strong> package. Calling <code><a href="reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code>, <code><a href="reference/build_corpus_index.html">build_corpus_index()</a></code>, or <code><a href="reference/lookup_by_id.html">lookup_by_id()</a></code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
 <div class="section level3">
-<h3 id="id_1-openalex-api-cloud">1. OpenAlex API (cloud)<a class="anchor" aria-label="anchor" href="#id_1-openalex-api-cloud"></a></h3>
+<h3 id="openalex-api-cloud">OpenAlex API (cloud)<a class="anchor" aria-label="anchor" href="#openalex-api-cloud"></a></h3>
 <p>Functions that query the live OpenAlex REST API:</p>
 <ul><li>
 <code><a href="reference/pro_query.html">pro_query()</a></code> — builds query URLs with filters, search, entity selection, ID chunking</li>
 <li>
-<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSONL; accepts nested lists of URLs (each nesting level becomes a subdirectory)</li>
+<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory)</li>
 <li>
-<code><a href="reference/pro_fetch.html">pro_fetch()</a></code> — all-in-one: query → paginate → convert to parquet (project folder)</li>
+<code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> — converts JSON files from <code><a href="reference/pro_request.html">pro_request()</a></code> directly to Parquet (schema inference + per-file DuckDB COPY, parallel via <code>future</code>)</li>
+<li>
+<code><a href="reference/pro_fetch.html">pro_fetch()</a></code> — all-in-one: query → paginate → convert to Parquet (project folder)</li>
 <li>
 <code><a href="reference/pro_count.html">pro_count()</a></code> — counts matching records</li>
 <li>
@@ -98,52 +96,24 @@
 </ul><p>All HTTP calls route through <code>api_call()</code> (<code>R/api_call.R</code>), which handles retries, error inspection, and <code>httr2</code> plumbing. Tests use VCR cassettes in <code>tests/fixtures/vcr/</code>.</p>
 </div>
 <div class="section level3">
-<h3 id="id_2-local-snapshot-processing">2. Local Snapshot Processing<a class="anchor" aria-label="anchor" href="#id_2-local-snapshot-processing"></a></h3>
-<p>Functions that process the OpenAlex bulk data snapshot (hundreds of GB of <code>.gz</code> NDJSON):</p>
-<div class="section level4">
-<h4 id="binary-wrappers-preferred--delegates-to-openalex-snapshot-rust-cli">Binary wrappers (preferred — delegates to <code>openalex-snapshot</code> Rust CLI)<a class="anchor" aria-label="anchor" href="#binary-wrappers-preferred--delegates-to-openalex-snapshot-rust-cli"></a></h4>
+<h3 id="sql-helpers">SQL helpers<a class="anchor" aria-label="anchor" href="#sql-helpers"></a></h3>
 <ul><li>
-<code>snapshot_to_parquet(root_dir, ...)</code> — converts JSON → parquet via <code>convert</code> command</li>
+<code><a href="reference/oa_works_abstract_sql.html">oa_works_abstract_sql()</a></code> — DuckDB SQL expression reconstructing plain-text abstract from <code>abstract_inverted_index</code> MAP column</li>
 <li>
-<code>build_corpus_index(root_dir, ...)</code> — builds ID lookup index via <code>index</code> command</li>
+<code><a href="reference/oa_works_citation_sql.html">oa_works_citation_sql()</a></code> — DuckDB SQL expression building <code>"Author (year)"</code> citation string</li>
 <li>
-<code>lookup_by_id(root_dir, ids, project_dir, ...)</code> — extracts records via <code>extract</code> command</li>
-</ul><p>These require the <code>openalex-snapshot</code> binary. Resolution order for the binary path: 1. <code>oas_bin</code> argument 2. <code>options("openalexPro.oas_bin")</code> 3. <code>Sys.which("openalex-snapshot")</code> (PATH)</p>
-<p>Internal helpers in <code>R/oas_binary.R</code>: <code><a href="reference/find_oas_binary.html">find_oas_binary()</a></code> and <code><a href="reference/run_oas.html">run_oas()</a></code>.</p>
-<p><strong>Root-dir layout</strong> (used by the binary and its wrappers):</p>
-<pre><code>&lt;root_dir&gt;/
-  openalex-snapshot/   # raw JSON .gz files
-  parquet/             # converted parquet files
-  parquet/&lt;dataset&gt;_id_idx.parquet   # lookup index
-  .openalex-snapshot_metadata/       # metadata</code></pre>
-</div>
-<div class="section level4">
-<h4 id="pure-r-fallbacks-no-binary-required">Pure-R fallbacks (no binary required)<a class="anchor" aria-label="anchor" href="#pure-r-fallbacks-no-binary-required"></a></h4>
-<ul><li>
-<code>snapshot_to_parquet_R(snapshot_dir, parquet_dir, ...)</code> — original R + DuckDB conversion</li>
-<li>
-<code>build_corpus_index_R(corpus_dir, ...)</code> — original R + DuckDB index building</li>
-<li>
-<code>lookup_by_id_R(index_file, ids, ...)</code> — original R + DuckDB record retrieval</li>
-</ul><p>These are exported and useful when the binary is unavailable. They use <code>future_lapply()</code> for parallelism and DuckDB for all heavy lifting.</p>
-</div>
-<div class="section level4">
-<h4 id="test-pattern-for-snapshot-functions">Test pattern for snapshot functions<a class="anchor" aria-label="anchor" href="#test-pattern-for-snapshot-functions"></a></h4>
-<p>Each test file (<code>test-011</code>, <code>test-012</code>, <code>test-013</code>) has two sections: - <code>*_R()</code> tests — always run (require <code>arrow</code> + <code>duckdb</code>) - Binary wrapper tests — gated with <code>skip_if(Sys.which("openalex-snapshot") == "", "...")</code></p>
-</div>
-</div>
+<code><a href="reference/oa_normalize_duckdb_type.html">oa_normalize_duckdb_type()</a></code> — canonicalises a DuckDB type string (uppercases keywords)</li>
+</ul></div>
 <div class="section level3">
 <h3 id="supporting-functions">Supporting functions<a class="anchor" aria-label="anchor" href="#supporting-functions"></a></h3>
 <ul><li>
-<code><a href="reference/infer_json_schema.html">infer_json_schema()</a></code> — per-file schema inference with two-level caching (used by <code><a href="reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code>)</li>
-<li>
 <code><a href="reference/id_block.html">id_block()</a></code> — converts an OpenAlex ID to its block number (<code>floor(numeric_id / 10000)</code>)</li>
+<li>
+<code><a href="reference/infer_json_schema.html">infer_json_schema()</a></code> — per-file schema inference with two-level caching</li>
 <li>
 <code><a href="reference/opt_select_fields.html">opt_select_fields()</a></code>, <code><a href="reference/opt_filter_names.html">opt_filter_names()</a></code> — helpers for building API queries</li>
 <li>
 <code><a href="reference/prepare_snapshot.html">prepare_snapshot()</a></code> — snapshot download/preparation utilities</li>
-<li>
-<code>collect_leaf_queries()</code> — recursively flattens a nested list of URLs into <code>(path, url)</code> pairs (internal, used by <code><a href="reference/pro_request.html">pro_request()</a></code>)</li>
 </ul></div>
 </div>
 <div class="section level2">
@@ -158,15 +128,12 @@
 <h2 id="debug-options">Debug Options<a class="anchor" aria-label="anchor" href="#debug-options"></a></h2>
 <ul><li>
 <code>options(openalexPro.ratelimit_check = TRUE)</code> — print rate-limit status before every API call (via <code>api_call()</code>)</li>
-<li>
-<code>options(openalexPro.oas_bin = "/path/to/openalex-snapshot")</code> — override binary path for snapshot functions</li>
 </ul></div>
 <div class="section level2">
 <h2 id="key-conventions">Key Conventions<a class="anchor" aria-label="anchor" href="#key-conventions"></a></h2>
 <ul><li>
-<code>project_dir</code> is the standard output directory parameter (consistent across <code><a href="reference/pro_fetch.html">pro_fetch()</a></code>, <code><a href="reference/pro_request.html">pro_request()</a></code>, <code><a href="reference/lookup_by_id.html">lookup_by_id()</a></code>)</li>
+<code>project_dir</code> is the standard output directory parameter (consistent across <code><a href="reference/pro_fetch.html">pro_fetch()</a></code>, <code><a href="reference/pro_request.html">pro_request()</a></code>)</li>
 <li>OpenAlex IDs accepted in both short form (<code>W2741809807</code>) and long form (<code>https://openalex.org/W2741809807</code>)</li>
-<li>The <code>openalex-snapshot</code> binary only accepts one <code>--dataset</code> per invocation; multi-dataset calls loop in R</li>
 <li>Nested query lists produce hive-partitioned parquet: depth 1 → <code>query=&lt;name&gt;</code>, depth N → <code>query_lN=&lt;name&gt;</code>
 </li>
 <li>VCR cassettes record/replay API calls; <code>api_key</code> is filtered to <code>&lt;api-key&gt;</code> in cassettes</li>
@@ -178,9 +145,9 @@
 <ul><li>
 <strong>On-disk processing</strong>: Each pipeline stage writes to disk before the next begins. This enables resume after crashes and avoids OOM for large datasets.</li>
 <li>
-<strong>One parquet file per gzip input file</strong>: Enables parallelism, resume, and preserves hive partition structure.</li>
+<strong>One parquet file per JSON input file</strong>: Enables parallelism, resume, and preserves hive partition structure.</li>
 <li>
-<strong><code>abstract_inverted_index</code> stored as <code>VARCHAR</code></strong>: DuckDB folds STRUCT keys to lowercase. Stored as raw JSON string; parse with <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> when needed.</li>
+<strong><code>ignore_errors = true</code> in schema inference</strong>: DuckDB’s <code>read_json</code> with <code>ignore_errors = true</code> infers <code>abstract_inverted_index</code> as <code>MAP(VARCHAR, BIGINT[])</code>, which correctly handles duplicate-cased keys (e.g. <code>"the"</code> / <code>"The"</code>) and is compatible with <code><a href="reference/oa_works_abstract_sql.html">oa_works_abstract_sql()</a></code>.</li>
 </ul></div>
 </div>
 <div class="section level2">

@@ -75,12 +75,9 @@ original R code under `*_R()` suffixed names.
 
 **Preserved pure-R fallbacks (exported):**
 
-- [`snapshot_to_parquet_R()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet_R.md)
-  — original R + DuckDB conversion
-- [`build_corpus_index_R()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index_R.md)
-  — original R + DuckDB index building
-- [`lookup_by_id_R()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id_R.md)
-  — original R + DuckDB record retrieval
+- `snapshot_to_parquet_R()` — original R + DuckDB conversion
+- `build_corpus_index_R()` — original R + DuckDB index building
+- `lookup_by_id_R()` — original R + DuckDB record retrieval
 
 These retain the original parameter names and work without any external
 binary.

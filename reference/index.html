@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,8 +22,8 @@
     <li><a class="dropdown-item" href="../articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="../articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="../articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
-    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</a></li>
-    <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots</a></li>
+    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
+    <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -56,13 +56,6 @@
 
         </dt>
         <dd>Build a Parquet ID-lookup index</dd>
-
-        <dt>
-
-          <code><a href="build_corpus_index_R.html">build_corpus_index_R()</a></code>
-
-        </dt>
-        <dd>Build a Parquet ID-lookup index (pure-R implementation)</dd>
 
         <dt>
 
@@ -108,34 +101,6 @@
 
         <dt>
 
-          <code><a href="lookup_by_id_R.html">lookup_by_id_R()</a></code>
-
-        </dt>
-        <dd>Look up records by ID using a pre-built index (pure-R implementation)</dd>
-
-        <dt>
-
-          <code><a href="oa_api_files_to_parquet.html">oa_api_files_to_parquet()</a></code>
-
-        </dt>
-        <dd>Parallel per-file conversion for OpenAlex API JSON responses.</dd>
-
-        <dt>
-
-          <code><a href="oa_build_corpus_index.html">oa_build_corpus_index()</a></code>
-
-        </dt>
-        <dd>Build a two-stage ID-lookup index for a single Parquet corpus directory.</dd>
-
-        <dt>
-
-          <code><a href="oa_lookup_by_id.html">oa_lookup_by_id()</a></code>
-
-        </dt>
-        <dd>Look up records by OpenAlex ID using a pre-built index.</dd>
-
-        <dt>
-
           <code><a href="oa_normalize_duckdb_type.html">oa_normalize_duckdb_type()</a></code>
 
         </dt>
@@ -143,24 +108,17 @@
 
         <dt>
 
-          <code><a href="oa_snapshot_to_parquet.html">oa_snapshot_to_parquet()</a></code>
-
-        </dt>
-        <dd>Convert an OpenAlex snapshot to Parquet format.</dd>
-
-        <dt>
-
           <code><a href="oa_works_abstract_sql.html">oa_works_abstract_sql()</a></code>
 
         </dt>
-        <dd>Return the DuckDB SQL expression that reconstructs a plain-text abstract from the `abstract_inverted_index` MAP column in OpenAlex works data.</dd>
+        <dd>Return the DuckDB SQL expression that reconstructs a plain-text abstract from the <code>abstract_inverted_index</code> MAP column in OpenAlex works data.</dd>
 
         <dt>
 
           <code><a href="oa_works_citation_sql.html">oa_works_citation_sql()</a></code>
 
         </dt>
-        <dd>Return the DuckDB SQL expression that builds a short citation string from the `authorships` and `publication_year` columns in OpenAlex works data.</dd>
+        <dd>Return the DuckDB SQL expression that builds a short citation string from the <code>authorships</code> and <code>publication_year</code> columns in OpenAlex works data.</dd>
 
         <dt>
 
@@ -213,13 +171,6 @@
 
         <dt>
 
-          <code><a href="pro_fetch_R.html">pro_fetch_R()</a></code>
-
-        </dt>
-        <dd>Fetch and convert OpenAlex data to Parquet (pure-R implementation)</dd>
-
-        <dt>
-
           <code><a href="pro_query.html">pro_query()</a></code>
 
         </dt>
@@ -262,13 +213,6 @@
 
         <dt>
 
-          <code><a href="pro_request_parquet_R.html">pro_request_parquet_R()</a></code>
-
-        </dt>
-        <dd>Convert JSON files from pro_request() directly to Apache Parquet (pure-R)</dd>
-
-        <dt>
-
           <code><a href="pro_validate_credentials.html">pro_validate_credentials()</a></code>
 
         </dt>
@@ -294,13 +238,6 @@
 
         </dt>
         <dd>Convert OA snapshot to Parquet format</dd>
-
-        <dt>
-
-          <code><a href="snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code>
-
-        </dt>
-        <dd>Convert OA snapshot to Parquet format (pure-R implementation)</dd>
       </dl></div>
   </main></div>
 

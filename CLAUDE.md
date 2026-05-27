@@ -19,11 +19,6 @@ devtools::load_all()      # Load package
 devtools::document()      # Regenerate roxygen2 docs and NAMESPACE
 devtools::test()          # Run all tests
 devtools::check()         # Full R CMD CHECK
-
-# Run a specific test file
-devtools::test(filter = "013")       # snapshot_to_parquet
-devtools::test(filter = "011")       # build_corpus_index
-devtools::test(filter = "012")       # lookup_by_id
 ```
 
 ### Live API Tests
@@ -45,9 +40,18 @@ source("inst/scripts/record_cassettes.R")
 
 ## Architecture
 
-The package has two functional areas:
+The package has one functional area: **OpenAlex API access**.
 
-### 1. OpenAlex API (cloud)
+Snapshot conversion, corpus indexing, and ID-based record lookup have
+moved to the **`openalexSnapshot`** package. Calling
+[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
+[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+or
+[`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+in `openalexPro` raises an informative error pointing to
+`openalexSnapshot`.
+
+### OpenAlex API (cloud)
 
 Functions that query the live OpenAlex REST API:
 
@@ -55,10 +59,15 @@ Functions that query the live OpenAlex REST API:
   — builds query URLs with filters, search, entity selection, ID
   chunking
 - [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
-  — paginates through API results, writes JSONL; accepts nested lists of
+  — paginates through API results, writes JSON; accepts nested lists of
   URLs (each nesting level becomes a subdirectory)
+- [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+  — converts JSON files from
+  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  directly to Parquet (schema inference + per-file DuckDB COPY, parallel
+  via `future`)
 - [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
-  — all-in-one: query → paginate → convert to parquet (project folder)
+  — all-in-one: query → paginate → convert to Parquet (project folder)
 - [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
   — counts matching records
 - [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
@@ -72,72 +81,28 @@ All HTTP calls route through `api_call()` (`R/api_call.R`), which
 handles retries, error inspection, and `httr2` plumbing. Tests use VCR
 cassettes in `tests/fixtures/vcr/`.
 
-### 2. Local Snapshot Processing
+### SQL helpers
 
-Functions that process the OpenAlex bulk data snapshot (hundreds of GB
-of `.gz` NDJSON):
-
-#### Binary wrappers (preferred — delegates to `openalex-snapshot` Rust CLI)
-
-- `snapshot_to_parquet(root_dir, ...)` — converts JSON → parquet via
-  `convert` command
-- `build_corpus_index(root_dir, ...)` — builds ID lookup index via
-  `index` command
-- `lookup_by_id(root_dir, ids, project_dir, ...)` — extracts records via
-  `extract` command
-
-These require the `openalex-snapshot` binary. Resolution order for the
-binary path: 1. `oas_bin` argument 2. `options("openalexPro.oas_bin")`
-3. `Sys.which("openalex-snapshot")` (PATH)
-
-Internal helpers in `R/oas_binary.R`:
-[`find_oas_binary()`](https://rkrug.github.io/openalexPro/reference/find_oas_binary.md)
-and
-[`run_oas()`](https://rkrug.github.io/openalexPro/reference/run_oas.md).
-
-**Root-dir layout** (used by the binary and its wrappers):
-
-    <root_dir>/
-      openalex-snapshot/   # raw JSON .gz files
-      parquet/             # converted parquet files
-      parquet/<dataset>_id_idx.parquet   # lookup index
-      .openalex-snapshot_metadata/       # metadata
-
-#### Pure-R fallbacks (no binary required)
-
-- `snapshot_to_parquet_R(snapshot_dir, parquet_dir, ...)` — original R +
-  DuckDB conversion
-- `build_corpus_index_R(corpus_dir, ...)` — original R + DuckDB index
-  building
-- `lookup_by_id_R(index_file, ids, ...)` — original R + DuckDB record
-  retrieval
-
-These are exported and useful when the binary is unavailable. They use
-`future_lapply()` for parallelism and DuckDB for all heavy lifting.
-
-#### Test pattern for snapshot functions
-
-Each test file (`test-011`, `test-012`, `test-013`) has two sections: -
-`*_R()` tests — always run (require `arrow` + `duckdb`) - Binary wrapper
-tests — gated with
-`skip_if(Sys.which("openalex-snapshot") == "", "...")`
+- [`oa_works_abstract_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_abstract_sql.md)
+  — DuckDB SQL expression reconstructing plain-text abstract from
+  `abstract_inverted_index` MAP column
+- [`oa_works_citation_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_citation_sql.md)
+  — DuckDB SQL expression building `"Author (year)"` citation string
+- [`oa_normalize_duckdb_type()`](https://rkrug.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
+  — canonicalises a DuckDB type string (uppercases keywords)
 
 ### Supporting functions
 
-- [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
-  — per-file schema inference with two-level caching (used by
-  [`snapshot_to_parquet_R()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet_R.md))
 - [`id_block()`](https://rkrug.github.io/openalexPro/reference/id_block.md)
   — converts an OpenAlex ID to its block number
   (`floor(numeric_id / 10000)`)
+- [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+  — per-file schema inference with two-level caching
 - [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md),
   [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
   — helpers for building API queries
 - [`prepare_snapshot()`](https://rkrug.github.io/openalexPro/reference/prepare_snapshot.md)
   — snapshot download/preparation utilities
-- `collect_leaf_queries()` — recursively flattens a nested list of URLs
-  into `(path, url)` pairs (internal, used by
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md))
 
 ## Branching
 
@@ -149,20 +114,15 @@ tests — gated with
 
 - `options(openalexPro.ratelimit_check = TRUE)` — print rate-limit
   status before every API call (via `api_call()`)
-- `options(openalexPro.oas_bin = "/path/to/openalex-snapshot")` —
-  override binary path for snapshot functions
 
 ## Key Conventions
 
 - `project_dir` is the standard output directory parameter (consistent
   across
   [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md))
+  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md))
 - OpenAlex IDs accepted in both short form (`W2741809807`) and long form
   (`https://openalex.org/W2741809807`)
-- The `openalex-snapshot` binary only accepts one `--dataset` per
-  invocation; multi-dataset calls loop in R
 - Nested query lists produce hive-partitioned parquet: depth 1 →
   `query=<name>`, depth N → `query_lN=<name>`
 - VCR cassettes record/replay API calls; `api_key` is filtered to
@@ -175,12 +135,13 @@ tests — gated with
 - **On-disk processing**: Each pipeline stage writes to disk before the
   next begins. This enables resume after crashes and avoids OOM for
   large datasets.
-- **One parquet file per gzip input file**: Enables parallelism, resume,
+- **One parquet file per JSON input file**: Enables parallelism, resume,
   and preserves hive partition structure.
-- **`abstract_inverted_index` stored as `VARCHAR`**: DuckDB folds STRUCT
-  keys to lowercase. Stored as raw JSON string; parse with
-  [`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html)
-  when needed.
+- **`ignore_errors = true` in schema inference**: DuckDB’s `read_json`
+  with `ignore_errors = true` infers `abstract_inverted_index` as
+  `MAP(VARCHAR, BIGINT[])`, which correctly handles duplicate-cased keys
+  (e.g. `"the"` / `"The"`) and is compatible with
+  [`oa_works_abstract_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_abstract_sql.md).
 
 ## Test Infrastructure
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,8 +22,8 @@
     <li><a class="dropdown-item" href="articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
-    <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</a></li>
-    <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots</a></li>
+    <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
+    <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -72,11 +72,11 @@
 <code>run_oas(args, oas_bin)</code>: calls <code>system2(binary, args)</code>, aborts on non-zero exit.</li>
 </ul><p><strong>Preserved pure-R fallbacks (exported):</strong></p>
 <ul><li>
-<code><a href="reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code> — original R + DuckDB conversion</li>
+<code>snapshot_to_parquet_R()</code> — original R + DuckDB conversion</li>
 <li>
-<code><a href="reference/build_corpus_index_R.html">build_corpus_index_R()</a></code> — original R + DuckDB index building</li>
+<code>build_corpus_index_R()</code> — original R + DuckDB index building</li>
 <li>
-<code><a href="reference/lookup_by_id_R.html">lookup_by_id_R()</a></code> — original R + DuckDB record retrieval</li>
+<code>lookup_by_id_R()</code> — original R + DuckDB record retrieval</li>
 </ul><p>These retain the original parameter names and work without any external binary.</p>
 <p><strong>Test pattern:</strong> Each test file has two sections — one for the <code>*_R()</code> function (always runs; requires arrow + duckdb) and one for the binary wrapper (gated with <code>skip_if(Sys.which("openalex-snapshot") == "", "...")</code>).</p>
 <p><strong>Makefile:</strong> <code>inst/Makefile.snapshot</code> rewritten to call the binary directly via <code>openalex-snapshot convert --root-dir ${ROOTDIR}</code> and <code>openalex-snapshot index --root-dir ${ROOTDIR}</code> instead of <code>Rscript</code>.</p>

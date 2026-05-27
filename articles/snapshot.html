@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Working with OpenAlex Snapshots • openalexPro</title>
+<title>Working with OpenAlex Snapshots — Moved to openalexSnapshot • openalexPro</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="snapshot_files/libs/quarto-html/popper.min.js"></script><script src="snapshot_files/libs/quarto-html/tippy.umd.min.js"></script><link href="snapshot_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="snapshot_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Working with OpenAlex Snapshots">
+<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Working with OpenAlex Snapshots — Moved to openalexSnapshot">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,8 +39,8 @@
     <li><a class="dropdown-item" href="../articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="../articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="../articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
-    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion: Binary Wrapper and Pure-R Fallbacks</a></li>
-    <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots</a></li>
+    <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
+    <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -59,7 +59,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Working with OpenAlex Snapshots</h1>
+      <h1>Working with OpenAlex Snapshots — Moved to openalexSnapshot</h1>
 
 
 
@@ -73,379 +73,19 @@
 
 
 
-    <section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h2>
-<p>OpenAlex provides complete data snapshots that can be downloaded and processed locally. This approach offers several advantages over API queries: - <strong>No rate limits</strong>: Process millions of records without API restrictions - <strong>Reproducibility</strong>: Work with a fixed point-in-time dataset - <strong>Speed</strong>: Local queries are significantly faster than API calls (in many cases, especially what larger result corp[ora concerns)]) - <strong>Offline access</strong>: No internet connection required after download</p>
-<p>This vignette guides you through:</p>
-<ol type="1">
-<li>Setting up your environment</li>
-<li>Downloading the OpenAlex snapshot</li>
-<li>Converting to parquet format</li>
-<li>Building indexes for fast lookups</li>
-<li>Querying your local corpus</li>
-</ol></section><section class="section level2"><h2 id="prerequisites">Prerequisites<a class="anchor" aria-label="anchor" href="#prerequisites"></a>
-</h2>
-<section class="level2"><h3 id="hardware-requirements">Hardware Requirements<a class="anchor" aria-label="anchor" href="#hardware-requirements"></a>
-</h3>
-<p>Working with the full OpenAlex snapshot requires significant resources:</p>
-<table class="table caption-top">
-<thead><tr class="header">
-<th>Resource</th>
-<th>Minimum</th>
-<th>Recommended</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Disk space</td>
-<td>2.5 TB</td>
-<td>3+ TB</td>
-</tr>
-<tr class="even">
-<td>RAM</td>
-<td>16 GB</td>
-<td>32+ GB</td>
-</tr>
-<tr class="odd">
-<td>CPU</td>
-<td>2 cores</td>
-<td>4+ cores</td>
-</tr>
-</tbody>
-</table>
-<p>The snapshot download is approximately 1.2 TB. The parquet conversion adds another 100-200 GB depending on compression settings.</p>
-</section><section class="level2"><h3 id="software-requirements">Software Requirements<a class="anchor" aria-label="anchor" href="#software-requirements"></a>
-</h3>
-<ul>
-<li>
-<strong>R</strong> (&gt;= 4.1.2)</li>
-<li>
-<strong>AWS CLI</strong>: For downloading from S3</li>
-<li>
-<strong>GNU Make</strong>: For running the Makefile targets</li>
-<li>
-<strong>openalexPro</strong>: This package</li>
-<li>
-<strong>openalex-snapshot</strong> binary: Required for <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, and <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code>. Download from <a href="https://github.com/rkrug/openalex-snapshot/releases" class="external-link">GitHub releases</a> or build with <code>cargo build --release</code>. Alternatively, use the pure-R <code>*_R()</code> variants.</li>
-</ul>
-<section class="level3"><h4 id="installing-aws-cli">Installing AWS CLI<a class="anchor" aria-label="anchor" href="#installing-aws-cli"></a>
-</h4>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># macOS (with Homebrew)</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install awscli</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Ubuntu/Debian</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install awscli</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Windows (with winget)</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">winget</span> install Amazon.AWSCLI</span></code></pre></div>
-<p>Verify installation:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> <span class="at">--version</span></span></code></pre></div>
-<p>No AWS account is required - the OpenAlex bucket allows anonymous access.</p>
-</section></section></section><section class="section level2"><h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
-</h2>
-<p>The easiest way to get started is using <code><a href="../reference/prepare_snapshot.html">prepare_snapshot()</a></code>:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Prepare a directory for your snapshot</span></span>
-<span><span class="fu"><a href="../reference/prepare_snapshot.html">prepare_snapshot</a></span><span class="op">(</span><span class="st">"/path/to/openalex-data"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>This creates:</p>
-<ul>
-<li>
-<code>Makefile</code>: Contains all commands for snapshot management</li>
-<li>
-<code>snapshot_guide.html</code>: This documentation</li>
-</ul>
-<p>Then navigate to the directory and use Make:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/openalex-data</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># See available commands and current variable values</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> help</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Download snapshot (</span><span class="al">WARNING</span><span class="co">: ~1TB, takes hours)</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> snapshot</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to parquet format</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Build search indexes</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet_index</span></code></pre></div>
-</section><section class="section level2"><h2 id="step-by-step-guide">Step-by-Step Guide<a class="anchor" aria-label="anchor" href="#step-by-step-guide"></a>
-</h2>
-<section class="level2"><h3 id="prepare-your-directory">1. Prepare Your Directory<a class="anchor" aria-label="anchor" href="#prepare-your-directory"></a>
-</h3>
-<p>Choose a location with sufficient disk space:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create and prepare the snapshot directory</span></span>
-<span><span class="va">snapshot_dir</span> <span class="op">&lt;-</span> <span class="st">"/Volumes/external-drive/openalex"</span></span>
-<span><span class="fu"><a href="../reference/prepare_snapshot.html">prepare_snapshot</a></span><span class="op">(</span><span class="va">snapshot_dir</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h3 id="download-the-snapshot">2. Download the Snapshot<a class="anchor" aria-label="anchor" href="#download-the-snapshot"></a>
-</h3>
-<p>The OpenAlex snapshot is hosted on Amazon S3 and updated regularly. The download uses <code>aws s3 sync</code> which:</p>
-<ul>
-<li>Downloads only new or changed files</li>
-<li>Resumes interrupted downloads</li>
-<li>Removes files deleted from the source</li>
-</ul>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /Volumes/external-drive/openalex</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> snapshot</span></code></pre></div>
-<p><strong>Expected time</strong>: 2-12 hours depending on your internet connection.</p>
-<p><strong>Tip</strong>: You can monitor progress in another terminal:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> <span class="at">-n</span> 60 <span class="st">'du -sh openalex-snapshot/*'</span></span></code></pre></div>
-<section class="level3"><h4 id="snapshot-structure">Snapshot Structure<a class="anchor" aria-label="anchor" href="#snapshot-structure"></a>
-</h4>
-<p>After download, you’ll have:</p>
-<pre><code>openalex-snapshot/
-├── RELEASE_NOTES.txt
-├── data/
-│   ├── works/
-│   ├── authors/
-│   ├── institutions/
-│   ├── sources/
-│   ├── publishers/
-│   ├── funders/
-│   ├── topics/
-│   ├── fields/
-│   ├── subfields/
-│   └── domains/
-└── ...</code></pre>
-<p>Each entity type contains gzipped JSON files partitioned by update date.</p>
-</section></section><section class="level2"><h3 id="convert-to-parquet-format">3. Convert to Parquet Format<a class="anchor" aria-label="anchor" href="#convert-to-parquet-format"></a>
-</h3>
-<p>The JSON snapshot is not efficient for analytical queries. Converting to parquet format provides:</p>
-<ul>
-<li>
-<strong>Columnar storage</strong>: Read only the columns you need</li>
-<li>
-<strong>Compression</strong>: Smaller files on disk</li>
-<li>
-<strong>Fast filtering</strong>: Predicate pushdown for efficient queries</li>
-<li>
-<strong>Type safety</strong>: Proper data types for each field</li>
-</ul>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet MAX_MEMORY_MB=20000 WORKERS=4 PROFILE=balanced</span></code></pre></div>
-<p>This invokes the <code>openalex-snapshot convert</code> command which:</p>
-<ol type="1">
-<li>
-<strong>Deletes</strong> the existing parquet directory first (depends on <code>clean_parquet</code>)</li>
-<li>Converts the JSON snapshot to parquet, using the specified worker count and memory limit</li>
-<li>Supports <code>PROFILE</code> values: <code>safe</code>, <code>balanced</code> (default), <code>fast</code>
-</li>
-</ol>
-<p><strong>NB:</strong> Set <code>MAX_MEMORY_MB</code> (memory cap in MB), <code>WORKERS</code>, and <code>PROFILE</code> to values that work with your system. Since <code>parquet</code> unconditionally deletes the existing parquet directory, call <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code> (or <code><a href="../reference/snapshot_to_parquet_R.html">snapshot_to_parquet_R()</a></code>) directly in R if you want resume behaviour.</p>
-<p><strong>Expected time</strong>: 2-8 hours depending on CPU and disk speed.</p>
-<section class="level3"><h4 id="parquet-structure">Parquet Structure<a class="anchor" aria-label="anchor" href="#parquet-structure"></a>
-</h4>
-<p>After conversion, each entity directory contains one <code>.parquet</code> file per input <code>.gz</code> file:</p>
-<pre><code>parquet/
-├── works/
-│   ├── part_000.parquet
-│   ├── part_001.parquet
-│   └── ...
-├── authors/
-├── institutions/
-└── ...</code></pre>
-</section></section><section class="level2"><h3 id="build-search-indexes">4. Build Search Indexes<a class="anchor" aria-label="anchor" href="#build-search-indexes"></a>
-</h3>
-<p>For fast ID-based lookups, build indexes:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet_index WORKERS=8</span></code></pre></div>
-<p>This creates a single index parquet file for each entity type, enabling fast lookups by OpenAlex ID:</p>
-<pre><code>parquet/
-├── works/
-├── works_id_idx.parquet
-└── ...</code></pre>
-<p>The index maps each ID to its physical location (file and row number) in the corpus, so <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> can retrieve specific records without scanning the entire corpus.</p>
-<p><strong>NB:</strong> Indexing is less memory-intensive than parquet conversion and profits from higher <code>WORKERS</code>. To rebuild indexes without touching the parquet files, use <code>make clean_index</code> followed by <code>make parquet_index</code>.</p>
-</section></section><section class="section level2"><h2 id="using-your-local-corpus">Using Your Local Corpus<a class="anchor" aria-label="anchor" href="#using-your-local-corpus"></a>
-</h2>
-<section class="level2"><h3 id="looking-up-records-by-id">Looking Up Records by ID<a class="anchor" aria-label="anchor" href="#looking-up-records-by-id"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Look up specific works by OpenAlex ID using the binary wrapper</span></span>
-<span><span class="co"># Records are written to &lt;project_dir&gt;/snapshot_extract/</span></span>
-<span><span class="fu"><a href="../reference/lookup_by_id.html">lookup_by_id</a></span><span class="op">(</span></span>
-<span>  root_dir    <span class="op">=</span> <span class="st">"/Volumes/external-drive/openalex"</span>,</span>
-<span>  ids         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W2741809807"</span>, <span class="st">"W2100837269"</span><span class="op">)</span>,</span>
-<span>  project_dir <span class="op">=</span> <span class="st">"my_project"</span>,</span>
-<span>  data_sets   <span class="op">=</span> <span class="st">"works"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Pure-R fallback (no binary required) — returns a data frame</span></span>
-<span><span class="va">works</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lookup_by_id_R.html">lookup_by_id_R</a></span><span class="op">(</span></span>
-<span>  index_file <span class="op">=</span> <span class="st">"/Volumes/external-drive/openalex/parquet/works_id_idx.parquet"</span>,</span>
-<span>  ids        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W2741809807"</span>, <span class="st">"W2100837269"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Pure-R fallback: write directly to parquet for millions of IDs</span></span>
-<span><span class="fu"><a href="../reference/lookup_by_id_R.html">lookup_by_id_R</a></span><span class="op">(</span></span>
-<span>  index_file <span class="op">=</span> <span class="st">"/Volumes/external-drive/openalex/parquet/works_id_idx.parquet"</span>,</span>
-<span>  ids        <span class="op">=</span> <span class="va">large_id_vector</span>,</span>
-<span>  output     <span class="op">=</span> <span class="st">"filtered_works"</span>,</span>
-<span>  workers    <span class="op">=</span> <span class="fl">3</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h3 id="direct-duckdb-queries">Direct DuckDB Queries<a class="anchor" aria-label="anchor" href="#direct-duckdb-queries"></a>
-</h3>
-<p>For complex analytical queries, use DuckDB directly:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dbi.r-dbi.org" class="external-link">DBI</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Register parquet files as a view</span></span>
-<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbExecute.html" class="external-link">dbExecute</a></span><span class="op">(</span></span>
-<span>  <span class="va">con</span>,</span>
-<span>  <span class="st">"</span></span>
-<span><span class="st">  CREATE VIEW works AS</span></span>
-<span><span class="st">  SELECT * FROM parquet_scan('/Volumes/external-drive/openalex/parquet/works/*.parquet')</span></span>
-<span><span class="st">"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Run analytical queries</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span></span>
-<span>  <span class="va">con</span>,</span>
-<span>  <span class="st">"</span></span>
-<span><span class="st">  SELECT publication_year, COUNT(*) as n_works</span></span>
-<span><span class="st">  FROM works</span></span>
-<span><span class="st">  WHERE publication_year &gt;= 2020</span></span>
-<span><span class="st">  GROUP BY publication_year</span></span>
-<span><span class="st">  ORDER BY publication_year</span></span>
-<span><span class="st">"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section></section><section class="section level2"><h2 id="managing-updates">Managing Updates<a class="anchor" aria-label="anchor" href="#managing-updates"></a>
-</h2>
-<p>OpenAlex releases new snapshots regularly. The Makefile supports update workflows via dedicated timestamp targets.</p>
-<section class="level2"><h3 id="checking-for-updates">Checking for Updates<a class="anchor" aria-label="anchor" href="#checking-for-updates"></a>
-</h3>
-<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> snapshot_info</span></code></pre></div>
-<p>This shows the current state of the S3 bucket including the total size and file count.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> help</span></code></pre></div>
-<p>This shows the current values of all configuration variables, including <code>RELEASE_DATE</code> read from <code>RELEASE_NOTES.txt</code>.</p>
-</section><section class="level2"><h3 id="update-workflow">Update Workflow<a class="anchor" aria-label="anchor" href="#update-workflow"></a>
-</h3>
-<div class="sourceCode" id="cb17"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Archive the current snapshot with its release date</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co">#    (renames openalex-snapshot → openalex-snapshot-YYYY-MM-DD)</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> snapshot_timestamp</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Download the new snapshot</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> snapshot</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Archive the current parquet directory with the old release date</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet_timestamp</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Re-convert to parquet (deletes parquet dir first, then converts)</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet MAX_MEMORY_MB=20000 WORKERS=4</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Rebuild indexes</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet_index</span></code></pre></div>
-<p><strong>Note:</strong> <code>snapshot_timestamp</code> and <code>parquet_timestamp</code> read the release date from <code>RELEASE_NOTES.txt</code> in the snapshot directory. Run <code>snapshot_timestamp</code> <em>before</em> downloading the new snapshot, and <code>parquet_timestamp</code> <em>before</em> re-converting, so the old release date is still available.</p>
-</section></section><section class="section level2"><h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
-</h2>
-<section class="level2"><h3 id="download-issues">Download Issues<a class="anchor" aria-label="anchor" href="#download-issues"></a>
-</h3>
-<p><strong>Interrupted download</strong>: Simply run <code>make snapshot</code> again. The sync will resume where it left off.</p>
-<p><strong>Slow download</strong>: OpenAlex uses CloudFront CDN. Speed depends on your location and internet connection. Consider running overnight.</p>
-<p><strong>Disk space errors</strong>: Ensure you have at least 400 GB free before starting.</p>
-</section><section class="level2"><h3 id="conversion-issues">Conversion Issues<a class="anchor" aria-label="anchor" href="#conversion-issues"></a>
-</h3>
-<p><strong>Out of memory</strong>: Reduce memory usage by overriding variables on the command line:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet MAX_MEMORY_MB=4000 WORKERS=1 PROFILE=safe</span></code></pre></div>
-<p><strong>DuckDB errors</strong> (when using <code>*_R()</code> fallback functions): Ensure you have the latest version of the <code>duckdb</code> R package.</p>
-<!-- ## Index Issues
+    <blockquote>
+<p><strong>Snapshot functionality has moved.</strong></p>
+<p>The full OpenAlex snapshot workflow — downloading, converting <code>.json.gz</code> files to Parquet, building ID lookup indexes, and extracting records by ID — is now part of the <strong><code>openalexSnapshot</code></strong> package.</p>
+<p>Please install <code>openalexSnapshot</code> and refer to its documentation.</p>
+</blockquote>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Install openalexSnapshot (once available on r-universe):</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"openalexSnapshot"</span><span class="op">)</span></span></code></pre></div>
+<p>Calling <code><a href="../reference/snapshot_to_parquet.html">snapshot_to_parquet()</a></code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, or <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
 
-**Slow lookups**: Rebuild the index with fewer workers to reduce the number of files per partition. -->
-</section></section><section class="section level2"><h2 id="makefile-reference">Makefile Reference<a class="anchor" aria-label="anchor" href="#makefile-reference"></a>
-</h2>
-<table class="table caption-top">
-<colgroup>
-<col style="width: 38%">
-<col style="width: 61%">
-</colgroup>
-<thead><tr class="header">
-<th>Target</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>help</code></td>
-<td>Show available targets and current variable values</td>
-</tr>
-<tr class="even">
-<td><code>all</code></td>
-<td>Clean, download snapshot, and convert to parquet</td>
-</tr>
-<tr class="odd">
-<td><code>snapshot_info</code></td>
-<td>Display S3 bucket size and file count</td>
-</tr>
-<tr class="even">
-<td><code>snapshot_timestamp</code></td>
-<td>Rename existing snapshot directory with its release date</td>
-</tr>
-<tr class="odd">
-<td><code>snapshot</code></td>
-<td>Download/sync snapshot from S3</td>
-</tr>
-<tr class="even">
-<td><code>parquet_timestamp</code></td>
-<td>Rename existing parquet directory with its release date</td>
-</tr>
-<tr class="odd">
-<td><code>parquet</code></td>
-<td>Delete parquet dir then convert snapshot to parquet</td>
-</tr>
-<tr class="even">
-<td><code>parquet_index</code></td>
-<td>Build ID indexes for all datasets</td>
-</tr>
-<tr class="odd">
-<td><code>clean_index</code></td>
-<td>Remove index files (<code>*_idx.parquet</code>) from parquet directory</td>
-</tr>
-<tr class="even">
-<td><code>clean_parquet</code></td>
-<td>Remove parquet directory (includes index files)</td>
-</tr>
-<tr class="odd">
-<td><code>clean_snapshot</code></td>
-<td>Remove snapshot directory</td>
-</tr>
-<tr class="even">
-<td><code>clean</code></td>
-<td>Remove both snapshot and parquet directories</td>
-</tr>
-</tbody>
-</table>
-<section class="level2"><h3 id="customizing-the-makefile">Customizing the Makefile<a class="anchor" aria-label="anchor" href="#customizing-the-makefile"></a>
-</h3>
-<p>Variables can be overridden on the command line or by editing the defaults at the top of the Makefile:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode makefile"><code class="sourceCode makefile"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="dt">ROOTDIR</span><span class="ch">=</span><span class="st">.          </span><span class="co"># Root directory (snapshot at &lt;ROOTDIR&gt;/openalex-snapshot, parquet at &lt;ROOTDIR&gt;/parquet)</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="dt">MAX_MEMORY_MB</span><span class="ch">=</span><span class="st">15000  </span><span class="co"># Memory cap per worker (in MB)</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="dt">WORKERS</span><span class="ch">=</span><span class="st">3            </span><span class="co"># Number of parallel workers</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="dt">PROFILE</span><span class="ch">=</span><span class="st">balanced     </span><span class="co"># Performance profile: safe / balanced / fast</span></span></code></pre></div>
-<p>Override on the command line without editing the file:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> parquet MAX_MEMORY_MB=20000 WORKERS=4 PROFILE=fast</span></code></pre></div>
-</section></section><section class="section level2"><h2 id="additional-resources">Additional Resources<a class="anchor" aria-label="anchor" href="#additional-resources"></a>
-</h2>
-<ul>
-<li><a href="https://docs.openalex.org/" class="external-link">OpenAlex Documentation</a></li>
-<li><a href="https://docs.openalex.org/download-all-data/openalex-snapshot" class="external-link">OpenAlex Snapshot Documentation</a></li>
-<li><a href="https://duckdb.org/docs/" class="external-link">DuckDB Documentation</a></li>
-<li><a href="https://parquet.apache.org/" class="external-link">Apache Parquet Format</a></li>
-</ul></section><script id="quarto-html-after-body" type="application/javascript">
+
+
+<script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -528,8 +168,7 @@
       }
     }
   });
-  </script></main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+  </script></main>
 </div>
 
 

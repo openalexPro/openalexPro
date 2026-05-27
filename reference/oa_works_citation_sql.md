@@ -1,8 +1,7 @@
-# Return the DuckDB SQL expression that builds a short citation string from the \`authorships\` and \`publication_year\` columns in OpenAlex works data.
+# Return the DuckDB SQL expression that builds a short citation string from the `authorships` and `publication_year` columns in OpenAlex works data.
 
-Format: \`"Author (year)"\` / \`"A & B (year)"\` / \`"A et al.
-(year)"\`. Null year renders as \`"(n.d.)"\`. Null or empty
-\`authorships\` yields NULL.
+Format: `"Author (year)"` / `"A & B (year)"` / `"A et al. (year)"`. Null
+year renders as `"(n.d.)"`. Null or empty `authorships` yields NULL.
 
 ## Usage
 

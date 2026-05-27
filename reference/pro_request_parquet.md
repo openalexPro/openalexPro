@@ -5,8 +5,8 @@ Single-step replacement for the two-step
 [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 pipeline. Reads the JSON files written by
 [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
-and converts each one to a Parquet file using the Rust backend (parallel
-via rayon), with no intermediate JSONL on disk.
+and converts each one to a Parquet file using DuckDB, with no
+intermediate JSONL on disk.
 
 ## Usage
 
@@ -52,8 +52,7 @@ pro_request_parquet(
 
 - progress:
 
-  Logical. Ignored (kept for backward compatibility; progress is
-  reported to stderr by the Rust backend).
+  Logical. Show a progress bar. Default `TRUE`.
 
 - delete_input:
 
@@ -68,9 +67,8 @@ pro_request_parquet(
 
 - workers:
 
-  Integer. Number of parallel workers for
-  [`oa_api_files_to_parquet()`](https://rkrug.github.io/openalexPro/reference/oa_api_files_to_parquet.md).
-  `NULL` or `1` runs sequentially. Default `NULL`.
+  Integer. Number of parallel workers. `NULL` or `1` runs sequentially.
+  Default `NULL`.
 
 - enrich:
 
@@ -119,8 +117,6 @@ filename (or subdirectory for multi-query inputs).
 
 [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
 to download the JSON files,
-[`pro_request_parquet_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet_R.md)
-for the pure-R/DuckDB fallback,
 [`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md)
 and
 [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)

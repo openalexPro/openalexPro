@@ -3,9 +3,8 @@
 Convenience wrapper that downloads records from OpenAlex via
 [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
 and converts them directly to an Apache Parquet dataset via
-[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
-(Rust-backed, parallel via rayon). No intermediate JSONL files are
-written.
+[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md).
+No intermediate JSONL files are written.
 
 ## Usage
 
@@ -114,8 +113,6 @@ The function
 
 ## See also
 
-[`pro_fetch_R()`](https://rkrug.github.io/openalexPro/reference/pro_fetch_R.md)
-for the pure-R/DuckDB fallback,
 [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
 for the download step,
 [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)

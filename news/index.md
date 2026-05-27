@@ -97,13 +97,12 @@
 - Pure-R / DuckDB fallback variants are now exported as separate
   functions:
 
-  - [`snapshot_to_parquet_R()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet_R.md)
-    — original R implementation of snapshot conversion (uses DuckDB +
-    arrow, no external binary required)
-  - [`build_corpus_index_R()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index_R.md)
-    — original R implementation of index building
-  - [`lookup_by_id_R()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id_R.md)
-    — original R implementation of ID-based record lookup
+  - `snapshot_to_parquet_R()` — original R implementation of snapshot
+    conversion (uses DuckDB + arrow, no external binary required)
+  - `build_corpus_index_R()` — original R implementation of index
+    building
+  - `lookup_by_id_R()` — original R implementation of ID-based record
+    lookup
 
   These retain the original parameter names and are useful when the
   `openalex-snapshot` binary is unavailable.

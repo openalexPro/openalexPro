@@ -1,8 +1,8 @@
-# Return the DuckDB SQL expression that reconstructs a plain-text abstract from the \`abstract_inverted_index\` MAP column in OpenAlex works data.
+# Return the DuckDB SQL expression that reconstructs a plain-text abstract from the `abstract_inverted_index` MAP column in OpenAlex works data.
 
 The expression walks the map, collects (position, word) pairs, sorts by
 position ascending, and joins words with single spaces. Returns NULL
-when \`abstract_inverted_index\` is NULL.
+when `abstract_inverted_index` is NULL.
 
 ## Usage
 
