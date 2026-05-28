@@ -1,0 +1,15 @@
+col_name,col_type
+cited_by_count,BIGINT
+created_date,TIMESTAMP
+description,VARCHAR
+display_name,VARCHAR
+display_name_alternatives,VARCHAR[]
+domain,"STRUCT(id VARCHAR, display_name VARCHAR)"
+field,"STRUCT(id VARCHAR, display_name VARCHAR)"
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, wikidata VARCHAR, wikipedia VARCHAR)"
+siblings,"STRUCT(id VARCHAR, display_name VARCHAR)[]"
+topics,"STRUCT(id VARCHAR, display_name VARCHAR)[]"
+updated_date,DATE
+works_api_url,VARCHAR
+works_count,BIGINT

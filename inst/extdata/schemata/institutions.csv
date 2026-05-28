@@ -1,0 +1,29 @@
+col_name,col_type
+associated_institutions,"STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, ""type"" VARCHAR, relationship VARCHAR)[]"
+cited_by_count,BIGINT
+country_code,VARCHAR
+counts_by_year,"STRUCT(""year"" BIGINT, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]"
+created_date,TIMESTAMP
+display_name,VARCHAR
+display_name_acronyms,VARCHAR[]
+display_name_alternatives,VARCHAR[]
+geo,"STRUCT(city VARCHAR, geonames_city_id VARCHAR, region VARCHAR, country_code VARCHAR, country VARCHAR, latitude DOUBLE, longitude DOUBLE)"
+homepage_url,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, ror VARCHAR, grid VARCHAR, wikipedia VARCHAR, wikidata VARCHAR)"
+image_thumbnail_url,VARCHAR
+image_url,VARCHAR
+is_super_system,BOOLEAN
+lineage,VARCHAR[]
+repositories,"STRUCT(id VARCHAR, display_name VARCHAR, host_organization VARCHAR, host_organization_name VARCHAR, host_organization_lineage VARCHAR[])[]"
+roles,"STRUCT(""role"" VARCHAR, id VARCHAR, works_count BIGINT)[]"
+ror,VARCHAR
+status,VARCHAR
+summary_stats,"STRUCT(""2yr_mean_citedness"" DOUBLE, h_index BIGINT, i10_index BIGINT)"
+topic_share,"STRUCT(id VARCHAR, display_name VARCHAR, ""value"" DOUBLE, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))[]"
+topics,"STRUCT(id VARCHAR, display_name VARCHAR, count BIGINT, score DOUBLE, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))[]"
+type,VARCHAR
+type_id,VARCHAR
+updated_date,DATE
+works_api_url,VARCHAR
+works_count,BIGINT

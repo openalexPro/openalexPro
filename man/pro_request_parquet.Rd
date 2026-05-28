@@ -14,7 +14,8 @@ pro_request_parquet(
   delete_input = FALSE,
   sample_size = 1000,
   workers = NULL,
-  enrich = TRUE
+  enrich = TRUE,
+  schema = "auto"
 )
 }
 \arguments{
@@ -46,6 +47,25 @@ records (accurate but slow for large files).  Default \code{1000}.}
 \item{enrich}{Logical.  When \code{TRUE} (the default) and the inferred schema
 contains \code{abstract_inverted_index} / \code{authorships} / \code{publication_year},
 add \code{abstract} and \code{citation} computed columns.}
+
+\item{schema}{Controls use of a pre-built baseline schema for type
+resolution.  Possible values:
+\describe{
+\item{\code{"auto"} (default)}{Auto-detect the OpenAlex entity type from the
+inferred columns, then load the matching schema from the user cache
+(populated by \code{\link{oa_cache_schema}()}) or the schemas bundled
+with the package.  For each column where DuckDB runtime inference
+produced the ambiguous \code{JSON} fallback type, the baseline type is used
+instead.  Falls back silently to runtime-only inference when the entity
+cannot be detected or no schema is found.}
+\item{\code{"none"} or \code{NULL}}{Skip the baseline entirely; behaviour is
+identical to package versions before this feature was added.}
+\item{A file path}{Path to a CSV with columns \code{col_name} / \code{col_type}.
+Used directly as the baseline.}
+\item{A directory path}{Auto-detect entity, then look for
+\verb{<entity>.csv} inside that directory.  Useful when pointing directly
+at a snapshot-metadata schemata directory.}
+}}
 }
 \value{
 Output directory path (invisibly).

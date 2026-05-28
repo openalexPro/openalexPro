@@ -1,0 +1,25 @@
+col_name,col_type
+amount,VARCHAR
+co_lead_investigator,JSON
+created_date,TIMESTAMP
+currency,VARCHAR
+description,VARCHAR
+display_name,VARCHAR
+doi,VARCHAR
+end_date,VARCHAR
+end_year,VARCHAR
+funded_outputs,VARCHAR
+funded_outputs_count,BIGINT
+funder,"STRUCT(id VARCHAR, display_name VARCHAR, ror_id VARCHAR, doi VARCHAR)"
+funder_award_id,VARCHAR
+funder_scheme,VARCHAR
+funding_type,VARCHAR
+id,VARCHAR
+investigators,"STRUCT(given_name VARCHAR, family_name VARCHAR, orcid JSON, role_start JSON, affiliation STRUCT(""name"" VARCHAR, country VARCHAR, ids JSON))[]"
+landing_page_url,VARCHAR
+lead_investigator,"STRUCT(given_name VARCHAR, family_name VARCHAR, orcid VARCHAR, role_start DATE, affiliation STRUCT(""name"" VARCHAR, country VARCHAR, ids STRUCT(id VARCHAR, ""type"" VARCHAR, asserted_by VARCHAR)[]))"
+provenance,VARCHAR
+start_date,VARCHAR
+start_year,VARCHAR
+updated_date,DATE
+works_api_url,VARCHAR
