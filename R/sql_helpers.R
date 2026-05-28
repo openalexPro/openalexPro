@@ -5,11 +5,18 @@
 # strings are identical so all call sites continue to work unchanged.
 
 #' Return the DuckDB SQL expression that reconstructs a plain-text abstract
-#' from the \code{abstract_inverted_index} MAP column in OpenAlex works data.
+#' from the \code{abstract_inverted_index} column in OpenAlex works data.
 #'
 #' The expression walks the map, collects (position, word) pairs, sorts by
 #' position ascending, and joins words with single spaces.  Returns NULL when
 #' \code{abstract_inverted_index} is NULL.
+#'
+#' \code{abstract_inverted_index} is normalised to \code{MAP(VARCHAR, BIGINT[])}
+#' via a double JSON cast (\code{::JSON::MAP(VARCHAR, BIGINT[])}) before
+#' \code{map_entries()} is called.  This makes the expression safe regardless
+#' of whether DuckDB inferred the column as \code{MAP}, \code{STRUCT}, or
+#' \code{VARCHAR} (raw JSON text): all three round-trip through the JSON
+#' representation identically.
 #'
 #' @return A character scalar containing the SQL expression.
 #' @export
@@ -21,7 +28,7 @@ oa_works_abstract_sql <- function() {
     "list_sort( ",
     "flatten( ",
     "apply( ",
-    "map_entries(abstract_inverted_index), ",
+    "map_entries(abstract_inverted_index::JSON::MAP(VARCHAR, BIGINT[])), ",
     "x -> apply(x.value, p -> {pos: p, word: x.key}) ",
     ") ",
     ") ",

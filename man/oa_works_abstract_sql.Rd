@@ -3,7 +3,7 @@
 \name{oa_works_abstract_sql}
 \alias{oa_works_abstract_sql}
 \title{Return the DuckDB SQL expression that reconstructs a plain-text abstract
-from the \code{abstract_inverted_index} MAP column in OpenAlex works data.}
+from the \code{abstract_inverted_index} column in OpenAlex works data.}
 \usage{
 oa_works_abstract_sql()
 }
@@ -14,4 +14,12 @@ A character scalar containing the SQL expression.
 The expression walks the map, collects (position, word) pairs, sorts by
 position ascending, and joins words with single spaces.  Returns NULL when
 \code{abstract_inverted_index} is NULL.
+}
+\details{
+\code{abstract_inverted_index} is normalised to \code{MAP(VARCHAR, BIGINT[])}
+via a double JSON cast (\code{::JSON::MAP(VARCHAR, BIGINT[])}) before
+\code{map_entries()} is called.  This makes the expression safe regardless
+of whether DuckDB inferred the column as \code{MAP}, \code{STRUCT}, or
+\code{VARCHAR} (raw JSON text): all three round-trip through the JSON
+representation identically.
 }

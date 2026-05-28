@@ -1,5 +1,37 @@
 # openalexPro (development)
 
+## New Features
+
+* `pro_request_parquet()` gains a `schema` parameter (default `"auto"`) that
+  uses pre-built field-type schemas — inferred from the complete OpenAlex
+  snapshot — to resolve ambiguous DuckDB type inference on small API pages.
+  This eliminates `VARCHAR[] → JSON` type-conflict errors when unioning parquet
+  files from separate API calls (e.g. keypaper + cited + citing in a snowball
+  search).
+
+* New `oa_cache_schema()` function copies schemas from a snapshot metadata
+  directory (e.g. `/Volumes/openalex/openalex-snapshot_metadata`) into the
+  user-level cache so the correct types are available even when the volume is
+  not mounted.
+
+* Factory-default schemas for all 21 OpenAlex entity types are now bundled in
+  `inst/extdata/schemata/` and used automatically when `schema = "auto"`, so
+  the feature works out-of-the-box without any manual cache population.
+
+## Bug Fixes
+
+* `oa_works_abstract_sql()` now casts `abstract_inverted_index` through JSON
+  (`::JSON::MAP(VARCHAR, BIGINT[])`) before calling `map_entries()`. This
+  fixes abstract reconstruction when DuckDB infers the column as `STRUCT`
+  (which happens when a sampled API page contains no duplicate-cased keys)
+  rather than `MAP`. The expression now handles `STRUCT`, `MAP`, and `VARCHAR`
+  inputs uniformly (#XXX).
+
+* `pro_request_parquet()` now overrides the inferred DuckDB type of
+  `abstract_inverted_index` to `MAP(VARCHAR, BIGINT[])` when building the
+  paginated `read_json` schema, so the fix applies even before the abstract SQL
+  runs.
+
 ## Breaking Changes
 
 * `snapshot_to_parquet()`, `build_corpus_index()`, and `lookup_by_id()` have

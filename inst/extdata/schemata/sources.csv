@@ -1,0 +1,37 @@
+col_name,col_type
+alternate_titles,VARCHAR
+apc_prices,"STRUCT(price BIGINT, currency VARCHAR)[]"
+apc_usd,VARCHAR
+cited_by_count,BIGINT
+country_code,VARCHAR
+counts_by_year,"STRUCT(""year"" BIGINT, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]"
+created_date,VARCHAR
+display_name,VARCHAR
+first_publication_year,BIGINT
+homepage_url,VARCHAR
+host_organization,VARCHAR
+host_organization_lineage,VARCHAR
+host_organization_name,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, issn_l VARCHAR, issn VARCHAR[], mag VARCHAR, wikidata VARCHAR)"
+is_core,BOOLEAN
+is_high_oa_rate,BOOLEAN
+is_high_oa_rate_since_year,VARCHAR
+is_in_doaj,BOOLEAN
+is_in_doaj_since_year,VARCHAR
+is_in_scielo,BOOLEAN
+is_oa,BOOLEAN
+is_ojs,BOOLEAN
+issn,VARCHAR
+issn_l,VARCHAR
+last_publication_year,BIGINT
+oa_flip_year,VARCHAR
+oa_works_count,BIGINT
+societies,"STRUCT(url VARCHAR, organization VARCHAR)[]"
+summary_stats,"STRUCT(""2yr_mean_citedness"" DOUBLE, h_index BIGINT, i10_index BIGINT)"
+topic_share,"STRUCT(id VARCHAR, display_name VARCHAR, ""value"" DOUBLE, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))[]"
+topics,"STRUCT(id VARCHAR, display_name VARCHAR, count BIGINT, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))[]"
+type,VARCHAR
+updated_date,DATE
+works_api_url,VARCHAR
+works_count,BIGINT

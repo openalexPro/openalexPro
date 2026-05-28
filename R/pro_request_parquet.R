@@ -47,6 +47,24 @@
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
 #'   contains `abstract_inverted_index` / `authorships` / `publication_year`,
 #'   add `abstract` and `citation` computed columns.
+#' @param schema Controls use of a pre-built baseline schema for type
+#'   resolution.  Possible values:
+#'   \describe{
+#'     \item{`"auto"` (default)}{Auto-detect the OpenAlex entity type from the
+#'       inferred columns, then load the matching schema from the user cache
+#'       (populated by \code{\link{oa_cache_schema}()}) or the schemas bundled
+#'       with the package.  For each column where DuckDB runtime inference
+#'       produced the ambiguous `JSON` fallback type, the baseline type is used
+#'       instead.  Falls back silently to runtime-only inference when the entity
+#'       cannot be detected or no schema is found.}
+#'     \item{`"none"` or `NULL`}{Skip the baseline entirely; behaviour is
+#'       identical to package versions before this feature was added.}
+#'     \item{A file path}{Path to a CSV with columns `col_name` / `col_type`.
+#'       Used directly as the baseline.}
+#'     \item{A directory path}{Auto-detect entity, then look for
+#'       `<entity>.csv` inside that directory.  Useful when pointing directly
+#'       at a snapshot-metadata schemata directory.}
+#'   }
 #'
 #' @return Output directory path (invisibly).
 #'
@@ -74,7 +92,8 @@ pro_request_parquet <- function(
   delete_input = FALSE,
   sample_size = 1000,
   workers = NULL,
-  enrich = TRUE
+  enrich = TRUE,
+  schema = "auto"
 ) {
   # ── Argument checks ──────────────────────────────────────────────────────────
   if (is.null(input_json)) stop("No `input_json` specified!")
@@ -155,9 +174,77 @@ pro_request_parquet <- function(
       }
     )
     if (!is.null(schema_df) && nrow(schema_df) > 0L) {
+      # Force abstract_inverted_index to MAP(VARCHAR, BIGINT[]).
+      # When a sampled page has no duplicate-cased keys DuckDB infers the
+      # column as STRUCT(...) rather than MAP, which breaks map_entries() in
+      # oa_works_abstract_sql().  Pinning the type here ensures read_json()
+      # always parses it as MAP regardless of the sample contents.
+      aii_idx <- which(schema_df$column_name == "abstract_inverted_index")
+      if (length(aii_idx) == 1L) {
+        schema_df$column_type[aii_idx] <- "MAP(VARCHAR, BIGINT[])"
+      }
+
+      # ── Baseline schema type resolution ─────────────────────────────────────
+      # Load a high-quality pre-built schema (inferred from millions of snapshot
+      # records) and override any column type where DuckDB runtime inference
+      # fell back to the ambiguous JSON type.  Runtime inference remains the
+      # source of truth for *which columns are present*; the baseline only
+      # corrects *types* for columns it knows about.
+      #
+      # JSON / JSON[] types arise when all sampled records have null values for
+      # a field — DuckDB cannot infer the specific type and uses JSON as a
+      # catch-all.  When multiple pro_request_parquet() calls produce parquet
+      # files that are later read with union_by_name = true, this mismatch
+      # causes "Can't change source type (VARCHAR[]) to target type (JSON)".
+      if (!is.null(schema) && !identical(schema, "none")) {
+        baseline_df <- .resolve_baseline(schema, present_cols = schema_df$column_name)
+        if (!is.null(baseline_df)) {
+          for (.i in seq_len(nrow(schema_df))) {
+            rt  <- schema_df$column_type[.i]
+            # Override only when runtime produced an ambiguous JSON type —
+            # clean types like VARCHAR[], STRUCT(...) reflect actual data and
+            # must not be replaced by a potentially older baseline type.
+            if (grepl("\\bJSON\\b", rt)) {
+              col <- schema_df$column_name[.i]
+              base_row <- baseline_df[baseline_df$col_name == col, , drop = FALSE]
+              if (nrow(base_row) == 1L) {
+                schema_df$column_type[.i] <- base_row$col_type
+              }
+            }
+          }
+          if (verbose) {
+            message(
+              "Applied baseline schema for entity '",
+              attr(baseline_df, "entity"), "'."
+            )
+          }
+        }
+      }
+      # ────────────────────────────────────────────────────────────────────────
+
       struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
       list_type <- paste0(
         "STRUCT(", paste(struct_fields, collapse = ", "), ")[]"
+      )
+      # Normalise OpenAlex source-struct fields that DuckDB infers as JSON
+      # when all sampled records have null values for those fields.  Using
+      # JSON as a scalar type for what is actually VARCHAR[] (e.g. "issn")
+      # causes read_parquet(union_by_name=true) to fail with
+      # "Can't change source type (VARCHAR[]) to target type (JSON)" when
+      # another page file correctly inferred the field as VARCHAR[].
+      #
+      # Fix: replace the known OpenAlex field types that DuckDB may wrongly
+      # infer as JSON / JSON[] with their correct specific types.
+      list_type <- gsub(
+        "\\bissn_l JSON\\b", "issn_l VARCHAR",  list_type
+      )
+      list_type <- gsub(
+        "(?<![_])\\bissn JSON\\b", "issn VARCHAR[]", list_type, perl = TRUE
+      )
+      list_type <- gsub(
+        "host_organization_lineage_names JSON\\[\\]",
+        "host_organization_lineage_names VARCHAR[]",
+        list_type, fixed = TRUE
       )
     }
   } else {

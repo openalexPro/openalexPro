@@ -1,0 +1,22 @@
+col_name,col_type
+alternate_titles,VARCHAR
+cited_by_count,BIGINT
+country_codes,VARCHAR[]
+counts_by_year,"STRUCT(""year"" BIGINT, works_count BIGINT, cited_by_count BIGINT)[]"
+created_date,TIMESTAMP
+display_name,VARCHAR
+hierarchy_level,BIGINT
+homepage_url,VARCHAR
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, ror VARCHAR, wikidata VARCHAR)"
+image_thumbnail_url,VARCHAR
+image_url,VARCHAR
+lineage,VARCHAR[]
+parent_publisher,"STRUCT(id VARCHAR, display_name VARCHAR)"
+roles,"STRUCT(""role"" VARCHAR, id VARCHAR, works_count BIGINT)[]"
+ror_id,VARCHAR
+sources_api_url,VARCHAR
+summary_stats,"STRUCT(""2yr_mean_citedness"" DOUBLE, h_index BIGINT, i10_index BIGINT)"
+updated_date,DATE
+wikidata_id,VARCHAR
+works_count,BIGINT

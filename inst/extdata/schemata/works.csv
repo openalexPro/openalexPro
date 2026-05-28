@@ -1,0 +1,50 @@
+col_name,col_type
+abstract_inverted_index,"MAP(VARCHAR, BIGINT[])"
+apc_list,"STRUCT(""value"" BIGINT, currency VARCHAR, value_usd BIGINT)"
+apc_paid,"STRUCT(""value"" DOUBLE, currency VARCHAR, value_usd DOUBLE)"
+authors_count,BIGINT
+authorships,"STRUCT(author STRUCT(display_name VARCHAR, id VARCHAR, orcid VARCHAR), author_position VARCHAR, affiliations STRUCT(institution_ids VARCHAR[], raw_affiliation_string VARCHAR)[], countries VARCHAR[], raw_author_name VARCHAR, is_corresponding BOOLEAN, raw_affiliation_strings VARCHAR[], institutions STRUCT(country_code VARCHAR, display_name VARCHAR, id VARCHAR, lineage VARCHAR[], ror VARCHAR, ""type"" VARCHAR)[])[]"
+awards,"STRUCT(id VARCHAR, display_name VARCHAR, funder_award_id VARCHAR, funder_id VARCHAR, funder_display_name VARCHAR)[]"
+best_oa_location,"STRUCT(id VARCHAR, ""source"" STRUCT(id VARCHAR, display_name VARCHAR, issn_l VARCHAR, issn VARCHAR[], is_oa BOOLEAN, is_in_doaj BOOLEAN, is_core BOOLEAN, host_organization VARCHAR, host_organization_name VARCHAR, host_organization_lineage VARCHAR[], host_organization_lineage_names VARCHAR[], ""type"" VARCHAR), is_oa BOOLEAN, is_published BOOLEAN, landing_page_url VARCHAR, pdf_url VARCHAR, raw_source_name VARCHAR, raw_type VARCHAR, provenance VARCHAR, license VARCHAR, license_id VARCHAR, ""version"" VARCHAR, is_accepted BOOLEAN)"
+biblio,"STRUCT(volume VARCHAR, issue VARCHAR, first_page VARCHAR, last_page VARCHAR)"
+citation_normalized_percentile,"STRUCT(""value"" DOUBLE, is_in_top_1_percent BOOLEAN, is_in_top_10_percent BOOLEAN)"
+cited_by_count,BIGINT
+cited_by_percentile_year,"STRUCT(min BIGINT, max BIGINT)"
+concepts,"STRUCT(id VARCHAR, wikidata VARCHAR, display_name VARCHAR, ""level"" BIGINT, score DOUBLE)[]"
+corresponding_author_ids,VARCHAR
+corresponding_institution_ids,VARCHAR
+countries_distinct_count,BIGINT
+counts_by_year,"STRUCT(""year"" BIGINT, cited_by_count BIGINT)[]"
+created_date,TIMESTAMP
+display_name,VARCHAR
+doi,VARCHAR
+funders,"STRUCT(id VARCHAR, display_name VARCHAR, ror VARCHAR)[]"
+fwci,DOUBLE
+has_content,"STRUCT(pdf BOOLEAN, grobid_xml BOOLEAN)"
+has_fulltext,BOOLEAN
+id,VARCHAR
+ids,"STRUCT(openalex VARCHAR, mag VARCHAR, doi VARCHAR, pmid VARCHAR)"
+indexed_in,VARCHAR
+institutions,JSON[]
+institutions_distinct_count,BIGINT
+is_paratext,BOOLEAN
+is_retracted,BOOLEAN
+is_xpac,BOOLEAN
+keywords,"STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE)[]"
+language,VARCHAR
+locations,"STRUCT(id VARCHAR, ""source"" STRUCT(id VARCHAR, display_name VARCHAR, issn_l VARCHAR, issn VARCHAR[], is_oa BOOLEAN, is_in_doaj BOOLEAN, is_core BOOLEAN, host_organization VARCHAR, host_organization_name VARCHAR, host_organization_lineage VARCHAR[], host_organization_lineage_names VARCHAR[], ""type"" VARCHAR), is_oa BOOLEAN, is_published BOOLEAN, landing_page_url VARCHAR, pdf_url VARCHAR, raw_source_name VARCHAR, raw_type VARCHAR, provenance VARCHAR, license VARCHAR, license_id VARCHAR, ""version"" VARCHAR, is_accepted BOOLEAN)[]"
+locations_count,BIGINT
+mesh,"STRUCT(descriptor_ui VARCHAR, descriptor_name VARCHAR, qualifier_ui VARCHAR, qualifier_name VARCHAR, is_major_topic BOOLEAN)[]"
+open_access,"STRUCT(is_oa BOOLEAN, oa_status VARCHAR, any_repository_has_fulltext BOOLEAN, oa_url VARCHAR)"
+primary_location,"STRUCT(id VARCHAR, ""source"" STRUCT(id VARCHAR, display_name VARCHAR, issn_l VARCHAR, issn VARCHAR[], is_oa BOOLEAN, is_in_doaj BOOLEAN, is_core BOOLEAN, host_organization VARCHAR, host_organization_name VARCHAR, host_organization_lineage VARCHAR[], host_organization_lineage_names VARCHAR[], ""type"" VARCHAR), is_oa BOOLEAN, is_published BOOLEAN, landing_page_url VARCHAR, pdf_url VARCHAR, raw_source_name VARCHAR, raw_type VARCHAR, provenance VARCHAR, license VARCHAR, license_id VARCHAR, ""version"" VARCHAR, is_accepted BOOLEAN)"
+primary_topic,"STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))"
+publication_date,DATE
+publication_year,BIGINT
+referenced_works,VARCHAR
+referenced_works_count,BIGINT
+related_works,VARCHAR
+sustainable_development_goals,"STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE)[]"
+title,VARCHAR
+topics,"STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE, subfield STRUCT(id VARCHAR, display_name VARCHAR), field STRUCT(id VARCHAR, display_name VARCHAR), ""domain"" STRUCT(id VARCHAR, display_name VARCHAR))[]"
+type,VARCHAR
+updated_date,DATE
