@@ -21,7 +21,8 @@ pro_request_parquet(
   delete_input = FALSE,
   sample_size = 1000,
   workers = NULL,
-  enrich = TRUE
+  enrich = TRUE,
+  schema = "auto"
 )
 ```
 
@@ -75,6 +76,38 @@ pro_request_parquet(
   Logical. When `TRUE` (the default) and the inferred schema contains
   `abstract_inverted_index` / `authorships` / `publication_year`, add
   `abstract` and `citation` computed columns.
+
+- schema:
+
+  Controls use of a pre-built baseline schema for type resolution.
+  Possible values:
+
+  `"auto"` (default)
+
+  :   Auto-detect the OpenAlex entity type from the inferred columns,
+      then load the matching schema from the user cache (populated by
+      [`oa_cache_schema()`](https://rkrug.github.io/openalexPro/reference/oa_cache_schema.md))
+      or the schemas bundled with the package. For each column where
+      DuckDB runtime inference produced the ambiguous `JSON` fallback
+      type, the baseline type is used instead. Falls back silently to
+      runtime-only inference when the entity cannot be detected or no
+      schema is found.
+
+  `"none"` or `NULL`
+
+  :   Skip the baseline entirely; behaviour is identical to package
+      versions before this feature was added.
+
+  A file path
+
+  :   Path to a CSV with columns `col_name` / `col_type`. Used directly
+      as the baseline.
+
+  A directory path
+
+  :   Auto-detect entity, then look for `<entity>.csv` inside that
+      directory. Useful when pointing directly at a snapshot-metadata
+      schemata directory.
 
 ## Value
 

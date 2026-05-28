@@ -44,7 +44,7 @@ Parquet file using DuckDB, with no intermediate JSONL on disk."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Convert JSON files from pro_request() directly to Apache Parquet</h1>
-      <small class="dont-index">Source: <a href="https://github.com/rkrug/openalexPro/blob/v0.10.0/R/pro_request_parquet.R" class="external-link"><code>R/pro_request_parquet.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/rkrug/openalexPro/blob/main/R/pro_request_parquet.R" class="external-link"><code>R/pro_request_parquet.R</code></a></small>
       <div class="d-none name"><code>pro_request_parquet.Rd</code></div>
     </div>
 
@@ -67,7 +67,8 @@ Parquet file using DuckDB, with no intermediate JSONL on disk.</p>
 <span>  delete_input <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sample_size <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  workers <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  enrich <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  enrich <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  schema <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -122,6 +123,34 @@ records (accurate but slow for large files).  Default <code>1000</code>.</p></dd
 <dd><p>Logical.  When <code>TRUE</code> (the default) and the inferred schema
 contains <code>abstract_inverted_index</code> / <code>authorships</code> / <code>publication_year</code>,
 add <code>abstract</code> and <code>citation</code> computed columns.</p></dd>
+
+
+<dt id="arg-schema">schema<a class="anchor" aria-label="anchor" href="#arg-schema"></a></dt>
+<dd><p>Controls use of a pre-built baseline schema for type
+resolution.  Possible values:</p><dl><dt><code>"auto"</code> (default)</dt>
+<dd><p>Auto-detect the OpenAlex entity type from the
+inferred columns, then load the matching schema from the user cache
+(populated by <code><a href="oa_cache_schema.html">oa_cache_schema()</a></code>) or the schemas bundled
+with the package.  For each column where DuckDB runtime inference
+produced the ambiguous <code>JSON</code> fallback type, the baseline type is used
+instead.  Falls back silently to runtime-only inference when the entity
+cannot be detected or no schema is found.</p></dd>
+
+<dt><code>"none"</code> or <code>NULL</code></dt>
+<dd><p>Skip the baseline entirely; behaviour is
+identical to package versions before this feature was added.</p></dd>
+
+<dt>A file path</dt>
+<dd><p>Path to a CSV with columns <code>col_name</code> / <code>col_type</code>.
+Used directly as the baseline.</p></dd>
+
+<dt>A directory path</dt>
+<dd><p>Auto-detect entity, then look for
+<code>&lt;entity&gt;.csv</code> inside that directory.  Useful when pointing directly
+at a snapshot-metadata schemata directory.</p></dd>
+
+
+</dl></dd>
 
 </dl></div>
     <div class="section level2">

@@ -23,6 +23,10 @@
 - [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
   : Look up records by OpenAlex ID
 
+- [`oa_cache_schema()`](https://rkrug.github.io/openalexPro/reference/oa_cache_schema.md)
+  : Populate the local baseline-schema cache from a snapshot metadata
+  directory
+
 - [`oa_normalize_duckdb_type()`](https://rkrug.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
   : Canonicalise a DuckDB type string.
 
@@ -30,8 +34,8 @@
   :
 
   Return the DuckDB SQL expression that reconstructs a plain-text
-  abstract from the `abstract_inverted_index` MAP column in OpenAlex
-  works data.
+  abstract from the `abstract_inverted_index` column in OpenAlex works
+  data.
 
 - [`oa_works_citation_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_citation_sql.md)
   :
