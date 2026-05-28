@@ -1,7 +1,7 @@
 Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
-Version: 0.10.0
+Version: 0.10.1
 Author: Rainer M Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
 Description: More about what it does (maybe more than one line).
