@@ -3,14 +3,14 @@
 ## Introduction
 
 The
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 function is the foundation of the `openalexPro` workflow. It constructs
 well-formed URLs for querying the OpenAlex API, handling parameter
 validation, filter construction, and automatic request chunking for
 large queries.
 
 This vignette provides a comprehensive guide to using
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md),
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md),
 including:
 
 - OpenAlex API concepts and URL structure
@@ -93,11 +93,11 @@ flowchart LR
 | `id` | character | NULL | Single entity ID for direct retrieval. Multiple IDs are moved to `ids.openalex` filter |
 | `search` | character | NULL | Full-text search string |
 | `group_by` | character | NULL | Field to group by for faceted counts |
-| `select` | character vector | NULL | Fields to return (validated against [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)) |
+| `select` | character vector | NULL | Fields to return (validated against [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)) |
 | `options` | named list | NULL | Additional query parameters (per_page, sort, cursor, sample) |
 | `endpoint` | character | “https://api.openalex.org” | Base API URL |
 | `chunk_limit` | integer | 50 | Maximum items per chunk for chunkable filters |
-| `...` | named arguments | \- | Filters (validated against [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)) |
+| `...` | named arguments | \- | Filters (validated against [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)) |
 
 ## Basic Usage
 
@@ -117,7 +117,7 @@ url
 
 ### Search Modes
 
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 supports three mutually exclusive search parameters, each with different
 matching behaviour and cost:
 
@@ -206,7 +206,7 @@ url <- pro_query(
 
 > **Note:** Semantic search returns at most 50 results. For large-scale
 > retrieval, combine `search` or `search.exact` with
-> [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md).
+> [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md).
 
 ### Field Selection
 
@@ -227,7 +227,7 @@ url
 #### Available Select Fields
 
 Use
-[`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)
+[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)
 to see all available fields:
 
 ``` r
@@ -313,7 +313,7 @@ url <- pro_query(
 
 > **Tip:** For bulk lookup of multiple DOIs or IDs, use a filter
 > (`doi = c(...)`) rather than the `id` parameter —
-> [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+> [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 > will automatically chunk them into batches of up to 50.
 
 ## Filtering
@@ -473,7 +473,7 @@ pro_query(entity = "works", `concepts.id` = c("C119857082", "C41008148"))
 | `cited_by` | Works cited by this ID | “W2741809807” |
 
 Use
-[`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
+[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
 to see all available filters.
 
 ## Advanced Features
@@ -630,7 +630,7 @@ url <- pro_query(
 ```
 
 XPAC work IDs can be passed directly to
-[`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
 — `include_xpac` is a discovery-phase parameter and is not needed at
 download time. To find XPAC works that also have downloadable full-text,
 combine the filters:
@@ -656,7 +656,7 @@ more details.
 ## Automatic Chunking
 
 When querying with large lists of DOIs or IDs,
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 automatically splits the request into chunks to avoid API URL length
 limits (max ~4094 characters).
 
@@ -890,7 +890,7 @@ pro_query(entity = "funders", country_code = "US")
 
 ## Validation System
 
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 validates all inputs to catch errors early and provide helpful
 suggestions.
 
@@ -926,7 +926,7 @@ flowchart TD
 ### Filter Validation
 
 Filter names are validated against
-[`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md):
+[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md):
 
 ``` r
 
@@ -945,7 +945,7 @@ try(
 ### Select Field Validation
 
 Select fields are validated against
-[`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md):
+[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md):
 
 ``` r
 
@@ -1295,7 +1295,7 @@ try(pro_query(entity = "works", invalid_filter = "value"))
 ```
 
 **Solution:** Check
-[`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
+[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
 for valid filter names.
 
 #### Invalid Select Field
@@ -1309,12 +1309,12 @@ try(pro_query(entity = "works", select = c("id", "titel")))
 ```
 
 **Solution:** Use suggested corrections or check
-[`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md).
+[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md).
 
 #### URL Too Long
 
 When a query URL exceeds ~4094 characters, the API returns an error.
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 prevents this through automatic chunking, but if you manually construct
 very long URLs:
 
@@ -1370,7 +1370,7 @@ pro_query(entity = "works", search = "machine learning")
 ### 3. Check Counts Before Downloading
 
 Use
-[`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
 to check query size:
 
 ``` r
@@ -1384,7 +1384,7 @@ count$count
 ### 4. Leverage Automatic Chunking
 
 Let
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 handle large ID lists:
 
 ``` r
@@ -1560,18 +1560,18 @@ pro_validate_credentials()
 ```
 
 Credentials are used by API-calling functions
-([`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-[`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md),
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-[`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md))
+([`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md),
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md))
 and are optional. If `api_key` is `NULL` or `""`, those functions call
 OpenAlex without authentication.
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 itself only builds URLs and does not require credentials.
 
 ## Integration with openalexPro Workflow
 
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 is the first step in the typical `openalexPro` data pipeline:
 
 ``` mermaid
@@ -1665,18 +1665,18 @@ dbDisconnect(con)
 
 ## See Also
 
-- [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md) -
+- [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md) -
   List available filter names
-- [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md) -
+- [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md) -
   List available select fields
-- [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) -
+- [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md) -
   Validate API credentials (optional helper)
-- [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) -
+- [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md) -
   Get count of results without downloading
-- [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) -
+- [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) -
   Execute API requests and save results
 - `pro_request_jsonl()` - Convert JSON to JSONL format
-- [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) -
+- [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) -
   Convert JSONL to Parquet format (with schema harmonization)
 
 ## References

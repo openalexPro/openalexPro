@@ -26,7 +26,7 @@ pro_request(
 - query_url:
 
   The URL of the API query or a list of URLs returned from
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md).
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
 
 - pages:
 
@@ -50,7 +50,7 @@ pro_request(
 - api_key:
 
   Character string API key or `NULL`. Defaults to
-  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md).
   If `NULL` or `""`, requests are sent without an API key (subject to
   OpenAlex's unauthenticated limits).
 

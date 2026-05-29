@@ -44,10 +44,10 @@ The package has one functional area: **OpenAlex API access**.
 
 Snapshot conversion, corpus indexing, and ID-based record lookup have
 moved to the **`openalexSnapshot`** package. Calling
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+[`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
 or
-[`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+[`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
 in `openalexPro` raises an informative error pointing to
 `openalexSnapshot`.
 
@@ -55,26 +55,26 @@ in `openalexPro` raises an informative error pointing to
 
 Functions that query the live OpenAlex REST API:
 
-- [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+- [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   — builds query URLs with filters, search, entity selection, ID
   chunking
-- [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+- [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   — paginates through API results, writes JSON; accepts nested lists of
   URLs (each nesting level becomes a subdirectory)
-- [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+- [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   — converts JSON files from
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   directly to Parquet (schema inference + per-file DuckDB COPY, parallel
   via `future`)
-- [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+- [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   — all-in-one: query → paginate → convert to Parquet (project folder)
-- [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
+- [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   — counts matching records
-- [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+- [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   — downloads PDFs / TEI XML from `content.openalex.org`
-- [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+- [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   — queries the `/rate-limit` endpoint
-- [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)
+- [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   — checks API key validity
 
 All HTTP calls route through `api_call()` (`R/api_call.R`), which
@@ -83,25 +83,25 @@ cassettes in `tests/fixtures/vcr/`.
 
 ### SQL helpers
 
-- [`oa_works_abstract_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_abstract_sql.md)
+- [`oa_works_abstract_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_abstract_sql.md)
   — DuckDB SQL expression reconstructing plain-text abstract from
   `abstract_inverted_index` MAP column
-- [`oa_works_citation_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_citation_sql.md)
+- [`oa_works_citation_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_citation_sql.md)
   — DuckDB SQL expression building `"Author (year)"` citation string
-- [`oa_normalize_duckdb_type()`](https://rkrug.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
+- [`oa_normalize_duckdb_type()`](https://openalexpro.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
   — canonicalises a DuckDB type string (uppercases keywords)
 
 ### Supporting functions
 
-- [`id_block()`](https://rkrug.github.io/openalexPro/reference/id_block.md)
+- [`id_block()`](https://openalexpro.github.io/openalexPro/reference/id_block.md)
   — converts an OpenAlex ID to its block number
   (`floor(numeric_id / 10000)`)
-- [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+- [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
   — per-file schema inference with two-level caching
-- [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md),
-  [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
+- [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md),
+  [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
   — helpers for building API queries
-- [`prepare_snapshot()`](https://rkrug.github.io/openalexPro/reference/prepare_snapshot.md)
+- [`prepare_snapshot()`](https://openalexpro.github.io/openalexPro/reference/prepare_snapshot.md)
   — snapshot download/preparation utilities
 
 ## Branching
@@ -119,8 +119,8 @@ cassettes in `tests/fixtures/vcr/`.
 
 - `project_dir` is the standard output directory parameter (consistent
   across
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md))
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md))
 - OpenAlex IDs accepted in both short form (`W2741809807`) and long form
   (`https://openalex.org/W2741809807`)
 - Nested query lists produce hive-partitioned parquet: depth 1 →
@@ -141,7 +141,7 @@ cassettes in `tests/fixtures/vcr/`.
   with `ignore_errors = true` infers `abstract_inverted_index` as
   `MAP(VARCHAR, BIGINT[])`, which correctly handles duplicate-cased keys
   (e.g. `"the"` / `"The"`) and is compatible with
-  [`oa_works_abstract_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_abstract_sql.md).
+  [`oa_works_abstract_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_abstract_sql.md).
 
 ## Test Infrastructure
 

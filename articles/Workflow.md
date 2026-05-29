@@ -87,13 +87,13 @@ flowchart TD
 
 | Approach | When to Use |
 |----|----|
-| **Simple**: [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | Quick analysis, standard workflow, getting started |
+| **Simple**: [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) | Quick analysis, standard workflow, getting started |
 | **Advanced**: Individual functions | Custom processing from downloaded json, more control, advanced workflows |
 
 ## Simple Approach: `pro_fetch()`
 
 For most use cases,
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 handles everything in one call:
 
 ``` mermaid
@@ -686,7 +686,7 @@ dbDisconnect(con)
 
 OpenAlex provides full-text PDFs (~60 M works) and Grobid TEI XML (~43 M
 works) via `content.openalex.org`. Use
-[`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
 to retrieve them. Each file costs **\$0.01**.
 
 ``` r
@@ -730,7 +730,7 @@ table(results$status)
 # 892       45         3
 ```
 
-[`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
 never aborts on partial failures — inspect the `status` column to
 identify any files that need retrying.
 
@@ -810,26 +810,26 @@ flowchart TD
 
 | Function | Purpose | Key Parameters |
 |----|----|----|
-| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) | Build API URL | entity, search, filters, select |
-| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) | Get result count | query_url |
-| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | **All-in-one download** | query_url, project_folder |
-| [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) | Download JSON | query_url, output, pages, workers |
+| [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md) | Build API URL | entity, search, filters, select |
+| [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md) | Get result count | query_url |
+| [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) | **All-in-one download** | query_url, project_folder |
+| [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) | Download JSON | query_url, output, pages, workers |
 | `pro_request_jsonl()` | Convert to JSONL | input_json, output, workers |
-| [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) | Convert to Parquet | input_jsonl, output, sample_size |
-| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) | Test credentials (optional helper) | api_key |
-| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check rate limit usage & remaining budget | api_key, verbose |
-| [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md) | Download full-text PDFs or TEI XML | ids, output, format, workers |
+| [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) | Convert to Parquet | input_jsonl, output, sample_size |
+| [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md) | Test credentials (optional helper) | api_key |
+| [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check rate limit usage & remaining budget | api_key, verbose |
+| [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md) | Download full-text PDFs or TEI XML | ids, output, format, workers |
 
 ## See Also
 
 - **[Quick Start
-  Guide](https://rkrug.github.io/openalexPro/articles/Quick_Start.md)** -
+  Guide](https://openalexpro.github.io/openalexPro/articles/Quick_Start.md)** -
   Get started in 5 minutes
 - **[pro_query()
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_query.md)** -
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_query.md)** -
   Query building details
 - **[pro_request()
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_request.md)** -
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_request.md)** -
   Download pipeline details
 - **[OpenAlex Documentation](https://docs.openalex.org)** - API
   reference

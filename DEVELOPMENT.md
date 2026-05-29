@@ -10,7 +10,7 @@ understand *why* things are the way they are.
 ## 2026-04-20 — Fix `overwrite` parameter in `pro_request()` list method and `pro_fetch()` (0.8.1)
 
 **Bug:**
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 accepted an `overwrite` parameter but silently ignored it when
 `query_url` was a list — the top-level output directory was never
 checked or deleted, and each sub-query’s `fetch_query_pages()` call
@@ -25,7 +25,7 @@ before flattening queries: error if `output` exists and
 directory no longer exists by the time they run).
 
 **Bug:**
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 delegated `overwrite` to each of the three sub-functions (`pro_request`,
 `pro_request_jsonl`, `pro_request_jsonl_parquet`) individually, so
 directories were deleted one at a time as the pipeline progressed. If
@@ -110,13 +110,13 @@ validating malformed inputs.
 **Implementation:**
 
 - Normalized `api_key` handling in:
-  - [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
-  - [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  - [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
+  - [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
     / `fetch_query_pages()`
-  - [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
-  - [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
-  - [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
-  - [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)
+  - [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  - [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
+  - [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  - [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
     docs
 - Unified rules:
   - `api_key = NULL` or `api_key = ""` =\> send request without API key
@@ -144,7 +144,7 @@ validating malformed inputs.
 - Added `inst/scripts/record_cassettes.R` to re-record and sanitize
   cassettes.
 - Added a preflight key check via
-  [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   to avoid replacing valid cassettes with HTTP 401 responses when
   credentials are invalid.
 - Updated `helper_vcr.R` behavior for explicit recording mode
@@ -158,13 +158,13 @@ validating malformed inputs.
 returns the caller’s current daily budget, amount used, remaining
 balance, and per-endpoint costs in a single JSON object. This replaces
 the previous credential-check pattern (making a dummy
-[`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
 call) with a purpose-built status function.
 
 **Implementation:**
 
 - New file `R/pro_rate_limit_status.R` with exported
-  [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md).
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md).
 - Makes a `GET https://api.openalex.org/rate-limit?api_key=<key>`
   request.
 - Uses `httr2::req_error(is_error = function(resp) FALSE)` so httr2
@@ -184,7 +184,7 @@ call) with a purpose-built status function.
   `api_call`).
 
 **Refactor:**
-[`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)
+[`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
 now calls `pro_rate_limit_status(api_key = api_key, verbose = FALSE)`
 and checks `isTRUE(is.list(result))`. The public interface (messages,
 `TRUE`/`FALSE` return) is unchanged. Using the rate-limit endpoint is
@@ -224,13 +224,13 @@ identified around OpenAlex XPAC support.
   `api_call()` call so the helper’s internal logging
   (`"⚠ HTTP 401 - returning response for caller inspection"`, etc.) is
   suppressed; each function emits its own user-facing messages instead.
-- [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+- [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   gains a `User-Agent` header (was previously missing).
-- [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+- [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   passes `max_retries = 5` (matching its previous
   `req_retry(max_tries = 5)`); `transient_responses` defaults are
   identical.
-- [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)’s
+- [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)’s
   `tryCatch` catches
   [`rlang::abort`](https://rlang.r-lib.org/reference/abort.html) thrown
   by `api_call()` on network errors, returning `NULL` as before.
@@ -250,11 +250,11 @@ callers.
   XPAC is, how to enable it via `options = list(include_xpac = TRUE)`,
   how to filter for XPAC-only works with `is_xpac = TRUE`, and how to
   chain discovery into
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md).
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md).
   No code changes needed — the `options` parameter already splices
   arbitrary query parameters via `httr2::req_url_query(req, !!!q)`.
 - Added XPAC example to
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   `@examples` roxygen block.
 
 **Key files:** `R/pro_rate_limit_status.R`, `R/pro_download_content.R`,
@@ -269,11 +269,11 @@ callers.
 Grobid TEI XML (~43 M files) for works. Cost is \$0.01 per file. The
 metadata API already supports `has_content.pdf:true` and
 `has_content.grobid-xml:true` filter arguments in
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 to discover downloadable works.
 
 **Implementation:** - New file `R/pro_download_content.R` with exported
-[`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md). -
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md). -
 Accepts a character vector of work IDs (or full OpenAlex URLs,
 normalised). - Downloads via
 [`httr2::req_perform()`](https://httr2.r-lib.org/reference/req_perform.html):
@@ -300,7 +300,7 @@ variants were also introduced: `search.exact` (unstemmed) and
 `search.semantic` (AI-powered).
 
 **Changes:** -
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 already had a `search` parameter (mapped to `search=` in the URL); added
 `search.exact` and `search.semantic` alongside it in `shared_q`. -
 `.validate_filter()` now emits a
@@ -338,7 +338,7 @@ issue is absent.
 **Symptoms (12 test failures on Windows CI, none on macOS/Linux):**
 
 1.  `test-013` (resume detection in
-    [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)):
+    [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)):
     `%in%` comparing
     [`list.files()`](https://rdrr.io/r/base/list.files.html) output
     (`/`) vs
@@ -346,17 +346,17 @@ issue is absent.
     output (`\`) always `FALSE` → all files re-converted instead of
     skipped.
 2.  `test-012`
-    ([`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md) +
-    [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+    ([`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md) +
+    [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
     path doubling):
-    [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+    [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
     used `regexp_replace(filename, '<snapshot_dir>', '')` in SQL. On
     Windows, `snapshot_dir` contained `\`, DuckDB `filename` uses `/` →
     regex never matched → full absolute path stored.
-    [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+    [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
     then did `file.path(snapshot_path, abs_path)` doubling the path.
 3.  `test-004`/`test-007` (spurious `query=` directories in
-    [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)):
+    [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)):
     `dirname(normalizePath(f)) != input_root` always `TRUE` due to 8.3
     vs long-name mismatch → every output file placed in a
     `query=<dirname>` subdirectory instead of the root output directory.
@@ -398,7 +398,7 @@ has path-related failures.
 ## 2026-02-24 — Export `infer_json_schema()` and rename cache files
 
 **Export:**
-[`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+[`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
 was previously internal (`@noRd`). It is now exported with full roxygen
 documentation including `@section Caching` and
 `@section Type-widening rules`. Useful standalone for any workflow that
@@ -455,7 +455,7 @@ correctly via jsonlite.
 ## 2026-02-23 — Per-file schema inference with two-level disk caching
 
 **Problem:**
-[`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+[`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
 ran a single bulk DuckDB query against all sampled files:
 `DESCRIBE SELECT * FROM read_json_auto([N files], union_by_name = true, ...)`.
 For the `works` dataset (1981 files, `maximum_object_size=1000000000`),
@@ -486,7 +486,7 @@ alphabetical) to maintain backward compatibility with existing parquet
 consumers.
 
 **Changes:** - `R/infer_json_schema.R`: rewrote
-[`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+[`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
 to use per-file loop with caching; added `schema_cache_dir` parameter;
 added `merge_schemas()` internal helper. - `R/snapshot_to_parquet.R`:
 passes `schema_cache_dir = file.path(parquet_ds, ".schema_cache")`. -
@@ -501,7 +501,7 @@ cache creation and unified schema reuse.
 ## 2026-02-13 — DuckDB temp file IO error fix (TEMP_DIR in Makefile)
 
 **Problem:** During
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 for the `works` dataset (resume run after an OOM kill), DuckDB raised:
 
     IO Error: Could not read enough bytes from file ".tmp/duckdb_temp_storage_DEFAULT-0.tmp":
@@ -513,9 +513,9 @@ filesystem) causing the error.
 
 **Fix:** Exposed `temp_directory` via a new `TEMP_DIR` Makefile variable
 (default `/tmp`) and passed it to
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 in the `parquet` target. The
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 function already accepted `temp_directory`; only the Makefile was
 missing the plumbing.
 
@@ -523,7 +523,7 @@ missing the plumbing.
 `inst/Makefile.snapshot`. - Added `TEMP_DIR` to `help` output and the
 command-line override example. - Passed
 `temp_directory = "'${TEMP_DIR}'"` to
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 in the `parquet` target. - Updated `vignettes/snapshot.qmd`: added
 `TEMP_DIR` to the variables table and added a Troubleshooting entry
 explaining the error and fix.
@@ -545,24 +545,24 @@ above). Current development supports unauthenticated mode via
 **Changes:**
 
 - Removed `mailto` parameter from
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md),
-  [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md),
+  [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md),
   and
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   examples.
 - Added upfront `api_key` validation in
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
   and
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md):
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md):
   if `Sys.getenv("openalexPro.apikey")` is empty, a clear error is
   thrown with instructions to set the env var.
 - Simplified User-Agent from `openalexPro v[VERSION] (mailto:[EMAIL])`
   to `openalexPro/[VERSION]`.
 - Removed `mailto` query parameter from
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   requests.
 - Updated all four vignettes (`Quick_Start.qmd`, `pro_request.qmd`,
   `pro_query.qmd`, `Workflow.qmd`) to remove email setup steps.
@@ -622,7 +622,7 @@ if (dirname(f_norm) != input_root) {
 
 **Makefile improvements (`inst/Makefile.snapshot`):** - Added
 `SAMPLE_SIZE=10000` variable (passed to
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)). -
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)). -
 Added `cli.progress_handlers_force = "cli"` to the `Rscript` options so
 progress bars render in non-interactive (Makefile) sessions. - Added
 `SAMPLE_SIZE` to `help` output and the override example line.
@@ -636,7 +636,7 @@ progress bars render in non-interactive (Makefile) sessions. - Added
 ## 2026-02-13 — OOM kill fix for schema inference
 
 **Problem:** Running
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 on the `works` dataset (largest dataset, ~300 GB) with
 `SAMPLE_SIZE=1000` caused the R process to be killed (exit code 137 =
 OOM) during schema inference. The schema inference DuckDB connection had
@@ -644,7 +644,7 @@ no memory limit, while the per-file conversion connections did.
 
 **Fix:** Applied `memory_limit` and `temp_directory` settings to the
 schema inference connection in
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 (same settings already applied to per-file workers). This enables DuckDB
 to spill to disk during inference rather than exhausting RAM.
 
@@ -675,7 +675,7 @@ regenerated via `devtools::document()`.
 ## Earlier (0.5.0) — snapshot_to_parquet major refactor
 
 **Motivation:** The original
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
 loaded all `.gz` files for a dataset into a single DuckDB query, which
 caused OOM errors for large datasets. The refactor converts each `.gz`
 to one `.parquet` file individually, enabling:
@@ -695,7 +695,7 @@ to one `.parquet` file individually, enabling:
         )
 
 Both
-[`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+[`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
 and `convert_json_to_parquet()` live in `R/infer_json_schema.R`
 (internal, `@noRd`).
 
@@ -762,11 +762,11 @@ now read exclusively from environment variables:
 ## Earlier (0.3.x) — pro_fetch convenience wrapper
 
 Added
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 as an all-in-one function that chains:
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 → `pro_request_jsonl()` →
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 
 into a single call with a `project_folder` argument. Useful for the
 common “give me a parquet dataset for this query” use case.
@@ -776,7 +776,7 @@ common “give me a parquet dataset for this query” use case.
 ## Earlier (0.2.0) — pro_query builder
 
 Added
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 as the package-native query builder. Handles: - Entity selection -
 Filter construction - ID chunking (splitting large ID lists into
 multiple queries to stay within URL length limits) - Returns a list of

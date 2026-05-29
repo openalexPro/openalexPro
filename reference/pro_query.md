@@ -97,7 +97,7 @@ An individual URL or a list of URLs.
 ## Details
 
 Filter names are validated via `.validate_filter()` using
-[`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md).
+[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md).
 `select` fields are validated via `.validate_select()` using
 `` `opt_select_fields()` ``.
 

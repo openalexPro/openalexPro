@@ -23,7 +23,7 @@ This package is inspired by the package
 [`openalexR`](https://github.com/ropensci/openalexR) but provides a
 different approach to retrieve works from OpenAlex. In contrast to
 `openalexR`, which does all processing and conversions in memory,
-[`openalexPro`](https://rkrug.r-universe.dev/openalexPro) uses an
+[`openalexPro`](https://openalexpro.r-universe.dev/openalexPro) uses an
 on-disc processing approach where the data is processed by number of
 records returned per individual call, i.e. a per-page processing
 approach. Doing all processing in memory has advantages for smaller
@@ -34,18 +34,18 @@ allocations even before that. The on-disc based processing essentially
 should scale at most linearly with the number of pages requested from
 [OpenAlex](https://openalex.org) and likely considerably less as
 parallel processing is used extensively in
-[`openalexPro`](https://rkrug.r-universe.dev/openalexPro).
+[`openalexPro`](https://openalexpro.r-universe.dev/openalexPro).
 
 # Quickstart
 
 ## Installation
 
 The latest “stable” version is available via
-[r-universe](https://rkrug.r-universe.dev/openalexPro)
+[r-universe](https://openalexpro.r-universe.dev/openalexPro)
 
 ``` r
 
-install.packages('openalexPro', repos = c('https://rkrug.r-universe.dev', 'https://cloud.r-project.org'))
+install.packages('openalexPro', repos = c('https://openalexpro.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
 The “development” version can be installed from github. **This is
@@ -55,7 +55,7 @@ functionality, this is not recommended.
 
 ``` r
 
-remotes::install_github("rkrug/openalexPro", ref = "dev")
+remotes::install_github("openalexPro/openalexPro", ref = "dev")
 ```
 
 ## Authentication (Optional, Recommended)
@@ -105,7 +105,7 @@ devtools::test(filter = "900-live")
 ### 1. Define query (`openalexPro::pro_query()`)
 
 The query is defined using the function
-[`openalexPro::pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md).
+[`openalexPro::pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
 It follows the logic and arguments of
 [`openalexR::oa_query()`](https://docs.ropensci.org/openalexR/reference/oa_query.html).
 In addition to
@@ -153,7 +153,7 @@ The resulting URL(s) can be opened in the browser for evaluation.
 ## `pro_fetch()`
 
 For most use cases,
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 handles everything in one call:
 
 ``` r
@@ -195,10 +195,10 @@ output. One important difference is now between the query being a single
 URL or a list: if it is a list, the `future` and `future.apply` packages
 are used to process the URLs in the list in parallel.
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 also accepts **nested lists**, which creates a mirrored nested directory
 structure. The subsequent
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 step converts the directory depth into hive-style partition keys
 (`query=<name>`, `query_l2=<name>`, …), so the final parquet dataset can
 be filtered by group directly:
@@ -261,7 +261,7 @@ corpus <- pro_query(...) |>
 ### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
 
 The
-[`read_corpus()`](https://rkrug.github.io/openalexPro/reference/read_corpus.md)
+[`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
 function reads the corpus either as a arrow `Dataset` object if
 `return_data = FALSE`, which is essentially metadata to the dataset, or
 a `data.frame`, if `return_data = TRUE`, in which case the whole dataset
@@ -286,7 +286,7 @@ The retrieval of works and the initial processing / preparation can be
 split into these three steps:
 
 In a first step
-([`openalexPro::pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)),
+([`openalexPro::pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)),
 each page from the API call is saved into an individual json file as
 returned by the API. The number of retrieved records is effectively only
 limited by the space on the drive where the json files are saved. As the
@@ -302,7 +302,7 @@ added. It writes the resulting json file as a newline-delimited JSON
 (.jsonl), suitable for further processing using `arrow` or DuckDB.
 
 In the third (and final) step
-([`openalexPro::pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
+([`openalexPro::pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
 converts the jsonl files into a parquet database partitioned by `page`
 using the `duckdb` package. Again, as the processing is done per page as
 well, the conversion is not limited by memory.
@@ -319,7 +319,7 @@ huge corpora, are rate limits by OpenAlex (see
 and
 [here](https://help.openalex.org/hc/en-us/articles/24397762024087-Pricing)
 for further details). Use
-[`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+[`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
 to inspect your current daily budget, usage, and remaining allowance at
 any time.
 
@@ -340,5 +340,5 @@ book).
 # Snowball Searches
 
 Snowball search functionality has moved to the separate
-[`openalexSnowball`](https://github.com/rkrug/openalexSnowball) package,
-which depends on `openalexPro` for the underlying pipeline.
+[`openalexSnowball`](https://github.com/openalexPro/openalexSnowball)
+package, which depends on `openalexPro` for the underlying pipeline.

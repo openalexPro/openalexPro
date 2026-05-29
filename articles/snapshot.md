@@ -16,9 +16,9 @@ pak::pak("openalexSnapshot")
 ```
 
 Calling
-[`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-[`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+[`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+[`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
 or
-[`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+[`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
 in `openalexPro` raises an informative error pointing to
 `openalexSnapshot`.

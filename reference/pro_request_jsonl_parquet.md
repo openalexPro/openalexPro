@@ -66,7 +66,7 @@ The function returns the output path invisibly.
 ## Details
 
 The `page` column (added by
-[`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md))
+[`pro_request_jsonl_R()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_R.md))
 is preserved as a regular column in the Parquet data.
 
 When starting the conversion, a file `00_in.progress` is created which

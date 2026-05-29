@@ -23,7 +23,7 @@ This package is inspired by the package
 [`openalexR`](https://github.com/ropensci/openalexR) but provides a
 different approach to retrieve works from OpenAlex. In contrast to
 `openalexR`, which does all processing and conversions in memory,
-[`openalexPro`](https://rkrug.r-universe.dev/openalexPro) uses an
+[`openalexPro`](https://openalexpro.r-universe.dev/openalexPro) uses an
 on-disc processing approach where the data is processed by number of
 records returned per individual call, i.e. a per-page processing
 approach. Doing all processing in memory has advantages for smaller
@@ -34,18 +34,18 @@ allocations even before that. The on-disc based processing essentially
 should scale at most linearly with the number of pages requested from
 [OpenAlex](https://openalex.org) and likely considerably less as
 parallel processing is used extensively in
-[`openalexPro`](https://rkrug.r-universe.dev/openalexPro).
+[`openalexPro`](https://openalexpro.r-universe.dev/openalexPro).
 
 # Quickstart
 
 ## Installation
 
 The latest “stable” version is available via
-[r-universe](https://rkrug.r-universe.dev/openalexPro)
+[r-universe](https://openalexpro.r-universe.dev/openalexPro)
 
 ``` r
 
-install.packages('openalexPro', repos = c('https://rkrug.r-universe.dev', 'https://cloud.r-project.org'))
+install.packages('openalexPro', repos = c('https://openalexpro.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
 The “development” version can be installed from github. **This is
@@ -55,7 +55,7 @@ functionality, this is not recommended.
 
 ``` r
 
-remotes::install_github("rkrug/openalexPro", ref = "dev")
+remotes::install_github("openalexPro/openalexPro", ref = "dev")
 ```
 
 ## Authentication (Optional, Recommended)
@@ -105,7 +105,7 @@ devtools::test(filter = "900-live")
 ### 1. Define query (`openalexPro::pro_query()`)
 
 The query is defined using the function
-[`openalexPro::pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md).
+[`openalexPro::pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
 It follows the logic and arguments of
 [`openalexR::oa_query()`](https://docs.ropensci.org/openalexR/reference/oa_query.html).
 In addition to
@@ -153,7 +153,7 @@ The resulting URL(s) can be opened in the browser for evaluation.
 ## `pro_fetch()`
 
 For most use cases,
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 handles everything in one call:
 
 ``` r
@@ -195,10 +195,10 @@ output. One important difference is now between the query being a single
 URL or a list: if it is a list, the `future` and `future.apply` packages
 are used to process the URLs in the list in parallel.
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 also accepts **nested lists**, which creates a mirrored nested directory
 structure. The subsequent
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 step converts the directory depth into hive-style partition keys
 (`query=<name>`, `query_l2=<name>`, …), so the final parquet dataset can
 be filtered by group directly:
@@ -261,7 +261,7 @@ corpus <- pro_query(...) |>
 ### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
 
 The
-[`read_corpus()`](https://rkrug.github.io/openalexPro/reference/read_corpus.md)
+[`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
 function reads the corpus either as a arrow `Dataset` object if
 `return_data = FALSE`, which is essentially metadata to the dataset, or
 a `data.frame`, if `return_data = TRUE`, in which case the whole dataset
@@ -286,7 +286,7 @@ The retrieval of works and the initial processing / preparation can be
 split into these three steps:
 
 In a first step
-([`openalexPro::pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)),
+([`openalexPro::pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)),
 each page from the API call is saved into an individual json file as
 returned by the API. The number of retrieved records is effectively only
 limited by the space on the drive where the json files are saved. As the
@@ -302,7 +302,7 @@ added. It writes the resulting json file as a newline-delimited JSON
 (.jsonl), suitable for further processing using `arrow` or DuckDB.
 
 In the third (and final) step
-([`openalexPro::pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
+([`openalexPro::pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
 converts the jsonl files into a parquet database partitioned by `page`
 using the `duckdb` package. Again, as the processing is done per page as
 well, the conversion is not limited by memory.
@@ -319,7 +319,7 @@ huge corpora, are rate limits by OpenAlex (see
 and
 [here](https://help.openalex.org/hc/en-us/articles/24397762024087-Pricing)
 for further details). Use
-[`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+[`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
 to inspect your current daily budget, usage, and remaining allowance at
 any time.
 
@@ -340,104 +340,104 @@ book).
 # Snowball Searches
 
 Snowball search functionality has moved to the separate
-[`openalexSnowball`](https://github.com/rkrug/openalexSnowball) package,
-which depends on `openalexPro` for the underlying pipeline.
+[`openalexSnowball`](https://github.com/openalexPro/openalexSnowball)
+package, which depends on `openalexPro` for the underlying pipeline.
 
 # Package index
 
 ## All functions
 
-- [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+- [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
   : Build a Parquet ID-lookup index
 
-- [`compatibility_report()`](https://rkrug.github.io/openalexPro/reference/compatibility_report.md)
+- [`compatibility_report()`](https://openalexpro.github.io/openalexPro/reference/compatibility_report.md)
   : Render and open the compatibility report
 
-- [`extract_doi()`](https://rkrug.github.io/openalexPro/reference/extract_doi.md)
+- [`extract_doi()`](https://openalexpro.github.io/openalexPro/reference/extract_doi.md)
   : Extract DOIs or Components from Character Vectors
 
-- [`id_block()`](https://rkrug.github.io/openalexPro/reference/id_block.md)
+- [`id_block()`](https://openalexpro.github.io/openalexPro/reference/id_block.md)
   : Compute ID block from OpenAlex IDs
 
-- [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+- [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
   : Infer unified JSON schema using DuckDB
 
-- [`jq_execute()`](https://rkrug.github.io/openalexPro/reference/jq_execute.md)
+- [`jq_execute()`](https://openalexpro.github.io/openalexPro/reference/jq_execute.md)
   : Execute a jq transformation from an OpenAlex-style JSON to JSONL
 
-- [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+- [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
   : Look up records by OpenAlex ID
 
-- [`oa_cache_schema()`](https://rkrug.github.io/openalexPro/reference/oa_cache_schema.md)
+- [`oa_cache_schema()`](https://openalexpro.github.io/openalexPro/reference/oa_cache_schema.md)
   : Populate the local baseline-schema cache from a snapshot metadata
   directory
 
-- [`oa_normalize_duckdb_type()`](https://rkrug.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
+- [`oa_normalize_duckdb_type()`](https://openalexpro.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
   : Canonicalise a DuckDB type string.
 
-- [`oa_works_abstract_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_abstract_sql.md)
+- [`oa_works_abstract_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_abstract_sql.md)
   :
 
   Return the DuckDB SQL expression that reconstructs a plain-text
   abstract from the `abstract_inverted_index` column in OpenAlex works
   data.
 
-- [`oa_works_citation_sql()`](https://rkrug.github.io/openalexPro/reference/oa_works_citation_sql.md)
+- [`oa_works_citation_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_citation_sql.md)
   :
 
   Return the DuckDB SQL expression that builds a short citation string
   from the `authorships` and `publication_year` columns in OpenAlex
   works data.
 
-- [`opt_api_key()`](https://rkrug.github.io/openalexPro/reference/opt_api_key.md)
+- [`opt_api_key()`](https://openalexpro.github.io/openalexPro/reference/opt_api_key.md)
   : Get API key for OpenAlex API
 
-- [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md)
+- [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
   : Get available filter names from OpenAlex API
 
-- [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md)
+- [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)
   : Get available select fields from OpenAlex API
 
-- [`prepare_snapshot()`](https://rkrug.github.io/openalexPro/reference/prepare_snapshot.md)
+- [`prepare_snapshot()`](https://openalexpro.github.io/openalexPro/reference/prepare_snapshot.md)
   : Prepare a directory for OpenAlex snapshot management
 
-- [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md)
+- [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
   : Retrieve the OpenAlex Pro API key
 
-- [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+- [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   : Download full-text PDFs or TEI XML for OpenAlex works
 
-- [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+- [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   : Fetch and convert OpenAlex data to Parquet
 
-- [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+- [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   : Build an OpenAlex request (httr2)
 
-- [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+- [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   : Check OpenAlex rate limit status
 
-- [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+- [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   : Fetch works from OpenAlex
 
-- [`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md)
+- [`pro_request_jsonl_R()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_R.md)
   : Convert JSON files to jsonl files
 
-- [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+- [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   : Convert JSON files to Apache Parquet files
 
-- [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+- [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   : Convert JSON files from pro_request() directly to Apache Parquet
 
-- [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)
+- [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   : Validate OpenAlex credentials
 
-- [`read_corpus()`](https://rkrug.github.io/openalexPro/reference/read_corpus.md)
+- [`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
   : Read corpus from Parquet Dataset
 
-- [`sample_parquet_n()`](https://rkrug.github.io/openalexPro/reference/sample_parquet_n.md)
+- [`sample_parquet_n()`](https://openalexpro.github.io/openalexPro/reference/sample_parquet_n.md)
   : Sample rows from Parquet files using DuckDB reservoir sampling
 
-- [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+- [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   : Convert OA snapshot to Parquet format
 
 # Articles
@@ -445,14 +445,14 @@ which depends on `openalexPro` for the underlying pipeline.
 ### Guides
 
 - [Quick Start
-  Guide](https://rkrug.github.io/openalexPro/articles/Quick_Start.md):
+  Guide](https://openalexpro.github.io/openalexPro/articles/Quick_Start.md):
 - [Workflow
-  Guide](https://rkrug.github.io/openalexPro/articles/Workflow.md):
+  Guide](https://openalexpro.github.io/openalexPro/articles/Workflow.md):
 - [\`pro_query()\` - Background and Technical
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_query.md):
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_query.md):
 - [\`pro_request()\` - Background and Technical
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_request.md):
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_request.md):
 - [Snapshot Conversion — Moved to
-  openalexSnapshot](https://rkrug.github.io/openalexPro/articles/snapshot_conversion.md):
+  openalexSnapshot](https://openalexpro.github.io/openalexPro/articles/snapshot_conversion.md):
 - [Working with OpenAlex Snapshots — Moved to
-  openalexSnapshot](https://rkrug.github.io/openalexPro/articles/snapshot.md):
+  openalexSnapshot](https://openalexpro.github.io/openalexPro/articles/snapshot.md):

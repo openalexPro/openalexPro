@@ -1,10 +1,10 @@
 # Convert JSON files from pro_request() directly to Apache Parquet
 
 Single-step replacement for the two-step
-[`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md) +
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_R()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_R.md) +
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 pipeline. Reads the JSON files written by
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 and converts each one to a Parquet file using DuckDB, with no
 intermediate JSONL on disk.
 
@@ -31,7 +31,7 @@ pro_request_parquet(
 - input_json:
 
   Directory of JSON files returned by
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md).
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md).
 
 - output:
 
@@ -86,7 +86,7 @@ pro_request_parquet(
 
   :   Auto-detect the OpenAlex entity type from the inferred columns,
       then load the matching schema from the user cache (populated by
-      [`oa_cache_schema()`](https://rkrug.github.io/openalexPro/reference/oa_cache_schema.md))
+      [`oa_cache_schema()`](https://openalexpro.github.io/openalexPro/reference/oa_cache_schema.md))
       or the schemas bundled with the package. For each column where
       DuckDB runtime inference produced the ambiguous `JSON` fallback
       type, the baseline type is used instead. Falls back silently to
@@ -132,7 +132,7 @@ for column.
 
 ## File format
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 writes one JSON file per API page. For paginated queries each file has
 the structure `{"results": [...], "meta": {...}}`. For group-by queries
 the array field is `"group_by"`. For single-record lookups the file is a
@@ -148,9 +148,9 @@ filename (or subdirectory for multi-query inputs).
 
 ## See also
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 to download the JSON files,
-[`pro_request_jsonl_R()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_R.md)
+[`pro_request_jsonl_R()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_R.md)
 and
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 for the older two-step pipeline (now deprecated).

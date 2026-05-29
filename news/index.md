@@ -10,7 +10,7 @@
   lookup. Pure-R `_R` variants remain as fallbacks. This eliminates the
   external `openalex-snapshot` binary dependency for the main pipeline.
 
-- **[`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)**
+- **[`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)**
   — query your OpenAlex API rate-limit status (daily budget, used,
   remaining, prepaid balance, reset time, per-endpoint costs). Returns a
   list invisibly; prints a formatted summary when `verbose = TRUE`.
@@ -27,14 +27,14 @@
 
 ### Bug Fixes
 
-- [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+- [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   list method now respects the `overwrite` parameter. Previously, when
   `query_url` was a list, the top-level `output` directory was neither
   checked nor deleted regardless of `overwrite`. It now errors if the
   directory exists and `overwrite = FALSE`, and deletes it upfront if
   `overwrite = TRUE`.
 
-- [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+- [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   now deletes all three subdirectories (`json`, `jsonl`, `parquet`)
   upfront before the pipeline starts when `overwrite = TRUE`, rather
   than delegating deletion to each sub-function individually. If any of
@@ -46,9 +46,9 @@
 
 ### New Features
 
-- [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
+- [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
   `pro_request_jsonl()`, and
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   now accept **nested lists** of query URLs. Each nesting level is
   preserved as a subdirectory in the output, and the parquet stage
   converts directory depth into hive-style partition keys: depth 1 →
@@ -56,7 +56,7 @@
   `query_l3=<name>`, etc. The resulting dataset is readable with
   [`arrow::open_dataset()`](https://arrow.apache.org/docs/r/reference/open_dataset.html)
   and the partition columns appear as regular columns.
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   inherits this behaviour automatically. A new internal helper
   `collect_leaf_queries()` performs the recursive list flattening.
 
@@ -64,7 +64,7 @@
 
 ### Breaking Changes
 
-- [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+- [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   has a new signature. The old `snapshot_dir` and `parquet_dir`
   parameters are replaced by a single `root_dir` parameter that matches
   the directory layout used by the companion `openalex-snapshot` Rust
@@ -73,20 +73,20 @@
   `snapshot_to_parquet(snapshot_dir = "...", parquet_dir = "...")` with
   `snapshot_to_parquet(root_dir = "...")`.
 
-- [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+- [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
   has a new signature. The old `corpus_dir` parameter is replaced by
   `root_dir`. The function now delegates to the `openalex-snapshot`
   binary. **Migration:** replace
   `build_corpus_index(corpus_dir = "...")` with
   `build_corpus_index(root_dir = "...")`.
 
-- [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+- [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
   has a new signature. The old `index_file` and `output` parameters are
   replaced by `root_dir` and `project_dir` (consistent with the
   project-folder convention used by
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   and
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)).
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)).
   The function now delegates to the `openalex-snapshot` binary.
   **Migration:** replace
   `lookup_by_id(index_file = "...", output = "...")` with
@@ -107,9 +107,9 @@
   These retain the original parameter names and are useful when the
   `openalex-snapshot` binary is unavailable.
 
-- [`find_oas_binary()`](https://rkrug.github.io/openalexPro/reference/find_oas_binary.md)
+- [`find_oas_binary()`](https://openalexpro.github.io/openalexPro/reference/find_oas_binary.md)
   and
-  [`run_oas()`](https://rkrug.github.io/openalexPro/reference/run_oas.md)
+  [`run_oas()`](https://openalexpro.github.io/openalexPro/reference/run_oas.md)
   are exported internal helpers for resolving and invoking the
   `openalex-snapshot` binary. They support:
 
@@ -124,10 +124,10 @@
 ### Dependencies
 
 - The `openalex-snapshot` Rust binary is now required for
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
   and
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md).
+  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md).
   Download from <https://github.com/rkrug/openalex-snapshot/releases> or
   build with `cargo build --release`. The pure-R `*_R()` variants have
   no binary dependency.
@@ -142,11 +142,11 @@
 ### Changes
 
 - Normalized `api_key` handling across API-calling functions:
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md),
   and
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   now accept `api_key = NULL` or `api_key = ""`. In that case, requests
   are sent without an API key (subject to OpenAlex’s unauthenticated
   limits).
@@ -156,7 +156,7 @@
   string.
 
 - Updated
-  [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   to handle `api_key = NULL` safely (informational message + `FALSE`
   return), and aligned documentation.
 
@@ -177,7 +177,7 @@
 ### New Features
 
 - Added
-  [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   to query the OpenAlex rate-limit endpoint (`GET /rate-limit`). Returns
   the full rate-limit JSON invisibly (daily budget, used, remaining,
   prepaid balance, per-endpoint costs, reset time). Prints a
@@ -187,15 +187,15 @@
   invalid API key, and `NULL` on a network error, so callers can
   distinguish auth problems from transient failures.
 
-- [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)
+- [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   refactored to use
-  [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   internally instead of making a separate
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md)
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   request. Behaviour and return value are unchanged.
 
 - Added
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   to download full-text PDFs (`format = "pdf"`) or TEI XML
   (`format = "grobid-xml"`) from the OpenAlex content endpoint
   (`content.openalex.org`). Accepts a vector of work IDs, supports
@@ -204,7 +204,7 @@
   downloads cost \$0.01 per file.
 
 - Added `search.exact` and `search.semantic` parameters to
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md),
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md),
   matching the new OpenAlex search API:
 
   - `search.exact`: searches without stemming or stop-word removal;
@@ -217,23 +217,23 @@
     syntax in addition to its existing stemmed matching.
 
 - Exported
-  [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+  [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
   for direct use. Infers a unified DuckDB columns clause from a set of
   JSON/NDJSON files via per-file `DESCRIBE` queries with type-widening
   and optional two-level disk caching (`schema_cache_dir`).
 
 ### Internal Changes
 
-- [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md)
+- [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
   and
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   now route their HTTP requests through the internal `api_call()`
   helper, unifying retry logic and error handling across all real API
   call sites.
   [`suppressMessages()`](https://rdrr.io/r/base/message.html) is used to
   suppress `api_call()`’s internal logging so each function emits its
   own user-facing messages.
-  [`pro_download_content()`](https://rkrug.github.io/openalexPro/reference/pro_download_content.md)
+  [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   now also sends a `User-Agent` header (previously omitted).
 
 ### Deprecations
@@ -242,33 +242,33 @@
   (e.g. `title_and_abstract.search = "..."`) are deprecated by the
   OpenAlex API. They still work but now emit a warning. Use the `search`
   parameter of
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   instead: `pro_query(entity = "works", search = "your terms")`. See
   <https://developers.openalex.org/guides/searching> for details.
 
 ### Bug Fixes
 
 - Fixed Windows path-normalization failures in
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md),
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
+  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md),
   and
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
   On Windows,
   [`normalizePath()`](https://rdrr.io/r/base/normalizePath.html) can
   return 8.3 short names (e.g. `RUNNER~1`) for
   [`tempdir()`](https://rdrr.io/r/base/tempfile.html)-derived paths
   while [`list.files()`](https://rdrr.io/r/base/list.files.html) and
   DuckDB resolve to long names (`runneradmin`). Resume detection in
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   used `%in%` on paths with mixed separators (`\` vs `/`), causing
   already-converted files to be reconverted.
-  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
   embedded `snapshot_dir` (with `\`) inside a DuckDB `regexp_replace`
   pattern, which never matched — so the full absolute path was stored in
   the index and later doubled by
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md).
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md).
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   used `normalizePath` string comparison to detect subdirectories, which
   always failed, placing every output file in a spurious
   `query=<dirname>` subdirectory.
@@ -280,7 +280,7 @@
   vs long-name differences;
 
   3.  pass the relative path as a SQL literal in
-      [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+      [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
       instead of computing it inside DuckDB with a regex.
 
 ### Changes
@@ -292,16 +292,16 @@
 ### Breaking Changes
 
 - Removed `mailto` parameter from all API functions
-  ([`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md),
-  [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md)).
+  ([`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md),
+  [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)).
   OpenAlex no longer uses email addresses for polite-pool access.
 - `api_key` handling was tightened in 0.6.0 for
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
   and
-  [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md).  
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md).  
   Note: this was later relaxed again in development; current development
   allows `api_key = NULL` / `""` and runs in unauthenticated mode.
 - Simplified User-Agent string from
@@ -314,7 +314,7 @@
 #### Snapshot Handling
 
 - Added
-  [`prepare_snapshot()`](https://rkrug.github.io/openalexPro/reference/prepare_snapshot.md)
+  [`prepare_snapshot()`](https://openalexpro.github.io/openalexPro/reference/prepare_snapshot.md)
   function for setting up a directory with Makefile and documentation
   for managing OpenAlex snapshots.
 - Added `Makefile.snapshot` in `inst/` for automating snapshot download,
@@ -322,21 +322,21 @@
   `parquet_index`, and automatic renaming of existing data with release
   dates.
 - Added
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   function for converting OpenAlex snapshot NDJSON files to Parquet
   format using DuckDB. Processes each `.gz` file individually with
   per-file resume support. Supports parallel processing via `workers`
   (using `future_lapply()`) and unified schema inference via
   `sample_size`.
 - Added
-  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md)
+  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
   function for creating memory-efficient Parquet indexes for fast ID
   lookups. Handles 300M+ records by processing parquet files
   individually, with optional parallelization via `workers` and progress
   reporting via `progressr`. The index file is auto-named and placed
   alongside the corpus directory.
 - Added
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
   function for fast record retrieval from a parquet corpus using
   pre-built indexes. Uses Arrow for index filtering with automatic ID
   normalization. Supports parallel reads via `workers` and streaming to
@@ -344,7 +344,7 @@
 - Added `snapshot_filter_ids()` function for filtering snapshot data by
   ID lists.
 - Added
-  [`id_block()`](https://rkrug.github.io/openalexPro/reference/id_block.md)
+  [`id_block()`](https://openalexpro.github.io/openalexPro/reference/id_block.md)
   helper function for computing ID block partitions.
 
 ### Documentation
@@ -355,20 +355,20 @@
 ### Changes
 
 - Refactored
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   to process each `.gz` file individually instead of all at once. This
   reduces memory usage, enables per-file resume on interruption, and
   shows progress with ETA. The `workers` parameter now controls parallel
   `future` workers instead of DuckDB threads. Added `sample_size`
   parameter for schema inference.
 - Extracted
-  [`infer_json_schema()`](https://rkrug.github.io/openalexPro/reference/infer_json_schema.md)
+  [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
   and `convert_json_to_parquet()` internal helpers, shared by both
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   and
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
 - Refactored
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   to per-file conversion with `future_lapply()` parallelization. Removes
   hive partitioning by `page`; subfolder structure is preserved
   directly. Added `workers` parameter. Removed `progress` parameter
@@ -379,7 +379,7 @@
 - Fixed vignette parse errors in `pro_query.qmd` (malformed code block
   closings).
 - Fixed out-of-memory crash in
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   when `sample_size` exceeded the number of available files
   (e.g. `sample_size = 10000` with 1981 works files). Schema inference
   now processes one file at a time instead of a single bulk DuckDB
@@ -393,13 +393,13 @@
   [`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html)
   when needed.
 - Fixed DuckDB temp file IO errors during
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   by exposing a `TEMP_DIR` variable in `Makefile.snapshot` (default
   `/tmp`).
 
 ### Changes
 
-- [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md)
+- [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md)
   schema inference now runs one DuckDB `DESCRIBE` per file instead of a
   single query across all sampled files. Results are cached in
   `<parquet_ds>/.schema_cache/`: per-file CSVs
@@ -410,10 +410,10 @@
 ### Tests
 
 - Added comprehensive tests for
-  [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-  [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+  [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
   and
-  [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md).
+  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md).
 - Added tests for schema caching, unified schema reuse, and works
   `abstract_inverted_index` VARCHAR round-trip.
 
@@ -444,7 +444,7 @@
   oap_apikey() and simplified handling of api key and email to only use
   environmental variables `openalexPro.email` and `openalexPro.apikey`
 - Added unified schema inference to
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   to prevent schema conflicts when reading combined Parquet datasets.
   New `sample_size` parameter controls schema inference sampling. This
   fixes “Unsupported cast from string to struct” errors when fields have
@@ -464,12 +464,12 @@
 ## openalexPro 0.3.1
 
 - Added
-  [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   with `project_folder` support for structured outputs.
 - Added progress reporting and parallelization for
   `pro_request_jsonl()`.
 - Added
-  [`sample_parquet_n()`](https://rkrug.github.io/openalexPro/reference/sample_parquet_n.md)
+  [`sample_parquet_n()`](https://openalexpro.github.io/openalexPro/reference/sample_parquet_n.md)
   random sampling utilities with `select` support.
 - Improved `count_only` output to return a data frame with an error
   column.
@@ -477,17 +477,17 @@
 ## openalexPro 0.3.0
 
 - Added `count_only` support for
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   and related helpers.
 - Added DOI handling improvements and API call fixes.
 
 ## openalexPro 0.2.0
 
 - Introduced
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   as the package-native query builder with chunking.
 - Added snowball search utilities and citation edge extraction workflow.
 - Expanded conversion pipeline tests and VCR-based API fixtures.
 - Added
-  [`extract_doi()`](https://rkrug.github.io/openalexPro/reference/extract_doi.md)
+  [`extract_doi()`](https://openalexpro.github.io/openalexPro/reference/extract_doi.md)
   helpers and compatibility reporting artifacts.

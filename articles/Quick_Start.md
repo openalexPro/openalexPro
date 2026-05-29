@@ -240,13 +240,13 @@ during processing:
 ## Next Steps
 
 For more control over the download process, see the **[Workflow
-Guide](https://rkrug.github.io/openalexPro/articles/Workflow.md)** which
-covers:
+Guide](https://openalexpro.github.io/openalexPro/articles/Workflow.md)**
+which covers:
 
 - Using
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
   `pro_request_jsonl()`, and
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   separately
 - Parallel processing with multiple workers
 - Handling very large datasets
@@ -256,23 +256,23 @@ covers:
 For detailed technical documentation, see:
 
 - **[pro_query() Technical
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_query.md)** -
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_query.md)** -
   Query building, filtering, chunking
 - **[pro_request() Technical
-  Documentation](https://rkrug.github.io/openalexPro/articles/pro_request.md)** -
+  Documentation](https://openalexpro.github.io/openalexPro/articles/pro_request.md)** -
   Download pipeline, error handling, progress tracking
 
 ## Function Reference
 
 | Function | Purpose |
 |----|----|
-| [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) | Build OpenAlex API query URLs |
-| [`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md) | **One-step download + transform + convert** |
-| [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) | Get result count without downloading |
-| [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) | Test your API credentials |
-| [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check current rate limit usage and remaining budget |
-| [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md) | List available filter names |
-| [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md) | List available select fields |
+| [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md) | Build OpenAlex API query URLs |
+| [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) | **One-step download + transform + convert** |
+| [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md) | Get result count without downloading |
+| [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md) | Test your API credentials |
+| [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check current rate limit usage and remaining budget |
+| [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md) | List available filter names |
+| [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md) | List available select fields |
 
 ## Getting Help
 

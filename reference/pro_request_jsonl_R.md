@@ -5,7 +5,7 @@ The function takes a directory of JSON files as written from a call to
 further using DuckDB by converting them to `jsonl` files. The subfolders
 in `input_json` are preserved in `output`, i.e. results of a list of
 initial queries passed to
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 are maintained.
 
 ## Usage
@@ -71,7 +71,7 @@ The function does returns the output invisibly.
 ## Details
 
 See
-[`jq_execute`](https://rkrug.github.io/openalexPro/reference/jq_execute.md)
+[`jq_execute`](https://openalexpro.github.io/openalexPro/reference/jq_execute.md)
 or the [`vignette`](https://rdrr.io/r/utils/vignette.html)("jq", package
 = "openalexPro") for more information on the conversion of the JSON
 files. The folder/filename is converted to a value named `page` As an

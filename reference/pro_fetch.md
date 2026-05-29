@@ -1,9 +1,9 @@
 # Fetch and convert OpenAlex data to Parquet
 
 Convenience wrapper that downloads records from OpenAlex via
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 and converts them directly to an Apache Parquet dataset via
-[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md).
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md).
 No intermediate JSONL files are written.
 
 ## Usage
@@ -30,7 +30,7 @@ pro_fetch(
 - query_url:
 
   The URL of the API query or a list of URLs returned from
-  [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md).
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
 
 - pages:
 
@@ -55,7 +55,7 @@ pro_fetch(
 - api_key:
 
   Character string API key or `NULL`. Defaults to
-  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md).
   If `NULL` or `""`, requests are sent without an API key (subject to
   OpenAlex's unauthenticated limits).
 
@@ -102,18 +102,18 @@ Invisibly, the normalised path of the `parquet` subfolder inside
 The function
 
 - downloads records from OpenAlex via
-  [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   into a `"json"` subfolder of `project_folder`, and
 
 - converts the JSON files to an Apache Parquet dataset via
-  [`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   into a `"parquet"` subfolder.
 
 **This function assumes `count_only == FALSE`**
 
 ## See also
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 for the download step,
-[`pro_request_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
 for the conversion step.

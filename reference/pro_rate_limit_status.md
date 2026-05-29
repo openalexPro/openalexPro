@@ -14,7 +14,7 @@ pro_rate_limit_status(api_key = pro_api_key(), verbose = TRUE)
 - api_key:
 
   API key (character string) or \`NULL\`. Defaults to
-  [`pro_api_key()`](https://rkrug.github.io/openalexPro/reference/pro_api_key.md).
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md).
   If \`NULL\` or \`""\`, this function returns `FALSE` with an
   informational message.
 

@@ -2,10 +2,10 @@
 
 > **These functions have moved.**
 >
-> [`snapshot_to_parquet()`](https://rkrug.github.io/openalexPro/reference/snapshot_to_parquet.md),
-> [`build_corpus_index()`](https://rkrug.github.io/openalexPro/reference/build_corpus_index.md),
+> [`snapshot_to_parquet()`](https://openalexpro.github.io/openalexPro/reference/snapshot_to_parquet.md),
+> [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
 > and
-> [`lookup_by_id()`](https://rkrug.github.io/openalexPro/reference/lookup_by_id.md)
+> [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
 > are now part of the **`openalexSnapshot`** package.
 >
 > Please install `openalexSnapshot` and refer to its documentation for

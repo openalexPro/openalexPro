@@ -49,7 +49,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/rkrug/openalexPro/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/openalexPro/openalexPro/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -72,7 +72,7 @@
 <div class="section level1">
 <h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h1>
-<p>This package is inspired by the package <a href="https://github.com/ropensci/openalexR" class="external-link"><code>openalexR</code></a> but provides a different approach to retrieve works from OpenAlex. In contrast to <code>openalexR</code>, which does all processing and conversions in memory, <a href="https://rkrug.r-universe.dev/openalexPro" class="external-link"><code>openalexPro</code></a> uses an on-disc processing approach where the data is processed by number of records returned per individual call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from <a href="https://openalex.org" class="external-link">OpenAlex</a>, but limits the number of works which can be retrieved due to memory limitations and a considerable slowdown due to repeated memory allocations even before that. The on-disc based processing essentially should scale at most linearly with the number of pages requested from <a href="https://openalex.org" class="external-link">OpenAlex</a> and likely considerably less as parallel processing is used extensively in <a href="https://rkrug.r-universe.dev/openalexPro" class="external-link"><code>openalexPro</code></a>.</p>
+<p>This package is inspired by the package <a href="https://github.com/ropensci/openalexR" class="external-link"><code>openalexR</code></a> but provides a different approach to retrieve works from OpenAlex. In contrast to <code>openalexR</code>, which does all processing and conversions in memory, <a href="https://openalexpro.r-universe.dev/openalexPro" class="external-link"><code>openalexPro</code></a> uses an on-disc processing approach where the data is processed by number of records returned per individual call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from <a href="https://openalex.org" class="external-link">OpenAlex</a>, but limits the number of works which can be retrieved due to memory limitations and a considerable slowdown due to repeated memory allocations even before that. The on-disc based processing essentially should scale at most linearly with the number of pages requested from <a href="https://openalex.org" class="external-link">OpenAlex</a> and likely considerably less as parallel processing is used extensively in <a href="https://openalexpro.r-universe.dev/openalexPro" class="external-link"><code>openalexPro</code></a>.</p>
 </div>
 <div class="section level1">
 <h1 id="quickstart">Quickstart<a class="anchor" aria-label="anchor" href="#quickstart"></a>
@@ -80,12 +80,12 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>The latest “stable” version is available via <a href="https://rkrug.r-universe.dev/openalexPro" class="external-link">r-universe</a></p>
+<p>The latest “stable” version is available via <a href="https://openalexpro.r-universe.dev/openalexPro" class="external-link">r-universe</a></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'openalexPro'</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://rkrug.r-universe.dev'</span>, <span class="st">'https://cloud.r-project.org'</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'openalexPro'</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://openalexpro.r-universe.dev'</span>, <span class="st">'https://cloud.r-project.org'</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The “development” version can be installed from github. <strong>This is generally not recommended!</strong> Unless you need bleeding edge functionality and can deal with changing function definitions, or want to test new functionality, this is not recommended.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rkrug/openalexPro"</span>, ref <span class="op">=</span> <span class="st">"dev"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openalexPro/openalexPro"</span>, ref <span class="op">=</span> <span class="st">"dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="authentication-optional-recommended">Authentication (Optional, Recommended)<a class="anchor" aria-label="anchor" href="#authentication-optional-recommended"></a>
@@ -158,7 +158,7 @@ To run online contract checks against the live OpenAlex API:</p>
 </h2>
 <p>For more control over the pipeline, use the individual functions:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rkrug/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/openalexPro/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="id_1-retrieving-records-openalexpropro_request">1. Retrieving records (<code>openalexPro::pro_request()</code>)<a class="anchor" aria-label="anchor" href="#id_1-retrieving-records-openalexpropro_request"></a>
 </h3>
@@ -237,14 +237,14 @@ To run online contract checks against the live OpenAlex API:</p>
 <div class="section level1">
 <h1 id="snowball-searches">Snowball Searches<a class="anchor" aria-label="anchor" href="#snowball-searches"></a>
 </h1>
-<p>Snowball search functionality has moved to the separate <a href="https://github.com/rkrug/openalexSnowball" class="external-link"><code>openalexSnowball</code></a> package, which depends on <code>openalexPro</code> for the underlying pipeline.</p>
+<p>Snowball search functionality has moved to the separate <a href="https://github.com/openalexPro/openalexSnowball" class="external-link"><code>openalexSnowball</code></a> package, which depends on <code>openalexPro</code> for the underlying pipeline.</p>
 </div>
 
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/rkrug/openalexPro/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/rkrug/openalexPro/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/openalexPro/openalexPro/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/openalexPro/openalexPro/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -273,10 +273,10 @@ To run online contract checks against the live OpenAlex API:</p>
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://rkrug.r-universe.dev/" class="external-link"><img src="https://rkrug.r-universe.dev/badges/:name" alt="name status badge"></a></li>
-<li><a href="https://rkrug.r-universe.dev/openalexPro" class="external-link"><img src="https://rkrug.r-universe.dev/openalexPro/badges/version" alt="openalexPro status badge"></a></li>
+<li><a href="https://openalexpro.r-universe.dev/" class="external-link"><img src="https://openalexpro.r-universe.dev/badges/:name" alt="name status badge"></a></li>
+<li><a href="https://openalexpro.r-universe.dev/openalexPro" class="external-link"><img src="https://openalexpro.r-universe.dev/openalexPro/badges/version" alt="openalexPro status badge"></a></li>
 <li><a href="https://doi.org/10.5281/zenodo.17453180" class="external-link"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17453180.svg" alt="DOI"></a></li>
-<li><a href="https://app.codecov.io/gh/rkrug/openalexPro" class="external-link"><img src="https://codecov.io/gh/rkrug/openalexPro/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://app.codecov.io/gh/openalexPro/openalexPro" class="external-link"><img src="https://codecov.io/gh/openalexPro/openalexPro/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>
 

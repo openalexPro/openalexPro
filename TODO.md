@@ -3,7 +3,7 @@
 Document all functions
 
 Add
-[`read_corpus()`](https://rkrug.github.io/openalexPro/reference/read_corpus.md)
+[`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
 function to read the parquet corpus and return the opened dataset
 <https://github.com/rkrug/openalexPro/issues/1>
 

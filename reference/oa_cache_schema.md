@@ -3,7 +3,7 @@
 Copies `unified_schema.csv` files from an OpenAlex snapshot metadata
 directory (e.g. `/Volumes/openalex/openalex-snapshot_metadata`) into the
 user-level cache used by
-[`pro_request_parquet`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)`(schema = "auto")`.
+[`pro_request_parquet`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)`(schema = "auto")`.
 
 ## Usage
 
@@ -43,5 +43,5 @@ OpenAlex (run with `overwrite = TRUE`).
 
 ## See also
 
-[`pro_request_parquet`](https://rkrug.github.io/openalexPro/reference/pro_request_parquet.md)
+[`pro_request_parquet`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
 for the `schema` parameter.

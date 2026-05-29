@@ -3,22 +3,22 @@
 ## Introduction
 
 The
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 function is the core data retrieval component of the `openalexPro`
 workflow. It downloads data from the OpenAlex API and saves it as JSON
 files to disk, enabling processing of datasets too large to fit in
 memory.
 
 This vignette provides a comprehensive guide to using
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 and related functions, including:
 
 - Basic usage patterns
 - Progress bars and parallel processing
 - The complete data pipeline
-  ([`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+  ([`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   → `pro_request_jsonl()` →
-  [`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
 - Internal architecture and flow diagrams
 - Error handling and retry logic
 
@@ -68,7 +68,7 @@ pro_request(
 ### Simple Download
 
 The most basic usage requires a query URL (from
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md))
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md))
 and an output directory:
 
 ``` r
@@ -129,7 +129,7 @@ pro_request(
 ### Limiting Pages
 
 By default,
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 downloads up to 10,000 pages (2 million records at 200 per page). You
 can adjust this:
 
@@ -153,9 +153,9 @@ pro_request(
 ## Handling Chunked Queries
 
 When
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 returns a list of URLs (due to automatic chunking of large ID lists),
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 handles them seamlessly:
 
 ``` r
@@ -177,10 +177,10 @@ pro_request(
 
 ### Nested List Queries
 
-[`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md)
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 also accepts **nested lists** of URLs. Each nesting level is preserved
 as a subdirectory, and
-[`pro_request_jsonl_parquet()`](https://rkrug.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 converts the directory depth to hive-style partition keys:
 
 | Directory depth | Partition key     |
@@ -224,7 +224,7 @@ ds |> dplyr::filter(query == "year_2022")
 ds |> dplyr::filter(query == "institutions", query_l2 == "usa")
 ```
 
-[`pro_fetch()`](https://rkrug.github.io/openalexPro/reference/pro_fetch.md)
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 inherits nested list support automatically — you can pass a nested list
 directly as `query_url`.
 
@@ -245,7 +245,7 @@ pro_request(
 
 | Parameter | Type | Default | Description |
 |----|----|----|----|
-| `query_url` | character/list | required | URL or list of URLs from [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) |
+| `query_url` | character/list | required | URL or list of URLs from [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md) |
 | `pages` | integer/NULL | 10000 | Max pages to download. `NULL` = all pages |
 | `output` | character | required | Directory for JSON output files |
 | `overwrite` | logical | FALSE | Delete existing output directory if it exists |
@@ -549,7 +549,7 @@ pro_request_jsonl(
 
 | Parameter | Type | Default | Description |
 |----|----|----|----|
-| `input_json` | character | required | Directory of JSON files from [`pro_request()`](https://rkrug.github.io/openalexPro/reference/pro_request.md) |
+| `input_json` | character | required | Directory of JSON files from [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) |
 | `output` | character | required | Output directory for JSONL files |
 | `add_columns` | list | [`list()`](https://rdrr.io/r/base/list.html) | Named list of additional columns to add |
 | `overwrite` | logical | FALSE | Overwrite existing output |
@@ -600,7 +600,7 @@ flowchart TD
 ### jq_execute() Transformation
 
 The
-[`jq_execute()`](https://rkrug.github.io/openalexPro/reference/jq_execute.md)
+[`jq_execute()`](https://openalexpro.github.io/openalexPro/reference/jq_execute.md)
 function performs the actual JSON transformation using the `jqr`
 package:
 
@@ -912,7 +912,7 @@ meta$error
 ```
 
 **Solution:** Use
-[`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md)
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 with chunking (it handles this automatically).
 
 ## Best Practices
@@ -986,17 +986,17 @@ pro_request_jsonl(input, output, workers = parallel::detectCores() - 1)
 
 ## See Also
 
-- [`pro_query()`](https://rkrug.github.io/openalexPro/reference/pro_query.md) -
+- [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md) -
   Build OpenAlex API query URLs
-- [`pro_count()`](https://rkrug.github.io/openalexPro/reference/pro_count.md) -
+- [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md) -
   Get result counts without downloading
-- [`pro_validate_credentials()`](https://rkrug.github.io/openalexPro/reference/pro_validate_credentials.md) -
+- [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md) -
   Validate API credentials (optional helper)
-- [`pro_rate_limit_status()`](https://rkrug.github.io/openalexPro/reference/pro_rate_limit_status.md) -
+- [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md) -
   Check current rate limit usage and remaining budget
-- [`opt_filter_names()`](https://rkrug.github.io/openalexPro/reference/opt_filter_names.md) -
+- [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md) -
   List available filter names
-- [`opt_select_fields()`](https://rkrug.github.io/openalexPro/reference/opt_select_fields.md) -
+- [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md) -
   List available select fields
 
 ## References
