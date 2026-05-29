@@ -1,12 +1,12 @@
 Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
-Version: 0.10.0
+Version: 0.10.1
 Author: Rainer M Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
 Description: More about what it does (maybe more than one line).
-URL: https://github.com/rkrug/openalexPro, https://rkrug.github.io/openalexPro/
-BugReports: https://github.com/rkrug/openalexPro/issues
+URL: https://github.com/openalexPro/openalexPro, https://openalexpro.github.io/openalexPro/
+BugReports: https://github.com/openalexPro/openalexPro/issues
 License: GPL (>= 2)
 Depends:
     R (>= 4.2)

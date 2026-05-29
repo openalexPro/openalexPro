@@ -4,10 +4,10 @@ date: today
 author: Rainer M Krug
 format: gfm
 ---
-[![name status badge](https://rkrug.r-universe.dev/badges/:name)](https://rkrug.r-universe.dev/)
-[![openalexPro status badge](https://rkrug.r-universe.dev/openalexPro/badges/version)](https://rkrug.r-universe.dev/openalexPro)
+[![name status badge](https://openalexpro.r-universe.dev/badges/:name)](https://openalexpro.r-universe.dev/)
+[![openalexPro status badge](https://openalexpro.r-universe.dev/openalexPro/badges/version)](https://openalexpro.r-universe.dev/openalexPro)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17453180.svg)](https://doi.org/10.5281/zenodo.17453180)
-[![Codecov test coverage](https://codecov.io/gh/rkrug/openalexPro/graph/badge.svg)](https://app.codecov.io/gh/rkrug/openalexPro)
+[![Codecov test coverage](https://codecov.io/gh/openalexPro/openalexPro/graph/badge.svg)](https://app.codecov.io/gh/openalexPro/openalexPro)
 
 # Disclaimer
 
@@ -21,16 +21,16 @@ Code and documentation in this project have been generated with the assistance o
 
 # Introduction
 
-This package is inspired by the package [`openalexR`](https://github.com/ropensci/openalexR) but provides a different approach to retrieve works from OpenAlex. In contrast to `openalexR`, which does all processing and conversions in memory, [`openalexPro`](https://rkrug.r-universe.dev/openalexPro) uses an on-disc processing approach where the data is processed by number of records returned per individual call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from [OpenAlex](https://openalex.org), but limits the number of works which can be retrieved due to memory limitations and a considerable slowdown due to repeated memory allocations even before that. The on-disc based processing essentially should scale at most linearly with the number of pages requested from [OpenAlex](https://openalex.org) and likely considerably less as parallel processing is used extensively in [`openalexPro`](https://rkrug.r-universe.dev/openalexPro).
+This package is inspired by the package [`openalexR`](https://github.com/ropensci/openalexR) but provides a different approach to retrieve works from OpenAlex. In contrast to `openalexR`, which does all processing and conversions in memory, [`openalexPro`](https://openalexpro.r-universe.dev/openalexPro) uses an on-disc processing approach where the data is processed by number of records returned per individual call, i.e. a per-page processing approach. Doing all processing in memory has advantages for smaller numbers of records retrieved from [OpenAlex](https://openalex.org), but limits the number of works which can be retrieved due to memory limitations and a considerable slowdown due to repeated memory allocations even before that. The on-disc based processing essentially should scale at most linearly with the number of pages requested from [OpenAlex](https://openalex.org) and likely considerably less as parallel processing is used extensively in [`openalexPro`](https://openalexpro.r-universe.dev/openalexPro).
 
 # Quickstart
 
 ## Installation
 
-The latest "stable" version is available via [r-universe](https://rkrug.r-universe.dev/openalexPro)
+The latest "stable" version is available via [r-universe](https://openalexpro.r-universe.dev/openalexPro)
 
 ```r
-install.packages('openalexPro', repos = c('https://rkrug.r-universe.dev', 'https://cloud.r-project.org'))
+install.packages('openalexPro', repos = c('https://openalexpro.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
 The "development" version can be installed from github.
@@ -38,7 +38,7 @@ The "development" version can be installed from github.
 Unless you need bleeding edge functionality and can deal with changing function definitions, or want to test new functionality, this is not recommended.
 
 ```r
-remotes::install_github("rkrug/openalexPro", ref = "dev")
+remotes::install_github("openalexPro/openalexPro", ref = "dev")
 ```
 
 ## Authentication (Optional, Recommended)
@@ -227,5 +227,5 @@ The final format which is used in this package to save the retrieved data is the
 # Snowball Searches
 
 Snowball search functionality has moved to the separate
-[`openalexSnowball`](https://github.com/rkrug/openalexSnowball) package, which
+[`openalexSnowball`](https://github.com/openalexPro/openalexSnowball) package, which
 depends on `openalexPro` for the underlying pipeline.
