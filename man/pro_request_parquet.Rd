@@ -15,7 +15,11 @@ pro_request_parquet(
   sample_size = 1000,
   workers = NULL,
   enrich = TRUE,
-  schema = "auto"
+  schema = "auto",
+  resume = FALSE,
+  on_error = c("error", "warn", "ignore"),
+  memory_limit = NULL,
+  retry_memory_limit = NULL
 )
 }
 \arguments{
@@ -65,6 +69,27 @@ Used directly as the baseline.}
 \item{A directory path}{Auto-detect entity, then look for
 \verb{<entity>.csv} inside that directory.}
 }}
+
+\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and convert
+only the files that are not already there.  Safe because each file is
+written to a \code{.part} sidecar and renamed only on success, so a present
+file is always complete.  Default \code{FALSE}.}
+
+\item{on_error}{How to handle files that still fail after the sequential
+retry: \code{"error"} (the default) stops and names them, \code{"warn"} warns and
+returns, \code{"ignore"} is silent.
+
+Before 0.12.0 failures were only \code{message()}d when \code{verbose}, and the run
+reported success regardless -- so a page that failed to convert went
+silently missing from the corpus.  \code{"warn"} is the closest to that old
+behaviour, but visible.}
+
+\item{memory_limit}{DuckDB \code{memory_limit} for each conversion worker.
+\code{NULL} (default) derives one from physical RAM and \code{workers}, rather than
+letting every worker claim DuckDB's default of 80\% of the machine.}
+
+\item{retry_memory_limit}{\code{memory_limit} for the sequential retry pass,
+where no workers compete.  \code{NULL} (default) uses the whole budget.}
 }
 \value{
 Output directory path (invisibly).

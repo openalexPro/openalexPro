@@ -14,7 +14,8 @@ pro_request(
   verbose = FALSE,
   progress = TRUE,
   count_only = FALSE,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE
 )
 }
 \arguments{
@@ -46,6 +47,11 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 \item{count_only}{return count only as a data.frame.}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
+
+\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and refetch
+only the leaf queries that did not complete.  Completion is detected with
+the \verb{00_in.progress} sentinel each leaf directory carries while it is
+being written.  Default \code{FALSE}.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and
