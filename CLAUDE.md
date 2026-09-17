@@ -44,8 +44,8 @@ or `lookup_by_id()` in `openalexPro` raises an informative error pointing to
 Functions that query the live OpenAlex REST API:
 
 - `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking
-- `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory)
-- `pro_request_parquet()` — converts JSON files from `pro_request()` directly to Parquet (schema inference + per-file DuckDB COPY, parallel via `future`)
+- `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). `resume = TRUE` refetches only the leaf queries that did not complete, using the `00_in.progress` sentinel each leaf carries while it is being written
+- `pro_request_parquet()` — converts JSON files from `pro_request()` directly to Parquet (schema inference + per-file DuckDB COPY, parallel via `future`). `resume = TRUE` converts only what is missing; `on_error` controls what happens to files that fail (see *Failure handling* below)
 - `pro_fetch()` — all-in-one: query → paginate → convert to Parquet (project folder)
 - `pro_count()` — counts matching records
 - `pro_download_content()` — downloads PDFs / TEI XML from `content.openalex.org`
@@ -68,6 +68,7 @@ error inspection, and `httr2` plumbing. Tests use VCR cassettes in
 - `infer_json_schema()` — per-file schema inference with two-level caching
 - `opt_select_fields()`, `opt_filter_names()` — helpers for building API queries
 - `oa_schema()` — get or refresh the baseline entity schema used by `pro_request_parquet(schema = "auto")`
+- `.pro_con()` / `.pro_worker_memory()` / `.pro_temp_dir()` (internal, `R/utils_duckdb.R`) — the configured DuckDB connection factory and its budget helpers
 
 ## Branching
 
@@ -86,6 +87,22 @@ error inspection, and `httr2` plumbing. Tests use VCR cassettes in
 - Nested query lists produce hive-partitioned parquet: depth 1 → `query=<name>`, depth N → `query_lN=<name>`
 - VCR cassettes record/replay API calls; `api_key` is filtered to `<api-key>` in cassettes
 - `OPENALEXPRO_LIVE_TESTS=true` + a real API key enables live API tests in `test-900`
+
+### DuckDB connections
+
+All DuckDB connections go through `.pro_con()` (`R/utils_duckdb.R`), which sets `preserve_insertion_order`, `memory_limit`, `threads` and `temp_directory`, and optionally loads the JSON extension.
+
+Do not open a bare `dbConnect(duckdb::duckdb())` in a worker. DuckDB's defaults are a `memory_limit` of ~80% of system RAM **per instance** — so N workers promise 0.8 × N of the machine — and a `temp_directory` of `.tmp` *relative to the working directory*, which every worker inherits and then corrupts by writing colliding `duckdb_temp_storage_*.tmp` files. `pro_request_parquet()` gives each worker a derived budget, `threads = 1`, and a private spill directory under `tempdir()`.
+
+Physical RAM is derived from DuckDB itself — a bare connection's `memory_limit` is 80% of it — so there is no new dependency and no platform-specific code.
+
+Note also that `INSTALL json; LOAD json;` is explicit rather than left to autoloading: `autoinstall_known_extensions` defaults to **FALSE**, so autoloading can only load an extension that is already installed, never fetch one. That works on a developer machine and fails on a fresh CI runner.
+
+### Failure handling in `pro_request_parquet()`
+
+Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on `on_error`: `"error"` (default), `"warn"`, `"ignore"`.
+
+This was a silent-data-loss bug before 0.12.0: failures were `message()`d only when `verbose` and the run reported success regardless, so a page that failed to convert was simply absent from the corpus and every downstream count was quietly wrong. Each file is written to a `.part` sidecar and renamed on success, because a parquet footer is written last — a killed worker used to leave a file that passed `file.exists()` but could not be read.
 
 ### Key Design Decisions
 
