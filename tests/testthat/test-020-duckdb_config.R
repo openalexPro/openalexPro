@@ -39,10 +39,14 @@ test_that(".pro_worker_memory divides the budget between workers", {
   skip_if(is.na(.pro_total_ram_bytes()), "could not determine RAM")
   one  <- .pro_parse_bytes(.pro_worker_memory(1L))
   four <- .pro_parse_bytes(.pro_worker_memory(4L))
-  expect_gt(one, four)
-  expect_equal(four, one / 4, tolerance = 0.02)
-  # never below the 1 GB floor, however many workers are asked for
-  expect_gte(.pro_parse_bytes(.pro_worker_memory(10000L)), 1024^2)
+
+  # The budget divides by the worker count but never drops below the 1 GB
+  # floor, and on a small machine the floor is what you get: a CI runner with
+  # 7 GB gives 3.5 GB for one worker and 875 MB -> 1 GB for four. Asserting
+  # plain proportionality passes on a 36 GB laptop and fails there.
+  expect_equal(four, max(1024^3, one / 4), tolerance = 0.02)
+  expect_gte(one, four)
+  expect_gte(.pro_parse_bytes(.pro_worker_memory(10000L)), 1024^3)
 })
 
 # -- the connection factory --------------------------------------------------
