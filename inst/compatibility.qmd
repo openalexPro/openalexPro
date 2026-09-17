@@ -45,7 +45,7 @@ Thew search scenarios we will compare below are:
   - [TODO] full text search
   - [TODO] with filter
   - [TODO] return of selected fields
-- snowball search (this is only done if the package [`openalexSnowball`](https://rkrug.r-universe.dev/openalexPro) is also installed )
+- snowball search (this is only done if the package [`openalexSnowball`](https://openalexpro.r-universe.dev/openalexPro) is also installed )
 
 `openalexR` is fully memory based, whereas `openalexPro` fully file based. This implies a slighhtly different workflow for the searches and which are reflected in the respective sections. 
 
