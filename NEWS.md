@@ -1,3 +1,64 @@
+# openalexPro 0.12.0
+
+## Breaking: `pro_request_parquet()` no longer hides conversion failures
+
+A JSON file that failed to convert was caught, `message()`d only when
+`verbose`, and the run then reported success anyway. The page was simply
+absent from the resulting corpus: `read_corpus()` worked, nothing warned, and
+every downstream count was quietly wrong. On a large run under memory
+pressure this is worse than a crash, because a crash at least announces
+itself.
+
+Failures are now collected, retried once sequentially with the full memory
+budget (per-file peak memory varies with how large and nested a page is, so
+sizing the per-worker limit for the worst file would throttle all of them),
+and whatever still fails is reported according to the new `on_error`
+argument: `"error"` (default) stops and names the files, `"warn"` warns and
+returns, `"ignore"` restores the old silence.
+
+**This will stop runs that previously appeared to succeed.** That is the
+point. Pass `on_error = "warn"` for the closest thing to the old behaviour,
+but visible.
+
+Each file is now written to a `.part` sidecar and renamed on success. A
+parquet footer is written last, so a worker killed mid-`COPY` used to leave a
+file that looked plausible to `file.exists()` but could not be read.
+
+## DuckDB connections are configured rather than left at their defaults
+
+New internal `.pro_con()` factory, mirroring `openalexSnapshot:::.oas_con()`.
+Every connection in the package now goes through it, including the schema
+inference pass and `convert_json_to_parquet()`.
+
+This matters most inside `future` workers. Each worker used to open a bare
+`dbConnect(duckdb::duckdb())`, which means:
+
+* a `memory_limit` of ~80% of system RAM **per worker** -- so N workers
+  promised 0.8 x N of the machine, and
+* a `temp_directory` of `.tmp` *relative to the working directory*, shared by
+  every worker, which is the colliding-spill-file corruption openalexSnapshot
+  documents in `build_citation_index()`.
+
+Workers now get a per-worker memory budget derived from physical RAM and the
+worker count, `threads = 1` (the processes already saturate the machine), and
+a private spill directory under `tempdir()`. `memory_limit` and
+`retry_memory_limit` are exposed for callers who want to set them directly.
+
+Physical RAM is derived without a new dependency or platform code: a bare
+DuckDB connection's own `memory_limit` is 80% of it.
+
+## `resume` for both request functions
+
+`pro_request(resume = TRUE)` refetches only the leaf queries that did not
+complete, using the `00_in.progress` sentinel each leaf directory already
+carried and which nothing previously read. `pro_request_parquet(resume =
+TRUE)` converts only the files that are not already present -- trustworthy
+because of the `.part`-and-rename change above.
+
+Previously the only options were `overwrite = TRUE` (delete everything and
+refetch) or `overwrite = FALSE` (hard error). There was no way to continue an
+interrupted download.
+
 # openalexPro 0.11.0
 
 ## Breaking changes

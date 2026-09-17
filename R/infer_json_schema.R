@@ -294,16 +294,15 @@ convert_json_to_parquet <- function(
 ) {
   dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
 
-  con <- DBI::dbConnect(duckdb::duckdb(), read_only = FALSE)
+  # Falls back to a private spill directory when the caller names none: the
+  # DuckDB default is `.tmp` relative to the working directory, which
+  # concurrent workers would share and corrupt.
+  con <- .pro_con(
+    memory_limit = memory_limit,
+    temp_dir = temp_directory %||% .pro_temp_dir(basename(output_file)),
+    json = TRUE
+  )
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
-
-  DBI::dbExecute(conn = con, "INSTALL json; LOAD json;")
-  if (!is.null(memory_limit)) {
-    DBI::dbExecute(conn = con, paste0("SET memory_limit = '", memory_limit, "'"))
-  }
-  if (!is.null(temp_directory)) {
-    DBI::dbExecute(conn = con, paste0("SET temp_directory='", temp_directory, "'"))
-  }
 
   # Build read function ----
   read_fn <- if (!is.null(columns_clause)) {

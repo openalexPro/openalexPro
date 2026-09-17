@@ -39,6 +39,23 @@
 #' @param sample_size Integer.  Number of records per file passed to DuckDB's
 #'   `sample_size` option during schema inference.  Use `-1` to read all
 #'   records (accurate but slow for large files).  Default `1000`.
+#' @param resume Logical.  When `TRUE`, keep an existing `output` and convert
+#'   only the files that are not already there.  Safe because each file is
+#'   written to a `.part` sidecar and renamed only on success, so a present
+#'   file is always complete.  Default `FALSE`.
+#' @param on_error How to handle files that still fail after the sequential
+#'   retry: `"error"` (the default) stops and names them, `"warn"` warns and
+#'   returns, `"ignore"` is silent.
+#'
+#'   Before 0.12.0 failures were only `message()`d when `verbose`, and the run
+#'   reported success regardless -- so a page that failed to convert went
+#'   silently missing from the corpus.  `"warn"` is the closest to that old
+#'   behaviour, but visible.
+#' @param memory_limit DuckDB `memory_limit` for each conversion worker.
+#'   `NULL` (default) derives one from physical RAM and `workers`, rather than
+#'   letting every worker claim DuckDB's default of 80% of the machine.
+#' @param retry_memory_limit `memory_limit` for the sequential retry pass,
+#'   where no workers compete.  `NULL` (default) uses the whole budget.
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
@@ -89,12 +106,17 @@ pro_request_parquet <- function(
   sample_size = 1000,
   workers = NULL,
   enrich = TRUE,
-  schema = "auto"
+  schema = "auto",
+  resume = FALSE,
+  on_error = c("error", "warn", "ignore"),
+  memory_limit = NULL,
+  retry_memory_limit = NULL
 ) {
   if (is.null(input_json)) stop("No `input_json` specified!")
   if (is.null(output))     stop("No `output` specified!")
+  on_error <- match.arg(on_error)
 
-  progress_file <- .prr_prepare_output(output, overwrite)
+  progress_file <- .prr_prepare_output(output, overwrite, resume)
   success <- FALSE
   on.exit({ if (isTRUE(success)) unlink(progress_file) }, add = TRUE)
 
@@ -131,12 +153,20 @@ pro_request_parquet <- function(
   .citation_sql <- citation_sql
   .add_columns  <- add_columns
   .verbose      <- verbose
+  .resume       <- isTRUE(resume)
   jsons         <- disc$jsons
 
-  progressr::with_progress({
+  # One DuckDB thread per worker: the processes already saturate the machine,
+  # and each worker's parquet write buffers separately. Sequentially, let
+  # DuckDB use all cores rather than idling them.
+  n_workers <- if (is.null(workers)) 1L else as.integer(workers)
+  .threads  <- if (n_workers > 1L) 1L else NULL
+  .memory   <- memory_limit %||% .pro_worker_memory(n_workers)
+
+  statuses <- progressr::with_progress({
     p <- if (progress) progressr::progressor(steps = length(jsons)) else NULL
     future.apply::future_lapply(seq_along(jsons), function(i) {
-      .prr_convert_one(
+      st <- .prr_convert_one(
         fn           = jsons[[i]],
         out_fn       = output_files[[i]],
         array_field  = .array_field,
@@ -145,29 +175,106 @@ pro_request_parquet <- function(
         abstract_sql = .abstract_sql,
         citation_sql = .citation_sql,
         add_columns  = .add_columns,
-        verbose      = .verbose
+        verbose      = .verbose,
+        memory_limit = .memory,
+        threads      = .threads,
+        resume       = .resume
       )
       if (!is.null(p)) p()
-      invisible(NULL)
+      st
     })
   }, enable = progress)
 
+  failed <- which(!vapply(statuses, is.null, logical(1)))
+
+  # Retry sequentially with the whole budget. Per-file peak memory varies with
+  # how large and nested a page happens to be, so sizing the per-worker limit
+  # for the worst file would throttle all of them; let dense files fail and
+  # re-run just those alone.
+  if (length(failed) > 0L && n_workers > 1L) {
+    if (verbose) {
+      message("Retrying ", length(failed), " failed file(s) sequentially.")
+    }
+    future::plan(future::sequential)
+    retry_mem <- retry_memory_limit %||% .pro_worker_memory(1L)
+    for (i in failed) {
+      statuses[[i]] <- .prr_convert_one(
+        fn           = jsons[[i]],
+        out_fn       = output_files[[i]],
+        array_field  = .array_field,
+        has_subdirs  = .has_subdirs,
+        list_type    = .list_type,
+        abstract_sql = .abstract_sql,
+        citation_sql = .citation_sql,
+        add_columns  = .add_columns,
+        verbose      = .verbose,
+        memory_limit = retry_mem,
+        threads      = NULL,
+        resume       = FALSE
+      )
+    }
+    failed <- which(!vapply(statuses, is.null, logical(1)))
+  }
+
+  if (length(failed) > 0L) {
+    .prr_report_failures(failed, jsons, statuses, output, length(jsons), on_error)
+  }
+
   if (delete_input) unlink(input_json, recursive = TRUE, force = TRUE)
 
-  success <- TRUE
+  # Only a wholly successful run clears the sentinel, so `00_in.progress`
+  # marks a partial conversion and can drive `resume`.
+  success <- length(failed) == 0L
   invisible(normalizePath(output))
+}
+
+#' Report per-file conversion failures according to `on_error`
+#'
+#' @keywords internal
+#' @noRd
+.prr_report_failures <- function(failed, jsons, statuses, output, n_total, on_error) {
+  if (on_error == "ignore") {
+    return(invisible(NULL))
+  }
+  shown <- utils::head(failed, 10L)
+  detail <- paste0(
+    "  ", basename(unlist(jsons[shown])), ": ",
+    vapply(statuses[shown], function(s) sub("\n.*", "", s), character(1)),
+    collapse = "\n"
+  )
+  msg <- paste0(
+    length(failed), " of ", n_total, " JSON file(s) failed to convert",
+    " (", n_total - length(failed), " succeeded).\n", detail,
+    if (length(failed) > length(shown)) {
+      paste0("\n  ... and ", length(failed) - length(shown), " more")
+    } else {
+      ""
+    },
+    "\nOutput: ", output,
+    "\nRe-run with `resume = TRUE` to convert only the missing files."
+  )
+  if (on_error == "error") stop(msg, call. = FALSE) else warning(msg, call. = FALSE)
 }
 
 # Helpers --------------------------------------------------------------------
 
 #' @keywords internal
 #' @noRd
-.prr_prepare_output <- function(output, overwrite) {
+.prr_prepare_output <- function(output, overwrite, resume = FALSE) {
   if (file.exists(output)) {
+    # Resume keeps what is already converted. Each output file is written via
+    # a `.part` sidecar and renamed on success, so anything present is whole.
+    if (isTRUE(resume)) {
+      unlink(list.files(output, pattern = "\\.part$", recursive = TRUE,
+                        full.names = TRUE), force = TRUE)
+      progress_file <- file.path(output, "00_in.progress")
+      if (!file.exists(progress_file)) file.create(progress_file)
+      return(progress_file)
+    }
     if (!overwrite) {
       stop(
         "output ", output, " exists.\n",
-        "Either specify `overwrite = TRUE` or delete it."
+        "Either specify `overwrite = TRUE`, `resume = TRUE`, or delete it."
       )
     }
     unlink(output, recursive = TRUE, force = TRUE)
@@ -220,9 +327,14 @@ pro_request_parquet <- function(
 
   if (verbose) message("Inferring schema from ", length(infer_files), " sampled file(s)...")
 
-  con <- DBI::dbConnect(duckdb::duckdb())
+  # Schema inference reads up to 20 JSON files, which is not free -- give it
+  # the same budget and private spill directory as a conversion worker.
+  temp_dir <- .pro_temp_dir("infer_schema")
+  con <- .pro_con(
+    memory_limit = .pro_worker_memory(1L), temp_dir = temp_dir, json = TRUE
+  )
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
-  DBI::dbExecute(con, "INSTALL json; LOAD json;")
+  on.exit(unlink(temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
 
   if (is.null(array_field)) {
     schema_sql <- sprintf(
@@ -329,8 +441,16 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_convert_one <- function(
   fn, out_fn, array_field, has_subdirs, list_type,
-  abstract_sql, citation_sql, add_columns, verbose
+  abstract_sql, citation_sql, add_columns, verbose,
+  memory_limit = NULL, threads = NULL, resume = FALSE
 ) {
+  # Resume: a finished file is complete by construction, because the write is
+  # to `<out>.part` and renamed only on success. A bare file.exists() check
+  # against a directly-written target would happily trust a file truncated by
+  # a killed worker.
+  if (isTRUE(resume) && file.exists(out_fn)) {
+    return(NULL)
+  }
   pn <- if (has_subdirs) {
     basename(dirname(fn))
   } else {
@@ -354,6 +474,13 @@ pro_request_parquet <- function(
     ""
   }
 
+  # Write to a sidecar and rename on success. A parquet footer is written
+  # last, so a worker killed mid-COPY leaves a file that looks plausible to
+  # file.exists() but cannot be read -- and `resume` would then skip it
+  # forever. A same-directory rename is atomic.
+  part_fn <- paste0(out_fn, ".part")
+  unlink(part_fn, force = TRUE)
+
   sql <- if (!is.null(array_field)) {
     read_spec <- if (!is.null(list_type)) {
       sprintf(
@@ -371,7 +498,7 @@ pro_request_parquet <- function(
           FROM (SELECT unnest(%s) AS r FROM %s)
         )
       ) TO '%s' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE 100000)",
-      extra_select, array_field, read_spec, out_fn
+      extra_select, array_field, read_spec, part_fn
     )
   } else {
     sprintf(
@@ -379,21 +506,41 @@ pro_request_parquet <- function(
         SELECT *%s
         FROM read_json_auto('%s')
       ) TO '%s' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE 100000)",
-      extra_select, fn, out_fn
+      extra_select, fn, part_fn
     )
   }
 
-  worker_con <- DBI::dbConnect(duckdb::duckdb())
-  on.exit(DBI::dbDisconnect(worker_con, shutdown = TRUE), add = TRUE)
-  tryCatch(
-    {
-      DBI::dbExecute(worker_con, "INSTALL json; LOAD json;")
-      DBI::dbExecute(worker_con, sql)
-    },
-    error = function(e) {
-      if (verbose) {
-        message("Failed to convert ", basename(fn), ": ", conditionMessage(e))
-      }
-    }
+  temp_dir <- .pro_temp_dir(basename(out_fn))
+  worker_con <- .pro_con(
+    memory_limit = memory_limit, temp_dir = temp_dir,
+    threads = threads, json = TRUE
   )
+  on.exit(DBI::dbDisconnect(worker_con, shutdown = TRUE), add = TRUE)
+  on.exit(unlink(temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  # Returns NULL on success and the error message on failure. It must NOT
+  # swallow the error: until 0.11.0 a file that failed to convert was only
+  # message()d when `verbose`, and the run still reported success -- so an
+  # OOMed page went silently missing from the corpus and every downstream
+  # count was quietly wrong. The caller decides what to do with failures.
+  status <- tryCatch(
+    {
+      DBI::dbExecute(worker_con, sql)
+      NULL
+    },
+    error = function(e) conditionMessage(e)
+  )
+
+  if (is.null(status)) {
+    if (!file.rename(part_fn, out_fn)) {
+      status <- paste0("could not rename ", part_fn, " to ", out_fn)
+    }
+  }
+  if (!is.null(status)) {
+    unlink(part_fn, force = TRUE)
+    if (verbose) {
+      message("Failed to convert ", basename(fn), ": ", status)
+    }
+  }
+  status
 }
