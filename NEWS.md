@@ -1,3 +1,16 @@
+# openalexPro 0.12.1
+
+## The startup banner pointed at the old r-universe
+
+`.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package
+has been distributed from `https://openalexpro.r-universe.dev` since the move
+to the openalexPro organisation -- and `DESCRIPTION`'s
+`Additional_repositories` already said so -- so the one URL every user saw on
+every `library(openalexPro)` was the one that was wrong.
+
+Also tidies two typos in the same banner (`functions definitions`, and a
+space before a comma).
+
 # openalexPro 0.12.0
 
 ## Breaking: `pro_request_parquet()` no longer hides conversion failures
