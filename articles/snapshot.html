@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,7 +81,7 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install openalexSnapshot (once available on r-universe):</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"openalexSnapshot"</span><span class="op">)</span></span></code></pre></div>
-<p>Calling <code>snapshot_to_parquet()</code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, or <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
+<p><code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code> and <code>lookup_by_id()</code> are no longer part of <code>openalexPro</code> in any form. They previously remained as stubs that raised an informative error, but an exported stub <strong>masks</strong> the real function whenever both packages are attached – <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(openalexSnapshot); library(openalexPro)</a></code> made the stub win and error. Call them as <code>openalexSnapshot::build_corpus_index()</code> and so on.</p>
 
 
 
@@ -177,7 +177,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

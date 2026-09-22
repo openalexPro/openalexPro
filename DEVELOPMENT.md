@@ -286,16 +286,12 @@ issue is absent.
     [`normalizePath()`](https://rdrr.io/r/base/normalizePath.html)
     output (`\`) always `FALSE` → all files re-converted instead of
     skipped.
-2.  `test-012`
-    ([`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md) +
-    [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-    path doubling):
-    [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
-    used `regexp_replace(filename, '<snapshot_dir>', '')` in SQL. On
-    Windows, `snapshot_dir` contained `\`, DuckDB `filename` uses `/` →
-    regex never matched → full absolute path stored.
-    [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-    then did `file.path(snapshot_path, abs_path)` doubling the path.
+2.  `test-012` (`build_corpus_index()` + `lookup_by_id()` path
+    doubling): `build_corpus_index()` used
+    `regexp_replace(filename, '<snapshot_dir>', '')` in SQL. On Windows,
+    `snapshot_dir` contained `\`, DuckDB `filename` uses `/` → regex
+    never matched → full absolute path stored. `lookup_by_id()` then did
+    `file.path(snapshot_path, abs_path)` doubling the path.
 3.  `test-004`/`test-007` (spurious `query=` directories in
     [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)):
     `dirname(normalizePath(f)) != input_root` always `TRUE` due to 8.3

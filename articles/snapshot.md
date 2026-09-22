@@ -14,9 +14,10 @@
 pak::pak("openalexSnapshot")
 ```
 
-Calling `snapshot_to_parquet()`,
-[`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
-or
-[`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-in `openalexPro` raises an informative error pointing to
-`openalexSnapshot`.
+`snapshot_to_parquet()`, `build_corpus_index()` and `lookup_by_id()` are
+no longer part of `openalexPro` in any form. They previously remained as
+stubs that raised an informative error, but an exported stub **masks**
+the real function whenever both packages are attached –
+[`library(openalexSnapshot); library(openalexPro)`](https://rdrr.io/r/base/library.html)
+made the stub win and error. Call them as
+`openalexSnapshot::build_corpus_index()` and so on.

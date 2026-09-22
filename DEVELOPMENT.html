@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,7 +155,7 @@
 <ol style="list-style-type: decimal"><li>
 <code>test-013</code> (resume detection in <code>snapshot_to_parquet()</code>): <code>%in%</code> comparing <code><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files()</a></code> output (<code>/</code>) vs <code><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath()</a></code> output (<code>\</code>) always <code>FALSE</code> → all files re-converted instead of skipped.</li>
 <li>
-<code>test-012</code> (<code><a href="reference/build_corpus_index.html">build_corpus_index()</a></code> + <code><a href="reference/lookup_by_id.html">lookup_by_id()</a></code> path doubling): <code><a href="reference/build_corpus_index.html">build_corpus_index()</a></code> used <code>regexp_replace(filename, '&lt;snapshot_dir&gt;', '')</code> in SQL. On Windows, <code>snapshot_dir</code> contained <code>\</code>, DuckDB <code>filename</code> uses <code>/</code> → regex never matched → full absolute path stored. <code><a href="reference/lookup_by_id.html">lookup_by_id()</a></code> then did <code>file.path(snapshot_path, abs_path)</code> doubling the path.</li>
+<code>test-012</code> (<code>build_corpus_index()</code> + <code>lookup_by_id()</code> path doubling): <code>build_corpus_index()</code> used <code>regexp_replace(filename, '&lt;snapshot_dir&gt;', '')</code> in SQL. On Windows, <code>snapshot_dir</code> contained <code>\</code>, DuckDB <code>filename</code> uses <code>/</code> → regex never matched → full absolute path stored. <code>lookup_by_id()</code> then did <code>file.path(snapshot_path, abs_path)</code> doubling the path.</li>
 <li>
 <code>test-004</code>/<code>test-007</code> (spurious <code>query=</code> directories in <code><a href="reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>): <code>dirname(normalizePath(f)) != input_root</code> always <code>TRUE</code> due to 8.3 vs long-name mismatch → every output file placed in a <code>query=&lt;dirname&gt;</code> subdirectory instead of the root output directory.</li>
 </ol><p><strong>Fixes:</strong></p>
@@ -341,7 +341,7 @@ lookup_by_id(ids, corpus_dir, index_file)
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

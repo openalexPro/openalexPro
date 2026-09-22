@@ -1,5 +1,128 @@
 # Changelog
 
+## openalexPro 0.12.1
+
+### The startup banner pointed at the old r-universe
+
+`.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The
+package has been distributed from `https://openalexpro.r-universe.dev`
+since the move to the openalexPro organisation – and `DESCRIPTION`’s
+`Additional_repositories` already said so – so the one URL every user
+saw on every
+[`library(openalexPro)`](https://github.com/openalexPro/openalexPro) was
+the one that was wrong.
+
+Also tidies two typos in the same banner (`functions definitions`, and a
+space before a comma).
+
+## openalexPro 0.12.0
+
+### Breaking: `pro_request_parquet()` no longer hides conversion failures
+
+A JSON file that failed to convert was caught,
+[`message()`](https://rdrr.io/r/base/message.html)d only when `verbose`,
+and the run then reported success anyway. The page was simply absent
+from the resulting corpus:
+[`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
+worked, nothing warned, and every downstream count was quietly wrong. On
+a large run under memory pressure this is worse than a crash, because a
+crash at least announces itself.
+
+Failures are now collected, retried once sequentially with the full
+memory budget (per-file peak memory varies with how large and nested a
+page is, so sizing the per-worker limit for the worst file would
+throttle all of them), and whatever still fails is reported according to
+the new `on_error` argument: `"error"` (default) stops and names the
+files, `"warn"` warns and returns, `"ignore"` restores the old silence.
+
+**This will stop runs that previously appeared to succeed.** That is the
+point. Pass `on_error = "warn"` for the closest thing to the old
+behaviour, but visible.
+
+Each file is now written to a `.part` sidecar and renamed on success. A
+parquet footer is written last, so a worker killed mid-`COPY` used to
+leave a file that looked plausible to
+[`file.exists()`](https://rdrr.io/r/base/files.html) but could not be
+read.
+
+### DuckDB connections are configured rather than left at their defaults
+
+New internal `.pro_con()` factory, mirroring
+`openalexSnapshot:::.oas_con()`. Every connection in the package now
+goes through it, including the schema inference pass and
+`convert_json_to_parquet()`.
+
+This matters most inside `future` workers. Each worker used to open a
+bare `dbConnect(duckdb::duckdb())`, which means:
+
+- a `memory_limit` of ~80% of system RAM **per worker** – so N workers
+  promised 0.8 x N of the machine, and
+- a `temp_directory` of `.tmp` *relative to the working directory*,
+  shared by every worker, which is the colliding-spill-file corruption
+  openalexSnapshot documents in `build_citation_index()`.
+
+Workers now get a per-worker memory budget derived from physical RAM and
+the worker count, `threads = 1` (the processes already saturate the
+machine), and a private spill directory under
+[`tempdir()`](https://rdrr.io/r/base/tempfile.html). `memory_limit` and
+`retry_memory_limit` are exposed for callers who want to set them
+directly.
+
+Physical RAM is derived without a new dependency or platform code: a
+bare DuckDB connection’s own `memory_limit` is 80% of it.
+
+### `resume` for both request functions
+
+`pro_request(resume = TRUE)` refetches only the leaf queries that did
+not complete, using the `00_in.progress` sentinel each leaf directory
+already carried and which nothing previously read.
+`pro_request_parquet(resume = TRUE)` converts only the files that are
+not already present – trustworthy because of the `.part`-and-rename
+change above.
+
+Previously the only options were `overwrite = TRUE` (delete everything
+and refetch) or `overwrite = FALSE` (hard error). There was no way to
+continue an interrupted download.
+
+## openalexPro 0.11.0
+
+### Breaking changes
+
+- **`build_corpus_index()` and `lookup_by_id()` are removed.** They had
+  been left behind as stubs that raised “moved to the openalexSnapshot
+  package”. That was actively harmful: an exported stub **masks** the
+  real function whenever both packages are attached, so
+  [`library(openalexSnapshot); library(openalexPro)`](https://rdrr.io/r/base/library.html)
+  made the stub win and the call fail. Use
+  `openalexSnapshot::build_corpus_index()` and
+  `openalexSnapshot::lookup_by_id()`.
+
+  [`id_block()`](https://openalexpro.github.io/openalexPro/reference/id_block.md)
+  and
+  [`read_corpus()`](https://openalexpro.github.io/openalexPro/reference/read_corpus.md)
+  are unaffected and remain exported.
+
+### Bug fixes
+
+- [`extract_doi()`](https://openalexpro.github.io/openalexPro/reference/extract_doi.md)
+  no longer truncates DOIs containing `<`, `>`, `[` or `]`. The
+  character class excluded them, so a SICI-style DOI such as
+  `10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2` matched only up to
+  the first `<` and returned `10.1175/1520-0450(1963)002`. The truncated
+  remainder then *passed* the normalisation whitelist, so the function
+  returned a plausible-looking wrong DOI with no warning and no `NA` –
+  silent corruption rather than a visible failure. Roughly 0.4% of
+  OpenAlex works carry such DOIs (~1.4 million records).
+
+  Both the match pattern and the normalisation whitelist now admit those
+  characters. Note the fix required reordering rather than escaping: in
+  a POSIX bracket expression a backslash is literal, so `]` must be the
+  first character in the class and `-` the last.
+
+  This also fixes `openalexConvert`’s `.normalize_doi()`, which
+  delegates here and therefore emitted truncated DOIs into CSL-JSON
+  output.
+
 ## openalexPro 0.10.4
 
 ### Internal / Code Quality
@@ -66,10 +189,7 @@
 
 ### Breaking Changes
 
-- `snapshot_to_parquet()`,
-  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
-  and
-  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
+- `snapshot_to_parquet()`, `build_corpus_index()`, and `lookup_by_id()`
   have moved to the **openalexSnapshot** package. Calling them in
   `openalexPro` now raises an informative error. Their `_R` variants
   have been removed entirely.
@@ -155,17 +275,15 @@
   `snapshot_to_parquet(snapshot_dir = "...", parquet_dir = "...")` with
   `snapshot_to_parquet(root_dir = "...")`.
 
-- [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
-  has a new signature. The old `corpus_dir` parameter is replaced by
-  `root_dir`. The function now delegates to the `openalex-snapshot`
-  binary. **Migration:** replace
+- `build_corpus_index()` has a new signature. The old `corpus_dir`
+  parameter is replaced by `root_dir`. The function now delegates to the
+  `openalex-snapshot` binary. **Migration:** replace
   `build_corpus_index(corpus_dir = "...")` with
   `build_corpus_index(root_dir = "...")`.
 
-- [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-  has a new signature. The old `index_file` and `output` parameters are
-  replaced by `root_dir` and `project_dir` (consistent with the
-  project-folder convention used by
+- `lookup_by_id()` has a new signature. The old `index_file` and
+  `output` parameters are replaced by `root_dir` and `project_dir`
+  (consistent with the project-folder convention used by
   [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   and
   [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)).
@@ -317,9 +435,7 @@
 ### Bug Fixes
 
 - Fixed Windows path-normalization failures in `snapshot_to_parquet()`,
-  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
-  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md),
-  and
+  `build_corpus_index()`, `lookup_by_id()`, and
   [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md).
   On Windows,
   [`normalizePath()`](https://rdrr.io/r/base/normalizePath.html) can
@@ -329,11 +445,10 @@
   DuckDB resolve to long names (`runneradmin`). Resume detection in
   `snapshot_to_parquet()` used `%in%` on paths with mixed separators
   (`\` vs `/`), causing already-converted files to be reconverted.
-  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
-  embedded `snapshot_dir` (with `\`) inside a DuckDB `regexp_replace`
-  pattern, which never matched — so the full absolute path was stored in
-  the index and later doubled by
-  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md).
+  `build_corpus_index()` embedded `snapshot_dir` (with `\`) inside a
+  DuckDB `regexp_replace` pattern, which never matched — so the full
+  absolute path was stored in the index and later doubled by
+  `lookup_by_id()`.
   [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
   used `normalizePath` string comparison to detect subdirectories, which
   always failed, placing every output file in a spurious
@@ -345,8 +460,7 @@
   extraction) rather than string-matching absolute paths — immune to 8.3
   vs long-name differences;
 
-  3.  pass the relative path as a SQL literal in
-      [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
+  3.  pass the relative path as a SQL literal in `build_corpus_index()`
       instead of computing it inside DuckDB with a regex.
 
 ### Changes
@@ -390,19 +504,16 @@
   `.gz` file individually with per-file resume support. Supports
   parallel processing via `workers` (using `future_lapply()`) and
   unified schema inference via `sample_size`.
-- Added
-  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
-  function for creating memory-efficient Parquet indexes for fast ID
-  lookups. Handles 300M+ records by processing parquet files
-  individually, with optional parallelization via `workers` and progress
-  reporting via `progressr`. The index file is auto-named and placed
-  alongside the corpus directory.
-- Added
-  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-  function for fast record retrieval from a parquet corpus using
-  pre-built indexes. Uses Arrow for index filtering with automatic ID
-  normalization. Supports parallel reads via `workers` and streaming to
-  parquet via `output` for millions of IDs without loading into memory.
+- Added `build_corpus_index()` function for creating memory-efficient
+  Parquet indexes for fast ID lookups. Handles 300M+ records by
+  processing parquet files individually, with optional parallelization
+  via `workers` and progress reporting via `progressr`. The index file
+  is auto-named and placed alongside the corpus directory.
+- Added `lookup_by_id()` function for fast record retrieval from a
+  parquet corpus using pre-built indexes. Uses Arrow for index filtering
+  with automatic ID normalization. Supports parallel reads via `workers`
+  and streaming to parquet via `output` for millions of IDs without
+  loading into memory.
 - Added `snapshot_filter_ids()` function for filtering snapshot data by
   ID lists.
 - Added
@@ -466,9 +577,7 @@
 ### Tests
 
 - Added comprehensive tests for `snapshot_to_parquet()`,
-  [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md),
-  and
-  [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md).
+  `build_corpus_index()`, and `lookup_by_id()`.
 - Added tests for schema caching, unified schema reuse, and works
   `abstract_inverted_index` VARCHAR round-trip.
 

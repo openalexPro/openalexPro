@@ -13,7 +13,7 @@ Parquet file using DuckDB, with no intermediate JSONL on disk."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,11 @@ Parquet file using DuckDB, with no intermediate JSONL on disk.</p>
 <span>  sample_size <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  workers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  enrich <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  schema <span class="op">=</span> <span class="st">"auto"</span></span>
+<span>  schema <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  resume <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  on_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"ignore"</span><span class="op">)</span>,</span>
+<span>  memory_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  retry_memory_limit <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -151,6 +155,34 @@ Used directly as the baseline.</p></dd>
 
 </dl></dd>
 
+
+<dt id="arg-resume">resume<a class="anchor" aria-label="anchor" href="#arg-resume"></a></dt>
+<dd><p>Logical.  When <code>TRUE</code>, keep an existing <code>output</code> and convert
+only the files that are not already there.  Safe because each file is
+written to a <code>.part</code> sidecar and renamed only on success, so a present
+file is always complete.  Default <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-on-error">on_error<a class="anchor" aria-label="anchor" href="#arg-on-error"></a></dt>
+<dd><p>How to handle files that still fail after the sequential
+retry: <code>"error"</code> (the default) stops and names them, <code>"warn"</code> warns and
+returns, <code>"ignore"</code> is silent.</p>
+<p>Before 0.12.0 failures were only <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code>d when <code>verbose</code>, and the run
+reported success regardless – so a page that failed to convert went
+silently missing from the corpus.  <code>"warn"</code> is the closest to that old
+behaviour, but visible.</p></dd>
+
+
+<dt id="arg-memory-limit">memory_limit<a class="anchor" aria-label="anchor" href="#arg-memory-limit"></a></dt>
+<dd><p>DuckDB <code>memory_limit</code> for each conversion worker.
+<code>NULL</code> (default) derives one from physical RAM and <code>workers</code>, rather than
+letting every worker claim DuckDB's default of 80% of the machine.</p></dd>
+
+
+<dt id="arg-retry-memory-limit">retry_memory_limit<a class="anchor" aria-label="anchor" href="#arg-retry-memory-limit"></a></dt>
+<dd><p><code>memory_limit</code> for the sequential retry pass,
+where no workers compete.  <code>NULL</code> (default) uses the whole budget.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -199,7 +231,7 @@ two-step pipeline (now deprecated).</p></div>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,57 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.1" id="openalexpro-0121">openalexPro 0.12.1<a class="anchor" aria-label="anchor" href="#openalexpro-0121"></a></h2>
+<div class="section level3">
+<h3 id="the-startup-banner-pointed-at-the-old-r-universe-0-12-1">The startup banner pointed at the old r-universe<a class="anchor" aria-label="anchor" href="#the-startup-banner-pointed-at-the-old-r-universe-0-12-1"></a></h3>
+<p><code>.onAttach()</code> printed <code>https://rkrug.r-universe.dev/openalexPro</code>. The package has been distributed from <code>https://openalexpro.r-universe.dev</code> since the move to the openalexPro organisation – and <code>DESCRIPTION</code>’s <code>Additional_repositories</code> already said so – so the one URL every user saw on every <code><a href="https://github.com/openalexPro/openalexPro" class="external-link">library(openalexPro)</a></code> was the one that was wrong.</p>
+<p>Also tidies two typos in the same banner (<code>functions definitions</code>, and a space before a comma).</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.0" id="openalexpro-0120">openalexPro 0.12.0<a class="anchor" aria-label="anchor" href="#openalexpro-0120"></a></h2>
+<div class="section level3">
+<h3 id="breaking-pro_request_parquet-no-longer-hides-conversion-failures-0-12-0">Breaking: <code>pro_request_parquet()</code> no longer hides conversion failures<a class="anchor" aria-label="anchor" href="#breaking-pro_request_parquet-no-longer-hides-conversion-failures-0-12-0"></a></h3>
+<p>A JSON file that failed to convert was caught, <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code>d only when <code>verbose</code>, and the run then reported success anyway. The page was simply absent from the resulting corpus: <code><a href="../reference/read_corpus.html">read_corpus()</a></code> worked, nothing warned, and every downstream count was quietly wrong. On a large run under memory pressure this is worse than a crash, because a crash at least announces itself.</p>
+<p>Failures are now collected, retried once sequentially with the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and whatever still fails is reported according to the new <code>on_error</code> argument: <code>"error"</code> (default) stops and names the files, <code>"warn"</code> warns and returns, <code>"ignore"</code> restores the old silence.</p>
+<p><strong>This will stop runs that previously appeared to succeed.</strong> That is the point. Pass <code>on_error = "warn"</code> for the closest thing to the old behaviour, but visible.</p>
+<p>Each file is now written to a <code>.part</code> sidecar and renamed on success. A parquet footer is written last, so a worker killed mid-<code>COPY</code> used to leave a file that looked plausible to <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists()</a></code> but could not be read.</p>
+</div>
+<div class="section level3">
+<h3 id="duckdb-connections-are-configured-rather-than-left-at-their-defaults-0-12-0">DuckDB connections are configured rather than left at their defaults<a class="anchor" aria-label="anchor" href="#duckdb-connections-are-configured-rather-than-left-at-their-defaults-0-12-0"></a></h3>
+<p>New internal <code>.pro_con()</code> factory, mirroring <code>openalexSnapshot:::.oas_con()</code>. Every connection in the package now goes through it, including the schema inference pass and <code>convert_json_to_parquet()</code>.</p>
+<p>This matters most inside <code>future</code> workers. Each worker used to open a bare <code>dbConnect(duckdb::duckdb())</code>, which means:</p>
+<ul><li>a <code>memory_limit</code> of ~80% of system RAM <strong>per worker</strong> – so N workers promised 0.8 x N of the machine, and</li>
+<li>a <code>temp_directory</code> of <code>.tmp</code> <em>relative to the working directory</em>, shared by every worker, which is the colliding-spill-file corruption openalexSnapshot documents in <code>build_citation_index()</code>.</li>
+</ul><p>Workers now get a per-worker memory budget derived from physical RAM and the worker count, <code>threads = 1</code> (the processes already saturate the machine), and a private spill directory under <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>. <code>memory_limit</code> and <code>retry_memory_limit</code> are exposed for callers who want to set them directly.</p>
+<p>Physical RAM is derived without a new dependency or platform code: a bare DuckDB connection’s own <code>memory_limit</code> is 80% of it.</p>
+</div>
+<div class="section level3">
+<h3 id="resume-for-both-request-functions-0-12-0">
+<code>resume</code> for both request functions<a class="anchor" aria-label="anchor" href="#resume-for-both-request-functions-0-12-0"></a></h3>
+<p><code>pro_request(resume = TRUE)</code> refetches only the leaf queries that did not complete, using the <code>00_in.progress</code> sentinel each leaf directory already carried and which nothing previously read. <code>pro_request_parquet(resume = TRUE)</code> converts only the files that are not already present – trustworthy because of the <code>.part</code>-and-rename change above.</p>
+<p>Previously the only options were <code>overwrite = TRUE</code> (delete everything and refetch) or <code>overwrite = FALSE</code> (hard error). There was no way to continue an interrupted download.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.0" id="openalexpro-0110">openalexPro 0.11.0<a class="anchor" aria-label="anchor" href="#openalexpro-0110"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-11-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-11-0"></a></h3>
+<ul><li>
+<p><strong><code>build_corpus_index()</code> and <code>lookup_by_id()</code> are removed.</strong> They had been left behind as stubs that raised “moved to the openalexSnapshot package”. That was actively harmful: an exported stub <strong>masks</strong> the real function whenever both packages are attached, so <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(openalexSnapshot); library(openalexPro)</a></code> made the stub win and the call fail. Use <code>openalexSnapshot::build_corpus_index()</code> and <code>openalexSnapshot::lookup_by_id()</code>.</p>
+<p><code><a href="../reference/id_block.html">id_block()</a></code> and <code><a href="../reference/read_corpus.html">read_corpus()</a></code> are unaffected and remain exported.</p>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-11-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-0"></a></h3>
+<ul><li>
+<p><code><a href="../reference/extract_doi.html">extract_doi()</a></code> no longer truncates DOIs containing <code>&lt;</code>, <code>&gt;</code>, <code>[</code> or <code>]</code>. The character class excluded them, so a SICI-style DOI such as <code>10.1175/1520-0450(1963)002&lt;0713:ooasds&gt;2.0.co;2</code> matched only up to the first <code>&lt;</code> and returned <code>10.1175/1520-0450(1963)002</code>. The truncated remainder then <em>passed</em> the normalisation whitelist, so the function returned a plausible-looking wrong DOI with no warning and no <code>NA</code> – silent corruption rather than a visible failure. Roughly 0.4% of OpenAlex works carry such DOIs (~1.4 million records).</p>
+<p>Both the match pattern and the normalisation whitelist now admit those characters. Note the fix required reordering rather than escaping: in a POSIX bracket expression a backslash is literal, so <code>]</code> must be the first character in the class and <code>-</code> the last.</p>
+<p>This also fixes <code>openalexConvert</code>’s <code>.normalize_doi()</code>, which delegates here and therefore emitted truncated DOIs into CSL-JSON output.</p>
+</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.4" id="openalexpro-0104">openalexPro 0.10.4<a class="anchor" aria-label="anchor" href="#openalexpro-0104"></a></h2>
 <div class="section level3">
 <h3 id="internal--code-quality-0-10-4">Internal / Code Quality<a class="anchor" aria-label="anchor" href="#internal--code-quality-0-10-4"></a></h3>
@@ -63,7 +114,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-0-10-4">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-10-4"></a></h3>
-<ul><li><p><code>snapshot_to_parquet()</code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, and <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> have moved to the <strong>openalexSnapshot</strong> package. Calling them in <code>openalexPro</code> now raises an informative error. Their <code>_R</code> variants have been removed entirely.</p></li>
+<ul><li><p><code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, and <code>lookup_by_id()</code> have moved to the <strong>openalexSnapshot</strong> package. Calling them in <code>openalexPro</code> now raises an informative error. Their <code>_R</code> variants have been removed entirely.</p></li>
 <li><p><code>pro_request_parquet_R()</code> and <code>pro_fetch_R()</code> removed. <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> and <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> are now the single pure-R/DuckDB implementations.</p></li>
 </ul></div>
 <div class="section level3">
@@ -101,8 +152,8 @@
 <div class="section level3">
 <h3 id="breaking-changes-0-7-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-7-0"></a></h3>
 <ul><li><p><code>snapshot_to_parquet()</code> has a new signature. The old <code>snapshot_dir</code> and <code>parquet_dir</code> parameters are replaced by a single <code>root_dir</code> parameter that matches the directory layout used by the companion <code>openalex-snapshot</code> binary. The function now delegates to the binary rather than performing conversion in R. <strong>Migration:</strong> replace <code>snapshot_to_parquet(snapshot_dir = "...", parquet_dir = "...")</code> with <code>snapshot_to_parquet(root_dir = "...")</code>.</p></li>
-<li><p><code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code> has a new signature. The old <code>corpus_dir</code> parameter is replaced by <code>root_dir</code>. The function now delegates to the <code>openalex-snapshot</code> binary. <strong>Migration:</strong> replace <code>build_corpus_index(corpus_dir = "...")</code> with <code>build_corpus_index(root_dir = "...")</code>.</p></li>
-<li><p><code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> has a new signature. The old <code>index_file</code> and <code>output</code> parameters are replaced by <code>root_dir</code> and <code>project_dir</code> (consistent with the project-folder convention used by <code><a href="../reference/pro_request.html">pro_request()</a></code> and <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>). The function now delegates to the <code>openalex-snapshot</code> binary. <strong>Migration:</strong> replace <code>lookup_by_id(index_file = "...", output = "...")</code> with <code>lookup_by_id(root_dir = "...", project_dir = "...")</code>.</p></li>
+<li><p><code>build_corpus_index()</code> has a new signature. The old <code>corpus_dir</code> parameter is replaced by <code>root_dir</code>. The function now delegates to the <code>openalex-snapshot</code> binary. <strong>Migration:</strong> replace <code>build_corpus_index(corpus_dir = "...")</code> with <code>build_corpus_index(root_dir = "...")</code>.</p></li>
+<li><p><code>lookup_by_id()</code> has a new signature. The old <code>index_file</code> and <code>output</code> parameters are replaced by <code>root_dir</code> and <code>project_dir</code> (consistent with the project-folder convention used by <code><a href="../reference/pro_request.html">pro_request()</a></code> and <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>). The function now delegates to the <code>openalex-snapshot</code> binary. <strong>Migration:</strong> replace <code>lookup_by_id(index_file = "...", output = "...")</code> with <code>lookup_by_id(root_dir = "...", project_dir = "...")</code>.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-7-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-7-0"></a></h3>
@@ -175,9 +226,9 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-6-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-6-0"></a></h3>
 <ul><li>
-<p>Fixed Windows path-normalization failures in <code>snapshot_to_parquet()</code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code>, and <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>. On Windows, <code><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath()</a></code> can return 8.3 short names (e.g. <code>RUNNER~1</code>) for <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>-derived paths while <code><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files()</a></code> and DuckDB resolve to long names (<code>runneradmin</code>). Resume detection in <code>snapshot_to_parquet()</code> used <code>%in%</code> on paths with mixed separators (<code>\</code> vs <code>/</code>), causing already-converted files to be reconverted. <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code> embedded <code>snapshot_dir</code> (with <code>\</code>) inside a DuckDB <code>regexp_replace</code> pattern, which never matched — so the full absolute path was stored in the index and later doubled by <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code>. <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> used <code>normalizePath</code> string comparison to detect subdirectories, which always failed, placing every output file in a spurious <code>query=&lt;dirname&gt;</code> subdirectory.</p>
+<p>Fixed Windows path-normalization failures in <code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, <code>lookup_by_id()</code>, and <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>. On Windows, <code><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath()</a></code> can return 8.3 short names (e.g. <code>RUNNER~1</code>) for <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>-derived paths while <code><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files()</a></code> and DuckDB resolve to long names (<code>runneradmin</code>). Resume detection in <code>snapshot_to_parquet()</code> used <code>%in%</code> on paths with mixed separators (<code>\</code> vs <code>/</code>), causing already-converted files to be reconverted. <code>build_corpus_index()</code> embedded <code>snapshot_dir</code> (with <code>\</code>) inside a DuckDB <code>regexp_replace</code> pattern, which never matched — so the full absolute path was stored in the index and later doubled by <code>lookup_by_id()</code>. <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> used <code>normalizePath</code> string comparison to detect subdirectories, which always failed, placing every output file in a spurious <code>query=&lt;dirname&gt;</code> subdirectory.</p>
 <p>Fixes: (1) normalize separators to <code>/</code> with <code>gsub("\\\\", "/", ...)</code> on both sides of <code>%in%</code> comparisons; (2) compute relative paths in R using path-depth counting (<code>strsplit(path, "/")</code> then indexed extraction) rather than string-matching absolute paths — immune to 8.3 vs long-name differences;</p>
-<ol start="3" style="list-style-type: decimal"><li>pass the relative path as a SQL literal in <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code> instead of computing it inside DuckDB with a regex.</li>
+<ol start="3" style="list-style-type: decimal"><li>pass the relative path as a SQL literal in <code>build_corpus_index()</code> instead of computing it inside DuckDB with a regex.</li>
 </ol></li>
 </ul></div>
 <div class="section level3">
@@ -202,8 +253,8 @@ Note: this was later relaxed again in development; current development allows <c
 <ul><li>Added <code>prepare_snapshot()</code> function for setting up a directory with Makefile and documentation for managing OpenAlex snapshots.</li>
 <li>Added <code>Makefile.snapshot</code> in <code>inst/</code> for automating snapshot download, conversion, and indexing. Includes targets for <code>snapshot</code>, <code>parquet</code>, <code>parquet_index</code>, and automatic renaming of existing data with release dates.</li>
 <li>Added <code>snapshot_to_parquet()</code> function for converting OpenAlex snapshot NDJSON files to Parquet format using DuckDB. Processes each <code>.gz</code> file individually with per-file resume support. Supports parallel processing via <code>workers</code> (using <code>future_lapply()</code>) and unified schema inference via <code>sample_size</code>.</li>
-<li>Added <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code> function for creating memory-efficient Parquet indexes for fast ID lookups. Handles 300M+ records by processing parquet files individually, with optional parallelization via <code>workers</code> and progress reporting via <code>progressr</code>. The index file is auto-named and placed alongside the corpus directory.</li>
-<li>Added <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> function for fast record retrieval from a parquet corpus using pre-built indexes. Uses Arrow for index filtering with automatic ID normalization. Supports parallel reads via <code>workers</code> and streaming to parquet via <code>output</code> for millions of IDs without loading into memory.</li>
+<li>Added <code>build_corpus_index()</code> function for creating memory-efficient Parquet indexes for fast ID lookups. Handles 300M+ records by processing parquet files individually, with optional parallelization via <code>workers</code> and progress reporting via <code>progressr</code>. The index file is auto-named and placed alongside the corpus directory.</li>
+<li>Added <code>lookup_by_id()</code> function for fast record retrieval from a parquet corpus using pre-built indexes. Uses Arrow for index filtering with automatic ID normalization. Supports parallel reads via <code>workers</code> and streaming to parquet via <code>output</code> for millions of IDs without loading into memory.</li>
 <li>Added <code>snapshot_filter_ids()</code> function for filtering snapshot data by ID lists.</li>
 <li>Added <code><a href="../reference/id_block.html">id_block()</a></code> helper function for computing ID block partitions.</li>
 </ul></div>
@@ -232,7 +283,7 @@ Note: this was later relaxed again in development; current development allows <c
 </ul></div>
 <div class="section level3">
 <h3 id="tests-0-5-0">Tests<a class="anchor" aria-label="anchor" href="#tests-0-5-0"></a></h3>
-<ul><li>Added comprehensive tests for <code>snapshot_to_parquet()</code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, and <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code>.</li>
+<ul><li>Added comprehensive tests for <code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, and <code>lookup_by_id()</code>.</li>
 <li>Added tests for schema caching, unified schema reuse, and works <code>abstract_inverted_index</code> VARCHAR round-trip.</li>
 </ul></div>
 </div>
@@ -297,7 +348,7 @@ Note: this was later relaxed again in development; current development allows <c
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

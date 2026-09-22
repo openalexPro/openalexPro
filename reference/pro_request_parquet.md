@@ -22,7 +22,11 @@ pro_request_parquet(
   sample_size = 1000,
   workers = NULL,
   enrich = TRUE,
-  schema = "auto"
+  schema = "auto",
+  resume = FALSE,
+  on_error = c("error", "warn", "ignore"),
+  memory_limit = NULL,
+  retry_memory_limit = NULL
 )
 ```
 
@@ -107,6 +111,36 @@ pro_request_parquet(
 
   :   Auto-detect entity, then look for `<entity>.csv` inside that
       directory.
+
+- resume:
+
+  Logical. When `TRUE`, keep an existing `output` and convert only the
+  files that are not already there. Safe because each file is written to
+  a `.part` sidecar and renamed only on success, so a present file is
+  always complete. Default `FALSE`.
+
+- on_error:
+
+  How to handle files that still fail after the sequential retry:
+  `"error"` (the default) stops and names them, `"warn"` warns and
+  returns, `"ignore"` is silent.
+
+  Before 0.12.0 failures were only
+  [`message()`](https://rdrr.io/r/base/message.html)d when `verbose`,
+  and the run reported success regardless – so a page that failed to
+  convert went silently missing from the corpus. `"warn"` is the closest
+  to that old behaviour, but visible.
+
+- memory_limit:
+
+  DuckDB `memory_limit` for each conversion worker. `NULL` (default)
+  derives one from physical RAM and `workers`, rather than letting every
+  worker claim DuckDB's default of 80% of the machine.
+
+- retry_memory_limit:
+
+  `memory_limit` for the sequential retry pass, where no workers
+  compete. `NULL` (default) uses the whole budget.
 
 ## Value
 

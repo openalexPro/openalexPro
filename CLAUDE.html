@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,16 +72,16 @@
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
 <p>The package has one functional area: <strong>OpenAlex API access</strong>.</p>
-<p>Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the <strong><code>openalexSnapshot</code></strong> package. Calling <code>snapshot_to_parquet()</code>, <code><a href="reference/build_corpus_index.html">build_corpus_index()</a></code>, or <code><a href="reference/lookup_by_id.html">lookup_by_id()</a></code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
+<p>Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the <strong><code>openalexSnapshot</code></strong> package. Calling <code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, or <code>lookup_by_id()</code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
 <div class="section level3">
 <h3 id="openalex-api-cloud">OpenAlex API (cloud)<a class="anchor" aria-label="anchor" href="#openalex-api-cloud"></a></h3>
 <p>Functions that query the live OpenAlex REST API:</p>
 <ul><li>
 <code><a href="reference/pro_query.html">pro_query()</a></code> — builds query URLs with filters, search, entity selection, ID chunking</li>
 <li>
-<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory)</li>
+<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). <code>resume = TRUE</code> refetches only the leaf queries that did not complete, using the <code>00_in.progress</code> sentinel each leaf carries while it is being written</li>
 <li>
-<code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> — converts JSON files from <code><a href="reference/pro_request.html">pro_request()</a></code> directly to Parquet (schema inference + per-file DuckDB COPY, parallel via <code>future</code>)</li>
+<code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> — converts JSON files from <code><a href="reference/pro_request.html">pro_request()</a></code> directly to Parquet (schema inference + per-file DuckDB COPY, parallel via <code>future</code>). <code>resume = TRUE</code> converts only what is missing; <code>on_error</code> controls what happens to files that fail (see <em>Failure handling</em> below)</li>
 <li>
 <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> — all-in-one: query → paginate → convert to Parquet (project folder)</li>
 <li>
@@ -115,6 +115,8 @@
 <li>
 <code><a href="reference/oa_schema.html">oa_schema()</a></code> — get or refresh the baseline entity schema used by <code>pro_request_parquet(schema = "auto")</code>
 </li>
+<li>
+<code>.pro_con()</code> / <code>.pro_worker_memory()</code> / <code>.pro_temp_dir()</code> (internal, <code>R/utils_duckdb.R</code>) — the configured DuckDB connection factory and its budget helpers</li>
 </ul></div>
 </div>
 <div class="section level2">
@@ -142,6 +144,19 @@
 <code>OPENALEXPRO_LIVE_TESTS=true</code> + a real API key enables live API tests in <code>test-900</code>
 </li>
 </ul><div class="section level3">
+<h3 id="duckdb-connections">DuckDB connections<a class="anchor" aria-label="anchor" href="#duckdb-connections"></a></h3>
+<p>All DuckDB connections go through <code>.pro_con()</code> (<code>R/utils_duckdb.R</code>), which sets <code>preserve_insertion_order</code>, <code>memory_limit</code>, <code>threads</code> and <code>temp_directory</code>, and optionally loads the JSON extension.</p>
+<p>Do not open a bare <code>dbConnect(duckdb::duckdb())</code> in a worker. DuckDB’s defaults are a <code>memory_limit</code> of ~80% of system RAM <strong>per instance</strong> — so N workers promise 0.8 × N of the machine — and a <code>temp_directory</code> of <code>.tmp</code> <em>relative to the working directory</em>, which every worker inherits and then corrupts by writing colliding <code>duckdb_temp_storage_*.tmp</code> files. <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> gives each worker a derived budget, <code>threads = 1</code>, and a private spill directory under <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>.</p>
+<p>Physical RAM is derived from DuckDB itself — a bare connection’s <code>memory_limit</code> is 80% of it — so there is no new dependency and no platform-specific code.</p>
+<p>Note also that <code>INSTALL json; LOAD json;</code> is explicit rather than left to autoloading: <code>autoinstall_known_extensions</code> defaults to <strong>FALSE</strong>, so autoloading can only load an extension that is already installed, never fetch one. That works on a developer machine and fails on a fresh CI runner.</p>
+</div>
+<div class="section level3">
+<h3 id="failure-handling-in-pro_request_parquet">Failure handling in <code>pro_request_parquet()</code>
+<a class="anchor" aria-label="anchor" href="#failure-handling-in-pro_request_parquet"></a></h3>
+<p>Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on <code>on_error</code>: <code>"error"</code> (default), <code>"warn"</code>, <code>"ignore"</code>.</p>
+<p>This was a silent-data-loss bug before 0.12.0: failures were <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code>d only when <code>verbose</code> and the run reported success regardless, so a page that failed to convert was simply absent from the corpus and every downstream count was quietly wrong. Each file is written to a <code>.part</code> sidecar and renamed on success, because a parquet footer is written last — a killed worker used to leave a file that passed <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists()</a></code> but could not be read.</p>
+</div>
+<div class="section level3">
 <h3 id="key-design-decisions">Key Design Decisions<a class="anchor" aria-label="anchor" href="#key-design-decisions"></a></h3>
 <ul><li>
 <strong>On-disk processing</strong>: Each pipeline stage writes to disk before the next begins. This enables resume after crashes and avoids OOM for large datasets.</li>
@@ -171,7 +186,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

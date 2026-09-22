@@ -11,7 +11,7 @@ json files."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,8 @@ json files.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  count_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  error_log <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  error_log <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  resume <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -120,6 +121,13 @@ without an API key (subject to OpenAlex's unauthenticated limits).</p></dd>
 <dt id="arg-error-log">error_log<a class="anchor" aria-label="anchor" href="#arg-error-log"></a></dt>
 <dd><p>location of error log of API calls. (default: <code>NULL</code> (none)).</p></dd>
 
+
+<dt id="arg-resume">resume<a class="anchor" aria-label="anchor" href="#arg-resume"></a></dt>
+<dd><p>Logical.  When <code>TRUE</code>, keep an existing <code>output</code> and refetch
+only the leaf queries that did not complete.  Completion is detected with
+the <code>00_in.progress</code> sentinel each leaf directory carries while it is
+being written.  Default <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -146,7 +154,7 @@ in the list are returned in a folder named after the names of the list elements 
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

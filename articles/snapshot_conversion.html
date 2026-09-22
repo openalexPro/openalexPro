@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,8 +75,9 @@
 
     <blockquote>
 <p><strong>These functions have moved.</strong></p>
-<p><code>snapshot_to_parquet()</code>, <code><a href="../reference/build_corpus_index.html">build_corpus_index()</a></code>, and <code><a href="../reference/lookup_by_id.html">lookup_by_id()</a></code> are now part of the <strong><code>openalexSnapshot</code></strong> package.</p>
+<p><code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, and <code>lookup_by_id()</code> are now part of the <strong><code>openalexSnapshot</code></strong> package.</p>
 <p>Please install <code>openalexSnapshot</code> and refer to its documentation for converting the OpenAlex bulk snapshot to Parquet, building ID lookup indexes, and extracting records by ID.</p>
+<p>They are no longer present in <code>openalexPro</code> even as error-raising stubs: an exported stub masks the real function when both packages are attached.</p>
 </blockquote>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install openalexSnapshot (once available on r-universe):</span></span>
@@ -177,7 +178,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

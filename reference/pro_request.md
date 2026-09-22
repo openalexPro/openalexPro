@@ -17,7 +17,8 @@ pro_request(
   verbose = FALSE,
   progress = TRUE,
   count_only = FALSE,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE
 )
 ```
 
@@ -74,6 +75,13 @@ pro_request(
 - error_log:
 
   location of error log of API calls. (default: `NULL` (none)).
+
+- resume:
+
+  Logical. When `TRUE`, keep an existing `output` and refetch only the
+  leaf queries that did not complete. Completion is detected with the
+  `00_in.progress` sentinel each leaf directory carries while it is
+  being written. Default `FALSE`.
 
 ## Value
 

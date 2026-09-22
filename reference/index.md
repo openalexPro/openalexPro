@@ -2,9 +2,6 @@
 
 ## All functions
 
-- [`build_corpus_index()`](https://openalexpro.github.io/openalexPro/reference/build_corpus_index.md)
-  : Build a Parquet ID-lookup index
-
 - [`compatibility_report()`](https://openalexpro.github.io/openalexPro/reference/compatibility_report.md)
   : Render and open the compatibility report
 
@@ -19,9 +16,6 @@
 
 - [`jq_execute()`](https://openalexpro.github.io/openalexPro/reference/jq_execute.md)
   : Execute a jq transformation from an OpenAlex-style JSON to JSONL
-
-- [`lookup_by_id()`](https://openalexpro.github.io/openalexPro/reference/lookup_by_id.md)
-  : Look up records by OpenAlex ID
 
 - [`oa_normalize_duckdb_type()`](https://openalexpro.github.io/openalexPro/reference/oa_normalize_duckdb_type.md)
   : Canonicalise a DuckDB type string.

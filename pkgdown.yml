@@ -1,5 +1,5 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   pro_query: pro_query.html
@@ -8,7 +8,7 @@ articles:
   snapshot_conversion: snapshot_conversion.html
   snapshot: snapshot.html
   Workflow: Workflow.html
-last_built: 2026-06-30T15:05Z
+last_built: 2026-09-22T18:08Z
 urls:
   reference: https://openalexpro.github.io/openalexPro/reference
   article: https://openalexpro.github.io/openalexPro/articles
