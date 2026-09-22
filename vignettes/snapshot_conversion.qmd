@@ -17,6 +17,9 @@ vignette: >
 > Please install `openalexSnapshot` and refer to its documentation for
 > converting the OpenAlex bulk snapshot to Parquet, building ID lookup
 > indexes, and extracting records by ID.
+>
+> They are no longer present in `openalexPro` even as error-raising stubs: an
+> exported stub masks the real function when both packages are attached.
 
 ```r
 # Install openalexSnapshot (once available on r-universe):

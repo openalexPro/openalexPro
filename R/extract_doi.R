@@ -55,7 +55,14 @@ extract_doi <- function(
   x[is.na(x)] <- ""
 
   # Common regex patterns
-  doi_pattern <- "10\\.[0-9]{4,9}/[-._;()/:A-Z0-9]+"
+  # The character class must admit < > [ ] : real DOIs use them. SICI-style
+  # DOIs such as 10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2 are common
+  # in older AMS/ASLO/Wiley content (~0.4% of OpenAlex works). Without them
+  # the match stops at the first < and returns a TRUNCATED string that still
+  # looks like a valid DOI, which is worse than no match at all.
+  # In a POSIX bracket expression a backslash is literal, so "]" must come
+  # first and "-" last rather than being escaped.
+  doi_pattern <- "10\\.[0-9]{4,9}/[]._;()/:<>[A-Z0-9-]+"
   resolver_pattern <- "https?://[^\\s/]+/?"
   prefix_pattern <- "10\\.[0-9]{4,9}"
 
@@ -88,7 +95,7 @@ extract_doi <- function(
   if (normalize && length(matched_idx) > 0) {
     # Step 2: character whitelist check for certain components
     if (what %in% c("doi", "prefix", "suffix")) {
-      valid_pattern <- "^[0-9a-z./:;()_-]+$"
+      valid_pattern <- "^[]0-9a-z./:;()_<>[-]+$"
       valid <- grepl(valid_pattern, matches, ignore.case = FALSE)
 
       if (is.null(non_doi_value)) {

@@ -29,6 +29,10 @@
 #' @param verbose Logical indicating whether to show verbose messages.
 #' @param progress Logical indicating whether to show a progress bar. Default `TRUE`.
 #' @param count_only return count only as a data.frame.
+#' @param resume Logical.  When `TRUE`, keep an existing `output` and refetch
+#'   only the leaf queries that did not complete.  Completion is detected with
+#'   the `00_in.progress` sentinel each leaf directory carries while it is
+#'   being written.  Default `FALSE`.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
 #'
 #' @return If `count_only` is `FALSE` (the default) the complete path to the expanded and
@@ -56,7 +60,8 @@ pro_request <- function(
   verbose = FALSE,
   progress = TRUE,
   count_only = FALSE,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE
 ) {
   if (
     is.null(api_key) ||
@@ -88,7 +93,7 @@ pro_request <- function(
     }
 
     # Delete output directory upfront if overwrite requested
-    if (!is.null(output) && dir.exists(output)) {
+    if (!is.null(output) && dir.exists(output) && !isTRUE(resume)) {
       if (!overwrite) {
         stop(
           "Directory ",
@@ -166,11 +171,24 @@ pro_request <- function(
               do.call(file.path, c(list(output), as.list(path_parts)))
             }
 
+            # Resume at leaf granularity. `00_in.progress` is created
+            # when a leaf starts and unlinked when it completes, so its
+            # absence from an existing directory means that leaf finished --
+            # including the legitimate case of an empty result set. A leaf
+            # that still carries the sentinel was interrupted: cursor paging
+            # cannot be resumed mid-stream (the cursor token is not
+            # persisted), so it is refetched whole.
+            if (isTRUE(resume) && !is.null(query_output) &&
+                dir.exists(query_output) &&
+                !file.exists(file.path(query_output, "00_in.progress"))) {
+              return(invisible(NULL))
+            }
+
             fetch_query_pages(
               query_url = leaf_urls[[i]],
               pages = pages,
               output = query_output,
-              overwrite = FALSE,
+              overwrite = isTRUE(resume),
               api_key = api_key,
               verbose = verbose,
               error_log = error_log,

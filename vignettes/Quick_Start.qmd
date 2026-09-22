@@ -59,7 +59,7 @@ flowchart LR
 # Install stable version from r-universe (recommended)
 install.packages(
   "openalexPro",
-  repos = c("https://rkrug.r-universe.dev", "https://cloud.r-project.org")
+  repos = c("https://openalexpro.r-universe.dev", "https://cloud.r-project.org")
 )
 
 # Or install development version from GitHub

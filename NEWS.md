@@ -1,3 +1,110 @@
+# openalexPro 0.12.1
+
+## The startup banner pointed at the old r-universe
+
+`.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package
+has been distributed from `https://openalexpro.r-universe.dev` since the move
+to the openalexPro organisation -- and `DESCRIPTION`'s
+`Additional_repositories` already said so -- so the one URL every user saw on
+every `library(openalexPro)` was the one that was wrong.
+
+Also tidies two typos in the same banner (`functions definitions`, and a
+space before a comma).
+
+# openalexPro 0.12.0
+
+## Breaking: `pro_request_parquet()` no longer hides conversion failures
+
+A JSON file that failed to convert was caught, `message()`d only when
+`verbose`, and the run then reported success anyway. The page was simply
+absent from the resulting corpus: `read_corpus()` worked, nothing warned, and
+every downstream count was quietly wrong. On a large run under memory
+pressure this is worse than a crash, because a crash at least announces
+itself.
+
+Failures are now collected, retried once sequentially with the full memory
+budget (per-file peak memory varies with how large and nested a page is, so
+sizing the per-worker limit for the worst file would throttle all of them),
+and whatever still fails is reported according to the new `on_error`
+argument: `"error"` (default) stops and names the files, `"warn"` warns and
+returns, `"ignore"` restores the old silence.
+
+**This will stop runs that previously appeared to succeed.** That is the
+point. Pass `on_error = "warn"` for the closest thing to the old behaviour,
+but visible.
+
+Each file is now written to a `.part` sidecar and renamed on success. A
+parquet footer is written last, so a worker killed mid-`COPY` used to leave a
+file that looked plausible to `file.exists()` but could not be read.
+
+## DuckDB connections are configured rather than left at their defaults
+
+New internal `.pro_con()` factory, mirroring `openalexSnapshot:::.oas_con()`.
+Every connection in the package now goes through it, including the schema
+inference pass and `convert_json_to_parquet()`.
+
+This matters most inside `future` workers. Each worker used to open a bare
+`dbConnect(duckdb::duckdb())`, which means:
+
+* a `memory_limit` of ~80% of system RAM **per worker** -- so N workers
+  promised 0.8 x N of the machine, and
+* a `temp_directory` of `.tmp` *relative to the working directory*, shared by
+  every worker, which is the colliding-spill-file corruption openalexSnapshot
+  documents in `build_citation_index()`.
+
+Workers now get a per-worker memory budget derived from physical RAM and the
+worker count, `threads = 1` (the processes already saturate the machine), and
+a private spill directory under `tempdir()`. `memory_limit` and
+`retry_memory_limit` are exposed for callers who want to set them directly.
+
+Physical RAM is derived without a new dependency or platform code: a bare
+DuckDB connection's own `memory_limit` is 80% of it.
+
+## `resume` for both request functions
+
+`pro_request(resume = TRUE)` refetches only the leaf queries that did not
+complete, using the `00_in.progress` sentinel each leaf directory already
+carried and which nothing previously read. `pro_request_parquet(resume =
+TRUE)` converts only the files that are not already present -- trustworthy
+because of the `.part`-and-rename change above.
+
+Previously the only options were `overwrite = TRUE` (delete everything and
+refetch) or `overwrite = FALSE` (hard error). There was no way to continue an
+interrupted download.
+
+# openalexPro 0.11.0
+
+## Breaking changes
+
+* **`build_corpus_index()` and `lookup_by_id()` are removed.** They had been
+  left behind as stubs that raised "moved to the openalexSnapshot package".
+  That was actively harmful: an exported stub **masks** the real function
+  whenever both packages are attached, so
+  `library(openalexSnapshot); library(openalexPro)` made the stub win and the
+  call fail. Use `openalexSnapshot::build_corpus_index()` and
+  `openalexSnapshot::lookup_by_id()`.
+
+  `id_block()` and `read_corpus()` are unaffected and remain exported.
+
+## Bug fixes
+
+* `extract_doi()` no longer truncates DOIs containing `<`, `>`, `[` or `]`.
+  The character class excluded them, so a SICI-style DOI such as
+  `10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2` matched only up to the
+  first `<` and returned `10.1175/1520-0450(1963)002`. The truncated remainder
+  then *passed* the normalisation whitelist, so the function returned a
+  plausible-looking wrong DOI with no warning and no `NA` -- silent corruption
+  rather than a visible failure. Roughly 0.4% of OpenAlex works carry such
+  DOIs (~1.4 million records).
+
+  Both the match pattern and the normalisation whitelist now admit those
+  characters. Note the fix required reordering rather than escaping: in a
+  POSIX bracket expression a backslash is literal, so `]` must be the first
+  character in the class and `-` the last.
+
+  This also fixes `openalexConvert`'s `.normalize_doi()`, which delegates here
+  and therefore emitted truncated DOIs into CSL-JSON output.
+
 # openalexPro 0.10.4
 
 ## Internal / Code Quality
