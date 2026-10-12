@@ -16,16 +16,17 @@ pro_fetch(
   progress = TRUE,
   enrich = TRUE,
   count_only,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE
 )
 }
 \arguments{
 \item{query_url}{The URL of the API query or a list of URLs returned from \code{pro_query()}.}
 
-\item{pages}{The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
-all pages will be downloaded. Default: 100000.}
+\item{pages}{The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If \code{NULL},
+all pages will be downloaded.}
 
 \item{project_folder}{Directory where intermediate (\code{json}) and final
 (\code{parquet}) results are stored.  If it does not exist, it is created.
@@ -57,6 +58,12 @@ add \code{abstract} and \code{citation} computed columns.}
 \code{TRUE} and give a warning if \code{FALSE}.}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
+
+\item{resume}{Logical. When \code{TRUE}, keep existing \code{json} and
+\code{parquet} subfolders and complete an interrupted run: only leaf
+queries that did not finish are downloaded again, and only missing
+Parquet files are converted. A finished run is returned unchanged.
+\code{overwrite} is ignored. Default \code{FALSE}.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder

@@ -31,6 +31,11 @@
 #'   those subdirectories already exist, the function stops with an error.
 #' @param delete_input Logical. If \code{TRUE} (the default), the \code{json}
 #'   subfolder is deleted after successful conversion to Parquet.
+#' @param resume Logical. When \code{TRUE}, keep existing \code{json} and
+#'   \code{parquet} subfolders and complete an interrupted run: only leaf
+#'   queries that did not finish are downloaded again, and only missing
+#'   Parquet files are converted. A finished run is returned unchanged.
+#'   \code{overwrite} is ignored. Default \code{FALSE}.
 #'
 #' @return Invisibly, the normalised path of the \code{parquet} subfolder
 #'   inside \code{project_folder}.
@@ -53,7 +58,8 @@ pro_fetch <- function(
   progress       = TRUE,
   enrich         = TRUE,
   count_only,
-  error_log      = NULL
+  error_log      = NULL,
+  resume         = FALSE
 ) {
   if (
     is.null(api_key) ||
@@ -78,7 +84,16 @@ pro_fetch <- function(
 
   subdirs  <- c("json", "parquet")
   existing <- subdirs[dir.exists(file.path(project_folder, subdirs))]
-  if (length(existing) > 0) {
+  parquet_dir <- file.path(project_folder, "parquet")
+
+  # Resume: a parquet folder without its sentinel is a finished run (the json
+  # may already be gone through `delete_input`), so there is nothing to do.
+  if (isTRUE(resume) && dir.exists(parquet_dir) &&
+      !file.exists(file.path(parquet_dir, "00_in.progress"))) {
+    return(invisible(normalizePath(parquet_dir)))
+  }
+
+  if (length(existing) > 0 && !isTRUE(resume)) {
     if (!overwrite) {
       stop(
         "The following subdirectories already exist in '",
@@ -103,15 +118,17 @@ pro_fetch <- function(
     verbose    = verbose,
     progress   = progress,
     count_only = FALSE,
-    error_log  = error_log
+    error_log  = error_log,
+    resume     = resume
   ) |>
     pro_request_parquet(
-      output       = file.path(project_folder, "parquet"),
+      output       = parquet_dir,
       overwrite    = FALSE,
       verbose      = verbose,
       progress     = progress,
       delete_input = delete_input,
       workers      = workers,
-      enrich       = enrich
+      enrich       = enrich,
+      resume       = resume
     )
 }

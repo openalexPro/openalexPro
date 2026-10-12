@@ -115,7 +115,10 @@ testthat::test_that("pro_query works with all entity types", {
     "institutions",
     "concepts",
     "publishers",
-    "funders"
+    "funders",
+    "sources",
+    "topics",
+    "locations"
   )
   for (ent in entities) {
     url <- pro_query(entity = ent)

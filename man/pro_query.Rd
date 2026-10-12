@@ -6,7 +6,7 @@
 \usage{
 pro_query(
   entity = c("works", "authors", "venues", "institutions", "concepts", "publishers",
-    "funders"),
+    "funders", "sources", "topics", "locations"),
   id = NULL,
   doi = NULL,
   search = NULL,
@@ -21,8 +21,11 @@ pro_query(
 )
 }
 \arguments{
-\item{entity}{Character; one of \code{"works"}, \code{"authors"}, \code{"venues"},
-\code{"institutions"}, \code{"concepts"}, \code{"publishers"}, \code{"funders"}.}
+\item{entity}{Character; one of \code{"works"}, \code{"authors"},
+\code{"institutions"}, \code{"publishers"}, \code{"funders"},
+\code{"sources"}, \code{"topics"}, \code{"locations"}. \code{"venues"}
+(now \code{"sources"}) and \code{"concepts"} (now \code{"topics"}) are
+deprecated by OpenAlex and kept only for compatibility.}
 
 \item{id}{Optional ID or vector of IDs (e.g., \code{"W1775749144"}). If a single ID
 is provided, fetches one entity directly. If multiple IDs are provided, they are

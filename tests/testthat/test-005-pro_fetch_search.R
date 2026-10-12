@@ -53,3 +53,16 @@ test_that("pro_fetch search `biodiversity AND fiance`", {
 })
 
 # unlink(output_dir, recursive = TRUE, force = TRUE)
+
+test_that("pro_fetch(resume = TRUE) returns a finished run without any request", {
+  tmp <- withr::local_tempdir()
+  parquet <- file.path(tmp, "parquet")
+  dir.create(parquet)
+  file.create(file.path(parquet, "results_page_1.parquet"))
+  # An unroutable URL: reaching the network would error.
+  expect_equal(
+    pro_fetch("http://invalid.invalid/works", project_folder = tmp,
+              resume = TRUE, progress = FALSE),
+    normalizePath(parquet)
+  )
+})

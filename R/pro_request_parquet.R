@@ -35,7 +35,8 @@
 #' @param verbose Logical.  Show progress messages.  Default `TRUE`.
 #' @param progress Logical.  Show a progress bar.  Default `TRUE`.
 #' @param delete_input Logical.  Delete `input_json` after a successful
-#'   conversion.  Default `FALSE`.
+#'   conversion.  If any file failed to convert, `input_json` is kept so the
+#'   run can be completed with `resume = TRUE`.  Default `FALSE`.
 #' @param sample_size Integer.  Number of records per file passed to DuckDB's
 #'   `sample_size` option during schema inference.  Use `-1` to read all
 #'   records (accurate but slow for large files).  Default `1000`.
@@ -220,7 +221,11 @@ pro_request_parquet <- function(
     .prr_report_failures(failed, jsons, statuses, output, length(jsons), on_error)
   }
 
-  if (delete_input) unlink(input_json, recursive = TRUE, force = TRUE)
+  # Keep the input when anything failed (on_error = "warn"/"ignore"): it is the
+  # only copy of the failed pages, and `resume` needs it.
+  if (delete_input && length(failed) == 0L) {
+    unlink(input_json, recursive = TRUE, force = TRUE)
+  }
 
   # Only a wholly successful run clears the sentinel, so `00_in.progress`
   # marks a partial conversion and can drive `resume`.

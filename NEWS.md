@@ -11,6 +11,60 @@ every `library(openalexPro)` was the one that was wrong.
 Also tidies two typos in the same banner (`functions definitions`, and a
 space before a comma).
 
+## `delete_input` no longer deletes pages that failed to convert
+
+With `on_error = "warn"` or `"ignore"`, `pro_request_parquet(delete_input =
+TRUE)` deleted the JSON input even when some files had failed -- the only copy
+of those pages -- so `resume = TRUE` could not recover them. The input is now
+kept unless every file converted.
+
+## Downloads survive network failures and stalls
+
+`api_call()` retried only on HTTP 429/5xx. A dropped connection or curl error
+aborted the whole leaf, and a stalled transfer could hang a worker forever.
+Network failures are now retried with the same backoff, and a transfer below
+1 byte/s for 120 s is aborted and retried. Requires `httr2 >= 1.0.0`.
+
+## `resume` works for a single URL, and in `pro_fetch()`
+
+`pro_request(resume = TRUE)` was silently ignored for a single URL and failed
+with "Directory exists". A single URL is now treated as one leaf. `pro_fetch()`
+gains `resume` (default `FALSE`, behaviour unchanged), which completes an
+interrupted download and conversion and returns a finished run unchanged.
+
+## No count request per query before a parallel download
+
+To size its progress bar, `pro_request()` with a list of queries first sent a
+count request for every leaf, one after another, before downloading anything.
+For a chunked DOI / ID list (one page per leaf) that doubled the requests and
+their cost. Progress now counts leaves, each advancing in fractions as its
+pages arrive, with no extra requests.
+
+## Clearer API errors, and no pointless retries on an exhausted budget
+
+A 4xx error now includes OpenAlex's own explanation (e.g. which filter name is
+invalid) instead of only "HTTP 400 Bad Request". A 429 caused by the daily
+budget -- used up (`X-RateLimit-Remaining` at zero), or a query refused as
+costing more than is left (`"error": "not_enough_credits"`) -- fails
+immediately and says when the budget resets, instead of backing off for about
+17 minutes before failing.
+`verbose = TRUE` no longer prints the API key as part of the URL.
+
+`pro_query()` no longer fetches the list of valid `select` fields when no
+`select` is given, saving a request per session.
+
+## `pro_query()` knows the current entities
+
+`entity` now also accepts `"sources"`, `"topics"` and `"locations"`. `"venues"`
+and `"concepts"` (replaced by sources and topics in OpenAlex) are kept for
+compatibility. The default is still `"works"`.
+
+## Better load balancing for parallel downloads
+
+`pro_request()` with a list of queries pre-split the leaves into one block per
+worker, so a worker that drew the large leaves ran on while the others sat
+idle. Each leaf is now dispatched to the next free worker.
+
 # openalexPro 0.12.0
 
 ## Breaking: `pro_request_parquet()` no longer hides conversion failures

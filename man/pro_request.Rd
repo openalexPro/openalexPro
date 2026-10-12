@@ -21,13 +21,13 @@ pro_request(
 \arguments{
 \item{query_url}{The URL of the API query or a list of URLs returned from \code{pro_query()}.}
 
-\item{pages}{The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
-all pages will be downloaded. Default: 100000.}
+\item{pages}{The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If \code{NULL},
+all pages will be downloaded.}
 
-\item{output}{directory where the JSON files are saved. Default is a
-temporary directory. Needs to be specified.}
+\item{output}{directory where the JSON files are saved. Required (the
+default \code{NULL} stops with an error) unless \code{count_only = TRUE}.}
 
 \item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted before
 downloading. For a list \code{query_url}, the entire top-level \code{output}
@@ -51,7 +51,7 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 \item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and refetch
 only the leaf queries that did not complete.  Completion is detected with
 the \verb{00_in.progress} sentinel each leaf directory carries while it is
-being written.  Default \code{FALSE}.}
+being written.  A single URL is treated as one leaf.  Default \code{FALSE}.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and
