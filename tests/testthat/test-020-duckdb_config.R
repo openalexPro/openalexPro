@@ -229,3 +229,25 @@ test_that("an existing output without resume or overwrite still errors", {
     "exists"
   )
 })
+
+test_that("delete_input keeps the input when a file failed", {
+  tmp <- withr::local_tempdir()
+  input <- make_json_dir(file.path(tmp, "json"), n_good = 2L, n_bad = 1L)
+  out <- file.path(tmp, "parquet")
+  suppressWarnings(pro_request_parquet(
+    input_json = input, output = out, on_error = "warn", delete_input = TRUE,
+    verbose = FALSE, progress = FALSE, enrich = FALSE
+  ))
+  expect_true(dir.exists(input))
+})
+
+test_that("delete_input removes the input after a clean run", {
+  tmp <- withr::local_tempdir()
+  input <- make_json_dir(file.path(tmp, "json"), n_good = 2L, n_bad = 0L)
+  out <- file.path(tmp, "parquet")
+  pro_request_parquet(
+    input_json = input, output = out, delete_input = TRUE,
+    verbose = FALSE, progress = FALSE, enrich = FALSE
+  )
+  expect_false(dir.exists(input))
+})

@@ -84,3 +84,17 @@ test_that("pro_request_jsonl_parquet single identifier", {
 unlink(output_json, recursive = TRUE, force = TRUE)
 unlink(output_jsonl, recursive = TRUE, force = TRUE)
 unlink(output_parquet, recursive = TRUE, force = TRUE)
+
+test_that("resume skips a completed single query without any request", {
+  tmp <- withr::local_tempdir()
+  out <- file.path(tmp, "json")
+  dir.create(out)
+  writeLines("{}", file.path(out, "results_page_1.json"))
+  # An unroutable URL: reaching the network would error.
+  expect_equal(
+    pro_request("http://invalid.invalid/works", output = out, resume = TRUE,
+                progress = FALSE),
+    normalizePath(out)
+  )
+  expect_true(file.exists(file.path(out, "results_page_1.json")))
+})

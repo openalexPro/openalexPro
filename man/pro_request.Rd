@@ -51,7 +51,7 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 \item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and refetch
 only the leaf queries that did not complete.  Completion is detected with
 the \verb{00_in.progress} sentinel each leaf directory carries while it is
-being written.  Default \code{FALSE}.}
+being written.  A single URL is treated as one leaf.  Default \code{FALSE}.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and

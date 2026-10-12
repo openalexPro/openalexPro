@@ -11,6 +11,33 @@ every `library(openalexPro)` was the one that was wrong.
 Also tidies two typos in the same banner (`functions definitions`, and a
 space before a comma).
 
+## `delete_input` no longer deletes pages that failed to convert
+
+With `on_error = "warn"` or `"ignore"`, `pro_request_parquet(delete_input =
+TRUE)` deleted the JSON input even when some files had failed -- the only copy
+of those pages -- so `resume = TRUE` could not recover them. The input is now
+kept unless every file converted.
+
+## Downloads survive network failures and stalls
+
+`api_call()` retried only on HTTP 429/5xx. A dropped connection or curl error
+aborted the whole leaf, and a stalled transfer could hang a worker forever.
+Network failures are now retried with the same backoff, and a transfer below
+1 byte/s for 120 s is aborted and retried. Requires `httr2 >= 1.0.0`.
+
+## `resume` works for a single URL, and in `pro_fetch()`
+
+`pro_request(resume = TRUE)` was silently ignored for a single URL and failed
+with "Directory exists". A single URL is now treated as one leaf. `pro_fetch()`
+gains `resume` (default `FALSE`, behaviour unchanged), which completes an
+interrupted download and conversion and returns a finished run unchanged.
+
+## Better load balancing for parallel downloads
+
+`pro_request()` with a list of queries pre-split the leaves into one block per
+worker, so a worker that drew the large leaves ran on while the others sat
+idle. Each leaf is now dispatched to the next free worker.
+
 # openalexPro 0.12.0
 
 ## Breaking: `pro_request_parquet()` no longer hides conversion failures

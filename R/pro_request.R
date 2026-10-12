@@ -32,7 +32,7 @@
 #' @param resume Logical.  When `TRUE`, keep an existing `output` and refetch
 #'   only the leaf queries that did not complete.  Completion is detected with
 #'   the `00_in.progress` sentinel each leaf directory carries while it is
-#'   being written.  Default `FALSE`.
+#'   being written.  A single URL is treated as one leaf.  Default `FALSE`.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
 #'
 #' @return If `count_only` is `FALSE` (the default) the complete path to the expanded and
@@ -161,8 +161,12 @@ pro_request <- function(
           NULL
         }
 
+        # future.scheduling = Inf: one future per leaf, so workers pick up the
+        # next leaf when free. The default pre-splits the leaves into one block
+        # per worker, which leaves workers idle when leaf sizes differ a lot.
         result <- future.apply::future_lapply(
           seq_along(leaf_queries),
+          future.scheduling = Inf,
           function(i) {
             path_parts <- leaf_paths[[i]]
             query_output <- if (is.null(output)) {
@@ -215,12 +219,18 @@ pro_request <- function(
     return(out)
   }
 
+  # Resume: same sentinel logic as for a leaf in the list method above.
+  if (isTRUE(resume) && !is.null(output) && dir.exists(output) &&
+      !file.exists(file.path(output, "00_in.progress"))) {
+    return(normalizePath(output))
+  }
+
   # Use helper function with cli progress for single query
   fetch_query_pages(
     query_url = query_url,
     pages = pages,
     output = output,
-    overwrite = overwrite,
+    overwrite = overwrite || isTRUE(resume),
     api_key = api_key,
     verbose = verbose,
     error_log = error_log,

@@ -18,7 +18,7 @@ Imports:
     duckdb,
     future,
     future.apply,
-    httr2,
+    httr2 (>= 1.0.0),
     jqr,
     progressr,
     rlang

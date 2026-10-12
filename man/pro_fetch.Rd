@@ -16,7 +16,8 @@ pro_fetch(
   progress = TRUE,
   enrich = TRUE,
   count_only,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE
 )
 }
 \arguments{
@@ -57,6 +58,12 @@ add \code{abstract} and \code{citation} computed columns.}
 \code{TRUE} and give a warning if \code{FALSE}.}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
+
+\item{resume}{Logical. When \code{TRUE}, keep existing \code{json} and
+\code{parquet} subfolders and complete an interrupted run: only leaf
+queries that did not finish are downloaded again, and only missing
+Parquet files are converted. A finished run is returned unchanged.
+\code{overwrite} is ignored. Default \code{FALSE}.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder

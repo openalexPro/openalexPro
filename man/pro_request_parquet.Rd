@@ -39,7 +39,8 @@ Default \code{FALSE}.}
 \item{progress}{Logical.  Show a progress bar.  Default \code{TRUE}.}
 
 \item{delete_input}{Logical.  Delete \code{input_json} after a successful
-conversion.  Default \code{FALSE}.}
+conversion.  If any file failed to convert, \code{input_json} is kept so the
+run can be completed with \code{resume = TRUE}.  Default \code{FALSE}.}
 
 \item{sample_size}{Integer.  Number of records per file passed to DuckDB's
 \code{sample_size} option during schema inference.  Use \code{-1} to read all

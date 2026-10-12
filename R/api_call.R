@@ -29,7 +29,7 @@
 #' temporarily set to \code{FALSE} during the nested rate-limit call to prevent
 #' infinite recursion.
 #'
-#' @importFrom httr2 req_retry req_error req_perform resp_status resp_header
+#' @importFrom httr2 req_retry req_error req_perform resp_status resp_header req_options
 #' @importFrom rlang caller_env abort
 #' @noRd
 api_call <- function(
@@ -59,10 +59,14 @@ api_call <- function(
     }
   }
 
-  # Retry logic for transient statuses
+  # Retry logic for transient statuses and network failures (dropped
+  # connection, curl timeout). A transfer that stalls (< 1 byte/s for 120 s)
+  # is aborted and so retried, instead of hanging the worker forever.
   req <- req |>
+    httr2::req_options(low_speed_limit = 1L, low_speed_time = 120L) |>
     httr2::req_retry(
       max_tries = max_retries,
+      retry_on_failure = TRUE,
       backoff = ~ 2^.x,
       is_transient = function(resp) {
         status <- httr2::resp_status(resp)
