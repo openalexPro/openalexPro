@@ -23,10 +23,10 @@ pro_fetch(
 \arguments{
 \item{query_url}{The URL of the API query or a list of URLs returned from \code{pro_query()}.}
 
-\item{pages}{The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
-all pages will be downloaded. Default: 100000.}
+\item{pages}{The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If \code{NULL},
+all pages will be downloaded.}
 
 \item{project_folder}{Directory where intermediate (\code{json}) and final
 (\code{parquet}) results are stored.  If it does not exist, it is created.

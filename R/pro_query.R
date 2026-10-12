@@ -107,8 +107,12 @@
 #' @keywords internal
 #' @noRd
 .validate_select <- function(select) {
+  # Check `select` first: fetching the allowed fields costs a request.
+  if (.is_empty(select)) {
+    return(invisible(TRUE))
+  }
   allowed <- opt_select_fields()
-  if (.is_empty(allowed) || .is_empty(select)) {
+  if (.is_empty(allowed)) {
     return(invisible(TRUE))
   }
 

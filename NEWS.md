@@ -32,6 +32,25 @@ with "Directory exists". A single URL is now treated as one leaf. `pro_fetch()`
 gains `resume` (default `FALSE`, behaviour unchanged), which completes an
 interrupted download and conversion and returns a finished run unchanged.
 
+## No count request per query before a parallel download
+
+To size its progress bar, `pro_request()` with a list of queries first sent a
+count request for every leaf, one after another, before downloading anything.
+For a chunked DOI / ID list (one page per leaf) that doubled the requests and
+their cost. Progress now counts leaves, each advancing in fractions as its
+pages arrive, with no extra requests.
+
+## Clearer API errors, and no pointless retries on an exhausted budget
+
+A 4xx error now includes OpenAlex's own explanation (e.g. which filter name is
+invalid) instead of only "HTTP 400 Bad Request". A 429 caused by an exhausted
+daily budget (`X-RateLimit-Remaining` at zero) fails immediately and says when
+the budget resets, instead of backing off for about 17 minutes before failing.
+`verbose = TRUE` no longer prints the API key as part of the URL.
+
+`pro_query()` no longer fetches the list of valid `select` fields when no
+`select` is given, saving a request per session.
+
 ## Better load balancing for parallel downloads
 
 `pro_request()` with a list of queries pre-split the leaves into one block per

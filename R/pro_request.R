@@ -12,12 +12,12 @@
 #' When starting the download, a file `00_in.progress` which is deleted upon completion.
 #'
 #' @param query_url The URL of the API query or a list of URLs returned from `pro_query()`.
-#' @param pages The number of pages to be downloaded. The default is set to
-#'   10000, which would be 2,000,000 works. It is recommended to not increase it
-#'   beyond 100000 due to server load and to use the snapshot instead. If `NULL`,
-#'   all pages will be downloaded. Default: 100000.
-#' @param output directory where the JSON files are saved. Default is a
-#'   temporary directory. Needs to be specified.
+#' @param pages The maximum number of pages (of 200 records) downloaded per
+#'   query; for a list, the limit applies to each leaf query. 100000 pages
+#'   are 20,000,000 records; for more, use the snapshot instead. If `NULL`,
+#'   all pages will be downloaded.
+#' @param output directory where the JSON files are saved. Required (the
+#'   default `NULL` stops with an error) unless `count_only = TRUE`.
 #' @param overwrite Logical. If `TRUE`, `output` will be deleted before
 #'   downloading. For a list `query_url`, the entire top-level `output`
 #'   directory is removed upfront. If `FALSE` (the default) and `output`
@@ -129,26 +129,13 @@ pro_request <- function(
       return(out)
     }
 
-    # Calculate total pages for progress bar
+    # Progress counts leaves; each leaf advances it by 1 in fractions per page,
+    # once its first page has told it how many pages there are. This avoids a
+    # count request per leaf up front, which doubled the requests (and cost)
+    # for chunked DOI / ID lists.
     if (progress) {
-      cli::cli_alert_info("Fetching query counts...")
-      counts <- vapply(
-        leaf_urls,
-        function(url) {
-          pro_count(url, api_key = api_key)$count
-        },
-        numeric(1)
-      )
-
-      per_page <- 200
-      max_pages_per_query <- if (is.null(pages)) Inf else pages
-      pages_per_query <- pmin(ceiling(counts / per_page), max_pages_per_query)
-      total_pages <- sum(pages_per_query)
-      cli::cli_alert_info("Total pages to download: {total_pages}")
-
+      cli::cli_alert_info("Downloading {length(leaf_queries)} queries")
       progressr::handlers("cli")
-    } else {
-      total_pages <- 1 # Dummy value when progress is disabled
     }
 
     # Run parallel downloads with progress
@@ -156,7 +143,7 @@ pro_request <- function(
     progressr::with_progress(
       {
         p <- if (progress) {
-          progressr::progressor(steps = total_pages, auto_finish = FALSE)
+          progressr::progressor(steps = length(leaf_queries), auto_finish = FALSE)
         } else {
           NULL
         }
@@ -185,6 +172,7 @@ pro_request <- function(
             if (isTRUE(resume) && !is.null(query_output) &&
                 dir.exists(query_output) &&
                 !file.exists(file.path(query_output, "00_in.progress"))) {
+              if (!is.null(p)) p(amount = 1)
               return(invisible(NULL))
             }
 
@@ -355,7 +343,7 @@ fetch_query_pages <- function(
         )
       )
     if (!is.null(progressor)) {
-      progressor()
+      progressor(amount = 1)
     }
     success <- TRUE
     return(output)
@@ -368,6 +356,15 @@ fetch_query_pages <- function(
     if (!is.null(pages)) {
       max_pages <- min(max_pages, pages)
     }
+  }
+
+  # Share of the parallel progressor (one unit per leaf) for each page
+  page_share <- if (is.na(max_pages) || max_pages < 1) 1 else 1 / max_pages
+  share_done <- 0
+  tick <- function() {
+    amount <- min(page_share, 1 - share_done)
+    share_done <<- share_done + amount
+    progressor(amount = amount)
   }
 
   # Start cli progress bar if requested (scalar mode only)
@@ -394,7 +391,7 @@ fetch_query_pages <- function(
 
   # Update progress for first page
   if (!is.null(progressor)) {
-    progressor()
+    tick()
   } else if (show_cli_progress && cli_progress_count < max_pages) {
     cli_progress_count <- cli_progress_count + 1L
     cli::cli_progress_update(force = TRUE)
@@ -413,7 +410,7 @@ fetch_query_pages <- function(
 
     if (verbose) {
       message("Downloading page ", page)
-      message("URL: ", req$url)
+      message("URL: ", sub("api_key=[^&]*", "api_key=<redacted>", req$url))
     }
 
     resp <- api_call(
@@ -440,11 +437,16 @@ fetch_query_pages <- function(
 
     # Update progress (only if we haven't reached the total yet)
     if (!is.null(progressor)) {
-      progressor()
+      tick()
     } else if (show_cli_progress && cli_progress_count < max_pages) {
       cli_progress_count <- cli_progress_count + 1L
       cli::cli_progress_update()
     }
+  }
+
+  # Fewer pages than estimated: complete this leaf's share
+  if (!is.null(progressor) && share_done < 1) {
+    progressor(amount = 1 - share_done)
   }
 
   # Only call done if progress bar wasn't auto-closed by reaching total

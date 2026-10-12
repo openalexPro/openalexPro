@@ -140,3 +140,25 @@ test_that("pro_request_jsonl_parquet with subfolders", {
 unlink(output_json, recursive = TRUE, force = TRUE)
 unlink(output_jsonl, recursive = TRUE, force = TRUE)
 unlink(output_parquet, recursive = TRUE, force = TRUE)
+
+test_that("a list of queries makes no extra count requests", {
+  calls <- 0L
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    httr2::response(
+      200,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw(
+        '{"meta":{"count":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}'
+      )
+    )
+  })
+  out <- file.path(withr::local_tempdir(), "json")
+  pro_request(
+    list(a = "https://api.openalex.org/works?filter=doi:1",
+         b = "https://api.openalex.org/works?filter=doi:2"),
+    output = out, progress = TRUE
+  )
+  expect_equal(calls, 2L)
+  expect_true(file.exists(file.path(out, "a", "results_page_1.json")))
+})

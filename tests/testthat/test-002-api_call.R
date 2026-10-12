@@ -48,3 +48,41 @@ test_that("api_call returns response object on success (200)", {
 #     expect_error(api_call(req), "OpenAlex API request failed \\[404\\]")
 #   })
 # })
+
+mock_json <- function(status, body, headers = list()) {
+  function(req) {
+    httr2::response(
+      status,
+      headers = c(list("content-type" = "application/json"), headers),
+      body = charToRaw(body)
+    )
+  }
+}
+
+test_that("api_call includes OpenAlex's own message in a 4xx error", {
+  httr2::local_mocked_responses(mock_json(
+    400,
+    '{"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid field."}'
+  ))
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "DOESNTEXIST is not a valid field"
+  )
+})
+
+test_that("an exhausted daily budget fails at once instead of retrying", {
+  calls <- 0L
+  mock <- mock_json(
+    429, '{"error":"Rate limit exceeded"}',
+    list("x-ratelimit-remaining" = "0", "x-ratelimit-reset" = "7200")
+  )
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    mock(req)
+  })
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "budget exhausted; it resets in 2.0 h"
+  )
+  expect_equal(calls, 1L)
+})
