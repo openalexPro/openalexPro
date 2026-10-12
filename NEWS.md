@@ -53,6 +53,12 @@ immediately and says when the budget resets, instead of backing off for about
 `pro_query()` no longer fetches the list of valid `select` fields when no
 `select` is given, saving a request per session.
 
+## `pro_query()` knows the current entities
+
+`entity` now also accepts `"sources"`, `"topics"` and `"locations"`. `"venues"`
+and `"concepts"` (replaced by sources and topics in OpenAlex) are kept for
+compatibility. The default is still `"works"`.
+
 ## Better load balancing for parallel downloads
 
 `pro_request()` with a list of queries pre-split the leaves into one block per

@@ -186,8 +186,11 @@
 #' If multiple more then 50 `doi` or openalex `id`s are provided, the request
 #' is automatically split into chunks of 50 and a named list of URLs is returned.
 #'
-#' @param entity Character; one of \code{"works"}, \code{"authors"}, \code{"venues"},
-#'   \code{"institutions"}, \code{"concepts"}, \code{"publishers"}, \code{"funders"}.
+#' @param entity Character; one of \code{"works"}, \code{"authors"},
+#'   \code{"institutions"}, \code{"publishers"}, \code{"funders"},
+#'   \code{"sources"}, \code{"topics"}, \code{"locations"}. \code{"venues"}
+#'   (now \code{"sources"}) and \code{"concepts"} (now \code{"topics"}) are
+#'   deprecated by OpenAlex and kept only for compatibility.
 #' @param id Optional ID or vector of IDs (e.g., \code{"W1775749144"}). If a single ID
 #'   is provided, fetches one entity directly. If multiple IDs are provided, they are
 #'   automatically moved into the \code{ids.openalex} filter.
@@ -266,7 +269,10 @@ pro_query <- function(
     "institutions",
     "concepts",
     "publishers",
-    "funders"
+    "funders",
+    "sources",
+    "topics",
+    "locations"
   ),
   id = NULL,
   doi = NULL,
@@ -287,7 +293,10 @@ pro_query <- function(
     "institutions",
     "concepts",
     "publishers",
-    "funders"
+    "funders",
+    "sources",
+    "topics",
+    "locations"
   )
   entity <- match.arg(tolower(entity), VALID_ENTITIES)
 
