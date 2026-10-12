@@ -172,6 +172,45 @@
   stop(msg, call. = FALSE)
 }
 
+# OQL / OQO ----------------------------------------------------------------
+
+#' Build a root-endpoint URL for an OQL or OQO query
+#'
+#' @param classic Named logical: which classic arguments the caller supplied.
+#' @keywords internal
+#' @noRd
+.oa_oql_url <- function(oql, oqo, select, options, endpoint, classic) {
+  if (!is.null(oql) && !is.null(oqo)) {
+    stop("Supply either `oql` or `oqo`, not both.", call. = FALSE)
+  }
+  if (any(classic)) {
+    stop(
+      "`", paste(names(classic)[classic], collapse = "`, `"), "` cannot be ",
+      "combined with `oql` / `oqo`: express it inside the query.",
+      call. = FALSE
+    )
+  }
+  if (!is.null(oql) && !(is.character(oql) && length(oql) == 1L && nzchar(oql))) {
+    stop("`oql` must be a single non-empty string.", call. = FALSE)
+  }
+  if (is.list(oqo)) {
+    oqo <- as.character(jsonlite::toJSON(oqo, auto_unbox = TRUE))
+  } else if (!is.null(oqo) && !(is.character(oqo) && length(oqo) == 1L)) {
+    stop("`oqo` must be a list or a single JSON string.", call. = FALSE)
+  }
+
+  q <- c(
+    list(
+      oql = oql,
+      oqo = oqo,
+      select = if (!.is_empty(select)) paste(select, collapse = ",")
+    ),
+    options
+  )
+  q <- Filter(Negate(is.null), q)
+  httr2::req_url_query(httr2::request(endpoint), !!!q)$url
+}
+
 # main builder ------------------------------------------------------------
 
 #' Build an OpenAlex request (httr2)
@@ -216,6 +255,11 @@
 #'   \code{list(per_page = 200, sort = "cited_by_count:desc", cursor = "*", sample = 100)}).
 #' @param endpoint Base API URL. Defaults to \code{"https://api.openalex.org"}.
 #' @param   chunk_limit Number of DOIS or ids per chunk if chunked. Default: 50
+#' @param oql Optional OQL (OpenAlex Query Language) query string, e.g.
+#'   \code{"works where year is (2020) and type is (article)"}. See section
+#'   \emph{OQL and OQO}.
+#' @param oqo Optional OQO (OpenAlex Query Object): a nested list, or a JSON
+#'   string. See section \emph{OQL and OQO}.
 #' @param ... Filters as named arguments. Values may be scalars or vectors (vectors
 #'   are collapsed with \code{"|"} to express OR).
 #'
@@ -236,6 +280,20 @@
 #' \code{search.semantic} does not use keyword syntax; pass a natural-language
 #' phrase or even a full abstract. It returns at most 50 results per call.
 #'
+#' @section OQL and OQO:
+#' OpenAlex's query language (\code{oql}) and its JSON form (\code{oqo})
+#' express queries the classic filter syntax cannot, such as nested
+#' \code{and} / \code{or} conditions. The entity, all conditions, grouping
+#' (\code{group by}), \code{sample} and \code{corpus} belong inside the query,
+#' so \code{entity}, \code{id}, \code{doi}, the search arguments,
+#' \code{group_by} and filters in \code{...} cannot be combined with it --
+#' OpenAlex would silently ignore them. \code{select} and \code{options}
+#' (e.g. \code{sort}) are passed alongside. The URL targets the API root
+#' (\code{https://api.openalex.org/?oql=...}) and works with
+#' \code{pro_request()}, \code{pro_count()} and \code{pro_fetch()} as usual.
+#' An invalid query fails at request time with OpenAlex's parse error.
+#' See \url{https://help.openalex.org/api/oql/}.
+#'
 #' @section Deprecated search filters:
 #' Filter arguments with a \code{.search} suffix (e.g.
 #' \code{title_and_abstract.search = "biodiversity"}) are deprecated by the
@@ -246,7 +304,7 @@
 #' @examples
 #' \dontrun{
 #'
-#' req <- oa_build_req(
+#' url <- pro_query(
 #'   entity = "works",
 #'   search = "biodiversity",
 #'   from_publication_date = "2020-01-01",
@@ -254,8 +312,17 @@
 #'   select = c("id","title","publication_year"),
 #'   options = list(per_page = 5)
 #' )
-#' # resp <- api_call(req)
-#' # httr2::resp_body_json(resp)
+#'
+#' # OQL: nested conditions the filter syntax cannot express
+#' url <- pro_query(
+#'   oql = "works where year >= (2020) and (title has (coral) or title has (reef))"
+#' )
+#'
+#' # OQO: the same kind of query as a nested list
+#' url <- pro_query(oqo = list(
+#'   get_rows = "works",
+#'   filter_rows = list(list(column_id = "publication_year", value = 2020))
+#' ))
 #' }
 #'
 #' @export
@@ -284,8 +351,23 @@ pro_query <- function(
   options = NULL,
   endpoint = "https://api.openalex.org",
   chunk_limit = 50L,
+  oql = NULL,
+  oqo = NULL,
   ...
 ) {
+  if (!is.null(oql) || !is.null(oqo)) {
+    return(.oa_oql_url(
+      oql = oql, oqo = oqo, select = select, options = options,
+      endpoint = endpoint,
+      classic = c(
+        entity = !missing(entity), id = !is.null(id), doi = !is.null(doi),
+        search = !is.null(search), search.exact = !is.null(search.exact),
+        search.semantic = !is.null(search.semantic),
+        group_by = !is.null(group_by), filters = ...length() > 0
+      )
+    ))
+  }
+
   VALID_ENTITIES <- c(
     "works",
     "authors",

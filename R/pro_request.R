@@ -294,12 +294,6 @@ fetch_query_pages <- function(
 
   output <- normalizePath(output)
 
-  if (grepl("group_by=", query_url, fixed = TRUE)) {
-    page_prefix <- "group_by_page_"
-  } else {
-    page_prefix <- "results_page_"
-  }
-
   # Base request with query and custom user agent
   query <- list(
     per_page = 200,
@@ -327,9 +321,16 @@ fetch_query_pages <- function(
   data <- resp |>
     httr2::resp_body_json()
 
+  # Decided from the response, not the URL: with OQL / OQO the grouping is
+  # inside the query. Grouped responses carry a numeric `meta$groups_count`,
+  # list responses `null`.
   single_record <- is.null(data$meta)
-  if (single_record) {
-    page_prefix <- "single_"
+  page_prefix <- if (single_record) {
+    "single_"
+  } else if (!is.null(data$meta$groups_count)) {
+    "group_by_page_"
+  } else {
+    "results_page_"
   }
 
   # SINGLE-RECORD CASE --------------------------------------------------------

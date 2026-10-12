@@ -236,3 +236,44 @@ testthat::test_that("non-.search filters do not emit a deprecation warning", {
     pro_query("works", from_publication_date = "2020-01-01")
   )
 })
+
+# OQL / OQO ---------------------------------------------------------------
+
+testthat::test_that("pro_query(oql) targets the API root with the query", {
+  url <- pro_query(
+    oql = "works where year is (2020)",
+    select = c("id", "doi"),
+    options = list(sort = "cited_by_count:desc")
+  )
+  parsed <- httr2::url_parse(url)
+  testthat::expect_equal(parsed$path, "/")
+  testthat::expect_equal(parsed$query$oql, "works where year is (2020)")
+  testthat::expect_equal(parsed$query$select, "id,doi")
+  testthat::expect_equal(parsed$query$sort, "cited_by_count:desc")
+})
+
+testthat::test_that("pro_query(oqo) serialises a list to JSON", {
+  url <- pro_query(oqo = list(
+    get_rows = "works",
+    filter_rows = list(list(column_id = "publication_year", value = 2020))
+  ))
+  testthat::expect_equal(
+    httr2::url_parse(url)$query$oqo,
+    '{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}]}'
+  )
+})
+
+testthat::test_that("pro_query rejects classic arguments next to oql", {
+  testthat::expect_error(
+    pro_query(oql = "works", publication_year = 2020),
+    "`filters` cannot be combined"
+  )
+  testthat::expect_error(
+    pro_query(entity = "authors", oql = "works", search = "x"),
+    "`entity`, `search` cannot be combined"
+  )
+  testthat::expect_error(
+    pro_query(oql = "works", oqo = list(get_rows = "works")),
+    "not both"
+  )
+})

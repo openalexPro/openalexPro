@@ -1,5 +1,28 @@
 # openalexPro 0.12.1
 
+## OQL and OQO queries
+
+`pro_query()` gains `oql` and `oqo` (both default `NULL`, behaviour unchanged)
+for OpenAlex's query language and its JSON form, which express what the
+classic filter syntax cannot, such as nested `and` / `or` conditions:
+
+```r
+pro_query(oql = "works where year >= (2020) and (title has (coral) or title has (reef))")
+pro_query(oqo = list(get_rows = "works",
+                     filter_rows = list(list(column_id = "publication_year", value = 2020))))
+```
+
+The URL targets the API root and runs through `pro_request()`, `pro_count()`
+and `pro_fetch()` unchanged. Entity, conditions, grouping, `sample` and
+`corpus` belong inside the query; combining it with `entity`, `id`, `doi`,
+search arguments, `group_by` or filters is an error, because OpenAlex would
+silently ignore them. `select` and `options` are passed alongside. An invalid
+query fails with OpenAlex's parse error and position.
+
+`pro_request()` now detects grouped results from the response
+(`meta$groups_count`) instead of looking for `group_by=` in the URL, so
+grouping inside an OQL / OQO query is saved and converted correctly.
+
 ## The startup banner pointed at the old r-universe
 
 `.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package

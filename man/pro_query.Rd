@@ -17,6 +17,8 @@ pro_query(
   options = NULL,
   endpoint = "https://api.openalex.org",
   chunk_limit = 50L,
+  oql = NULL,
+  oqo = NULL,
   ...
 )
 }
@@ -62,6 +64,13 @@ to 1 request per second and returns at most 50 results per query.}
 
 \item{chunk_limit}{Number of DOIS or ids per chunk if chunked. Default: 50}
 
+\item{oql}{Optional OQL (OpenAlex Query Language) query string, e.g.
+\code{"works where year is (2020) and type is (article)"}. See section
+\emph{OQL and OQO}.}
+
+\item{oqo}{Optional OQO (OpenAlex Query Object): a nested list, or a JSON
+string. See section \emph{OQL and OQO}.}
+
 \item{...}{Filters as named arguments. Values may be scalars or vectors (vectors
 are collapsed with \code{"|"} to express OR).}
 }
@@ -97,6 +106,22 @@ All three search parameters (\code{search}, \code{search.exact},
 phrase or even a full abstract. It returns at most 50 results per call.
 }
 
+\section{OQL and OQO}{
+
+OpenAlex's query language (\code{oql}) and its JSON form (\code{oqo})
+express queries the classic filter syntax cannot, such as nested
+\code{and} / \code{or} conditions. The entity, all conditions, grouping
+(\code{group by}), \code{sample} and \code{corpus} belong inside the query,
+so \code{entity}, \code{id}, \code{doi}, the search arguments,
+\code{group_by} and filters in \code{...} cannot be combined with it --
+OpenAlex would silently ignore them. \code{select} and \code{options}
+(e.g. \code{sort}) are passed alongside. The URL targets the API root
+(\code{https://api.openalex.org/?oql=...}) and works with
+\code{pro_request()}, \code{pro_count()} and \code{pro_fetch()} as usual.
+An invalid query fails at request time with OpenAlex's parse error.
+See \url{https://help.openalex.org/api/oql/}.
+}
+
 \section{Deprecated search filters}{
 
 Filter arguments with a \code{.search} suffix (e.g.
@@ -109,7 +134,7 @@ OpenAlex API. They still work but emit a warning. Use the \code{search},
 \examples{
 \dontrun{
 
-req <- oa_build_req(
+url <- pro_query(
   entity = "works",
   search = "biodiversity",
   from_publication_date = "2020-01-01",
@@ -117,8 +142,17 @@ req <- oa_build_req(
   select = c("id","title","publication_year"),
   options = list(per_page = 5)
 )
-# resp <- api_call(req)
-# httr2::resp_body_json(resp)
+
+# OQL: nested conditions the filter syntax cannot express
+url <- pro_query(
+  oql = "works where year >= (2020) and (title has (coral) or title has (reef))"
+)
+
+# OQO: the same kind of query as a nested list
+url <- pro_query(oqo = list(
+  get_rows = "works",
+  filter_rows = list(list(column_id = "publication_year", value = 2020))
+))
 }
 
 }
