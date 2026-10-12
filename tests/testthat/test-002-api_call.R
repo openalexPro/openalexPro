@@ -82,7 +82,24 @@ test_that("an exhausted daily budget fails at once instead of retrying", {
   })
   expect_error(
     api_call(httr2::request("https://api.openalex.org/works")),
-    "budget exhausted; it resets in 2.0 h"
+    "credits left today; it resets in 2.0 h"
+  )
+  expect_equal(calls, 1L)
+})
+
+test_that("a not_enough_credits refusal fails at once", {
+  calls <- 0L
+  mock <- mock_json(
+    429, '{"error":"not_enough_credits","message":"Query costs 10 credits."}',
+    list("x-ratelimit-remaining" = "5")
+  )
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    mock(req)
+  })
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "Query costs 10 credits"
   )
   expect_equal(calls, 1L)
 })

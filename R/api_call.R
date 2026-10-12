@@ -179,7 +179,7 @@ api_call <- function(
       as.numeric(httr2::resp_header(resp, "x-ratelimit-reset", NA))
     )
     msg <- c(msg, paste0(
-      "Daily OpenAlex budget exhausted",
+      "Not enough OpenAlex credits left today",
       if (!is.na(reset)) sprintf("; it resets in %.1f h (midnight UTC)", reset / 3600),
       "."
     ))
@@ -187,16 +187,22 @@ api_call <- function(
   msg
 }
 
-#' Is this a 429 caused by an exhausted daily budget?
+#' Is this a 429 caused by the daily budget?
 #'
-#' OpenAlex returns 429 both for > 100 requests/s and for an exhausted daily
-#' budget. Only the second leaves `X-RateLimit-Remaining` at zero.
+#' OpenAlex returns 429 both for > 100 requests/s and for the daily budget:
+#' either it is used up (`X-RateLimit-Remaining` at zero), or the query costs
+#' more than what is left (`"error": "not_enough_credits"`). Retrying helps
+#' only in the first case.
 #'
 #' @keywords internal
 #' @noRd
 .oa_budget_exhausted <- function(resp) {
+  if (httr2::resp_status(resp) != 429L) {
+    return(FALSE)
+  }
   remaining <- suppressWarnings(
     as.numeric(httr2::resp_header(resp, "x-ratelimit-remaining", NA))
   )
-  httr2::resp_status(resp) == 429L && isTRUE(remaining <= 0)
+  body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
+  isTRUE(remaining <= 0) || identical(body$error, "not_enough_credits")
 }

@@ -43,9 +43,11 @@ pages arrive, with no extra requests.
 ## Clearer API errors, and no pointless retries on an exhausted budget
 
 A 4xx error now includes OpenAlex's own explanation (e.g. which filter name is
-invalid) instead of only "HTTP 400 Bad Request". A 429 caused by an exhausted
-daily budget (`X-RateLimit-Remaining` at zero) fails immediately and says when
-the budget resets, instead of backing off for about 17 minutes before failing.
+invalid) instead of only "HTTP 400 Bad Request". A 429 caused by the daily
+budget -- used up (`X-RateLimit-Remaining` at zero), or a query refused as
+costing more than is left (`"error": "not_enough_credits"`) -- fails
+immediately and says when the budget resets, instead of backing off for about
+17 minutes before failing.
 `verbose = TRUE` no longer prints the API key as part of the URL.
 
 `pro_query()` no longer fetches the list of valid `select` fields when no
