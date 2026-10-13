@@ -23,6 +23,26 @@ query fails with OpenAlex's parse error and position.
 (`meta$groups_count`) instead of looking for `group_by=` in the URL, so
 grouping inside an OQL / OQO query is saved and converted correctly.
 
+## Filter and select validation per entity
+
+`pro_query()` checked filter names and `select` fields against the lists for
+**works**, whatever the entity, so valid entity-specific names were rejected
+before reaching OpenAlex -- e.g. `pro_query(entity = "institutions",
+country_code = "US")` or `select = "orcid"` for authors. Refreshing with
+`update = TRUE` did not help, as it fetched the works list again.
+
+`opt_filter_names()` and `opt_select_fields()` gain an `entity` argument
+(default `"works"`, so existing calls are unchanged) and cache one list per
+entity; `pro_query()` validates against the queried entity's lists. The lists
+come from OpenAlex's error message for an invalid name, which costs no
+credits. An entity without a list (the retired `"venues"`) skips validation
+and lets OpenAlex answer.
+
+Parsing that message also dropped the first name of every list (e.g. the
+`abstract.search` filter, and `id`, which was patched back in by hand) and
+left a trailing period on the last select field (`"created_date."`); both are
+fixed.
+
 ## Documentation brought up to date
 
 - **API key name:** the vignettes, `CLAUDE.md` and the message of

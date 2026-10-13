@@ -120,13 +120,13 @@ https://api.openalex.org/works?search=climate+change&select=ids,title,publicatio
 | `search.exact` | character | NULL | Unstemmed search; needed for wildcards and fuzzy terms |
 | `search.semantic` | character | NULL | Semantic (embedding) search, max 50 results |
 | `group_by` | character | NULL | Field to group by for faceted counts |
-| `select` | character vector | NULL | Fields to return (validated against `opt_select_fields()`) |
+| `select` | character vector | NULL | Fields to return (validated against `opt_select_fields(entity = entity)`) |
 | `options` | named list | NULL | Additional query parameters (per_page, sort, cursor, sample) |
 | `endpoint` | character | "https://api.openalex.org" | Base API URL |
 | `chunk_limit` | integer | 50 | Maximum items per chunk for chunkable filters |
 | `oql` | character | NULL | OQL query string (see [OQL and OQO](#oql-and-oqo)) |
 | `oqo` | list/character | NULL | OQO query object, as a list or JSON string |
-| `...` | named arguments | - | Filters (validated against `opt_filter_names()`) |
+| `...` | named arguments | - | Filters (validated against `opt_filter_names(entity = entity)`) |
 
 # Basic Usage
 
@@ -300,15 +300,18 @@ url
 
 ### Available Select Fields
 
-Use `opt_select_fields()` to see all available fields:
+Use `opt_select_fields()` to see all available fields. They differ per
+entity, so pass the entity you query:
 
 ```{r}
-opt_select_fields()
-# [1] "abstract_inverted_index" "authorships"
-# [3] "biblio"                  "cited_by_count"
-# [5] "concepts"                "corresponding_author_ids"
+opt_select_fields() # works
+# [1] "id"           "doi"          "title"        "display_name"
 # ...
+opt_select_fields(entity = "authors")
 ```
+
+Each entity's list is fetched once per R session and cached;
+`opt_select_fields(update = TRUE, entity = ...)` fetches it again.
 
 ## Single Entity Retrieval
 
@@ -531,7 +534,8 @@ pro_query(entity = "works", `topics.id` = c("T12072", "T10036"))
 | `cites` | Works that cite this ID | "W2741809807" |
 | `cited_by` | Works cited by this ID | "W2741809807" |
 
-Use `opt_filter_names()` to see all available filters.
+Use `opt_filter_names()` to see all available filters, and
+`opt_filter_names(entity = "institutions")` etc. for other entities.
 
 # Advanced Features
 
@@ -877,6 +881,7 @@ replace the deprecated concepts):
 
 ```{r}
 pro_query(entity = "topics", search = "machine learning")
+pro_query(entity = "topics", `field.id` = "17") # Computer Science
 ```
 
 ## Publishers
@@ -940,7 +945,10 @@ flowchart TD
 
 ## Filter Validation
 
-Filter names are validated against `opt_filter_names()`:
+Filter names are validated against the names OpenAlex accepts for the queried
+entity, `opt_filter_names(entity = entity)`. A filter that exists for one entity
+is not accepted for another (e.g. `country_code` is valid for institutions, not
+for works):
 
 ```{r}
 # This will error with suggestions
@@ -952,24 +960,24 @@ try(
 )
 # Error: Invalid filter name(s): publiction_year.
 # Did you mean: publiction_year → publication_year?
-# Valid filter names are defined in `opt_filter_names()`.
+# Valid filter name(s) are defined in `opt_filter_names(entity = "works")`.
 ```
 
 ## Select Field Validation
 
-Select fields are validated against `opt_select_fields()`:
+Select fields are validated against `opt_select_fields(entity = entity)`:
 
 ```{r}
 # This will error with suggestions
 try(
   pro_query(
     entity = "works",
-    select = c("id", "titel") # "id" should be "ids", "titel" should be "title"
+    select = c("ids", "titel") # "titel" should be "title"
   )
 )
-# Error: Invalid select field(s): id, titel.
-# Did you mean: id → ids, titel → title?
-# Valid select fields are defined in `opt_select_fields()`.
+# Error: Invalid select field(s): titel.
+# Did you mean: titel → title?
+# Valid select field(s) are defined in `opt_select_fields(entity = "works")`.
 ```
 
 ## Entity Validation
@@ -1293,21 +1301,22 @@ try(pro_query(entity = "paper"))
 ```{r}
 try(pro_query(entity = "works", invalid_filter = "value"))
 # Error: Invalid filter name(s): invalid_filter.
-# Valid filter names are defined in `opt_filter_names()`.
+# Valid filter name(s) are defined in `opt_filter_names(entity = "works")`.
 ```
 
-**Solution:** Check `opt_filter_names()` for valid filter names.
+**Solution:** Check `opt_filter_names(entity = ...)` for the valid filter names
+of the entity you query.
 
 ### Invalid Select Field
 
 ```{r}
-try(pro_query(entity = "works", select = c("id", "titel")))
-# Error: Invalid select field(s): id, titel.
-# Did you mean: id → ids, titel → title?
-# Valid select fields are defined in `opt_select_fields()`.
+try(pro_query(entity = "works", select = c("ids", "titel")))
+# Error: Invalid select field(s): titel.
+# Did you mean: titel → title?
+# Valid select field(s) are defined in `opt_select_fields(entity = "works")`.
 ```
 
-**Solution:** Use suggested corrections or check `opt_select_fields()`.
+**Solution:** Use suggested corrections or check `opt_select_fields(entity = ...)`.
 
 ### URL Too Long
 

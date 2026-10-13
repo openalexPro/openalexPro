@@ -277,3 +277,98 @@ testthat::test_that("pro_query rejects classic arguments next to oql", {
     "not both"
   )
 })
+
+# Entity-specific filter names and select fields --------------------------
+
+# OpenAlex lists the accepted names in the error message for an invalid one.
+mock_field_lists <- function(calls = new.env()) {
+  calls$n <- 0L
+  function(req) {
+    calls$n <- calls$n + 1L
+    path <- httr2::url_parse(req$url)$path
+    is_select <- grepl("select=", req$url, fixed = TRUE)
+    msg <- switch(
+      path,
+      "/institutions" = if (is_select) {
+        "DOESNTEXIST is not a valid select field. Valid fields for select are: id, ror, country_code, created_date."
+      } else {
+        "DOESNTEXIST is not a valid field. Valid fields are underscore or hyphenated versions of: cited_by_count, country_code, type"
+      },
+      "/works" = if (is_select) {
+        "DOESNTEXIST is not a valid select field. Valid fields for select are: id, doi, title."
+      } else {
+        "DOESNTEXIST is not a valid field. Valid fields are underscore or hyphenated versions of: abstract.search, publication_year, type"
+      },
+      NULL
+    )
+    if (is.null(msg)) {
+      return(httr2::response(404, headers = list("content-type" = "application/json"),
+                             body = charToRaw('{"error":"Not found"}')))
+    }
+    httr2::response(
+      400,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw(jsonlite::toJSON(
+        list(error = "Invalid query parameters error.", message = msg),
+        auto_unbox = TRUE
+      ))
+    )
+  }
+}
+
+testthat::test_that("filter names and select fields are fetched per entity, parsed completely", {
+  withr::local_options(openalexPro = NULL)
+  httr2::local_mocked_responses(mock_field_lists())
+  # the first name is kept and the trailing period removed
+  testthat::expect_equal(
+    opt_filter_names(entity = "institutions"),
+    c("cited_by_count", "country_code", "type")
+  )
+  testthat::expect_equal(
+    opt_select_fields(entity = "institutions"),
+    c("id", "ror", "country_code", "created_date")
+  )
+  # the default is still works
+  testthat::expect_equal(opt_filter_names(), c("abstract.search", "publication_year", "type"))
+})
+
+testthat::test_that("each entity's list is cached; update = TRUE refetches", {
+  withr::local_options(openalexPro = NULL)
+  calls <- new.env()
+  httr2::local_mocked_responses(mock_field_lists(calls))
+  opt_filter_names(entity = "institutions")
+  opt_filter_names(entity = "institutions")
+  testthat::expect_equal(calls$n, 1L)
+  opt_filter_names(entity = "works")
+  testthat::expect_equal(calls$n, 2L)
+  opt_filter_names(update = TRUE, entity = "institutions")
+  testthat::expect_equal(calls$n, 3L)
+})
+
+testthat::test_that("no list (e.g. retired venues) gives character(0), uncached", {
+  withr::local_options(openalexPro = NULL)
+  calls <- new.env()
+  httr2::local_mocked_responses(mock_field_lists(calls))
+  testthat::expect_equal(opt_filter_names(entity = "venues"), character(0))
+  opt_filter_names(entity = "venues")
+  testthat::expect_equal(calls$n, 2L)
+  # validation is skipped, so the query is built and OpenAlex will answer it
+  testthat::expect_no_error(pro_query(entity = "venues", country_code = "US"))
+})
+
+testthat::test_that("pro_query validates against the queried entity's names", {
+  withr::local_options(openalexPro = NULL)
+  httr2::local_mocked_responses(mock_field_lists())
+  testthat::expect_no_error(
+    pro_query(entity = "institutions", country_code = "US",
+              select = c("id", "country_code"))
+  )
+  testthat::expect_error(
+    pro_query(entity = "institutions", country_cod = "US"),
+    'opt_filter_names\\(entity = "institutions"\\)'
+  )
+  testthat::expect_error(
+    pro_query(entity = "works", country_code = "US"),
+    "Invalid filter name"
+  )
+})

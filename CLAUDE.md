@@ -43,7 +43,7 @@ because an exported stub masks the real function when both packages are attached
 
 Functions that query the live OpenAlex REST API:
 
-- `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking; or, with `oql` / `oqo`, a root-endpoint URL (`https://api.openalex.org/?oql=...`) for OpenAlex's query language. Classic arguments next to `oql`/`oqo` are an error (OpenAlex would silently ignore them). Filter and select validation use the `/works` lists only
+- `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking; or, with `oql` / `oqo`, a root-endpoint URL (`https://api.openalex.org/?oql=...`) for OpenAlex's query language. Classic arguments next to `oql`/`oqo` are an error (OpenAlex would silently ignore them). Filter and select names are validated against the lists for the queried entity
 - `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). `resume = TRUE` refetches only the leaf queries that did not complete, using the `00_in.progress` sentinel each leaf carries while it is being written (a single URL is one leaf). Leaves are dispatched one future each (`future.scheduling = Inf`); progress counts leaves, with no count request up front. Grouped results are detected from the response (`meta$groups_count`), not the URL
 - `pro_request_parquet()` — converts JSON files from `pro_request()` directly to Parquet (schema inference + per-file DuckDB COPY, parallel via `future`). `resume = TRUE` converts only what is missing; `on_error` controls what happens to files that fail (see *Failure handling* below)
 - `pro_fetch()` — all-in-one: query → paginate → convert to Parquet (project folder); `resume = TRUE` completes an interrupted download and conversion
@@ -69,7 +69,7 @@ OpenAlex's `message` (or OQL `validation$errors`) to the error. Tests use VCR ca
 
 - `id_block()` — converts an OpenAlex ID to its block number (`floor(numeric_id / 10000)`)
 - `infer_json_schema()` — per-file schema inference with two-level caching
-- `opt_select_fields()`, `opt_filter_names()` — helpers for building API queries
+- `opt_select_fields()`, `opt_filter_names()` — accepted select fields / filter names per `entity` (default `"works"`), parsed from OpenAlex's error message for an invalid name (free) and cached per entity for the session; `update = TRUE` refetches
 - `oa_schema()` — get or refresh the baseline entity schema used by `pro_request_parquet(schema = "auto")`
 - `.pro_con()` / `.pro_worker_memory()` / `.pro_temp_dir()` (internal, `R/utils_duckdb.R`) — the configured DuckDB connection factory and its budget helpers
 

@@ -106,12 +106,12 @@
 
 #' @keywords internal
 #' @noRd
-.validate_select <- function(select) {
+.validate_select <- function(select, entity = "works") {
   # Check `select` first: fetching the allowed fields costs a request.
   if (.is_empty(select)) {
     return(invisible(TRUE))
   }
-  allowed <- opt_select_fields()
+  allowed <- opt_select_fields(entity = entity)
   if (.is_empty(allowed)) {
     return(invisible(TRUE))
   }
@@ -125,14 +125,14 @@
     bad,
     allowed,
     "select field(s)",
-    "opt_select_fields()"
+    sprintf('opt_select_fields(entity = "%s")', entity)
   )
   stop(msg, call. = FALSE)
 }
 
 #' @keywords internal
 #' @noRd
-.validate_filter <- function(fl) {
+.validate_filter <- function(fl, entity = "works") {
   if (.is_empty(fl)) {
     return(invisible(TRUE))
   }
@@ -153,7 +153,7 @@
     ))
   }
 
-  allowed <- opt_filter_names()
+  allowed <- opt_filter_names(entity = entity)
   if (.is_empty(allowed)) {
     return(invisible(TRUE))
   }
@@ -167,7 +167,7 @@
     bad,
     allowed,
     "filter name(s)",
-    "opt_filter_names()"
+    sprintf('opt_filter_names(entity = "%s")', entity)
   )
   stop(msg, call. = FALSE)
 }
@@ -218,9 +218,9 @@
 #' Construct an \code{httr2} request for the OpenAlex API. All filters must be
 #' supplied as named \code{...} arguments (e.g., \code{from_publication_date = "2020-01-01"}).
 #'
-#' Filter names are validated via \code{.validate_filter()} using
-#' \code{opt_filter_names()}. \code{select} fields are validated via
-#' \code{.validate_select()} using \code{`opt_select_fields()`}.
+#' Filter names are validated against \code{opt_filter_names(entity = entity)}
+#' and \code{select} fields against \code{opt_select_fields(entity = entity)},
+#' i.e. against the names OpenAlex accepts for the queried entity.
 #'
 #' If multiple more then 50 `doi` or openalex `id`s are provided, the request
 #' is automatically split into chunks of 50 and a named list of URLs is returned.
@@ -409,8 +409,8 @@ pro_query <- function(
   }
 
   # validate filters and select fields
-  .validate_filter(filter)
-  .validate_select(select)
+  .validate_filter(filter, entity)
+  .validate_select(select, entity)
 
   # prepare chunking ------------------------------------------------------
   # Split filters with large value lists (e.g., DOIs, IDs) into multiple requests

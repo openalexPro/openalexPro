@@ -87,14 +87,18 @@ The query is defined using the function `openalexPro::pro_query()`. It follows t
 The supported filter names can be retrieved by running
 
 ```r
-opt_filter_names()
+opt_filter_names()                        # works (default)
+opt_filter_names(entity = "institutions") # names differ per entity
 ```
 
 and supported select fields by running
 
 ```r
 opt_select_fields()
+opt_select_fields(entity = "authors")
 ```
+
+`pro_query()` validates against the lists for the queried `entity`.
 
 This defines a basic query.
 

@@ -82,9 +82,9 @@ Construct an \code{httr2} request for the OpenAlex API. All filters must be
 supplied as named \code{...} arguments (e.g., \code{from_publication_date = "2020-01-01"}).
 }
 \details{
-Filter names are validated via \code{.validate_filter()} using
-\code{opt_filter_names()}. \code{select} fields are validated via
-\code{.validate_select()} using \code{`opt_select_fields()`}.
+Filter names are validated against \code{opt_filter_names(entity = entity)}
+and \code{select} fields against \code{opt_select_fields(entity = entity)},
+i.e. against the names OpenAlex accepts for the queried entity.
 
 If multiple more then 50 `doi` or openalex `id`s are provided, the request
 is automatically split into chunks of 50 and a named list of URLs is returned.
