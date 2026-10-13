@@ -11,6 +11,18 @@
 #'
 #' When starting the download, a file `00_in.progress` which is deleted upon completion.
 #'
+#' If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+#' the other queries still complete. At the end, one error names each failed
+#' query with OpenAlex's reason. The failed queries keep their
+#' `00_in.progress`, so `resume = TRUE` fetches only them again.
+#'
+#' Pages are fetched with cursor paging. A `per_page` in the query is kept;
+#' `page` and `cursor` are replaced, with a warning. A `sample` is fetched by
+#' page number, as OpenAlex ends cursor paging of a sample after the first
+#' page; if it spans several pages and has no `seed`, one is chosen and
+#' reported. Semantic search (`search.semantic`) is fetched as its single page
+#' of at most 50 results.
+#'
 #' @param query_url The URL of the API query or a list of URLs returned from `pro_query()`.
 #' @param pages The maximum number of pages (of 200 records) downloaded per
 #'   query; for a list, the limit applies to each leaf query. 100000 pages
