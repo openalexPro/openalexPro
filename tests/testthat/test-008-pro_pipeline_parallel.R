@@ -162,3 +162,46 @@ test_that("a list of queries makes no extra count requests", {
   expect_equal(calls, 2L)
   expect_true(file.exists(file.path(out, "a", "results_page_1.json")))
 })
+
+mock_leaves <- function(calls, fail = "doi:bad") {
+  function(req) {
+    calls$urls <- c(calls$urls, req$url)
+    if (!is.null(fail) && grepl(fail, utils::URLdecode(req$url), fixed = TRUE)) {
+      return(httr2::response(
+        404, headers = list("content-type" = "application/json"),
+        body = charToRaw('{"error":"Not found","message":"Work bad not found"}')
+      ))
+    }
+    httr2::response(
+      200, headers = list("content-type" = "application/json"),
+      body = charToRaw('{"meta":{"count":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}')
+    )
+  }
+}
+
+test_that("a failing query does not stop the others; resume refetches only it", {
+  calls <- new.env()
+  httr2::local_mocked_responses(mock_leaves(calls))
+  out <- file.path(withr::local_tempdir(), "json")
+  queries <- list(
+    good = "https://api.openalex.org/works?filter=doi:good",
+    bad = "https://api.openalex.org/works?filter=doi:bad"
+  )
+  err <- expect_error(
+    pro_request(queries, output = out, progress = FALSE),
+    "1 of 2 queries failed \\(1 completed\\)"
+  )
+  expect_match(conditionMessage(err), "bad: .*404")
+  expect_match(conditionMessage(err), "resume = TRUE")
+  expect_true(file.exists(file.path(out, "good", "results_page_1.json")))
+  expect_false(file.exists(file.path(out, "good", "00_in.progress")))
+  expect_true(file.exists(file.path(out, "bad", "00_in.progress")))
+
+  # the problem is fixed: resume fetches only the failed query
+  calls$urls <- NULL
+  httr2::local_mocked_responses(mock_leaves(calls, fail = NULL))
+  pro_request(queries, output = out, progress = FALSE, resume = TRUE)
+  expect_length(calls$urls, 1L)
+  expect_match(utils::URLdecode(calls$urls), "doi:bad", fixed = TRUE)
+  expect_true(file.exists(file.path(out, "bad", "results_page_1.json")))
+})

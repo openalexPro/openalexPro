@@ -137,10 +137,16 @@ pro_request_parquet <- function(
 
   output_files <- .prr_output_paths(disc$jsons, input_json, output)
 
-  if (!is.null(workers) && workers > 1L) {
-    old_plan <- future::plan(future::multisession, workers = workers)
-    on.exit(future::plan(old_plan), add = TRUE)
+  # `workers` alone decides the parallelism, because the memory budget and
+  # DuckDB threads below are sized from it. Leaving NULL / 1 to whatever plan
+  # the user set ran a parallel plan with a single worker's budget and all
+  # cores per process. The user's plan is restored on exit.
+  old_plan <- if (!is.null(workers) && workers > 1L) {
+    future::plan(future::multisession, workers = workers)
+  } else {
+    future::plan(future::sequential)
   }
+  on.exit(future::plan(old_plan), add = TRUE)
 
   if (progress) {
     cli::cli_alert_info("Converting {length(disc$jsons)} JSON file{?s} to Parquet")
@@ -301,12 +307,13 @@ pro_request_parquet <- function(
   ))]
   if (length(jsons) == 0) stop("No JSON files found in `input_json`!")
 
-  types <- unique(vapply(
+  file_types <- vapply(
     basename(jsons),
     function(b) strsplit(b, "_")[[1L]][1L],
     character(1L)
-  ))
-  if (length(types) > 1L) stop("Mixed entity types found in `input_json`!")
+  )
+  types <- unique(file_types)
+  if (length(types) > 1L) .prr_stop_mixed(jsons, file_types, input_json)
   entity_type <- if (identical(types, "group")) "group_by" else types
   array_field <- switch(
     entity_type, results = "results", group_by = "group_by", NULL
@@ -316,6 +323,40 @@ pro_request_parquet <- function(
     jsons       = jsons,
     array_field = array_field,
     has_subdirs = length(list.dirs(input_json, recursive = FALSE)) > 0
+  )
+}
+
+#' Stop because query results of different kinds cannot share one dataset
+#'
+#' Grouped results (counts per group), lists of records and single records
+#' have different structures. Names the query directories of each kind, so
+#' they can be converted separately.
+#'
+#' @keywords internal
+#' @noRd
+.prr_stop_mixed <- function(jsons, file_types, input_json) {
+  labels <- c(results = "lists of records", group = "grouped results (group_by)",
+              single = "single records")
+  dirs <- dirname(jsons)
+  lines <- vapply(unique(file_types), function(t) {
+    d <- unique(dirs[file_types == t])
+    rel <- substring(d, nchar(sub("/+$", "", input_json)) + 2L)
+    rel[!nzchar(rel)] <- "."
+    shown <- utils::head(rel, 5L)
+    paste0(
+      "  ", labels[[t]] %||% t, ": ", paste(shown, collapse = ", "),
+      if (length(rel) > length(shown)) paste0(", ... (", length(rel), " in total)") else ""
+    )
+  }, character(1))
+  stop(
+    "`input_json` mixes query results of different kinds, which cannot be ",
+    "combined in one Parquet dataset:\n",
+    paste(lines, collapse = "\n"),
+    "\nConvert each kind separately, e.g. ",
+    "`pro_request_parquet(input_json = file.path(input_json, \"<query>\"), ...)`, ",
+    "or download them with separate `pro_fetch()` calls. ",
+    "The JSON files are kept.",
+    call. = FALSE
   )
 }
 

@@ -23,6 +23,29 @@ query fails with OpenAlex's parse error and position.
 (`meta$groups_count`) instead of looking for `group_by=` in the URL, so
 grouping inside an OQL / OQO query is saved and converted correctly.
 
+## Download robustness: failing queries, paging parameters, semantic search
+
+- **A failing query no longer stops a list download.** With a list of
+  queries, an error in one (e.g. HTTP 404 for an ID that does not exist)
+  aborted the whole run. Now the other queries complete, and one error at the
+  end names each failed query with OpenAlex's reason. Failed queries keep
+  their `00_in.progress` marker, so `resume = TRUE` fetches only those again.
+- **Semantic search works with `pro_request()` / `pro_fetch()`.** The download
+  always added `cursor=*`, which OpenAlex rejects for semantic search
+  (HTTP 400). Semantic search is now fetched as its single page of at most 50
+  results.
+- **Paging parameters are no longer silently overwritten.** A `per_page` in
+  the query (1--200) is kept; `page` and `cursor` are replaced by cursor
+  paging with a warning (OpenAlex rejects `page` together with `cursor`).
+  Without them, paging is unchanged (`per_page = 200`, cursor).
+- **`pro_request_parquet(workers = NULL)` is sequential, as documented.** It
+  ran under whatever `future` plan the user had set, so a parallel plan
+  converted in parallel with a single worker's memory budget and all cores
+  per process. `workers` now alone decides; the user's plan is restored.
+- **Grouped and list results in one conversion** stopped with "Mixed entity
+  types found". The error now names the queries of each kind and how to
+  convert them separately; the JSON files are kept.
+
 ## Filter and select validation per entity
 
 `pro_query()` checked filter names and `select` fields against the lists for

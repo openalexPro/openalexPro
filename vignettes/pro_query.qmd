@@ -121,7 +121,7 @@ https://api.openalex.org/works?search=climate+change&select=ids,title,publicatio
 | `search.semantic` | character | NULL | Semantic (embedding) search, max 50 results |
 | `group_by` | character | NULL | Field to group by for faceted counts |
 | `select` | character vector | NULL | Fields to return (validated against `opt_select_fields(entity = entity)`) |
-| `options` | named list | NULL | Additional query parameters (per_page, sort, cursor, sample) |
+| `options` | named list | NULL | Additional query parameters (sort, sample, seed, per_page, corpus); paging is done by `pro_request()` |
 | `endpoint` | character | "https://api.openalex.org" | Base API URL |
 | `chunk_limit` | integer | 50 | Maximum items per chunk for chunkable filters |
 | `oql` | character | NULL | OQL query string (see [OQL and OQO](#oql-and-oqo)) |
@@ -602,10 +602,9 @@ url <- pro_query(
   entity = "works",
   search = "quantum computing",
   options = list(
-    per_page = 200, # Results per page (max 200)
     sort = "cited_by_count:desc", # Sort by citations descending
-    cursor = "*", # Enable cursor pagination
-    sample = 100 # Random sample of 100 works
+    sample = 100, # Random sample of 100 works
+    seed = 42 # Reproducible sample
   )
 )
 ```
@@ -614,11 +613,19 @@ url <- pro_query(
 
 | Option | Description | Values |
 |--------|-------------|--------|
-| `per_page` | Results per page | 1-200 (default 25) |
 | `sort` | Sort field and order | "field:asc" or "field:desc" |
-| `cursor` | Cursor pagination | "*" for first page |
-| `sample` | Random sample size | Integer |
+| `sample` | Random sample size | Integer, up to 200 with `pro_request()` (see note) |
 | `seed` | Random seed for sampling | Integer |
+| `per_page` | Results per page | 1-200; `pro_request()` uses 200 unless set |
+| `corpus` | Works corpus | "core" (default), "all", "expansion" |
+
+Paging is done by `pro_request()` with a cursor: `page` and `cursor` given in
+`options` are replaced, with a warning. Semantic search does not support
+cursor paging; `pro_request()` fetches its single page of at most 50 results.
+
+> **Note:** OpenAlex currently ends cursor paging of a `sample` after the
+> first page, so with `pro_request()` a sample is limited to `per_page`
+> (at most 200) records.
 
 ### Sorting Options
 

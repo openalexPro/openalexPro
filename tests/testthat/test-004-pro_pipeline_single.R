@@ -98,3 +98,54 @@ test_that("resume skips a completed single query without any request", {
   )
   expect_true(file.exists(file.path(out, "results_page_1.json")))
 })
+
+capture_urls <- function(calls) {
+  function(req) {
+    calls$urls <- c(calls$urls, req$url)
+    httr2::response(
+      200, headers = list("content-type" = "application/json"),
+      body = charToRaw('{"meta":{"count":1,"per_page":50,"next_cursor":null},"results":[{"id":"W1"}]}')
+    )
+  }
+}
+
+test_that("per_page in the query is kept; page and cursor are replaced with a warning", {
+  calls <- new.env()
+  httr2::local_mocked_responses(capture_urls(calls))
+  expect_warning(
+    pro_request(
+      "https://api.openalex.org/works?filter=type:article&per_page=50&page=2&cursor=abc",
+      output = file.path(withr::local_tempdir(), "json"), progress = FALSE
+    ),
+    "`page`, `cursor` in the query is replaced by cursor paging"
+  )
+  q <- httr2::url_parse(calls$urls[[1]])$query
+  expect_equal(q$per_page, "50")
+  expect_equal(q$cursor, "*")
+  expect_null(q$page)
+})
+
+test_that("default paging is unchanged: per_page 200 with a cursor, no warning", {
+  calls <- new.env()
+  httr2::local_mocked_responses(capture_urls(calls))
+  expect_no_warning(pro_request(
+    "https://api.openalex.org/works?filter=type:article",
+    output = file.path(withr::local_tempdir(), "json"), progress = FALSE
+  ))
+  q <- httr2::url_parse(calls$urls[[1]])$query
+  expect_equal(q$per_page, "200")
+  expect_equal(q$cursor, "*")
+})
+
+test_that("semantic search is fetched without cursor paging", {
+  calls <- new.env()
+  httr2::local_mocked_responses(capture_urls(calls))
+  pro_request(
+    pro_query(entity = "works", search.semantic = "coral reef bleaching"),
+    output = file.path(withr::local_tempdir(), "json"), progress = FALSE
+  )
+  q <- httr2::url_parse(calls$urls[[1]])$query
+  expect_null(q$cursor)
+  expect_equal(q$per_page, "50")
+  expect_length(calls$urls, 1L)
+})
