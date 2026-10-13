@@ -35,9 +35,9 @@ source("inst/scripts/record_cassettes.R")
 The package has one functional area: **OpenAlex API access**.
 
 Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the
-**`openalexSnapshot`** package. Calling `snapshot_to_parquet()`, `build_corpus_index()`,
-or `lookup_by_id()` in `openalexPro` raises an informative error pointing to
-`openalexSnapshot`.
+**`openalexSnapshot`** package. `snapshot_to_parquet()`, `build_corpus_index()` and
+`lookup_by_id()` are not in `openalexPro` at all -- not even as error-raising stubs,
+because an exported stub masks the real function when both packages are attached.
 
 ### OpenAlex API (cloud)
 

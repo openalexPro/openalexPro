@@ -45,6 +45,14 @@ grouping inside an OQL / OQO query is saved and converted correctly.
   and budgets; `inst/errorcodes.qmd` is rewritten (the "polite pool" no longer
   exists).
 - Links point to the current OpenAlex documentation at `help.openalex.org`.
+- The `pro_request` vignette documents `pro_request_parquet()` (signature,
+  schema inference, failure handling, `resume`) instead of the deprecated
+  JSONL functions, which are reduced to a pointer to their help pages.
+- The snapshot vignettes install `openalexSnapshot` from r-universe (it is
+  available there) and no longer claim that error-raising stubs exist.
+- `DESCRIPTION` has a real `Description`, and `jsonlite` moves from Suggests
+  to Imports: `pro_query(oqo = <list>)` and every JSON response parse need it,
+  and httr2 does not import it.
 - Six Mermaid diagrams in the `pro_query` and `pro_request` vignettes showed
   "Syntax error" (unquoted labels containing `()` or `"`); they render again.
 

@@ -31,7 +31,7 @@ This vignette provides a comprehensive guide to using `pro_request()` and relate
 
 - Basic usage patterns
 - Progress bars and parallel processing
-- The complete data pipeline (`pro_request()` → `pro_request_jsonl()` → `pro_request_jsonl_parquet()`)
+- The complete data pipeline (`pro_request()` → `pro_request_parquet()`)
 - Internal architecture and flow diagrams
 - Error handling and retry logic
 
@@ -169,7 +169,7 @@ pro_request(
 
 ## Nested List Queries
 
-`pro_request()` also accepts **nested lists** of URLs. Each nesting level is preserved as a subdirectory, and `pro_request_jsonl_parquet()` converts the directory depth to hive-style partition keys:
+`pro_request()` also accepts **nested lists** of URLs. Each nesting level is preserved as a subdirectory, and `pro_request_parquet()` converts the directory depth to hive-style partition keys:
 
 | Directory depth | Partition key |
 |----------------|--------------|
@@ -199,7 +199,7 @@ pro_request(
 #   data/json/institutions/usa/
 #   data/json/institutions/uk/
 
-# After jsonl + parquet conversion the dataset is hive-partitioned:
+# After parquet conversion the dataset is hive-partitioned:
 #   data/parquet/query=year_2022/
 #   data/parquet/query=year_2023/
 #   data/parquet/query=institutions/query_l2=usa/
@@ -529,26 +529,27 @@ dbGetQuery(
 
 ---
 
-# pro_request_jsonl()
-
-> **Deprecated.** `pro_request_jsonl()` and `pro_request_jsonl_parquet()` are
-> superseded by `pro_request_parquet()`, which converts the JSON files to
-> Parquet in one step without intermediate JSONL files. The following sections
-> document the older two-step pipeline for existing code.
+# pro_request_parquet()
 
 ## Purpose
 
-Converts the raw JSON files from OpenAlex into JSON Lines (JSONL) format, which is more efficient for processing with DuckDB. During conversion, it also:
+Converts the JSON files written by `pro_request()` into an Apache Parquet
+dataset using DuckDB, one Parquet file per JSON file, with no intermediate
+files. During conversion it:
 
-1. **Reconstructs abstracts** from the `abstract_inverted_index` field
-2. **Generates citation strings** (e.g., "Smith et al. (2023)")
-3. **Adds a `page` field** for tracking data provenance
-4. **Optionally adds custom columns**
+1. **Reconstructs abstracts** from `abstract_inverted_index` (column `abstract`)
+2. **Generates citation strings** such as "Smith et al. (2023)" (column `citation`)
+3. **Adds a `page` column** for tracking data provenance
+4. **Optionally adds constant columns** (`add_columns`)
+
+Abstracts and citations are only added for works, when the needed fields are
+present and `enrich = TRUE` (the default). `pro_fetch()` calls
+`pro_request()` and then `pro_request_parquet()`.
 
 ## Function Signature
 
 ```{r}
-pro_request_jsonl(
+pro_request_parquet(
   input_json = NULL,
   output = NULL,
   add_columns = list(),
@@ -556,7 +557,14 @@ pro_request_jsonl(
   verbose = TRUE,
   progress = TRUE,
   delete_input = FALSE,
-  workers = 1
+  sample_size = 1000,
+  workers = NULL,
+  enrich = TRUE,
+  schema = "auto",
+  resume = FALSE,
+  on_error = c("error", "warn", "ignore"),
+  memory_limit = NULL,
+  retry_memory_limit = NULL
 )
 ```
 
@@ -565,260 +573,125 @@ pro_request_jsonl(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `input_json` | character | required | Directory of JSON files from `pro_request()` |
-| `output` | character | required | Output directory for JSONL files |
-| `add_columns` | list | `list()` | Named list of additional columns to add |
-| `overwrite` | logical | FALSE | Overwrite existing output |
-| `verbose` | logical | TRUE | Show detailed messages |
-| `progress` | logical | TRUE | Show progress bar |
-| `delete_input` | logical | FALSE | Delete input JSON after conversion |
-| `workers` | integer | 1 | Number of parallel workers |
+| `output` | character | required | Output directory for the Parquet dataset |
+| `add_columns` | list | `list()` | Named character scalars added as constant columns |
+| `overwrite` | logical | FALSE | Overwrite an existing `output` |
+| `verbose` | logical | TRUE | Show progress messages |
+| `progress` | logical | TRUE | Show a progress bar |
+| `delete_input` | logical | FALSE | Delete `input_json` after a complete conversion (kept if any file failed) |
+| `sample_size` | integer | 1000 | Records per file sampled for schema inference (`-1` = all) |
+| `workers` | integer/NULL | NULL | Parallel workers; `NULL` or 1 runs sequentially |
+| `enrich` | logical | TRUE | Add `abstract` and `citation` columns for works |
+| `schema` | character/NULL | "auto" | Baseline schema for ambiguous column types (see below) |
+| `resume` | logical | FALSE | Keep `output` and convert only missing files |
+| `on_error` | character | "error" | What to do with files that still fail: `"error"`, `"warn"`, `"ignore"` |
+| `memory_limit` | character/NULL | NULL | DuckDB memory limit per worker; derived from RAM and `workers` |
+| `retry_memory_limit` | character/NULL | NULL | Memory limit for the sequential retry pass |
 
 ## Internal Flow
 
 ```{mermaid}
 flowchart TD
-    Start([pro_request_jsonl]) --> ValidateInputs[Validate inputs]
-    ValidateInputs --> CheckOverwrite{Output exists?}
-
-    CheckOverwrite -->|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite -->|Yes, overwrite=TRUE| DeleteOutput[Delete output dir]
-    CheckOverwrite -->|No| CreateOutput[Create output dir]
-
-    DeleteOutput --> CreateOutput
-    CreateOutput --> CreateProgress[Create 00_in.progress]
-    CreateProgress --> ListJSONs[List all JSON files<br/>recursively]
-
-    ListJSONs --> DetectType[Detect type:<br/>results, group_by, single]
-    DetectType --> SetupFutures[Setup parallel plan<br/>if workers > 1]
-
-    SetupFutures --> ProcessLoop[future_lapply over<br/>JSON files]
-
-    ProcessLoop --> ForEachJSON[For each JSON file]
-    ForEachJSON --> ExtractPage[Extract page number<br/>from filename]
-    ExtractPage --> CallJQ[jq_execute:<br/>transform JSON]
-    CallJQ --> CheckSize{Output > 5 bytes?}
-    CheckSize -->|No| DeleteEmpty[Delete empty file]
-    CheckSize -->|Yes| UpdateProgress[Update progress]
-    DeleteEmpty --> UpdateProgress
-    UpdateProgress --> MoreFiles{More files?}
-    MoreFiles -->|Yes| ForEachJSON
-    MoreFiles -->|No| Cleanup[Delete input if<br/>delete_input=TRUE]
-
-    Cleanup --> Success([Return output path])
+    Start([pro_request_parquet]) --> Prepare[Prepare output:<br/>overwrite / resume<br/>create 00_in.progress]
+    Prepare --> Discover[Find JSON files<br/>results / group_by / single]
+    Discover --> Infer[Infer schema from<br/>up to 20 sampled files]
+    Infer --> Baseline[Resolve ambiguous types<br/>with baseline schema]
+    Baseline --> Convert[Convert each file<br/>DuckDB COPY to .part<br/>rename on success]
+    Convert --> Failed{Any file<br/>failed?}
+    Failed -->|No| Done[Delete input if<br/>delete_input = TRUE<br/>remove 00_in.progress]
+    Failed -->|Yes, workers > 1| Retry[Retry failed files<br/>sequentially, full memory]
+    Failed -->|Yes, sequential| OnError
+    Retry --> Still{Still failing?}
+    Still -->|No| Done
+    Still -->|Yes| OnError[on_error:<br/>error / warn / ignore<br/>keep input and 00_in.progress]
+    Done --> Return([Return output path])
+    OnError --> Return
 
     style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style ProcessLoop fill:#cce5ff
-```
-
-## jq_execute() Transformation
-
-The `jq_execute()` function performs the actual JSON transformation using the `jqr` package:
-
-```{mermaid}
-flowchart TD
-    Start([jq_execute]) --> SelectRoot{Type?}
-
-    SelectRoot -->|results| ExtractResults[".results[] |"]
-    SelectRoot -->|group_by| ExtractGroups[".group_by[] |"]
-    SelectRoot -->|single| NoExtract[Direct processing]
-
-    ExtractResults --> Transform
-    ExtractGroups --> Transform
-    NoExtract --> Transform
-
-    Transform[Apply jq filter] --> AbstractCheck{Has abstract_<br/>inverted_index?}
-
-    AbstractCheck -->|Yes| ReconstructAbstract[Reconstruct abstract<br/>from inverted index]
-    AbstractCheck -->|No| SkipAbstract[Keep as-is]
-
-    ReconstructAbstract --> GenerateCitation
-    SkipAbstract --> GenerateCitation
-
-    GenerateCitation[Generate citation string<br/>based on author count]
-    GenerateCitation --> AddColumns{Custom columns?}
-
-    AddColumns -->|Yes| InsertColumns[Add custom columns]
-    AddColumns -->|No| SkipColumns[Skip]
-
-    InsertColumns --> DeleteInverted
-    SkipColumns --> DeleteInverted
-
-    DeleteInverted[Delete abstract_inverted_index]
-    DeleteInverted --> AddPage{Page specified?}
-
-    AddPage -->|Yes| InsertPage[Add page field]
-    AddPage -->|No| SkipPage[Skip]
-
-    InsertPage --> WriteJSONL[Write to JSONL file]
-    SkipPage --> WriteJSONL
-
-    WriteJSONL --> Done([Return output path])
-
-    style Start fill:#e1f5e1
-    style Done fill:#e1f5e1
-    style Transform fill:#cce5ff
-    style GenerateCitation fill:#fff3cd
-```
-
-### Abstract Reconstruction
-
-OpenAlex stores abstracts as inverted indices for efficiency. The transformation reconstructs readable text:
-
-**Input (inverted index):**
-```json
-{
-  "abstract_inverted_index": {
-    "Climate": [0],
-    "change": [1, 5],
-    "affects": [2],
-    "biodiversity": [3],
-    "and": [4]
-  }
-}
-```
-
-**Output (reconstructed):**
-```json
-{
-  "abstract": "Climate change affects biodiversity and change"
-}
-```
-
-### Citation String Generation
-
-The function generates citation strings based on author count:
-
-| Authors | Citation Format |
-|---------|----------------|
-| 1 | "Smith (2023)" |
-| 2 | "Smith & Jones (2023)" |
-| 3+ | "Smith et al. (2023)" |
-
----
-
-# pro_request_jsonl_parquet()
-
-## Purpose
-
-Converts JSONL files to Apache Parquet format for efficient analytical queries. Key features:
-
-1. **Automatic schema harmonization** across all files
-2. **Partitioning by page** for efficient filtering
-3. **SNAPPY compression** for good compression/speed balance
-4. **Streaming conversion** - no memory limit on total dataset size
-
-## Function Signature
-
-```{r}
-pro_request_jsonl_parquet(
-  input_jsonl = NULL,
-  output = NULL,
-  overwrite = FALSE,
-  verbose = TRUE,
-  progress = TRUE,
-  delete_input = FALSE,
-  sample_size = 1000
-)
-```
-
-## Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `input_jsonl` | character | required | Directory of JSONL files |
-| `output` | character | required | Output directory for Parquet dataset |
-| `overwrite` | logical | FALSE | Overwrite existing output |
-| `verbose` | logical | TRUE | Show detailed messages |
-| `progress` | logical | TRUE | Show progress bar |
-| `delete_input` | logical | FALSE | Delete input JSONL after conversion |
-| `sample_size` | integer | 1000 | Records to sample for schema inference |
-
-## Internal Flow
-
-```{mermaid}
-flowchart TD
-    Start([pro_request_jsonl_parquet]) --> ValidateInputs[Validate inputs]
-    ValidateInputs --> SetupDuckDB[Create in-memory<br/>DuckDB connection]
-    SetupDuckDB --> LoadJSON[INSTALL json;<br/>LOAD json;]
-
-    LoadJSON --> CheckOverwrite{Output exists?}
-    CheckOverwrite -->|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite -->|Yes, overwrite=TRUE| DeleteOutput[Delete output]
-    CheckOverwrite -->|No| CreateOutput[Create output dir]
-
-    DeleteOutput --> CreateOutput
-    CreateOutput --> CreateProgress[Create 00_in.progress]
-    CreateProgress --> ListJSONL[List all JSONL files]
-
-    ListJSONL --> InferSchema[Infer unified schema<br/>from all files]
-
-    InferSchema --> SchemaSQL["DESCRIBE SELECT *<br/>FROM read_json_auto<br/>(union_by_name=true)"]
-    SchemaSQL --> SchemaSuccess{Schema<br/>inferred?}
-
-    SchemaSuccess -->|Yes| BuildColumns[Build columns clause<br/>for explicit schema]
-    SchemaSuccess -->|No| FallbackAuto[Fall back to<br/>per-file auto-detect]
-
-    BuildColumns --> ConvertLoop
-    FallbackAuto --> ConvertLoop
-
-    ConvertLoop[For each JSONL file]
-    ConvertLoop --> CopySQL["COPY (...) TO output<br/>(FORMAT PARQUET,<br/>PARTITION_BY 'page',<br/>APPEND)"]
-    CopySQL --> UpdateProgress[Update progress]
-    UpdateProgress --> MoreFiles{More files?}
-    MoreFiles -->|Yes| ConvertLoop
-    MoreFiles -->|No| Cleanup
-
-    Cleanup[Delete input if requested]
-    Cleanup --> CloseDB[Close DuckDB connection]
-    CloseDB --> Success([Return output path])
-
-    style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style InferSchema fill:#cce5ff
-    style ConvertLoop fill:#fff3cd
+    style Return fill:#e1f5e1
+    style Retry fill:#fff3cd
+    style OnError fill:#f8d7da
 ```
 
 ## Schema Harmonization
 
 Different OpenAlex records can have different field structures. For example:
 
-- Some works have `primary_location` as a struct, others as a string
-- Some have nested arrays, others have null values
+- A field can be a struct in one record and `null` in all records of another page
+- Nested arrays can be empty in one file and populated in another
 
-The function samples records from all files to infer a unified schema that accommodates all variations:
+`pro_request_parquet()` therefore infers one schema from a sample of up to 20
+files (`sample_size` records per file) and converts every file with these
+column types, so all Parquet files can be read together:
 
 ```{mermaid}
 flowchart LR
-    subgraph Input[Input JSONL Files]
-        F1[File 1:<br/>location: struct]
-        F2[File 2:<br/>location: string]
-        F3[File 3:<br/>location: null]
+    subgraph Input[Input JSON Files]
+        F1["File 1:<br/>location: struct"]
+        F2["File 2:<br/>location: null"]
+        F3["File 3:<br/>location: struct"]
     end
 
     subgraph Schema[Schema Inference]
-        Sample[Sample from<br/>all files]
-        Union[union_by_name=true]
-        Describe[DESCRIBE query]
+        Sample[Sample up to<br/>20 files]
+        Describe[DuckDB<br/>DESCRIBE]
+        Baseline[Baseline schema<br/>for JSON-typed columns]
     end
 
     subgraph Output[Unified Schema]
-        Unified["location: struct<br/>(accommodates all)"]
+        Unified["location: struct<br/>(applied to all files)"]
     end
 
     F1 --> Sample
     F2 --> Sample
     F3 --> Sample
-    Sample --> Union
-    Union --> Describe
-    Describe --> Unified
+    Sample --> Describe
+    Describe --> Baseline
+    Baseline --> Unified
 
     style Input fill:#f8d7da
     style Schema fill:#cce5ff
     style Output fill:#e1f5e1
 ```
+
+When DuckDB can only infer the generic `JSON` type for a column (for example
+because it is `null` in every sampled record), the `schema` argument supplies
+the type:
+
+- `"auto"` (default): detect the entity from the columns and use the matching
+  baseline schema from the user cache (`oa_schema(update = TRUE)`) or the
+  schemas bundled with the package
+- `"none"` or `NULL`: use DuckDB's inference only
+- a CSV file (columns `col_name`, `col_type`) or a directory of
+  `<entity>.csv` files
+
+## Failure Handling and Resume
+
+Each file is converted on its own, so one problematic page does not stop the
+others:
+
+- Every file is written to a `.part` sidecar and renamed only on success, so a
+  Parquet file that exists is always complete.
+- With `workers > 1`, files that fail (typically from memory pressure on
+  large, deeply nested pages) are retried once, sequentially and with the
+  whole memory budget.
+- Files that still fail are handled according to `on_error`: `"error"`
+  (default) stops and names them, `"warn"` warns and returns, `"ignore"` is
+  silent. In every case the JSON input is kept and `00_in.progress` stays in
+  `output`.
+- `resume = TRUE` keeps an existing `output` and converts only the files that
+  are missing:
+
+```{r}
+pro_request_parquet(
+  input_json = "data/json",
+  output = "data/parquet",
+  resume = TRUE
+)
+```
+
+With `workers > 1`, each worker gets its own DuckDB connection with a share of
+the memory budget, one thread and a private temporary directory.
 
 ## Output Structure
 
@@ -858,6 +731,15 @@ data/parquet/
 ```
 
 The hive partition columns (`query`, `query_l2`, …) become regular columns when you open the dataset with `arrow::open_dataset()`, enabling efficient predicate pushdown.
+
+---
+
+## Deprecated: the JSONL Pipeline
+
+`pro_request_jsonl()` and `pro_request_jsonl_parquet()` converted the JSON
+files in two steps via intermediate JSONL files. They still work but are
+deprecated; `pro_request_parquet()` replaces both. See their help pages
+(`?pro_request_jsonl`, `?pro_request_jsonl_parquet`) for existing code.
 
 ---
 
@@ -956,36 +838,34 @@ pro_request(
 Use `delete_input = TRUE` to save disk space:
 
 ```{r}
-# Convert and delete JSON
-pro_request_jsonl(
+# Convert and delete JSON (kept if any file failed to convert)
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
-  delete_input = TRUE
-)
-
-# Convert and delete JSONL
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
   output = "data/parquet",
   delete_input = TRUE
 )
 ```
+
+`pro_fetch()` deletes the JSON files by default (`delete_input = TRUE`).
 
 ## 5. Use Parallel Processing Wisely
 
 More workers isn't always better:
 
 ```{r}
-# Good for many small chunks
-pro_request(urls, output = "data", workers = 4)
+# Downloads: limited by the API, a few workers for a list of queries
+pro_request(urls, output = "data/json", workers = 4)
 
-# For JSONL conversion (CPU-bound)
-pro_request_jsonl(input, output, workers = parallel::detectCores() - 1)
+# Conversion: CPU and memory bound; each worker gets a share of the memory
+pro_request_parquet("data/json", "data/parquet", workers = parallel::detectCores() - 1)
 ```
 
 # See Also
 
 - `pro_query()` - Build OpenAlex API query URLs
+- `pro_request_parquet()` - Convert the JSON results to a Parquet dataset
+- `pro_fetch()` - Download and convert in one step
+- `read_corpus()` - Open the Parquet dataset
 - `pro_count()` - Get result counts without downloading
 - `pro_validate_credentials()` - Validate API credentials (optional helper)
 - `pro_rate_limit_status()` - Check current rate limit usage and remaining budget

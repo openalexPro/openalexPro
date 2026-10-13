@@ -51,7 +51,8 @@
 #'
 #' @importFrom utils read.csv write.csv
 #'
-#' @seealso [snapshot_to_parquet()] which uses this function internally.
+#' @seealso [pro_request_jsonl_parquet()] (deprecated), which uses this function
+#'   internally.
 #'
 #' @examples
 #' \dontrun{
