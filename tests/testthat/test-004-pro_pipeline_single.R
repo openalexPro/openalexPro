@@ -117,7 +117,7 @@ test_that("per_page in the query is kept; page and cursor are replaced with a wa
       "https://api.openalex.org/works?filter=type:article&per_page=50&page=2&cursor=abc",
       output = file.path(withr::local_tempdir(), "json"), progress = FALSE
     ),
-    "`page`, `cursor` in the query is replaced by cursor paging"
+    "`page`, `cursor` in the query is replaced"
   )
   q <- httr2::url_parse(calls$urls[[1]])$query
   expect_equal(q$per_page, "50")
@@ -148,4 +148,65 @@ test_that("semantic search is fetched without cursor paging", {
   expect_null(q$cursor)
   expect_equal(q$per_page, "50")
   expect_length(calls$urls, 1L)
+})
+
+# A sample of `n` records, served by page number (OpenAlex ends cursor paging
+# of a sample after the first page).
+mock_sample <- function(calls, n) {
+  function(req) {
+    calls$urls <- c(calls$urls, req$url)
+    q <- httr2::url_parse(req$url)$query
+    pp <- as.integer(q$per_page)
+    pg <- as.integer(q$page %||% 1L)
+    k <- max(0L, min(pp, n - (pg - 1L) * pp))
+    ids <- sprintf('{"id":"W%d"}', (pg - 1L) * pp + seq_len(k))
+    httr2::response(
+      200, headers = list("content-type" = "application/json"),
+      body = charToRaw(sprintf(
+        '{"meta":{"count":%d,"per_page":%d,"next_cursor":null},"results":[%s]}',
+        n, pp, paste(ids, collapse = ",")
+      ))
+    )
+  }
+}
+
+test_that("a sample larger than one page is paged by page number with a seed", {
+  calls <- new.env()
+  httr2::local_mocked_responses(mock_sample(calls, 450L))
+  out <- file.path(withr::local_tempdir(), "json")
+  expect_message(
+    pro_request(
+      "https://api.openalex.org/works?filter=type:article&sample=450",
+      output = out, progress = FALSE
+    ),
+    "using seed = [0-9]+"
+  )
+  qs <- lapply(calls$urls, function(u) httr2::url_parse(u)$query)
+  expect_equal(vapply(qs, `[[`, "", "page"), c("1", "2", "3"))
+  expect_true(all(vapply(qs, function(q) is.null(q$cursor), logical(1))))
+  seeds <- unique(vapply(qs, `[[`, "", "seed"))
+  expect_length(seeds, 1L)
+  expect_equal(
+    sort(list.files(out, "^results_page_")),
+    paste0("results_page_", 1:3, ".json")
+  )
+})
+
+test_that("a given seed is kept, and a one-page sample needs none", {
+  calls <- new.env()
+  httr2::local_mocked_responses(mock_sample(calls, 450L))
+  expect_no_message(pro_request(
+    "https://api.openalex.org/works?filter=type:article&sample=450&seed=7",
+    output = file.path(withr::local_tempdir(), "json"), progress = FALSE
+  ))
+  expect_true(all(vapply(calls$urls, function(u) httr2::url_parse(u)$query$seed == "7", logical(1))))
+
+  calls$urls <- NULL
+  httr2::local_mocked_responses(mock_sample(calls, 100L))
+  expect_no_message(pro_request(
+    "https://api.openalex.org/works?filter=type:article&sample=100",
+    output = file.path(withr::local_tempdir(), "json"), progress = FALSE
+  ))
+  expect_length(calls$urls, 1L)
+  expect_null(httr2::url_parse(calls$urls[[1]])$query$seed)
 })

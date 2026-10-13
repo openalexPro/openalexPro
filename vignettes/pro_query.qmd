@@ -614,18 +614,28 @@ url <- pro_query(
 | Option | Description | Values |
 |--------|-------------|--------|
 | `sort` | Sort field and order | "field:asc" or "field:desc" |
-| `sample` | Random sample size | Integer, up to 200 with `pro_request()` (see note) |
+| `sample` | Random sample size | Integer, up to 10,000 |
 | `seed` | Random seed for sampling | Integer |
 | `per_page` | Results per page | 1-200; `pro_request()` uses 200 unless set |
 | `corpus` | Works corpus | "core" (default), "all", "expansion" |
 
-Paging is done by `pro_request()` with a cursor: `page` and `cursor` given in
-`options` are replaced, with a warning. Semantic search does not support
-cursor paging; `pro_request()` fetches its single page of at most 50 results.
+Paging is done by `pro_request()`: `page` and `cursor` given in `options`
+are replaced, with a warning. Normally it pages with a cursor. Two exceptions,
+because OpenAlex does not support cursor paging for them:
 
-> **Note:** OpenAlex currently ends cursor paging of a `sample` after the
-> first page, so with `pro_request()` a sample is limited to `per_page`
-> (at most 200) records.
+- **Semantic search** is fetched as its single page of at most 50 results.
+- **A `sample`** is fetched page by page (up to OpenAlex's maximum of 10,000
+  records). Paging through a sample needs a `seed`; if the sample spans more
+  than one page and no `seed` is given, `pro_request()` picks one and reports
+  it in a message, so the same sample can be fetched again:
+
+```{r}
+url <- pro_query(entity = "works", publication_year = 2020,
+                 options = list(sample = 1000))
+pro_request(url, output = "data/sample")
+# `sample` spans several pages, which needs a `seed`: using seed = 877714475.
+# Add it to the query to reproduce this sample.
+```
 
 ### Sorting Options
 

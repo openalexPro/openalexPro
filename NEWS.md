@@ -42,6 +42,13 @@ grouping inside an OQL / OQO query is saved and converted correctly.
   ran under whatever `future` plan the user had set, so a parallel plan
   converted in parallel with a single worker's memory budget and all cores
   per process. `workers` now alone decides; the user's plan is restored.
+- **Samples larger than one page are downloaded completely.** OpenAlex ends
+  cursor paging of a `sample` after the first page, so
+  `options = list(sample = 1000)` silently gave only 200 records. A sample
+  is now paged by page number, up to OpenAlex's maximum of 10,000. Paging a
+  sample needs a `seed`; if none is given, one is chosen and reported in a
+  message so the same sample can be fetched again. Samples that fit in one
+  page are unchanged.
 - **Grouped and list results in one conversion** stopped with "Mixed entity
   types found". The error now names the queries of each kind and how to
   convert them separately; the JSON files are kept.

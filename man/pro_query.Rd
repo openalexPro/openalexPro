@@ -59,9 +59,11 @@ to 1 request per second and returns at most 50 results per query.}
 
 \item{options}{Optional named list of additional query parameters (e.g.,
 \code{list(sort = "cited_by_count:desc", sample = 100, seed = 42)}).
-\code{pro_request()} pages with a cursor, so \code{page} and
+\code{pro_request()} does the paging, so \code{page} and
 \code{cursor} given here are replaced (with a warning); \code{per_page}
-is kept (1--200, default 200).}
+is kept (1--200, default 200). A \code{sample} (up to 10,000) is paged by
+page number and needs a \code{seed} when it spans several pages;
+\code{pro_request()} picks and reports one if none is given.}
 
 \item{endpoint}{Base API URL. Defaults to \code{"https://api.openalex.org"}.}
 

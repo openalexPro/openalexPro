@@ -312,23 +312,42 @@ fetch_query_pages <- function(
   output <- normalizePath(output)
 
   # Base request with query and custom user agent. A `per_page` in the query
-  # is kept. Cursor paging replaces `page` / `cursor` (OpenAlex rejects `page`
-  # together with `cursor`). Semantic search rejects cursor paging altogether
-  # and returns at most 50 results: a single page.
+  # is kept; `page` / `cursor` are replaced by our own paging (OpenAlex
+  # rejects `page` together with `cursor`). Three paging modes:
+  # - semantic search rejects cursor paging and returns at most 50 results:
+  #   a single page;
+  # - a `sample` ends cursor paging after the first page, so it is paged by
+  #   page number (up to OpenAlex's maximum sample of 10,000), which needs a
+  #   `seed` once it spans several pages;
+  # - everything else uses cursor paging.
   user_q <- httr2::url_parse(query_url)$query
   semantic <- "search.semantic" %in% names(user_q)
+  sampled <- !semantic && !is.null(user_q$sample)
+  per_page <- as.integer(user_q$per_page %||% if (semantic) 50L else 200L)
   replaced <- intersect(c("page", "cursor"), names(user_q))
   if (!semantic && length(replaced) > 0L) {
     warning(
       "`", paste(replaced, collapse = "`, `"), "` in the query ",
-      "is replaced by cursor paging.",
+      "is replaced: `pro_request()` does the paging.",
       call. = FALSE
     )
   }
   query <- if (semantic) {
-    list(per_page = user_q$per_page %||% 50)
+    list(per_page = per_page)
+  } else if (sampled) {
+    list(per_page = per_page, page = 1L, cursor = NULL)
   } else {
-    list(per_page = user_q$per_page %||% 200, page = NULL, cursor = "*")
+    list(per_page = per_page, page = NULL, cursor = "*")
+  }
+  if (sampled && is.null(user_q$seed) &&
+      isTRUE(as.numeric(user_q$sample) > per_page)) {
+    # Without a seed, OpenAlex rejects page 2 of a sample. Not drawn from R's
+    # RNG, so the caller's random state is left alone.
+    query$seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
+    message(
+      "`sample` spans several pages, which needs a `seed`: using seed = ",
+      query$seed, ". Add it to the query to reproduce this sample."
+    )
   }
   if (!is.null(api_key)) {
     query$api_key <- api_key
@@ -429,16 +448,21 @@ fetch_query_pages <- function(
     cli::cli_progress_update(force = TRUE)
   }
 
-  # Continue with remaining pages if needed
-  while (!is.null(data$meta$next_cursor)) {
+  # Continue with remaining pages if needed. For a sample, meta$count is the
+  # sample size.
+  sample_pages <- if (sampled) ceiling(data$meta$count / per_page) else NA
+  while (if (sampled) page < sample_pages else !is.null(data$meta$next_cursor)) {
     page <- page + 1L
 
     if (!is.null(pages) && page > pages) {
       break
     }
 
-    req <- req |>
-      httr2::req_url_query(cursor = data$meta$next_cursor)
+    req <- if (sampled) {
+      httr2::req_url_query(req, page = page)
+    } else {
+      httr2::req_url_query(req, cursor = data$meta$next_cursor)
+    }
 
     if (verbose) {
       message("Downloading page ", page)
