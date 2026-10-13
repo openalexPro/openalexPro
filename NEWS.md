@@ -1,5 +1,81 @@
 # openalexPro 0.12.1
 
+## OQL and OQO queries
+
+`pro_query()` gains `oql` and `oqo` (both default `NULL`, behaviour unchanged)
+for OpenAlex's query language and its JSON form, which express what the
+classic filter syntax cannot, such as nested `and` / `or` conditions:
+
+```r
+pro_query(oql = "works where year >= (2020) and (title has (coral) or title has (reef))")
+pro_query(oqo = list(get_rows = "works",
+                     filter_rows = list(list(column_id = "publication_year", value = 2020))))
+```
+
+The URL targets the API root and runs through `pro_request()`, `pro_count()`
+and `pro_fetch()` unchanged. Entity, conditions, grouping, `sample` and
+`corpus` belong inside the query; combining it with `entity`, `id`, `doi`,
+search arguments, `group_by` or filters is an error, because OpenAlex would
+silently ignore them. `select` and `options` are passed alongside. An invalid
+query fails with OpenAlex's parse error and position.
+
+`pro_request()` now detects grouped results from the response
+(`meta$groups_count`) instead of looking for `group_by=` in the URL, so
+grouping inside an OQL / OQO query is saved and converted correctly.
+
+## Filter and select validation per entity
+
+`pro_query()` checked filter names and `select` fields against the lists for
+**works**, whatever the entity, so valid entity-specific names were rejected
+before reaching OpenAlex -- e.g. `pro_query(entity = "institutions",
+country_code = "US")` or `select = "orcid"` for authors. Refreshing with
+`update = TRUE` did not help, as it fetched the works list again.
+
+`opt_filter_names()` and `opt_select_fields()` gain an `entity` argument
+(default `"works"`, so existing calls are unchanged) and cache one list per
+entity; `pro_query()` validates against the queried entity's lists. The lists
+come from OpenAlex's error message for an invalid name, which costs no
+credits. An entity without a list (the retired `"venues"`) skips validation
+and lets OpenAlex answer.
+
+Parsing that message also dropped the first name of every list (e.g. the
+`abstract.search` filter, and `id`, which was patched back in by hand) and
+left a trailing period on the last select field (`"created_date."`); both are
+fixed.
+
+## Documentation brought up to date
+
+- **API key name:** the vignettes, `CLAUDE.md` and the message of
+  `pro_rate_limit_status()` told users to set `openalexPro.apikey`, which
+  `pro_api_key()` never reads -- a key set that way was silently ignored. The
+  correct name is the environment variable `openalexPro.api_key` (or the option
+  `openalexPro$api_key`), as the README already said.
+- **Search syntax:** wildcards (`microbio*`) and fuzzy terms work only with
+  `search.exact`; the stemmed `search` rejects wildcards with HTTP 400. All
+  three search types cost $0.001 per call (the vignette said $0.0001), and
+  semantic search does not require an API key.
+- **Entities:** `sources`, `topics` and `locations` replace `venues` and
+  `concepts` in the examples; `topics.id` replaces `concepts.id`.
+- **Corpus:** the deprecated `include_xpac` / `is_xpac` controls are replaced
+  by the `corpus` parameter (`"core"`, `"all"`, `"expansion"`); combining them
+  is an error at OpenAlex.
+- **Pipeline:** README, vignettes and diagrams describe `pro_request_parquet()`
+  instead of the deprecated JSONL pipeline, and `pro_fetch()` no longer appears
+  to write JSONL files. New sections cover OQL / OQO, `resume`, error handling
+  and budgets; `inst/errorcodes.qmd` is rewritten (the "polite pool" no longer
+  exists).
+- Links point to the current OpenAlex documentation at `help.openalex.org`.
+- The `pro_request` vignette documents `pro_request_parquet()` (signature,
+  schema inference, failure handling, `resume`) instead of the deprecated
+  JSONL functions, which are reduced to a pointer to their help pages.
+- The snapshot vignettes install `openalexSnapshot` from r-universe (it is
+  available there) and no longer claim that error-raising stubs exist.
+- `DESCRIPTION` has a real `Description`, and `jsonlite` moves from Suggests
+  to Imports: `pro_query(oqo = <list>)` and every JSON response parse need it,
+  and httr2 does not import it.
+- Six Mermaid diagrams in the `pro_query` and `pro_request` vignettes showed
+  "Syntax error" (unquoted labels containing `()` or `"`); they render again.
+
 ## The startup banner pointed at the old r-universe
 
 `.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package

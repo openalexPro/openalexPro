@@ -1,7 +1,7 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/works/W1775749144?select=DOESNTEXIST
+    uri: https://api.openalex.org/works?select=DOESNTEXIST
   response:
     status: 400
     headers:
@@ -38,7 +38,7 @@ http_interactions:
   recorded_at: 2026-05-22 12:24:11
 - request:
     method: GET
-    uri: https://api.openalex.org/works/W1775749144?select=DOESNTEXIST&api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/works?select=DOESNTEXIST&api_key=%3Capi-key%3E
   response:
     status: 400
     headers:

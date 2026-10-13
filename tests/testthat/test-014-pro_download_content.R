@@ -139,7 +139,7 @@ testthat::test_that("pro_download_content works without api_key and omits api_ke
   captured_url <- NULL
   fake_pdf <- as.raw(c(0x25, 0x50, 0x44, 0x46))
 
-  withr::with_envvar(c(openalexPro.apikey = ""), {
+  withr::with_envvar(c(openalexPro.api_key = ""), {
     httr2::with_mocked_responses(
       function(req) {
         captured_url <<- req$url

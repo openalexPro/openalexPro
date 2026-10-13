@@ -19,7 +19,7 @@ devtools::check()         # Full R CMD CHECK
 
 ```r
 Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
-options(openalexPro.apikey = "<your-key>")
+Sys.setenv(openalexPro.api_key = "<your-key>")
 devtools::test(filter = "900")
 ```
 
@@ -35,25 +35,28 @@ source("inst/scripts/record_cassettes.R")
 The package has one functional area: **OpenAlex API access**.
 
 Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the
-**`openalexSnapshot`** package. Calling `snapshot_to_parquet()`, `build_corpus_index()`,
-or `lookup_by_id()` in `openalexPro` raises an informative error pointing to
-`openalexSnapshot`.
+**`openalexSnapshot`** package. `snapshot_to_parquet()`, `build_corpus_index()` and
+`lookup_by_id()` are not in `openalexPro` at all -- not even as error-raising stubs,
+because an exported stub masks the real function when both packages are attached.
 
 ### OpenAlex API (cloud)
 
 Functions that query the live OpenAlex REST API:
 
-- `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking
-- `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). `resume = TRUE` refetches only the leaf queries that did not complete, using the `00_in.progress` sentinel each leaf carries while it is being written
+- `pro_query()` — builds query URLs with filters, search, entity selection, ID chunking; or, with `oql` / `oqo`, a root-endpoint URL (`https://api.openalex.org/?oql=...`) for OpenAlex's query language. Classic arguments next to `oql`/`oqo` are an error (OpenAlex would silently ignore them). Filter and select names are validated against the lists for the queried entity
+- `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). `resume = TRUE` refetches only the leaf queries that did not complete, using the `00_in.progress` sentinel each leaf carries while it is being written (a single URL is one leaf). Leaves are dispatched one future each (`future.scheduling = Inf`); progress counts leaves, with no count request up front. Grouped results are detected from the response (`meta$groups_count`), not the URL
 - `pro_request_parquet()` — converts JSON files from `pro_request()` directly to Parquet (schema inference + per-file DuckDB COPY, parallel via `future`). `resume = TRUE` converts only what is missing; `on_error` controls what happens to files that fail (see *Failure handling* below)
-- `pro_fetch()` — all-in-one: query → paginate → convert to Parquet (project folder)
+- `pro_fetch()` — all-in-one: query → paginate → convert to Parquet (project folder); `resume = TRUE` completes an interrupted download and conversion
 - `pro_count()` — counts matching records
 - `pro_download_content()` — downloads PDFs / TEI XML from `content.openalex.org`
 - `pro_rate_limit_status()` — queries the `/rate-limit` endpoint
 - `pro_validate_credentials()` — checks API key validity
 
 All HTTP calls route through `api_call()` (`R/api_call.R`), which handles retries,
-error inspection, and `httr2` plumbing. Tests use VCR cassettes in
+error inspection, and `httr2` plumbing: retries on 429/5xx and network failures,
+aborts stalled transfers (< 1 byte/s for 120 s), does not retry a 429 caused by
+the daily budget (`X-RateLimit-Remaining` 0 or `not_enough_credits`), and adds
+OpenAlex's `message` (or OQL `validation$errors`) to the error. Tests use VCR cassettes in
 `tests/fixtures/vcr/`.
 
 ### SQL helpers
@@ -66,7 +69,7 @@ error inspection, and `httr2` plumbing. Tests use VCR cassettes in
 
 - `id_block()` — converts an OpenAlex ID to its block number (`floor(numeric_id / 10000)`)
 - `infer_json_schema()` — per-file schema inference with two-level caching
-- `opt_select_fields()`, `opt_filter_names()` — helpers for building API queries
+- `opt_select_fields()`, `opt_filter_names()` — accepted select fields / filter names per `entity` (default `"works"`), parsed from OpenAlex's error message for an invalid name (free) and cached per entity for the session; `update = TRUE` refetches
 - `oa_schema()` — get or refresh the baseline entity schema used by `pro_request_parquet(schema = "auto")`
 - `.pro_con()` / `.pro_worker_memory()` / `.pro_temp_dir()` (internal, `R/utils_duckdb.R`) — the configured DuckDB connection factory and its budget helpers
 
@@ -100,7 +103,7 @@ Note also that `INSTALL json; LOAD json;` is explicit rather than left to autolo
 
 ### Failure handling in `pro_request_parquet()`
 
-Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on `on_error`: `"error"` (default), `"warn"`, `"ignore"`.
+Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on `on_error`: `"error"` (default), `"warn"`, `"ignore"`. `delete_input = TRUE` deletes the JSON input only when every file converted — with `"warn"`/`"ignore"` the input is the only copy of the failed pages, and `resume` needs it.
 
 This was a silent-data-loss bug before 0.12.0: failures were `message()`d only when `verbose` and the run reported success regardless, so a page that failed to convert was simply absent from the corpus and every downstream count was quietly wrong. Each file is written to a `.part` sidecar and renamed on success, because a parquet footer is written last — a killed worker used to leave a file that passed `file.exists()` but could not be read.
 

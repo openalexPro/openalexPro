@@ -4,7 +4,7 @@ library(testthat)
 #
 # Run these tests manually with:
 #   Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
-#   Sys.setenv(openalexPro.apikey = "your-real-key")
+#   Sys.setenv(openalexPro.api_key = "your-real-key")
 #   devtools::test(filter = "900-live")
 
 

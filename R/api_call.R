@@ -171,6 +171,15 @@ api_call <- function(
 .oa_error_body <- function(resp) {
   body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
   msg <- if (is.list(body)) body$message %||% body$error else NULL
+  # OQL / OQO errors come as {"validation": {"errors": [{type, message}]}}
+  errors <- if (is.list(body) && is.list(body$validation)) body$validation$errors
+  if (length(errors) > 0L) {
+    msg <- vapply(
+      errors,
+      function(e) paste0(e$type %||% "error", ": ", e$message %||% ""),
+      character(1)
+    )
+  }
   if (is.character(msg) && length(msg) == 1L && nchar(msg) > 500L) {
     msg <- paste0(substr(msg, 1L, 500L), " [...]")
   }

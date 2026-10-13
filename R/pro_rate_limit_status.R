@@ -22,8 +22,8 @@ pro_rate_limit_status <- function(
   ) {
     message(
       "No API key found. Set it with:\n",
-      "  Sys.setenv(openalexPro.apikey = 'your-key')\n",
-      "or add 'openalexPro.apikey=your-key' to your .Renviron file."
+      "  Sys.setenv(openalexPro.api_key = 'your-key')\n",
+      "or add 'openalexPro.api_key=your-key' to your .Renviron file."
     )
     return(invisible(FALSE))
   } else if (!is.character(api_key) || length(api_key) != 1) {

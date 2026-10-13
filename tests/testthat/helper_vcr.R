@@ -110,7 +110,7 @@ if (is.null(pro_api_key())) {
 
 # try(
 #   {
-#     Sys.setenv(openalexPro.apikey = keyring::key_get("API_openalex"))
+#     Sys.setenv(openalexPro.api_key = keyring::key_get("API_openalex"))
 #     Sys.setenv(openalexPro.email = "Rainer@krugs.de")
 #   }
 # )

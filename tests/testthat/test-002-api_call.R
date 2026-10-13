@@ -103,3 +103,14 @@ test_that("a not_enough_credits refusal fails at once", {
   )
   expect_equal(calls, 1L)
 })
+
+test_that("an OQL validation error shows OpenAlex's parse message", {
+  httr2::local_mocked_responses(mock_json(
+    400,
+    '{"validation":{"valid":false,"errors":[{"type":"parse_error","message":"unexpected text near \\"wher\\" (position 6)","position":6}],"warnings":[]}}'
+  ))
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/?oql=works%20wher")),
+    "parse_error: unexpected text near \"wher\""
+  )
+})
