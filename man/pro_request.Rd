@@ -71,4 +71,16 @@ in the list are returned in a folder named after the names of the list elements 
 \code{output} folder.
 
 When starting the download, a file \verb{00_in.progress} which is deleted upon completion.
+
+If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+the other queries still complete. At the end, one error names each failed
+query with OpenAlex's reason. The failed queries keep their
+\verb{00_in.progress}, so \code{resume = TRUE} fetches only them again.
+
+Pages are fetched with cursor paging. A \code{per_page} in the query is kept;
+\code{page} and \code{cursor} are replaced, with a warning. A \code{sample} is fetched by
+page number, as OpenAlex ends cursor paging of a sample after the first
+page; if it spans several pages and has no \code{seed}, one is chosen and
+reported. Semantic search (\code{search.semantic}) is fetched as its single page
+of at most 50 results.
 }

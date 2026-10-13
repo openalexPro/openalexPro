@@ -252,7 +252,12 @@
 #' @param group_by Optional field to group by (facets), e.g. \code{"type"}.
 #' @param select Optional character vector of fields to return.
 #' @param options Optional named list of additional query parameters (e.g.,
-#'   \code{list(per_page = 200, sort = "cited_by_count:desc", cursor = "*", sample = 100)}).
+#'   \code{list(sort = "cited_by_count:desc", sample = 100, seed = 42)}).
+#'   \code{pro_request()} does the paging, so \code{page} and
+#'   \code{cursor} given here are replaced (with a warning); \code{per_page}
+#'   is kept (1--200, default 200). A \code{sample} (up to 10,000) is paged by
+#'   page number and needs a \code{seed} when it spans several pages;
+#'   \code{pro_request()} picks and reports one if none is given.
 #' @param endpoint Base API URL. Defaults to \code{"https://api.openalex.org"}.
 #' @param   chunk_limit Number of DOIS or ids per chunk if chunked. Default: 50
 #' @param oql Optional OQL (OpenAlex Query Language) query string, e.g.

@@ -227,7 +227,12 @@ pro_request(
 
 Each query is handed to the next free worker, so a few large queries do not
 leave the other workers idle. Pages within one query are always fetched one
-after another (cursor paging), so `workers` only helps with a list of queries.
+after another (by cursor, or by page number for a `sample`), so `workers` only
+helps with a list of queries.
+
+If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+the others still complete. At the end, one error names each failed query with
+OpenAlex's reason; `resume = TRUE` then fetches only those again.
 
 ## Resuming an Interrupted Download
 
@@ -331,7 +336,7 @@ flowchart TD
 
     PageLoop -->|Yes| CheckLimit{page > pages<br/>limit?}
     CheckLimit -->|Yes| Done[Exit loop]
-    CheckLimit -->|No| NextRequest[Request next page<br/>with cursor]
+    CheckLimit -->|No| NextRequest[Request next page<br/>by cursor, or page<br/>number for a sample]
     NextRequest --> SavePage[Save<br/>PREFIXN.json]
     SavePage --> UpdateProgress[Update<br/>progress bar]
     UpdateProgress --> PageLoop

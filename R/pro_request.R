@@ -11,6 +11,18 @@
 #'
 #' When starting the download, a file `00_in.progress` which is deleted upon completion.
 #'
+#' If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+#' the other queries still complete. At the end, one error names each failed
+#' query with OpenAlex's reason. The failed queries keep their
+#' `00_in.progress`, so `resume = TRUE` fetches only them again.
+#'
+#' Pages are fetched with cursor paging. A `per_page` in the query is kept;
+#' `page` and `cursor` are replaced, with a warning. A `sample` is fetched by
+#' page number, as OpenAlex ends cursor paging of a sample after the first
+#' page; if it spans several pages and has no `seed`, one is chosen and
+#' reported. Semantic search (`search.semantic`) is fetched as its single page
+#' of at most 50 results.
+#'
 #' @param query_url The URL of the API query or a list of URLs returned from `pro_query()`.
 #' @param pages The maximum number of pages (of 200 records) downloaded per
 #'   query; for a list, the limit applies to each leaf query. 100000 pages
@@ -176,15 +188,27 @@ pro_request <- function(
               return(invisible(NULL))
             }
 
-            fetch_query_pages(
-              query_url = leaf_urls[[i]],
-              pages = pages,
-              output = query_output,
-              overwrite = isTRUE(resume),
-              api_key = api_key,
-              verbose = verbose,
-              error_log = error_log,
-              progressor = p
+            # A failing query (e.g. HTTP 404 for an ID that does not exist)
+            # must not stop the others: return its error message and report
+            # all failures at the end. Its `00_in.progress` stays, so
+            # `resume = TRUE` fetches it again.
+            tryCatch(
+              {
+                fetch_query_pages(
+                  query_url = leaf_urls[[i]],
+                  pages = pages,
+                  output = query_output,
+                  overwrite = isTRUE(resume),
+                  api_key = api_key,
+                  verbose = verbose,
+                  error_log = error_log,
+                  progressor = p
+                )
+                NULL
+              },
+              # api_call() wraps the HTTP error; its parent carries the status
+              # and OpenAlex's message without the wrapper's call trace.
+              error = function(e) conditionMessage(e$parent %||% e)
             )
           },
           future.seed = TRUE
@@ -192,6 +216,11 @@ pro_request <- function(
       },
       enable = progress
     )
+
+    failed <- which(!vapply(result, is.null, logical(1)))
+    if (length(failed) > 0L) {
+      .pr_report_failures(failed, result, leaf_paths, output)
+    }
 
     return(output)
   }
@@ -294,11 +323,44 @@ fetch_query_pages <- function(
 
   output <- normalizePath(output)
 
-  # Base request with query and custom user agent
-  query <- list(
-    per_page = 200,
-    cursor = "*"
-  )
+  # Base request with query and custom user agent. A `per_page` in the query
+  # is kept; `page` / `cursor` are replaced by our own paging (OpenAlex
+  # rejects `page` together with `cursor`). Three paging modes:
+  # - semantic search rejects cursor paging and returns at most 50 results:
+  #   a single page;
+  # - a `sample` ends cursor paging after the first page, so it is paged by
+  #   page number (up to OpenAlex's maximum sample of 10,000), which needs a
+  #   `seed` once it spans several pages;
+  # - everything else uses cursor paging.
+  user_q <- httr2::url_parse(query_url)$query
+  semantic <- "search.semantic" %in% names(user_q)
+  sampled <- !semantic && !is.null(user_q$sample)
+  per_page <- as.integer(user_q$per_page %||% if (semantic) 50L else 200L)
+  replaced <- intersect(c("page", "cursor"), names(user_q))
+  if (!semantic && length(replaced) > 0L) {
+    warning(
+      "`", paste(replaced, collapse = "`, `"), "` in the query ",
+      "is replaced: `pro_request()` does the paging.",
+      call. = FALSE
+    )
+  }
+  query <- if (semantic) {
+    list(per_page = per_page)
+  } else if (sampled) {
+    list(per_page = per_page, page = 1L, cursor = NULL)
+  } else {
+    list(per_page = per_page, page = NULL, cursor = "*")
+  }
+  if (sampled && is.null(user_q$seed) &&
+      isTRUE(as.numeric(user_q$sample) > per_page)) {
+    # Without a seed, OpenAlex rejects page 2 of a sample. Not drawn from R's
+    # RNG, so the caller's random state is left alone.
+    query$seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
+    message(
+      "`sample` spans several pages, which needs a `seed`: using seed = ",
+      query$seed, ". Add it to the query to reproduce this sample."
+    )
+  }
   if (!is.null(api_key)) {
     query$api_key <- api_key
   }
@@ -398,16 +460,21 @@ fetch_query_pages <- function(
     cli::cli_progress_update(force = TRUE)
   }
 
-  # Continue with remaining pages if needed
-  while (!is.null(data$meta$next_cursor)) {
+  # Continue with remaining pages if needed. For a sample, meta$count is the
+  # sample size.
+  sample_pages <- if (sampled) ceiling(data$meta$count / per_page) else NA
+  while (if (sampled) page < sample_pages else !is.null(data$meta$next_cursor)) {
     page <- page + 1L
 
     if (!is.null(pages) && page > pages) {
       break
     }
 
-    req <- req |>
-      httr2::req_url_query(cursor = data$meta$next_cursor)
+    req <- if (sampled) {
+      httr2::req_url_query(req, page = page)
+    } else {
+      httr2::req_url_query(req, cursor = data$meta$next_cursor)
+    }
 
     if (verbose) {
       message("Downloading page ", page)
@@ -484,4 +551,30 @@ collect_leaf_queries <- function(x, path_parts = character(0)) {
     result <- c(result, collect_leaf_queries(x[[i]], c(path_parts, nms[i])))
   }
   result
+}
+
+
+#' Stop with a summary of the leaf queries that failed
+#'
+#' @keywords internal
+#' @noRd
+.pr_report_failures <- function(failed, result, leaf_paths, output) {
+  shown <- utils::head(failed, 10L)
+  reasons <- vapply(
+    result[shown],
+    function(m) substr(gsub("\\s*\n\\s*", " ", m), 1L, 200L),
+    character(1)
+  )
+  queries <- vapply(leaf_paths[shown], paste, character(1), collapse = "/")
+  stop(
+    length(failed), " of ", length(result), " queries failed (",
+    length(result) - length(failed), " completed).\n",
+    paste0("  ", queries, ": ", reasons, collapse = "\n"),
+    if (length(failed) > length(shown)) {
+      paste0("\n  ... and ", length(failed) - length(shown), " more")
+    },
+    "\nOutput: ", output,
+    "\nRe-run with `resume = TRUE` to fetch only the failed and unfinished queries.",
+    call. = FALSE
+  )
 }

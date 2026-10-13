@@ -251,3 +251,47 @@ test_that("delete_input removes the input after a clean run", {
   )
   expect_false(dir.exists(input))
 })
+
+test_that("workers = NULL converts sequentially even under a parallel user plan", {
+  tmp <- withr::local_tempdir()
+  input <- make_json_dir(file.path(tmp, "json"), n_good = 3L, n_bad = 0L)
+  pids <- file.path(tmp, "pids.txt")
+  orig <- .prr_convert_one
+  # The mock only exists in this process: files converted in a worker
+  # process would not be recorded.
+  local_mocked_bindings(.prr_convert_one = function(...) {
+    cat(Sys.getpid(), "\n", file = pids, append = TRUE)
+    orig(...)
+  })
+  old <- future::plan(future::multisession, workers = 2)
+  on.exit(future::plan(old), add = TRUE)
+
+  pro_request_parquet(
+    input_json = input, output = file.path(tmp, "parquet"),
+    verbose = FALSE, progress = FALSE, enrich = FALSE
+  )
+  expect_equal(as.integer(readLines(pids)), rep(Sys.getpid(), 3L))
+  # the user's plan is restored
+  expect_true(inherits(future::plan(), "multisession"))
+})
+
+test_that("mixing grouped and list results names the queries of each kind", {
+  tmp <- withr::local_tempdir()
+  json <- file.path(tmp, "json")
+  dir.create(file.path(json, "papers"), recursive = TRUE)
+  dir.create(file.path(json, "by_type"), recursive = TRUE)
+  writeLines('{"results":[{"id":"W1"}],"meta":{"count":1}}',
+             file.path(json, "papers", "results_page_1.json"))
+  writeLines('{"group_by":[{"key":"article","count":3}],"meta":{"count":3,"groups_count":1}}',
+             file.path(json, "by_type", "group_by_page_1.json"))
+  err <- expect_error(
+    pro_request_parquet(
+      input_json = json, output = file.path(tmp, "parquet"),
+      verbose = FALSE, progress = FALSE
+    ),
+    "mixes query results of different kinds"
+  )
+  expect_match(conditionMessage(err), "lists of records: papers")
+  expect_match(conditionMessage(err), "grouped results \\(group_by\\): by_type")
+  expect_true(dir.exists(json))
+})
