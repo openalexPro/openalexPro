@@ -23,6 +23,31 @@ query fails with OpenAlex's parse error and position.
 (`meta$groups_count`) instead of looking for `group_by=` in the URL, so
 grouping inside an OQL / OQO query is saved and converted correctly.
 
+## Documentation brought up to date
+
+- **API key name:** the vignettes, `CLAUDE.md` and the message of
+  `pro_rate_limit_status()` told users to set `openalexPro.apikey`, which
+  `pro_api_key()` never reads -- a key set that way was silently ignored. The
+  correct name is the environment variable `openalexPro.api_key` (or the option
+  `openalexPro$api_key`), as the README already said.
+- **Search syntax:** wildcards (`microbio*`) and fuzzy terms work only with
+  `search.exact`; the stemmed `search` rejects wildcards with HTTP 400. All
+  three search types cost $0.001 per call (the vignette said $0.0001), and
+  semantic search does not require an API key.
+- **Entities:** `sources`, `topics` and `locations` replace `venues` and
+  `concepts` in the examples; `topics.id` replaces `concepts.id`.
+- **Corpus:** the deprecated `include_xpac` / `is_xpac` controls are replaced
+  by the `corpus` parameter (`"core"`, `"all"`, `"expansion"`); combining them
+  is an error at OpenAlex.
+- **Pipeline:** README, vignettes and diagrams describe `pro_request_parquet()`
+  instead of the deprecated JSONL pipeline, and `pro_fetch()` no longer appears
+  to write JSONL files. New sections cover OQL / OQO, `resume`, error handling
+  and budgets; `inst/errorcodes.qmd` is rewritten (the "polite pool" no longer
+  exists).
+- Links point to the current OpenAlex documentation at `help.openalex.org`.
+- Six Mermaid diagrams in the `pro_query` and `pro_request` vignettes showed
+  "Syntax error" (unquoted labels containing `()` or `"`); they render again.
+
 ## The startup banner pointed at the old r-universe
 
 `.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package

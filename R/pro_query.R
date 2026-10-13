@@ -149,7 +149,7 @@
         "Use the {.arg search} parameter instead: ",
         "{.code pro_query(..., search = \"your terms\")}."
       ),
-      "i" = "See {.url https://developers.openalex.org/guides/searching} for details."
+      "i" = "See {.url https://help.openalex.org/api/searching/} for details."
     ))
   }
 
@@ -238,14 +238,14 @@
 #'   separate requests when the number of DOIs exceeds \code{chunk_limit}.
 #' @param search Optional full-text search string. Applies stemming and
 #'   stop-word removal. Supports boolean operators (\code{AND}, \code{OR},
-#'   \code{NOT} in uppercase), quoted phrases (\code{"exact phrase"}),
-#'   proximity (\code{"word1 word2"~N}), wildcards (\code{*}, \code{?}), and
-#'   fuzzy matching (\code{term~N}). Replaces the deprecated
+#'   \code{NOT} in uppercase), quoted phrases (\code{"exact phrase"}) and
+#'   proximity (\code{"word1 word2"~N}). Wildcards are rejected by the API
+#'   (HTTP 400): use \code{search.exact}. Replaces the deprecated
 #'   \code{filter = field.search:keyword} syntax.
 #' @param search.exact Optional full-text search without stemming or stop-word
-#'   removal. Supports the same boolean/phrase/wildcard syntax as \code{search}.
-#'   Use when you need to match exact word forms (e.g. \code{"surgery"} should
-#'   not match \code{"surgical"}).
+#'   removal. Supports the boolean/phrase/proximity syntax of \code{search},
+#'   plus wildcards and fuzzy matching. Use when you need to match exact word
+#'   forms (e.g. \code{"surgery"} should not match \code{"surgical"}).
 #' @param search.semantic Optional semantic (AI-powered) search string. Uses
 #'   embeddings to match conceptual meaning rather than exact keywords. Limited
 #'   to 1 request per second and returns at most 50 results per query.
@@ -271,12 +271,24 @@
 #' \code{search.exact}, the following syntax is supported:
 #' \itemize{
 #'   \item Boolean: \code{biodiversity AND finance}, \code{climate OR weather},
-#'     \code{ocean NOT pollution} (operators must be uppercase).
+#'     \code{ocean NOT pollution} (operators must be uppercase); group with
+#'     parentheses. Words without an operator between them are combined with
+#'     \code{AND}.
 #'   \item Exact phrase: \code{"biodiversity finance"} (double quotes).
-#'   \item Proximity: \code{"biodiversity finance"~5} (words within 5 positions).
-#'   \item Wildcard: \code{bio*} (zero or more characters), \code{organi?ation}.
-#'   \item Fuzzy: \code{biodiversty~1} (allows 1 character edit).
+#'   \item Proximity: \code{"biodiversity finance"~5} (words within 5
+#'     positions), or two phrases near each other:
+#'     \code{"machine learning"~5~"neural network"}.
 #' }
+#' Only with \code{search.exact} (the stemmed \code{search} rejects wildcards
+#' with HTTP 400, and stemming distorts fuzzy terms):
+#' \itemize{
+#'   \item Wildcard: \code{microbio*} (zero or more characters),
+#'     \code{organi?ation} (exactly one). At least 3 characters before the
+#'     wildcard; no leading wildcard.
+#'   \item Fuzzy: \code{biodiversty~1} (up to N character edits, N = 0--2;
+#'     at least 3 characters before the \code{~}).
+#' }
+#' See \url{https://help.openalex.org/api/searching/}.
 #' \code{search.semantic} does not use keyword syntax; pass a natural-language
 #' phrase or even a full abstract. It returns at most 50 results per call.
 #'
@@ -299,7 +311,7 @@
 #' \code{title_and_abstract.search = "biodiversity"}) are deprecated by the
 #' OpenAlex API. They still work but emit a warning. Use the \code{search},
 #' \code{search.exact}, or \code{search.semantic} parameters instead. See
-#' \url{https://developers.openalex.org/guides/searching} for details.
+#' \url{https://help.openalex.org/api/searching/} for details.
 #'
 #' @examples
 #' \dontrun{

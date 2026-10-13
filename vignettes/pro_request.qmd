@@ -43,7 +43,7 @@ OpenAlex offers limited API access without credentials. Free API keys with subst
 
 ```{r}
 # Set credentials (typically in your .Renviron file)
-Sys.setenv(openalexPro.apikey = "your-api-key-here")
+Sys.setenv(openalexPro.api_key = "your-api-key-here")
 
 # Validate your credentials
 pro_validate_credentials()
@@ -121,14 +121,15 @@ pro_request(
   output = "data/json",
   progress = TRUE # Default
 )
-# ℹ Fetching query counts...
-# ℹ Total pages to download: 229
 # Downloading ████████████████░░░░░░░░░░░░░░░░ 120/229 [1m 23s]
 ```
 
+For a list of queries, the progress bar counts queries; each one advances it
+in fractions as its pages arrive. No extra count requests are made up front.
+
 ## Limiting Pages
 
-By default, `pro_request()` downloads up to 10,000 pages (2 million records at 200 per page). You can adjust this:
+By default, `pro_request()` downloads up to 100,000 pages per query (20 million records at 200 per page; `pro_fetch()` defaults to 10,000 pages). For a list of queries the limit applies to each query. You can adjust this:
 
 ```{r}
 # Download only first 100 pages (20,000 records)
@@ -224,12 +225,30 @@ pro_request(
 )
 ```
 
+Each query is handed to the next free worker, so a few large queries do not
+leave the other workers idle. Pages within one query are always fetched one
+after another (cursor paging), so `workers` only helps with a list of queries.
+
+## Resuming an Interrupted Download
+
+With `resume = TRUE`, an existing `output` is kept and only queries that did
+not finish are downloaded again. Each query directory carries a
+`00_in.progress` marker while it is being written; a query that was
+interrupted is fetched again from the start. This works for a single URL as
+well as for lists, and `pro_fetch(resume = TRUE)` also completes an
+interrupted Parquet conversion:
+
+```{r}
+pro_request(query_url = urls, output = "data/json", resume = TRUE)
+pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
+```
+
 # Function Parameters Reference
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `query_url` | character/list | required | URL or list of URLs from `pro_query()` |
-| `pages` | integer/NULL | 10000 | Max pages to download. `NULL` = all pages |
+| `pages` | integer/NULL | 100000 | Max pages per query. `NULL` = all pages |
 | `output` | character | required | Directory for JSON output files |
 | `overwrite` | logical | FALSE | Delete existing output directory if it exists |
 | `api_key` | character/NULL | env var | Optional API key. If `NULL` or `""`, requests are sent without key. |
@@ -238,6 +257,7 @@ pro_request(
 | `progress` | logical | TRUE | Show progress bar |
 | `count_only` | logical | FALSE | Return count without downloading |
 | `error_log` | character/NULL | NULL | Path for error log file |
+| `resume` | logical | FALSE | Keep `output`, refetch only unfinished queries |
 
 # pro_request() Architecture
 
@@ -254,12 +274,10 @@ flowchart TD
     ListMethod --> SetupFutures[Setup future plan<br/>based on workers]
     SetupFutures --> CountOnly1{count_only?}
 
-    CountOnly1 -->|Yes| ParallelCount[Parallel pro_count()<br/>for each URL]
+    CountOnly1 -->|Yes| ParallelCount["Parallel pro_count()<br/>for each URL"]
     ParallelCount --> ReturnCounts([Return named vector])
 
-    CountOnly1 -->|No| FetchCounts[Fetch counts for<br/>progress bar]
-    FetchCounts --> CalcPages[Calculate total<br/>pages to download]
-    CalcPages --> ParallelDownload[future_lapply:<br/>fetch_query_pages<br/>for each URL]
+    CountOnly1 -->|No| ParallelDownload[future_lapply:<br/>fetch_query_pages<br/>for each URL]
     ParallelDownload --> ReturnOutput([Return output path])
 
     %% Scalar Method Branch
@@ -301,16 +319,20 @@ flowchart TD
     CheckSingle -->|Yes| SaveSingle[Save single_1.json]
     SaveSingle --> Success1([Success: Return path])
 
-    CheckSingle -->|No| CalcMaxPages[Calculate max_pages<br/>from meta]
+    CheckSingle -->|No| CheckGroup{meta.groups_count<br/>set?}
+    CheckGroup -->|Yes| PrefixGroup[Prefix:<br/>group_by_page_]
+    CheckGroup -->|No| PrefixResults[Prefix:<br/>results_page_]
+    PrefixGroup --> CalcMaxPages[Calculate max_pages<br/>from meta]
+    PrefixResults --> CalcMaxPages
     CalcMaxPages --> StartProgress[Start CLI<br/>progress bar]
-    StartProgress --> SaveFirst[Save first page:<br/>results_page_1.json]
+    StartProgress --> SaveFirst[Save first page:<br/>PREFIX1.json]
 
     SaveFirst --> PageLoop{More pages?<br/>next_cursor exists?}
 
     PageLoop -->|Yes| CheckLimit{page > pages<br/>limit?}
     CheckLimit -->|Yes| Done[Exit loop]
     CheckLimit -->|No| NextRequest[Request next page<br/>with cursor]
-    NextRequest --> SavePage[Save<br/>results_page_N.json]
+    NextRequest --> SavePage[Save<br/>PREFIXN.json]
     SavePage --> UpdateProgress[Update<br/>progress bar]
     UpdateProgress --> PageLoop
 
@@ -325,9 +347,17 @@ flowchart TD
     style PageLoop fill:#fff3cd
 ```
 
+Whether a query is grouped is decided from the first response (grouped
+responses carry a numeric `meta$groups_count`), not from the URL, so grouping
+inside an OQL / OQO query is detected as well. Grouped pages are saved as
+`group_by_page_N.json`.
+
 ## api_call() Retry Logic
 
-All HTTP requests go through `api_call()` which provides robust retry logic:
+All HTTP requests go through `api_call()` which provides robust retry logic.
+Network failures (dropped connection, curl errors) are retried like transient
+statuses, and a transfer that stalls (less than 1 byte/s for 120 s) is aborted
+and retried. A 429 caused by the daily budget is not retried (see below):
 
 ```{mermaid}
 flowchart TD
@@ -338,7 +368,8 @@ flowchart TD
 
     CheckStatus -->|200 OK| ReturnSuccess([Return response])
 
-    CheckStatus -->|429, 500-504| Transient[Transient error:<br/>wait and retry]
+    CheckStatus -->|429 rate, 500-504,<br/>network failure| Transient[Transient error:<br/>wait and retry]
+    CheckStatus -->|429 budget| Abort0([Abort: budget<br/>and reset time])
     Transient --> RetryCount{Retries<br/>exhausted?}
     RetryCount -->|No| Perform
     RetryCount -->|Yes| LogError[Log error]
@@ -366,11 +397,18 @@ The following HTTP status codes are considered transient and trigger automatic r
 
 | Status | Meaning | Action |
 |--------|---------|--------|
-| 429 | Too Many Requests | Wait with exponential backoff |
+| 429 | Too Many Requests (more than 100 requests/s) | Wait with exponential backoff |
 | 500 | Internal Server Error | Retry up to 10 times |
 | 502 | Bad Gateway | Retry up to 10 times |
 | 503 | Service Unavailable | Retry up to 10 times |
 | 504 | Gateway Timeout | Retry up to 10 times |
+
+Not retried, because retrying cannot help:
+
+| Status | Meaning | Behaviour |
+|--------|---------|-----------|
+| 429 | Daily budget used up (`X-RateLimit-Remaining` is 0), or `not_enough_credits` (the query costs more than is left) | Abort at once; the error says when the budget resets (midnight UTC) |
+| 400, 403, 404 | Invalid query, no access, not found | Abort; the error includes OpenAlex's own message, e.g. which filter name is invalid, or the OQL parse error |
 
 # Output File Structure
 
@@ -406,6 +444,8 @@ During download, a `00_in.progress` file exists in the output directory. This fi
 - Download is still in progress, OR
 - Download was interrupted and is incomplete
 
+`resume = TRUE` uses this marker to decide which queries to fetch again.
+
 # The Complete Data Pipeline
 
 ## Pipeline Overview
@@ -420,29 +460,25 @@ flowchart LR
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJL[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJLP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ -->|URL/URLs| PR
-    PR -->|JSON files| PRJL
-    PRJL -->|JSONL files| PRJLP
-    PRJLP -->|Parquet dataset| DB
+    PR -->|JSON files| PRP
+    PRP -->|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 ```
+
+`pro_fetch()` runs steps 2 and 3 in one call.
 
 ## Complete Example
 
@@ -455,7 +491,10 @@ urls <- pro_query(
   search = "machine learning healthcare",
   from_publication_date = "2020-01-01",
   type = "article",
-  select = c("ids", "title", "abstract", "publication_year", "authorships")
+  select = c(
+    "ids", "title", "abstract_inverted_index", "publication_year",
+    "authorships", "cited_by_count"
+  )
 )
 
 # Step 2: Download JSON from API
@@ -466,22 +505,15 @@ pro_request(
   progress = TRUE
 )
 
-# Step 3: Convert to JSONL (with abstract reconstruction)
-pro_request_jsonl(
+# Step 3: Convert to Parquet (adds `abstract` and `citation` columns)
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
+  output = "data/parquet",
   progress = TRUE,
   workers = 4
 )
 
-# Step 4: Convert to Parquet (with schema harmonization)
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
-  output = "data/parquet",
-  progress = TRUE
-)
-
-# Step 5: Query with DuckDB
+# Step 4: Query with DuckDB
 library(duckdb)
 con <- dbConnect(duckdb())
 dbGetQuery(
@@ -498,6 +530,11 @@ dbGetQuery(
 ---
 
 # pro_request_jsonl()
+
+> **Deprecated.** `pro_request_jsonl()` and `pro_request_jsonl_parquet()` are
+> superseded by `pro_request_parquet()`, which converts the JSON files to
+> Parquet in one step without intermediate JSONL files. The following sections
+> document the older two-step pipeline for existing code.
 
 ## Purpose
 
@@ -768,7 +805,7 @@ flowchart LR
     end
 
     subgraph Output[Unified Schema]
-        Unified[location: struct<br/>(accommodates all)]
+        Unified["location: struct<br/>(accommodates all)"]
     end
 
     F1 --> Sample
@@ -848,11 +885,15 @@ pro_request(query_url = url)
 
 ### API Rate Limiting
 
-If you hit rate limits (HTTP 429), the function automatically retries with exponential backoff. To reduce rate limit issues:
+OpenAlex allows up to 100 requests per second and a daily budget ($0.10
+without an API key, $1 with a free key). If you exceed the per-second limit
+(HTTP 429), the function retries with exponential backoff. If the daily budget
+is used up, it stops at once and reports when the budget resets (midnight UTC).
+To stay within the budget:
 
 1. Use an API key (free from OpenAlex)
-2. Reduce parallel workers
-3. Add delays between large queries
+2. Check the cost first: searches cost ten times as much as filter queries
+3. Use `resume = TRUE` after the reset to complete an interrupted download
 
 You can check your current budget and remaining allowance at any time with:
 
@@ -953,7 +994,8 @@ pro_request_jsonl(input, output, workers = parallel::detectCores() - 1)
 
 # References
 
-- [OpenAlex API Documentation](https://docs.openalex.org/)
-- [OpenAlex Rate Limits](https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication)
+- [OpenAlex API Documentation](https://help.openalex.org/api/)
+- [OpenAlex Authentication and Rate Limits](https://help.openalex.org/api/authentication/)
+- [OpenAlex Error Handling](https://help.openalex.org/api/errors/)
 - [Apache Parquet Format](https://parquet.apache.org/)
 - [DuckDB Documentation](https://duckdb.org/docs/)

@@ -34,7 +34,7 @@
 #'   (sequential). Set higher for faster batch downloads, subject to the
 #'   content endpoint's rate limits.
 #' @param api_key OpenAlex API key (character string) or `NULL`. Defaults to
-#'   the \code{openalexPro.apikey} environment variable. If `NULL` or `""`,
+#'   \code{pro_api_key()} (option or the \code{openalexPro.api_key} environment variable). If `NULL` or `""`,
 #'   requests are sent without an API key.
 #' @param endpoint Base URL of the content endpoint. Defaults to
 #'   \code{"https://content.openalex.org"}.
