@@ -1,5 +1,18 @@
 # openalexPro 0.12.1
 
+## Test recordings refreshed
+
+All recorded API responses were re-recorded from the live API (with the key
+sent as a header and masked). The snapshot differences were checked: only
+data drift (counts, citations, one record with fewer locations) and fields
+OpenAlex has added since spring (`study_designs`, `volume`, `awards` details,
+`observed_orcids`, location `doi` / `listed_in`, `meta.x_query`); no field
+was removed. The URL / OQO equivalence tests passed again on the fresh data,
+and a `pro_count()` comparison was added. `inst/scripts/record_cassettes.R`
+now records all tests even when snapshots fail (testthat stopped after 10
+failures and left later cassettes unrecorded, while reporting success) and
+stops if any cassette is missing.
+
 ## Lossless queries: `via = "oqo"`, query record, cost, key as header
 
 - **`via = "oqo"`** (`pro_request()`, `pro_fetch()`, `pro_count()`; default

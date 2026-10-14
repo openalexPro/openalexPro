@@ -154,6 +154,25 @@ test_that("OQL and OQO input give the same records as the classic URL", {
   }
 })
 
+test_that("pro_count gives the same count via url and oqo", {
+  vcr::local_cassette("equiv_count")
+  queries <- list(
+    filter = pro_query(entity = "works", publication_year = "2018-2020",
+                       type = "erratum", `primary_location.source.id` = nature),
+    boolean = pro_query(entity = "works",
+                        search = "(coral OR reef) AND bleaching NOT model",
+                        publication_year = 2020),
+    authors = pro_query(entity = "authors",
+                        `last_known_institutions.id` = "I4200000001")
+  )
+  for (q in queries) {
+    via_url <- pro_count(q, via = "url")
+    via_oqo <- pro_count(q, via = "oqo")
+    expect_gt(via_url$count, 0)
+    expect_equal(via_oqo$count, via_url$count)
+  }
+})
+
 # Unit tests of the OQO route (mocked) -------------------------------------
 
 # /query echoes a fixed OQO; POST / answers with the page asked for.
