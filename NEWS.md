@@ -171,6 +171,12 @@ Parsing that message also dropped the first name of every list (e.g. the
 left a trailing period on the last select field (`"created_date."`); both are
 fixed.
 
+An argument of the functions that send a query, given to `pro_query()` by
+mistake (e.g. `pro_query(doi = dois, via = "oqo")`), was taken as a filter
+and failed with "Invalid filter name(s): via". It now says where it belongs:
+"`via` is an argument of pro_fetch(), pro_request(), pro_count()", with an
+example.
+
 ## Documentation brought up to date
 
 - **API key name:** the vignettes, `CLAUDE.md` and the message of

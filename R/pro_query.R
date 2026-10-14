@@ -172,6 +172,40 @@
   stop(msg, call. = FALSE)
 }
 
+#' Stop when an argument of the functions that send a query is given here
+#'
+#' Unknown arguments of pro_query() are filters, so `via = "oqo"` used to end
+#' as "Invalid filter name(s): via" -- or, when the filter list could not be
+#' fetched, as a filter in the URL.
+#'
+#' @keywords internal
+#' @noRd
+.check_request_args <- function(names) {
+  funs <- list(
+    pro_fetch = pro_fetch, pro_request = pro_request, pro_count = pro_count,
+    pro_request_parquet = pro_request_parquet
+  )
+  owners <- lapply(names, function(n) {
+    names(funs)[vapply(funs, function(f) n %in% names(formals(f)), logical(1))]
+  })
+  hit <- which(lengths(owners) > 0L)
+  if (length(hit) == 0L) {
+    return(invisible(TRUE))
+  }
+  lines <- vapply(hit, function(i) {
+    paste0("`", names[i], "` is an argument of ",
+           paste0(owners[[i]], "()", collapse = ", "), ".")
+  }, character(1))
+  first <- hit[1L]
+  stop(
+    "Not a filter of pro_query(): ", paste(lines, collapse = " "), "\n",
+    "Build the query first, then pass ", if (length(hit) == 1L) "it" else "them",
+    " there, e.g. `urls <- pro_query(...)`; `", owners[[first]][1L], "(urls, ",
+    names[first], " = ...)`.",
+    call. = FALSE
+  )
+}
+
 # OQL / OQO ----------------------------------------------------------------
 
 #' Build a root-endpoint URL for an OQL or OQO query
@@ -266,7 +300,9 @@
 #' @param oqo Optional OQO (OpenAlex Query Object): a nested list, or a JSON
 #'   string. See section \emph{OQL and OQO}.
 #' @param ... Filters as named arguments. Values may be scalars or vectors (vectors
-#'   are collapsed with \code{"|"} to express OR).
+#'   are collapsed with \code{"|"} to express OR). Arguments of the functions
+#'   that send the query, such as \code{via} or \code{workers}, belong to
+#'   [pro_fetch()], [pro_request()] or [pro_count()], not here.
 #'
 #' @return An individual URL or a list of URLs.
 #'
@@ -372,6 +408,7 @@ pro_query <- function(
   oqo = NULL,
   ...
 ) {
+  .check_request_args(...names())
   if (!is.null(oql) || !is.null(oqo)) {
     return(.oa_oql_url(
       oql = oql, oqo = oqo, select = select, options = options,
