@@ -216,8 +216,14 @@ test_that("via = 'oqo' translates once, then POSTs the OQO with cursor paging", 
     "https://api.openalex.org/works?filter=type:article&select=id,doi&sort=cited_by_count:desc&per_page=2",
     output = out, progress = FALSE, via = "oqo"
   )
-  r <- log$requests
-  expect_length(r, 3L)
+  all <- log$requests
+  is_query <- vapply(all, function(x) httr2::url_parse(x$url)$path == "/query", TRUE)
+  # translation first, then the pages, then the two calls for the readable OQL
+  # (render the OQO that ran, translate the OQL back)
+  expect_equal(is_query, c(TRUE, FALSE, FALSE, TRUE, TRUE))
+  expect_false(is.null(all[[4]]$body$oqo))
+  expect_false(is.null(all[[5]]$body$oql))
+  r <- all
   # 1. translation: paging and view parameters removed from the URL
   expect_equal(httr2::url_parse(r[[1]]$url)$path, "/query")
   expect_equal(utils::URLdecode(r[[1]]$body$oxurl), "/works?filter=type:article")

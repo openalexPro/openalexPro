@@ -470,4 +470,166 @@ http_interactions:
       string: |
         {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid select field. Valid fields for select are: id, doi, title, display_name, relevance_score, rerank_score, publication_year, publication_date, ids, language, primary_location, volume, sources, type, type_crossref, indexed_in, open_access, authorships, institution_assertions, institutions, countries_distinct_count, institutions_distinct_count, corresponding_author_ids, corresponding_institution_ids, apc_list, apc_paid, fwci, is_authors_truncated, has_fulltext, fulltext_origin, cited_by_count, citation_normalized_percentile, cited_by_percentile_year, biblio, is_retracted, is_paratext, is_xpac, primary_topic, topics, keywords, concepts, mesh, locations_count, locations, best_oa_location, sustainable_development_goals, sustainable_development_goals_aurora, study_designs, awards, funders, datasets, versions, has_content, content_urls, referenced_works_count, referenced_works, related_works, abstract_inverted_index, cited_by_api_url, counts_by_year, updated_date, created_date."}
   recorded_at: 2026-10-14 08:34:40
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:24 GMT
+      content-type: application/json
+      cf-ray: a4a54bd2a995526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54996'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967404"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967404"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum","oql":"get works where source is [Nature](S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","oql_oneline":"get works where source is [Nature](S137773608) and published from 2018 through 2020 and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in [Nature](S137773608) where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n5","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":">=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" >= "},{"kind":"text","text":"("},{"kind":"value","text":"2018","meta":{"value":2018}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2018,"operator":">="},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":"<=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020,"operator":"<="},"addr":[3]},{"node":"clause","id":"n4","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" >= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2018","value":2018,"kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" <= ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","value":2020,"kind":"comparison","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n4","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n4","text":" is ","addr":"4"},{"t":"text","id":"n4","text":"(","addr":"4"},{"t":"vbrick","id":"n4","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"4.1"},{"t":"text","id":"n4","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:24
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where source is [Nature](S137773608) and published
+        from 2018 through 2020 and type is [erratum](erratum)"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:24 GMT
+      content-type: application/json
+      cf-ray: a4a54bd45b7c526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54996'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967404"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967404"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum","oql":"get works where source is [Nature](S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","oql_oneline":"get works where source is [Nature](S137773608) and published from 2018 through 2020 and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in [Nature](S137773608) where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n5","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":">=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" >= "},{"kind":"text","text":"("},{"kind":"value","text":"2018","meta":{"value":2018}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2018,"operator":">="},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":"<=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020,"operator":"<="},"addr":[3]},{"node":"clause","id":"n4","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" >= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2018","value":2018,"kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" <= ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","value":2020,"kind":"comparison","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n4","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n4","text":" is ","addr":"4"},{"t":"text","id":"n4","text":"(","addr":"4"},{"t":"vbrick","id":"n4","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"4.1"},{"t":"text","id":"n4","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:24
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:24 GMT
+      content-type: application/json
+      cf-ray: a4a54bd66d3f526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54996'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967404"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967404"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum","oql":"get works where source is [Nature](S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","oql_oneline":"get works where source is [Nature](S137773608) and published from 2018 through 2020 and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in [Nature](S137773608) where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n5","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":">=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" >= "},{"kind":"text","text":"("},{"kind":"value","text":"2018","meta":{"value":2018}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2018,"operator":">="},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":"<=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020,"operator":"<="},"addr":[3]},{"node":"clause","id":"n4","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" >= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2018","value":2018,"kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" <= ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","value":2020,"kind":"comparison","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n4","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n4","text":" is ","addr":"4"},{"t":"text","id":"n4","text":"(","addr":"4"},{"t":"vbrick","id":"n4","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"4.1"},{"t":"text","id":"n4","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:24
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where source is [Nature](S137773608) and published
+        from 2018 through 2020 and type is [erratum](erratum)"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:24 GMT
+      content-type: application/json
+      cf-ray: a4a54bd7ee90526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54996'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967404"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=jHZw8ZxhEtlEWRKhUubgPC4tjkhDLXaCfNe44%2BGGkfo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967404"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum","oql":"get works where source is [Nature](S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","oql_oneline":"get works where source is [Nature](S137773608) and published from 2018 through 2020 and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in [Nature](S137773608) where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n5","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":">=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" >= "},{"kind":"text","text":"("},{"kind":"value","text":"2018","meta":{"value":2018}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2018,"operator":">="},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":"<=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020,"operator":"<="},"addr":[3]},{"node":"clause","id":"n4","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" >= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2018","value":2018,"kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" <= ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","value":2020,"kind":"comparison","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n4","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n4","text":" is ","addr":"4"},{"t":"text","id":"n4","text":"(","addr":"4"},{"t":"vbrick","id":"n4","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"4.1"},{"t":"text","id":"n4","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:24
 recorded_with: VCR-vcr/2.1.0

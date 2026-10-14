@@ -23,6 +23,14 @@
 #' reported. Semantic search (`search.semantic`) is fetched as its single page
 #' of at most 50 results.
 #'
+#' Each query directory also gets a record of the query: `_query.json` (the
+#' URL, how it was sent, the query as OpenAlex ran it as OQL and OQO, records,
+#' requests, credits, cost, time), and for papers `_query_oql.txt` and a
+#' formatted, self-contained `_query_oql.html` with the query in OpenAlex's
+#' readable query language (OQL). The OQL is translated back and compared with
+#' the query that ran; the files say whether it reproduces it exactly. Single
+#' records get only `_query.json`.
+#'
 #' @param query_url The URL of the API query or a list of URLs returned from `pro_query()`.
 #' @param pages The maximum number of pages (of 200 records) downloaded per
 #'   query; for a list, the limit applies to each leaf query. 100000 pages
@@ -484,6 +492,7 @@ fetch_query_pages <- function(
     }
     .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
                            oq %||% x_query, records, cost, started)
+    .pr_write_query_text_for(output, oq, x_query, query_url, api_key, records)
     success <- TRUE
     return(structure(output, cost = cost))
   }
@@ -604,6 +613,7 @@ fetch_query_pages <- function(
 
   .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
                          oq %||% x_query, records, cost, started)
+  .pr_write_query_text_for(output, oq, x_query, query_url, api_key, records)
   success <- TRUE
 
   structure(output, cost = cost)
@@ -635,6 +645,26 @@ fetch_query_pages <- function(
   jsonlite::write_json(
     record, file.path(output, "_query.json"),
     auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA
+  )
+}
+
+
+#' Write the readable OQL files for a finished query
+#'
+#' The OQO that ran: the translated one (`via = "oqo"`), or the one OpenAlex
+#' echoes in `meta$x_query` (`via = "url"`). A single record has neither.
+#' @keywords internal
+#' @noRd
+.pr_write_query_text_for <- function(output, oq, x_query, query_url, api_key,
+                                     records) {
+  .pr_write_query_text(
+    output,
+    oqo = oq$oqo %||% x_query$oqo,
+    oql_fallback = oq$oql %||% x_query$oql,
+    root = oq$root %||% sub("(^https?://[^/?#]+).*", "\\1", query_url),
+    api_key = api_key,
+    records = records,
+    query_url = sub("([?&])api_key=[^&]*&?", "\\1", query_url)
   )
 }
 

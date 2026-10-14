@@ -287,6 +287,34 @@ is kept when the JSON files are deleted. At the end, `pro_request()` reports
 the total, e.g. `i 12 requests, 12 credits ($0.0012)`. Arrow and DuckDB ignore
 the file (leading underscore, not `.parquet`).
 
+For methods sections and supplements, each query directory also gets the query
+in OpenAlex's readable query language (OQL), in two forms:
+
+- `_query_oql.txt`: plain text, ready to paste into a paper, e.g.
+
+  ```
+  # OpenAlex query (OQL)
+  # Records: 141 | Downloaded: 2026-10-14 (UTC) | openalexPro 0.12.1
+  # Exact: this OQL translates back to exactly the query that ran.
+
+  get works where full text has (microbio*)
+    and source is [Nature](S137773608)
+    and published in 2020
+  ```
+
+- `_query_oql.html`: the same, nicely formatted with highlighted keywords and
+  OpenAlex IDs linked to their records; self-contained (no scripts, no
+  external resources), with the exact OQO and the request URL in collapsible
+  sections.
+
+The OQL is OpenAlex's own rendering of the query that ran. Because that
+rendering can be lossy in some details, it is translated back and compared:
+the header says **Exact** if the printed OQL reproduces the query, otherwise
+**Not exact** (then the OQO in `_query.json` is the exact query) or **Not
+checked** (if OpenAlex's free `/query` endpoint could not be reached). Single
+records (`works/W123`) get no OQL files. Like `_query.json`, both files are
+copied into the Parquet partition.
+
 The API key is sent as an `Authorization: Bearer` header, never in the URL, so
 it does not appear in logs, error messages or recorded test responses.
 

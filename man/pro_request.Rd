@@ -93,4 +93,12 @@ page number, as OpenAlex ends cursor paging of a sample after the first
 page; if it spans several pages and has no \code{seed}, one is chosen and
 reported. Semantic search (\code{search.semantic}) is fetched as its single page
 of at most 50 results.
+
+Each query directory also gets a record of the query: \verb{_query.json} (the
+URL, how it was sent, the query as OpenAlex ran it as OQL and OQO, records,
+requests, credits, cost, time), and for papers \verb{_query_oql.txt} and a
+formatted, self-contained \verb{_query_oql.html} with the query in OpenAlex's
+readable query language (OQL). The OQL is translated back and compared with
+the query that ran; the files say whether it reproduces it exactly. Single
+records get only \verb{_query.json}.
 }
