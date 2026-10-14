@@ -16,7 +16,8 @@ pro_request(
   count_only = FALSE,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo")
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 )
 }
 \arguments{
@@ -49,10 +50,14 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
 
-\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and refetch
-only the leaf queries that did not complete.  Completion is detected with
-the \verb{00_in.progress} sentinel each leaf directory carries while it is
-being written.  A single URL is treated as one leaf.  Default \code{FALSE}.}
+\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and download
+only what is missing: finished queries are skipped (detected by the
+\verb{00_in.progress} sentinel each query directory carries while it is being
+written), and an interrupted query continues after its last saved page,
+using the cursor stored in its \verb{_paging.json} (the message says how old
+it is). If that state cannot be trusted, or for samples and semantic
+search, the query is fetched again from page 1. A single URL is treated
+as one query.  Default \code{FALSE}.}
 
 \item{via}{How each query is sent. \code{"url"} (default): as a GET request with
 the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
@@ -62,6 +67,17 @@ filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
 in about one page per chunk), checks the query before any credits are spent, and records the
 exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
 fetched via GET.}
+
+\item{inconsistency_on_resume}{What to do when a query that was resumed in
+the middle turns out inconsistent, because OpenAlex's data changed between
+the sessions: records that appear twice (found exactly, by work ID) or
+missing records (only as a net difference to OpenAlex's current count --
+a record lost and another added cancel out). \code{"error"} (default) stops;
+nothing is lost, and a rerun with \code{resume = TRUE} and another value
+applies that choice without downloading again. \code{"warning"} keeps both
+copies and warns, \code{"ignore"} keeps both silently, \code{"oldest"} / \code{"newest"}
+keep the first / last downloaded copy (removing the other from its page
+file) and warn about missing records.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and

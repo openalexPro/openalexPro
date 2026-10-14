@@ -19,7 +19,8 @@ pro_fetch(
   count_only,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo")
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 )
 }
 \arguments{
@@ -81,6 +82,17 @@ filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
 in about one page per chunk), checks the query before any credits are spent, and records the
 exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
 fetched via GET.}
+
+\item{inconsistency_on_resume}{What to do when a query that was resumed in
+the middle turns out inconsistent, because OpenAlex's data changed between
+the sessions: records that appear twice (found exactly, by work ID) or
+missing records (only as a net difference to OpenAlex's current count --
+a record lost and another added cancel out). \code{"error"} (default) stops;
+nothing is lost, and a rerun with \code{resume = TRUE} and another value
+applies that choice without downloading again. \code{"warning"} keeps both
+copies and warns, \code{"ignore"} keeps both silently, \code{"oldest"} / \code{"newest"}
+keep the first / last downloaded copy (removing the other from its page
+file) and warn about missing records.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder
