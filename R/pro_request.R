@@ -361,12 +361,9 @@ fetch_query_pages <- function(
       query$seed, ". Add it to the query to reproduce this sample."
     )
   }
-  if (!is.null(api_key)) {
-    query$api_key <- api_key
-  }
-
   req <- httr2::request(query_url)
   req <- do.call(httr2::req_url_query, c(list(req), query)) |>
+    .oa_auth(api_key) |>
     httr2::req_user_agent(
       paste0("openalexPro/", packageVersion("openalexPro"))
     )

@@ -147,9 +147,7 @@ pro_download_content <- function(
         result <- tryCatch(
           {
             req <- httr2::request(url)
-            if (!is.null(api_key)) {
-              req <- httr2::req_url_query(req, api_key = api_key)
-            }
+            req <- .oa_auth(req, api_key)
             req <- httr2::req_user_agent(
               req,
               paste0("openalexPro/", utils::packageVersion("openalexPro"))

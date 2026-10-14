@@ -47,12 +47,9 @@ pro_count <- function(
     select = "ids",
     page = 1
   )
-  if (!is.null(api_key)) {
-    query$api_key <- api_key
-  }
-
   req <- httr2::request(query_url)
   req <- do.call(httr2::req_url_query, c(list(req), query)) |>
+    .oa_auth(api_key) |>
     httr2::req_user_agent(
       paste0("openalexPro/", packageVersion("openalexPro"))
     )

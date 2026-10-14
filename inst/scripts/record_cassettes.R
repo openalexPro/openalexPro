@@ -4,17 +4,17 @@
 #
 # Run from the package root in an R session:
 #
-#   Sys.setenv(openalexPro.apikey = "your-real-key")
+#   Sys.setenv(openalexPro.api_key = "your-real-key")
 #   source("inst/scripts/record_cassettes.R")
 #
 # After recording, run devtools::test() normally (without the env var) to
 # verify all tests pass in playback mode.
 
 api_key <- pro_api_key()
-if (!nzchar(api_key)) {
+if (is.null(api_key) || !nzchar(api_key) || identical(api_key, "test-api-key")) {
   stop(
-    "openalexPro.apikey is not set.\n",
-    "Run first: Sys.setenv(openalexPro.apikey = 'your-real-key')"
+    "openalexPro.api_key is not set.\n",
+    "Run first: Sys.setenv(openalexPro.api_key = 'your-real-key')"
   )
 }
 
@@ -28,7 +28,7 @@ key_ok <- tryCatch(
 )
 if (!isTRUE(key_ok)) {
   stop(
-    "openalexPro.apikey appears invalid (rate-limit endpoint failed).\n",
+    "openalexPro.api_key appears invalid (rate-limit endpoint failed).\n",
     "Not re-recording cassettes to avoid replacing them with HTTP 401 responses."
   )
 }
@@ -65,18 +65,25 @@ message(
   "."
 )
 
-# Post-process: replace the real API key with the placeholder used in
-# playback matching.  The helper_vcr.R skips filter_query_parameters during
-# recording so that authenticated requests reach the server; we scrub the key
-# from the stored YAML files here instead.
+# Post-process: the key is sent as a Bearer header, which helper_vcr.R masks
+# when writing cassettes. As a safety net, scrub any remaining occurrence of
+# the real key (plain or URL-encoded) and fail if one survives.
 message("Sanitizing real API key in cassettes ...")
 encoded_key <- utils::URLencode(api_key, reserved = TRUE)
 for (f in new_cassettes) {
   lines <- readLines(f, warn = FALSE)
   lines <- gsub(api_key, "<api-key>", lines, fixed = TRUE)
   lines <- gsub(encoded_key, "%3Capi-key%3E", lines, fixed = TRUE)
+  # /rate-limit echoes a shortened key ("abc...xyz") in its response body
+  lines <- gsub('"api_key":"[^"]*"', '"api_key":"<api-key>"', lines)
   writeLines(lines, f)
 }
 message("Sanitized ", length(new_cassettes), " cassette(s).")
+leaks <- new_cassettes[vapply(new_cassettes, function(f) {
+  any(grepl(api_key, readLines(f, warn = FALSE), fixed = TRUE))
+}, logical(1))]
+if (length(leaks) > 0L) {
+  stop("The API key is still present in: ", paste(basename(leaks), collapse = ", "))
+}
 message("\nCassettes recorded:")
 message(paste(" -", basename(new_cassettes), collapse = "\n"))

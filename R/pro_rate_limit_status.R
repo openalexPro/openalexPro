@@ -34,7 +34,7 @@ pro_rate_limit_status <- function(
   }
 
   req <- httr2::request("https://api.openalex.org/rate-limit") |>
-    httr2::req_url_query(api_key = api_key) |>
+    .oa_auth(api_key) |>
     httr2::req_user_agent(paste0(
       "openalexPro/",
       utils::packageVersion("openalexPro")

@@ -1,7 +1,7 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/rate-limit?api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/rate-limit
   response:
     status: 401
     headers:
