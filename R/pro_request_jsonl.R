@@ -125,7 +125,7 @@ pro_request_jsonl <- function(
   ## Read names of json files
   jsons <- list.files(
     input_json,
-    pattern = "*.json$",
+    pattern = "^(results_page|group_by_page|single)_[0-9]+\\.json$", # page files only, not `_query.json`
     full.names = TRUE,
     recursive = TRUE
   )

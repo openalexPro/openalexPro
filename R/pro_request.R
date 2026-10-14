@@ -203,8 +203,8 @@ pro_request <- function(
                   verbose = verbose,
                   error_log = error_log,
                   progressor = p
-                )
-                NULL
+                ) |>
+                  attr("cost")
               },
               # api_call() wraps the HTTP error; its parent carries the status
               # and OpenAlex's message without the wrapper's call trace.
@@ -217,7 +217,12 @@ pro_request <- function(
       enable = progress
     )
 
-    failed <- which(!vapply(result, is.null, logical(1)))
+    # Per leaf: the cost (success), NULL (skipped by resume) or the error
+    # message (failure)
+    failed <- which(vapply(result, is.character, logical(1)))
+    if (progress || verbose) {
+      .pr_report_cost(result[!vapply(result, is.character, logical(1))])
+    }
     if (length(failed) > 0L) {
       .pr_report_failures(failed, result, leaf_paths, output)
     }
@@ -243,7 +248,7 @@ pro_request <- function(
   }
 
   # Use helper function with cli progress for single query
-  fetch_query_pages(
+  res <- fetch_query_pages(
     query_url = query_url,
     pages = pages,
     output = output,
@@ -254,6 +259,10 @@ pro_request <- function(
     progressor = NULL,
     use_cli_progress = progress
   )
+  if (progress || verbose) {
+    .pr_report_cost(list(attr(res, "cost")))
+  }
+  as.vector(res) # the output path, as before (without the cost attribute)
 }
 
 
@@ -312,6 +321,17 @@ fetch_query_pages <- function(
   progress_file <- file.path(output, "00_in.progress")
   file.create(progress_file)
   success <- FALSE
+
+  # Cost of this query, summed from the response headers of every page
+  started <- Sys.time()
+  cost <- c(requests = 0, credits = 0, usd = 0)
+  add_cost <- function(resp) {
+    num <- function(h) {
+      x <- suppressWarnings(as.numeric(httr2::resp_header(resp, h, "0")))
+      if (is.na(x)) 0 else x
+    }
+    cost <<- cost + c(1, num("x-ratelimit-credits-used"), num("x-ratelimit-cost-usd"))
+  }
   on.exit(
     {
       if (isTRUE(success)) {
@@ -376,9 +396,13 @@ fetch_query_pages <- function(
     req,
     error_log = error_log
   )
+  add_cost(resp)
 
   data <- resp |>
     httr2::resp_body_json()
+  # OpenAlex echoes the query it ran (OQL, OQO, URL) and the result size
+  x_query <- data$meta$x_query
+  records <- data$meta$count
 
   # Decided from the response, not the URL: with OQL / OQO the grouping is
   # inside the query. Grouped responses carry a numeric `meta$groups_count`,
@@ -405,8 +429,9 @@ fetch_query_pages <- function(
     if (!is.null(progressor)) {
       progressor(amount = 1)
     }
+    .pr_write_query_record(output, query_url, "url", x_query, records, cost, started)
     success <- TRUE
-    return(output)
+    return(structure(output, cost = cost))
   }
 
   # Calculate max_pages for cli progress bar
@@ -482,6 +507,7 @@ fetch_query_pages <- function(
       req,
       error_log = error_log
     )
+    add_cost(resp)
 
     data <- httr2::resp_body_json(resp)
 
@@ -519,9 +545,58 @@ fetch_query_pages <- function(
     cli::cli_progress_done()
   }
 
+  .pr_write_query_record(output, query_url, "url", x_query, records, cost, started)
   success <- TRUE
 
-  output
+  structure(output, cost = cost)
+}
+
+
+#' Write `_query.json`: what was asked, how, and what it cost
+#'
+#' The leading underscore keeps it out of the page discovery and out of
+#' arrow's `open_dataset()`.
+#'
+#' @keywords internal
+#' @noRd
+.pr_write_query_record <- function(output, query_url, via, x_query, records,
+                                   cost, started) {
+  record <- list(
+    query_url = sub("([?&])api_key=[^&]*&?", "\\1", query_url),
+    via = via,
+    oql = x_query$oql,
+    oqo = x_query$oqo,
+    records = records,
+    requests = unname(cost[["requests"]]),
+    credits = unname(cost[["credits"]]),
+    cost_usd = unname(cost[["usd"]]),
+    started = format(started, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    finished = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    openalexPro = as.character(utils::packageVersion("openalexPro"))
+  )
+  jsonlite::write_json(
+    record, file.path(output, "_query.json"),
+    auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA
+  )
+}
+
+
+#' Report the summed cost of the downloaded queries
+#'
+#' @param costs List of named numeric vectors (requests, credits, usd).
+#' @keywords internal
+#' @noRd
+.pr_report_cost <- function(costs) {
+  costs <- Filter(Negate(is.null), costs)
+  if (length(costs) == 0L) {
+    return(invisible(NULL))
+  }
+  total <- Reduce(`+`, costs)
+  cli::cli_alert_info(paste0(
+    "{total[['requests']]} request{?s}, {total[['credits']]} credit{?s} ",
+    "(${formatC(total[['usd']], format = 'f', digits = 4)})"
+  ))
+  invisible(total)
 }
 
 

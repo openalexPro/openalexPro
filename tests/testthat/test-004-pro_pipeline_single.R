@@ -210,3 +210,70 @@ test_that("a given seed is kept, and a one-page sample needs none", {
   expect_length(calls$urls, 1L)
   expect_null(httr2::url_parse(calls$urls[[1]])$query$seed)
 })
+
+# Two pages via cursor, each costing 1 credit / $0.0001, echoing the query.
+mock_two_pages <- function() {
+  function(req) {
+    q <- httr2::url_parse(req$url)$query
+    first <- identical(q$cursor, "*")
+    httr2::response(
+      200,
+      headers = list(
+        "content-type" = "application/json",
+        "x-ratelimit-credits-used" = "1",
+        "x-ratelimit-cost-usd" = "0.0001"
+      ),
+      body = charToRaw(sprintf(
+        paste0(
+          '{"meta":{"count":3,"per_page":2,"next_cursor":%s,',
+          '"x_query":{"oql":"get works where type is (article)",',
+          '"oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"article"}]}}},',
+          '"results":[%s]}'
+        ),
+        if (first) '"c2"' else "null",
+        if (first) '{"id":"W1"},{"id":"W2"}' else '{"id":"W3"}'
+      ))
+    )
+  }
+}
+
+test_that("each query gets a _query.json with the echoed query and its cost", {
+  httr2::local_mocked_responses(mock_two_pages())
+  out <- file.path(withr::local_tempdir(), "json")
+  expect_message(
+    res <- pro_request(
+      "https://api.openalex.org/works?filter=type:article",
+      output = out, progress = TRUE
+    ),
+    "2 requests, 2 credits \\(\\$0.0002\\)"
+  )
+  # the return value is still just the path
+  expect_null(attributes(res))
+  rec <- jsonlite::read_json(file.path(out, "_query.json"))
+  expect_equal(rec$query_url, "https://api.openalex.org/works?filter=type:article")
+  expect_equal(rec$via, "url")
+  expect_equal(rec$oql, "get works where type is (article)")
+  expect_equal(rec$oqo$get_rows, "works")
+  expect_equal(rec$records, 3L)
+  expect_equal(rec$requests, 2L)
+  expect_equal(rec$credits, 2L)
+  expect_equal(rec$cost_usd, 0.0002)
+  expect_true(all(c("started", "finished", "openalexPro") %in% names(rec)))
+})
+
+test_that("_query.json is not converted, but carried into the parquet partition", {
+  httr2::local_mocked_responses(mock_two_pages())
+  tmp <- withr::local_tempdir()
+  pro_fetch(
+    list(articles = "https://api.openalex.org/works?filter=type:article"),
+    project_folder = tmp, progress = FALSE, enrich = FALSE
+  )
+  # json folder deleted (delete_input = TRUE), record survives in the partition
+  expect_false(dir.exists(file.path(tmp, "json")))
+  rec <- file.path(tmp, "parquet", "query=articles", "_query.json")
+  expect_true(file.exists(rec))
+  expect_equal(jsonlite::read_json(rec)$records, 3L)
+  # only the pages are data
+  ds <- arrow::open_dataset(file.path(tmp, "parquet"))
+  expect_equal(sort(dplyr::collect(ds)$id), c("W1", "W2", "W3"))
+})
