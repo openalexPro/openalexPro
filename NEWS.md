@@ -23,6 +23,13 @@ query fails with OpenAlex's parse error and position.
 (`meta$groups_count`) instead of looking for `group_by=` in the URL, so
 grouping inside an OQL / OQO query is saved and converted correctly.
 
+## `pro_fetch()` gains `download_workers`
+
+Downloading is limited by the API, converting by CPU and memory, so the best
+number of workers differs. `pro_fetch()` used `workers` for both steps.
+`download_workers` (default `workers`, so existing calls are unchanged) now
+sets the download workers separately; `workers` sets the conversion workers.
+
 ## Download robustness: failing queries, paging parameters, semantic search
 
 - **A failing query no longer stops a list download.** With a list of

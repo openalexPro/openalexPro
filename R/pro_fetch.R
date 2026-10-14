@@ -31,6 +31,12 @@
 #'   those subdirectories already exist, the function stops with an error.
 #' @param delete_input Logical. If \code{TRUE} (the default), the \code{json}
 #'   subfolder is deleted after successful conversion to Parquet.
+#' @param workers Number of parallel workers for the conversion to Parquet
+#'   (CPU and memory bound), and by default also for the download. Default 1.
+#' @param download_workers Number of parallel workers for the download, used
+#'   when \code{query_url} is a list. Defaults to \code{workers}. Downloads
+#'   are limited by the API rather than the machine, so a few (e.g. 2--4)
+#'   are usually enough, while the conversion can use more.
 #' @param resume Logical. When \code{TRUE}, keep existing \code{json} and
 #'   \code{parquet} subfolders and complete an interrupted run: only leaf
 #'   queries that did not finish are downloaded again, and only missing
@@ -54,6 +60,7 @@ pro_fetch <- function(
   api_key        = pro_api_key(),
   delete_input   = TRUE,
   workers        = 1,
+  download_workers = workers,
   verbose        = FALSE,
   progress       = TRUE,
   enrich         = TRUE,
@@ -114,7 +121,7 @@ pro_fetch <- function(
     output     = file.path(project_folder, "json"),
     overwrite  = FALSE,
     api_key    = api_key,
-    workers    = workers,
+    workers    = download_workers,
     verbose    = verbose,
     progress   = progress,
     count_only = FALSE,
