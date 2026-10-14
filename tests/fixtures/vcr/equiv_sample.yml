@@ -5,9 +5,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:09 GMT
+      date: Wed, 14 Oct 2026 08:31:52 GMT
       content-type: application/json
-      cf-ray: a4a505267f197dd2-ZRH
+      cf-ray: a4a53aee292f7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -18,9 +18,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999887'
-      x-ratelimit-remaining-usd: '199.9887'
-      x-ratelimit-reset: '57891'
+      x-ratelimit-remaining: '1999819'
+      x-ratelimit-remaining-usd: '199.9819'
+      x-ratelimit-reset: '55688'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -30,11 +30,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964509"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964509"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966712"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966712"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 300, "db_response_time_ms": 46, "page": 1, "per_page":
+      string: '{"meta": {"count": 300, "db_response_time_ms": 49, "page": 1, "per_page":
         200, "groups_count": null, "x_query": {"oql": "get works where published in
         2020; then, sample 300 of those works with seed 42", "x_new_oql": "get works
         where published in 2020; then, sample 300 of those works with seed 42", "oqo":
@@ -141,16 +141,16 @@ http_interactions:
         {"id": "https://openalex.org/W3092117135"}, {"id": "https://openalex.org/W3095489037"},
         {"id": "https://openalex.org/W3084486997"}, {"id": "https://openalex.org/W3139120992"},
         {"id": "https://openalex.org/W3019024555"}], "group_by": []}'
-  recorded_at: 2026-10-14 07:55:09
+  recorded_at: 2026-10-14 08:31:52
 - request:
     method: GET
     uri: https://api.openalex.org/works?filter=publication_year%3A2020&select=id&sample=300&seed=42&per_page=200&page=2
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:09 GMT
+      date: Wed, 14 Oct 2026 08:31:52 GMT
       content-type: application/json
-      cf-ray: a4a505285dbc7dd2-ZRH
+      cf-ray: a4a53af0aa907dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -161,9 +161,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999886'
-      x-ratelimit-remaining-usd: '199.9886'
-      x-ratelimit-reset: '57891'
+      x-ratelimit-remaining: '1999818'
+      x-ratelimit-remaining-usd: '199.9818'
+      x-ratelimit-reset: '55688'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -173,11 +173,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964509"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964509"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966712"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966712"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 300, "db_response_time_ms": 63, "page": 2, "per_page":
+      string: '{"meta": {"count": 300, "db_response_time_ms": 31, "page": 2, "per_page":
         200, "groups_count": null, "x_query": {"oql": "get works where published in
         2020; then, sample 300 of those works with seed 42", "x_new_oql": "get works
         where published in 2020; then, sample 300 of those works with seed 42", "oqo":
@@ -234,7 +234,7 @@ http_interactions:
         {"id": "https://openalex.org/W7210352120"}, {"id": "https://openalex.org/W4413558350"},
         {"id": "https://openalex.org/W4395921618"}, {"id": "https://openalex.org/W3113825454"},
         {"id": "https://openalex.org/W4394385375"}], "group_by": []}'
-  recorded_at: 2026-10-14 07:55:09
+  recorded_at: 2026-10-14 08:31:52
 - request:
     method: POST
     uri: https://api.openalex.org/query
@@ -243,9 +243,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:09 GMT
+      date: Wed, 14 Oct 2026 08:31:52 GMT
       content-type: application/json
-      cf-ray: a4a50529fbc07dd2-ZRH
+      cf-ray: a4a53af228b07dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -256,9 +256,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999886'
-      x-ratelimit-remaining-usd: '199.9886'
-      x-ratelimit-reset: '57891'
+      x-ratelimit-remaining: '1999818'
+      x-ratelimit-remaining-usd: '199.9818'
+      x-ratelimit-reset: '55688'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -268,13 +268,13 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964509"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F8IilA5ebMvntjH9XHcZXiuBHxRosJQX%2FKNrE8NO9us%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964509"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966712"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=VU1XuZj24ocTIcBdck5549cXV6%2BQsUezR3yIj8tTIhk%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966712"
       content-encoding: gzip
     body:
       string: |
         {"oxurl":"/works?filter=publication_year:2020","oql":"get works where published in 2020","oql_oneline":"get works where published in 2020","x_new_oql":"get works from 2020","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"year","column_id":"publication_year","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
-  recorded_at: 2026-10-14 07:55:09
+  recorded_at: 2026-10-14 08:31:52
 - request:
     method: POST
     uri: https://api.openalex.org/
@@ -283,9 +283,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:10 GMT
+      date: Wed, 14 Oct 2026 08:31:53 GMT
       content-type: application/json
-      cf-ray: a4a5052b48c07dd2-ZRH
+      cf-ray: a4a53af3ce8e7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -296,9 +296,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999885'
-      x-ratelimit-remaining-usd: '199.9885'
-      x-ratelimit-reset: '57890'
+      x-ratelimit-remaining: '1999817'
+      x-ratelimit-remaining-usd: '199.9817'
+      x-ratelimit-reset: '55687'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -308,13 +308,13 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964510"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964510"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966713"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966713"
       content-encoding: gzip
     body:
       string: |
-        {"meta":{"count":300,"db_response_time_ms":46,"page":1,"per_page":200,"groups_count":null,"x_query":{"oql":"get works where published in 2020; then, sample 300 of those works with seed 42","x_new_oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}],"sample":300,"seed":"42"},"url":"/works?filter=publication_year:2020&sample=300&seed=42&per_page=200&page=1"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W4287635719"},{"id":"https://openalex.org/W4395983299"},{"id":"https://openalex.org/W4253500231"},{"id":"https://openalex.org/W3083113683"},{"id":"https://openalex.org/W3006110852"},{"id":"https://openalex.org/W4250277316"},{"id":"https://openalex.org/W4398309681"},{"id":"https://openalex.org/W2590023998"},{"id":"https://openalex.org/W4296757205"},{"id":"https://openalex.org/W3084416747"},{"id":"https://openalex.org/W3024696618"},{"id":"https://openalex.org/W3042599553"},{"id":"https://openalex.org/W3107057210"},{"id":"https://openalex.org/W3110551332"},{"id":"https://openalex.org/W4246565319"},{"id":"https://openalex.org/W3133451482"},{"id":"https://openalex.org/W4206414456"},{"id":"https://openalex.org/W3108867491"},{"id":"https://openalex.org/W7117211555"},{"id":"https://openalex.org/W3187438742"},{"id":"https://openalex.org/W4394464332"},{"id":"https://openalex.org/W3027272934"},{"id":"https://openalex.org/W4247940305"},{"id":"https://openalex.org/W3016305591"},{"id":"https://openalex.org/W3043562257"},{"id":"https://openalex.org/W4256658373"},{"id":"https://openalex.org/W3044192390"},{"id":"https://openalex.org/W3037704755"},{"id":"https://openalex.org/W3082395454"},{"id":"https://openalex.org/W4247891135"},{"id":"https://openalex.org/W3117097126"},{"id":"https://openalex.org/W3214551098"},{"id":"https://openalex.org/W4238375104"},{"id":"https://openalex.org/W4210695483"},{"id":"https://openalex.org/W3087945256"},{"id":"https://openalex.org/W3010921363"},{"id":"https://openalex.org/W4410818778"},{"id":"https://openalex.org/W4312623778"},{"id":"https://openalex.org/W3081648303"},{"id":"https://openalex.org/W3086168041"},{"id":"https://openalex.org/W3004726979"},{"id":"https://openalex.org/W3164336789"},{"id":"https://openalex.org/W4232398024"},{"id":"https://openalex.org/W4252555574"},{"id":"https://openalex.org/W3084923474"},{"id":"https://openalex.org/W3029583474"},{"id":"https://openalex.org/W3113070245"},{"id":"https://openalex.org/W3007558008"},{"id":"https://openalex.org/W4397651257"},{"id":"https://openalex.org/W3207792247"},{"id":"https://openalex.org/W3097084101"},{"id":"https://openalex.org/W4238059832"},{"id":"https://openalex.org/W3040458448"},{"id":"https://openalex.org/W4287942909"},{"id":"https://openalex.org/W3022394904"},{"id":"https://openalex.org/W3154779310"},{"id":"https://openalex.org/W2998057301"},{"id":"https://openalex.org/W3089172295"},{"id":"https://openalex.org/W3080572031"},{"id":"https://openalex.org/W3127942856"},{"id":"https://openalex.org/W4231717673"},{"id":"https://openalex.org/W3015476548"},{"id":"https://openalex.org/W4242443264"},{"id":"https://openalex.org/W3087007704"},{"id":"https://openalex.org/W3096190372"},{"id":"https://openalex.org/W3013986973"},{"id":"https://openalex.org/W7213728098"},{"id":"https://openalex.org/W3036848009"},{"id":"https://openalex.org/W3036622637"},{"id":"https://openalex.org/W3117547237"},{"id":"https://openalex.org/W2980158870"},{"id":"https://openalex.org/W3082946115"},{"id":"https://openalex.org/W4229764090"},{"id":"https://openalex.org/W4401096916"},{"id":"https://openalex.org/W4213215051"},{"id":"https://openalex.org/W4388177498"},{"id":"https://openalex.org/W3086524601"},{"id":"https://openalex.org/W3020602435"},{"id":"https://openalex.org/W3044620578"},{"id":"https://openalex.org/W3047768173"},{"id":"https://openalex.org/W3031698191"},{"id":"https://openalex.org/W3172824208"},{"id":"https://openalex.org/W3083344299"},{"id":"https://openalex.org/W3045477023"},{"id":"https://openalex.org/W32222044"},{"id":"https://openalex.org/W3120381405"},{"id":"https://openalex.org/W2583425670"},{"id":"https://openalex.org/W3107001536"},{"id":"https://openalex.org/W3018569085"},{"id":"https://openalex.org/W3168278813"},{"id":"https://openalex.org/W3093004342"},{"id":"https://openalex.org/W3070670906"},{"id":"https://openalex.org/W3015597823"},{"id":"https://openalex.org/W4232683842"},{"id":"https://openalex.org/W4233369701"},{"id":"https://openalex.org/W4393014636"},{"id":"https://openalex.org/W3126378086"},{"id":"https://openalex.org/W4243697636"},{"id":"https://openalex.org/W4407803732"},{"id":"https://openalex.org/W4398412205"},{"id":"https://openalex.org/W3103600312"},{"id":"https://openalex.org/W3093144580"},{"id":"https://openalex.org/W4230597374"},{"id":"https://openalex.org/W3013008816"},{"id":"https://openalex.org/W4250914854"},{"id":"https://openalex.org/W3114467828"},{"id":"https://openalex.org/W3093674569"},{"id":"https://openalex.org/W3030630475"},{"id":"https://openalex.org/W3160566386"},{"id":"https://openalex.org/W3154628272"},{"id":"https://openalex.org/W4394176040"},{"id":"https://openalex.org/W3035732386"},{"id":"https://openalex.org/W4233556014"},{"id":"https://openalex.org/W3025280184"},{"id":"https://openalex.org/W3092158004"},{"id":"https://openalex.org/W3031699809"},{"id":"https://openalex.org/W3214734055"},{"id":"https://openalex.org/W3164061865"},{"id":"https://openalex.org/W3110663618"},{"id":"https://openalex.org/W3035437179"},{"id":"https://openalex.org/W3047726430"},{"id":"https://openalex.org/W2997961924"},{"id":"https://openalex.org/W4413560259"},{"id":"https://openalex.org/W3037601887"},{"id":"https://openalex.org/W3165474007"},{"id":"https://openalex.org/W2620844158"},{"id":"https://openalex.org/W3128838697"},{"id":"https://openalex.org/W4251197328"},{"id":"https://openalex.org/W3096747715"},{"id":"https://openalex.org/W3097807327"},{"id":"https://openalex.org/W4231157698"},{"id":"https://openalex.org/W4395230574"},{"id":"https://openalex.org/W4236038678"},{"id":"https://openalex.org/W3109657749"},{"id":"https://openalex.org/W3043682498"},{"id":"https://openalex.org/W3000628543"},{"id":"https://openalex.org/W3090028090"},{"id":"https://openalex.org/W7209739403"},{"id":"https://openalex.org/W4396394611"},{"id":"https://openalex.org/W4232548341"},{"id":"https://openalex.org/W3010979899"},{"id":"https://openalex.org/W4323521894"},{"id":"https://openalex.org/W3040673325"},{"id":"https://openalex.org/W3094109557"},{"id":"https://openalex.org/W3046104836"},{"id":"https://openalex.org/W3112705045"},{"id":"https://openalex.org/W7219367055"},{"id":"https://openalex.org/W3108438012"},{"id":"https://openalex.org/W3026518084"},{"id":"https://openalex.org/W3028082865"},{"id":"https://openalex.org/W3015323554"},{"id":"https://openalex.org/W3127314258"},{"id":"https://openalex.org/W3004193157"},{"id":"https://openalex.org/W3012813966"},{"id":"https://openalex.org/W3209448266"},{"id":"https://openalex.org/W3170115047"},{"id":"https://openalex.org/W3089096950"},{"id":"https://openalex.org/W3103249192"},{"id":"https://openalex.org/W3011071180"},{"id":"https://openalex.org/W7172440692"},{"id":"https://openalex.org/W4243695640"},{"id":"https://openalex.org/W3108809396"},{"id":"https://openalex.org/W3198854223"},{"id":"https://openalex.org/W3089072691"},{"id":"https://openalex.org/W3106682126"},{"id":"https://openalex.org/W4250400944"},{"id":"https://openalex.org/W3085924478"},{"id":"https://openalex.org/W3116825294"},{"id":"https://openalex.org/W3092965778"},{"id":"https://openalex.org/W4397619333"},{"id":"https://openalex.org/W3033715851"},{"id":"https://openalex.org/W4252674109"},{"id":"https://openalex.org/W3011064972"},{"id":"https://openalex.org/W3133183971"},{"id":"https://openalex.org/W3081157778"},{"id":"https://openalex.org/W4395889212"},{"id":"https://openalex.org/W3012357374"},{"id":"https://openalex.org/W4287789266"},{"id":"https://openalex.org/W3033229464"},{"id":"https://openalex.org/W3039858213"},{"id":"https://openalex.org/W3097973297"},{"id":"https://openalex.org/W3087539868"},{"id":"https://openalex.org/W3027701268"},{"id":"https://openalex.org/W7216835036"},{"id":"https://openalex.org/W7131924072"},{"id":"https://openalex.org/W3027030902"},{"id":"https://openalex.org/W3045252274"},{"id":"https://openalex.org/W4254932451"},{"id":"https://openalex.org/W3120988727"},{"id":"https://openalex.org/W4241768138"},{"id":"https://openalex.org/W3026684062"},{"id":"https://openalex.org/W3108562791"},{"id":"https://openalex.org/W3088544613"},{"id":"https://openalex.org/W3199714770"},{"id":"https://openalex.org/W4231084175"},{"id":"https://openalex.org/W3092117135"},{"id":"https://openalex.org/W3095489037"},{"id":"https://openalex.org/W3084486997"},{"id":"https://openalex.org/W3139120992"},{"id":"https://openalex.org/W3019024555"}],"group_by":[]}
-  recorded_at: 2026-10-14 07:55:10
+        {"meta":{"count":300,"db_response_time_ms":31,"page":1,"per_page":200,"groups_count":null,"x_query":{"oql":"get works where published in 2020; then, sample 300 of those works with seed 42","x_new_oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}],"sample":300,"seed":"42"},"url":"/works?filter=publication_year:2020&sample=300&seed=42&per_page=200&page=1"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W4287635719"},{"id":"https://openalex.org/W4395983299"},{"id":"https://openalex.org/W4253500231"},{"id":"https://openalex.org/W3083113683"},{"id":"https://openalex.org/W3006110852"},{"id":"https://openalex.org/W4250277316"},{"id":"https://openalex.org/W4398309681"},{"id":"https://openalex.org/W2590023998"},{"id":"https://openalex.org/W4296757205"},{"id":"https://openalex.org/W3084416747"},{"id":"https://openalex.org/W3024696618"},{"id":"https://openalex.org/W3042599553"},{"id":"https://openalex.org/W3107057210"},{"id":"https://openalex.org/W3110551332"},{"id":"https://openalex.org/W4246565319"},{"id":"https://openalex.org/W3133451482"},{"id":"https://openalex.org/W4206414456"},{"id":"https://openalex.org/W3108867491"},{"id":"https://openalex.org/W7117211555"},{"id":"https://openalex.org/W3187438742"},{"id":"https://openalex.org/W4394464332"},{"id":"https://openalex.org/W3027272934"},{"id":"https://openalex.org/W4247940305"},{"id":"https://openalex.org/W3016305591"},{"id":"https://openalex.org/W3043562257"},{"id":"https://openalex.org/W4256658373"},{"id":"https://openalex.org/W3044192390"},{"id":"https://openalex.org/W3037704755"},{"id":"https://openalex.org/W3082395454"},{"id":"https://openalex.org/W4247891135"},{"id":"https://openalex.org/W3117097126"},{"id":"https://openalex.org/W3214551098"},{"id":"https://openalex.org/W4238375104"},{"id":"https://openalex.org/W4210695483"},{"id":"https://openalex.org/W3087945256"},{"id":"https://openalex.org/W3010921363"},{"id":"https://openalex.org/W4410818778"},{"id":"https://openalex.org/W4312623778"},{"id":"https://openalex.org/W3081648303"},{"id":"https://openalex.org/W3086168041"},{"id":"https://openalex.org/W3004726979"},{"id":"https://openalex.org/W3164336789"},{"id":"https://openalex.org/W4232398024"},{"id":"https://openalex.org/W4252555574"},{"id":"https://openalex.org/W3084923474"},{"id":"https://openalex.org/W3029583474"},{"id":"https://openalex.org/W3113070245"},{"id":"https://openalex.org/W3007558008"},{"id":"https://openalex.org/W4397651257"},{"id":"https://openalex.org/W3207792247"},{"id":"https://openalex.org/W3097084101"},{"id":"https://openalex.org/W4238059832"},{"id":"https://openalex.org/W3040458448"},{"id":"https://openalex.org/W4287942909"},{"id":"https://openalex.org/W3022394904"},{"id":"https://openalex.org/W3154779310"},{"id":"https://openalex.org/W2998057301"},{"id":"https://openalex.org/W3089172295"},{"id":"https://openalex.org/W3080572031"},{"id":"https://openalex.org/W3127942856"},{"id":"https://openalex.org/W4231717673"},{"id":"https://openalex.org/W3015476548"},{"id":"https://openalex.org/W4242443264"},{"id":"https://openalex.org/W3087007704"},{"id":"https://openalex.org/W3096190372"},{"id":"https://openalex.org/W3013986973"},{"id":"https://openalex.org/W7213728098"},{"id":"https://openalex.org/W3036848009"},{"id":"https://openalex.org/W3036622637"},{"id":"https://openalex.org/W3117547237"},{"id":"https://openalex.org/W2980158870"},{"id":"https://openalex.org/W3082946115"},{"id":"https://openalex.org/W4229764090"},{"id":"https://openalex.org/W4401096916"},{"id":"https://openalex.org/W4213215051"},{"id":"https://openalex.org/W4388177498"},{"id":"https://openalex.org/W3086524601"},{"id":"https://openalex.org/W3020602435"},{"id":"https://openalex.org/W3044620578"},{"id":"https://openalex.org/W3047768173"},{"id":"https://openalex.org/W3031698191"},{"id":"https://openalex.org/W3172824208"},{"id":"https://openalex.org/W3083344299"},{"id":"https://openalex.org/W3045477023"},{"id":"https://openalex.org/W32222044"},{"id":"https://openalex.org/W3120381405"},{"id":"https://openalex.org/W2583425670"},{"id":"https://openalex.org/W3107001536"},{"id":"https://openalex.org/W3018569085"},{"id":"https://openalex.org/W3168278813"},{"id":"https://openalex.org/W3093004342"},{"id":"https://openalex.org/W3070670906"},{"id":"https://openalex.org/W3015597823"},{"id":"https://openalex.org/W4232683842"},{"id":"https://openalex.org/W4233369701"},{"id":"https://openalex.org/W4393014636"},{"id":"https://openalex.org/W3126378086"},{"id":"https://openalex.org/W4243697636"},{"id":"https://openalex.org/W4407803732"},{"id":"https://openalex.org/W4398412205"},{"id":"https://openalex.org/W3103600312"},{"id":"https://openalex.org/W3093144580"},{"id":"https://openalex.org/W4230597374"},{"id":"https://openalex.org/W3013008816"},{"id":"https://openalex.org/W4250914854"},{"id":"https://openalex.org/W3114467828"},{"id":"https://openalex.org/W3093674569"},{"id":"https://openalex.org/W3030630475"},{"id":"https://openalex.org/W3160566386"},{"id":"https://openalex.org/W3154628272"},{"id":"https://openalex.org/W4394176040"},{"id":"https://openalex.org/W3035732386"},{"id":"https://openalex.org/W4233556014"},{"id":"https://openalex.org/W3025280184"},{"id":"https://openalex.org/W3092158004"},{"id":"https://openalex.org/W3031699809"},{"id":"https://openalex.org/W3214734055"},{"id":"https://openalex.org/W3164061865"},{"id":"https://openalex.org/W3110663618"},{"id":"https://openalex.org/W3035437179"},{"id":"https://openalex.org/W3047726430"},{"id":"https://openalex.org/W2997961924"},{"id":"https://openalex.org/W4413560259"},{"id":"https://openalex.org/W3037601887"},{"id":"https://openalex.org/W3165474007"},{"id":"https://openalex.org/W2620844158"},{"id":"https://openalex.org/W3128838697"},{"id":"https://openalex.org/W4251197328"},{"id":"https://openalex.org/W3096747715"},{"id":"https://openalex.org/W3097807327"},{"id":"https://openalex.org/W4231157698"},{"id":"https://openalex.org/W4395230574"},{"id":"https://openalex.org/W4236038678"},{"id":"https://openalex.org/W3109657749"},{"id":"https://openalex.org/W3043682498"},{"id":"https://openalex.org/W3000628543"},{"id":"https://openalex.org/W3090028090"},{"id":"https://openalex.org/W7209739403"},{"id":"https://openalex.org/W4396394611"},{"id":"https://openalex.org/W4232548341"},{"id":"https://openalex.org/W3010979899"},{"id":"https://openalex.org/W4323521894"},{"id":"https://openalex.org/W3040673325"},{"id":"https://openalex.org/W3094109557"},{"id":"https://openalex.org/W3046104836"},{"id":"https://openalex.org/W3112705045"},{"id":"https://openalex.org/W7219367055"},{"id":"https://openalex.org/W3108438012"},{"id":"https://openalex.org/W3026518084"},{"id":"https://openalex.org/W3028082865"},{"id":"https://openalex.org/W3015323554"},{"id":"https://openalex.org/W3127314258"},{"id":"https://openalex.org/W3004193157"},{"id":"https://openalex.org/W3012813966"},{"id":"https://openalex.org/W3209448266"},{"id":"https://openalex.org/W3170115047"},{"id":"https://openalex.org/W3089096950"},{"id":"https://openalex.org/W3103249192"},{"id":"https://openalex.org/W3011071180"},{"id":"https://openalex.org/W7172440692"},{"id":"https://openalex.org/W4243695640"},{"id":"https://openalex.org/W3108809396"},{"id":"https://openalex.org/W3198854223"},{"id":"https://openalex.org/W3089072691"},{"id":"https://openalex.org/W3106682126"},{"id":"https://openalex.org/W4250400944"},{"id":"https://openalex.org/W3085924478"},{"id":"https://openalex.org/W3116825294"},{"id":"https://openalex.org/W3092965778"},{"id":"https://openalex.org/W4397619333"},{"id":"https://openalex.org/W3033715851"},{"id":"https://openalex.org/W4252674109"},{"id":"https://openalex.org/W3011064972"},{"id":"https://openalex.org/W3133183971"},{"id":"https://openalex.org/W3081157778"},{"id":"https://openalex.org/W4395889212"},{"id":"https://openalex.org/W3012357374"},{"id":"https://openalex.org/W4287789266"},{"id":"https://openalex.org/W3033229464"},{"id":"https://openalex.org/W3039858213"},{"id":"https://openalex.org/W3097973297"},{"id":"https://openalex.org/W3087539868"},{"id":"https://openalex.org/W3027701268"},{"id":"https://openalex.org/W7216835036"},{"id":"https://openalex.org/W7131924072"},{"id":"https://openalex.org/W3027030902"},{"id":"https://openalex.org/W3045252274"},{"id":"https://openalex.org/W4254932451"},{"id":"https://openalex.org/W3120988727"},{"id":"https://openalex.org/W4241768138"},{"id":"https://openalex.org/W3026684062"},{"id":"https://openalex.org/W3108562791"},{"id":"https://openalex.org/W3088544613"},{"id":"https://openalex.org/W3199714770"},{"id":"https://openalex.org/W4231084175"},{"id":"https://openalex.org/W3092117135"},{"id":"https://openalex.org/W3095489037"},{"id":"https://openalex.org/W3084486997"},{"id":"https://openalex.org/W3139120992"},{"id":"https://openalex.org/W3019024555"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:53
 - request:
     method: POST
     uri: https://api.openalex.org/
@@ -323,9 +323,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:10 GMT
+      date: Wed, 14 Oct 2026 08:31:53 GMT
       content-type: application/json
-      cf-ray: a4a5052ceed87dd2-ZRH
+      cf-ray: a4a53af59d527dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -336,9 +336,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999884'
-      x-ratelimit-remaining-usd: '199.9884'
-      x-ratelimit-reset: '57890'
+      x-ratelimit-remaining: '1999816'
+      x-ratelimit-remaining-usd: '199.9816'
+      x-ratelimit-reset: '55687'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -348,11 +348,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964510"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964510"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966713"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966713"
       content-encoding: gzip
     body:
       string: |
-        {"meta":{"count":300,"db_response_time_ms":35,"page":2,"per_page":200,"groups_count":null,"x_query":{"oql":"get works where published in 2020; then, sample 300 of those works with seed 42","x_new_oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}],"sample":300,"seed":"42"},"url":"/works?filter=publication_year:2020&sample=300&seed=42&per_page=200&page=2"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3024711644"},{"id":"https://openalex.org/W3005063071"},{"id":"https://openalex.org/W3213458050"},{"id":"https://openalex.org/W3041633591"},{"id":"https://openalex.org/W3110908778"},{"id":"https://openalex.org/W3114155000"},{"id":"https://openalex.org/W3044278187"},{"id":"https://openalex.org/W3157314014"},{"id":"https://openalex.org/W3112872460"},{"id":"https://openalex.org/W3030633861"},{"id":"https://openalex.org/W3011311732"},{"id":"https://openalex.org/W4394515033"},{"id":"https://openalex.org/W3092632700"},{"id":"https://openalex.org/W3007805870"},{"id":"https://openalex.org/W4256351025"},{"id":"https://openalex.org/W3007975121"},{"id":"https://openalex.org/W7213684366"},{"id":"https://openalex.org/W3039111399"},{"id":"https://openalex.org/W3011958058"},{"id":"https://openalex.org/W3037050906"},{"id":"https://openalex.org/W2989677999"},{"id":"https://openalex.org/W3009672696"},{"id":"https://openalex.org/W3122366345"},{"id":"https://openalex.org/W3002965098"},{"id":"https://openalex.org/W3186755690"},{"id":"https://openalex.org/W3043450391"},{"id":"https://openalex.org/W3185596643"},{"id":"https://openalex.org/W3045471508"},{"id":"https://openalex.org/W3047194524"},{"id":"https://openalex.org/W4395769827"},{"id":"https://openalex.org/W7144111519"},{"id":"https://openalex.org/W3042133574"},{"id":"https://openalex.org/W3096627173"},{"id":"https://openalex.org/W3048626803"},{"id":"https://openalex.org/W4248996798"},{"id":"https://openalex.org/W3041350343"},{"id":"https://openalex.org/W3175282444"},{"id":"https://openalex.org/W3207677262"},{"id":"https://openalex.org/W4245079953"},{"id":"https://openalex.org/W3046056012"},{"id":"https://openalex.org/W3095190735"},{"id":"https://openalex.org/W3162429306"},{"id":"https://openalex.org/W3015213588"},{"id":"https://openalex.org/W3092176987"},{"id":"https://openalex.org/W3208719788"},{"id":"https://openalex.org/W4232531967"},{"id":"https://openalex.org/W3088562721"},{"id":"https://openalex.org/W3106618263"},{"id":"https://openalex.org/W3093093348"},{"id":"https://openalex.org/W3017689887"},{"id":"https://openalex.org/W4230551089"},{"id":"https://openalex.org/W4244094857"},{"id":"https://openalex.org/W4398457370"},{"id":"https://openalex.org/W3108771261"},{"id":"https://openalex.org/W4237562427"},{"id":"https://openalex.org/W3032249671"},{"id":"https://openalex.org/W3008018707"},{"id":"https://openalex.org/W3092434824"},{"id":"https://openalex.org/W3042959150"},{"id":"https://openalex.org/W7216812334"},{"id":"https://openalex.org/W3014197503"},{"id":"https://openalex.org/W3046969741"},{"id":"https://openalex.org/W3044802197"},{"id":"https://openalex.org/W3060944797"},{"id":"https://openalex.org/W3167471123"},{"id":"https://openalex.org/W3083607347"},{"id":"https://openalex.org/W3021798285"},{"id":"https://openalex.org/W4205726257"},{"id":"https://openalex.org/W3095895637"},{"id":"https://openalex.org/W3157384349"},{"id":"https://openalex.org/W3081639064"},{"id":"https://openalex.org/W3096370148"},{"id":"https://openalex.org/W3163776828"},{"id":"https://openalex.org/W3123456833"},{"id":"https://openalex.org/W7198617645"},{"id":"https://openalex.org/W3009004523"},{"id":"https://openalex.org/W3048765896"},{"id":"https://openalex.org/W4253081965"},{"id":"https://openalex.org/W3126687839"},{"id":"https://openalex.org/W3060239456"},{"id":"https://openalex.org/W4306882422"},{"id":"https://openalex.org/W3049219131"},{"id":"https://openalex.org/W4285696637"},{"id":"https://openalex.org/W3127356265"},{"id":"https://openalex.org/W3153179368"},{"id":"https://openalex.org/W3047645302"},{"id":"https://openalex.org/W3003001884"},{"id":"https://openalex.org/W3097484589"},{"id":"https://openalex.org/W3006839060"},{"id":"https://openalex.org/W3010462135"},{"id":"https://openalex.org/W3110819824"},{"id":"https://openalex.org/W3004094076"},{"id":"https://openalex.org/W3080106029"},{"id":"https://openalex.org/W4255991446"},{"id":"https://openalex.org/W3168204653"},{"id":"https://openalex.org/W7210352120"},{"id":"https://openalex.org/W4413558350"},{"id":"https://openalex.org/W4395921618"},{"id":"https://openalex.org/W3113825454"},{"id":"https://openalex.org/W4394385375"}],"group_by":[]}
-  recorded_at: 2026-10-14 07:55:10
+        {"meta":{"count":300,"db_response_time_ms":29,"page":2,"per_page":200,"groups_count":null,"x_query":{"oql":"get works where published in 2020; then, sample 300 of those works with seed 42","x_new_oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}],"sample":300,"seed":"42"},"url":"/works?filter=publication_year:2020&sample=300&seed=42&per_page=200&page=2"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3024711644"},{"id":"https://openalex.org/W3005063071"},{"id":"https://openalex.org/W3213458050"},{"id":"https://openalex.org/W3041633591"},{"id":"https://openalex.org/W3110908778"},{"id":"https://openalex.org/W3114155000"},{"id":"https://openalex.org/W3044278187"},{"id":"https://openalex.org/W3157314014"},{"id":"https://openalex.org/W3112872460"},{"id":"https://openalex.org/W3030633861"},{"id":"https://openalex.org/W3011311732"},{"id":"https://openalex.org/W4394515033"},{"id":"https://openalex.org/W3092632700"},{"id":"https://openalex.org/W3007805870"},{"id":"https://openalex.org/W4256351025"},{"id":"https://openalex.org/W3007975121"},{"id":"https://openalex.org/W7213684366"},{"id":"https://openalex.org/W3039111399"},{"id":"https://openalex.org/W3011958058"},{"id":"https://openalex.org/W3037050906"},{"id":"https://openalex.org/W2989677999"},{"id":"https://openalex.org/W3009672696"},{"id":"https://openalex.org/W3122366345"},{"id":"https://openalex.org/W3002965098"},{"id":"https://openalex.org/W3186755690"},{"id":"https://openalex.org/W3043450391"},{"id":"https://openalex.org/W3185596643"},{"id":"https://openalex.org/W3045471508"},{"id":"https://openalex.org/W3047194524"},{"id":"https://openalex.org/W4395769827"},{"id":"https://openalex.org/W7144111519"},{"id":"https://openalex.org/W3042133574"},{"id":"https://openalex.org/W3096627173"},{"id":"https://openalex.org/W3048626803"},{"id":"https://openalex.org/W4248996798"},{"id":"https://openalex.org/W3041350343"},{"id":"https://openalex.org/W3175282444"},{"id":"https://openalex.org/W3207677262"},{"id":"https://openalex.org/W4245079953"},{"id":"https://openalex.org/W3046056012"},{"id":"https://openalex.org/W3095190735"},{"id":"https://openalex.org/W3162429306"},{"id":"https://openalex.org/W3015213588"},{"id":"https://openalex.org/W3092176987"},{"id":"https://openalex.org/W3208719788"},{"id":"https://openalex.org/W4232531967"},{"id":"https://openalex.org/W3088562721"},{"id":"https://openalex.org/W3106618263"},{"id":"https://openalex.org/W3093093348"},{"id":"https://openalex.org/W3017689887"},{"id":"https://openalex.org/W4230551089"},{"id":"https://openalex.org/W4244094857"},{"id":"https://openalex.org/W4398457370"},{"id":"https://openalex.org/W3108771261"},{"id":"https://openalex.org/W4237562427"},{"id":"https://openalex.org/W3032249671"},{"id":"https://openalex.org/W3008018707"},{"id":"https://openalex.org/W3092434824"},{"id":"https://openalex.org/W3042959150"},{"id":"https://openalex.org/W7216812334"},{"id":"https://openalex.org/W3014197503"},{"id":"https://openalex.org/W3046969741"},{"id":"https://openalex.org/W3044802197"},{"id":"https://openalex.org/W3060944797"},{"id":"https://openalex.org/W3167471123"},{"id":"https://openalex.org/W3083607347"},{"id":"https://openalex.org/W3021798285"},{"id":"https://openalex.org/W4205726257"},{"id":"https://openalex.org/W3095895637"},{"id":"https://openalex.org/W3157384349"},{"id":"https://openalex.org/W3081639064"},{"id":"https://openalex.org/W3096370148"},{"id":"https://openalex.org/W3163776828"},{"id":"https://openalex.org/W3123456833"},{"id":"https://openalex.org/W7198617645"},{"id":"https://openalex.org/W3009004523"},{"id":"https://openalex.org/W3048765896"},{"id":"https://openalex.org/W4253081965"},{"id":"https://openalex.org/W3126687839"},{"id":"https://openalex.org/W3060239456"},{"id":"https://openalex.org/W4306882422"},{"id":"https://openalex.org/W3049219131"},{"id":"https://openalex.org/W4285696637"},{"id":"https://openalex.org/W3127356265"},{"id":"https://openalex.org/W3153179368"},{"id":"https://openalex.org/W3047645302"},{"id":"https://openalex.org/W3003001884"},{"id":"https://openalex.org/W3097484589"},{"id":"https://openalex.org/W3006839060"},{"id":"https://openalex.org/W3010462135"},{"id":"https://openalex.org/W3110819824"},{"id":"https://openalex.org/W3004094076"},{"id":"https://openalex.org/W3080106029"},{"id":"https://openalex.org/W4255991446"},{"id":"https://openalex.org/W3168204653"},{"id":"https://openalex.org/W7210352120"},{"id":"https://openalex.org/W4413558350"},{"id":"https://openalex.org/W4395921618"},{"id":"https://openalex.org/W3113825454"},{"id":"https://openalex.org/W4394385375"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:53
 recorded_with: VCR-vcr/2.1.0

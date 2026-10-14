@@ -5,9 +5,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:10 GMT
+      date: Wed, 14 Oct 2026 08:31:53 GMT
       content-type: application/json
-      cf-ray: a4a5052ead1a7dd2-ZRH
+      cf-ray: a4a53af74c357dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -18,9 +18,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999883'
-      x-ratelimit-remaining-usd: '199.9883'
-      x-ratelimit-reset: '57890'
+      x-ratelimit-remaining: '1999815'
+      x-ratelimit-remaining-usd: '199.9815'
+      x-ratelimit-reset: '55687'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -30,11 +30,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964510"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964510"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966713"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966713"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 3652, "db_response_time_ms": 6, "page": null, "per_page":
+      string: '{"meta": {"count": 3652, "db_response_time_ms": 7, "page": null, "per_page":
         200, "next_cursor": "InJldHJhY3Rpb24i", "groups_count": 8, "x_query": {"oql":
         "get works where source is (S137773608) and published in 2020;\nthen, group
         those works by type", "x_new_oql": "break down works from 2020 in (S137773608)
@@ -50,16 +50,16 @@ http_interactions:
         "key_display_name": "other", "count": 262}, {"key": "https://openalex.org/types/paratext",
         "key_display_name": "paratext", "count": 1}, {"key": "https://openalex.org/types/retraction",
         "key_display_name": "retraction", "count": 8}]}'
-  recorded_at: 2026-10-14 07:55:10
+  recorded_at: 2026-10-14 08:31:53
 - request:
     method: GET
     uri: https://api.openalex.org/works?filter=publication_year%3A2020%2Cprimary_location.source.id%3AS137773608&group_by=type&per_page=200&cursor=InJldHJhY3Rpb24i
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:10 GMT
+      date: Wed, 14 Oct 2026 08:31:53 GMT
       content-type: application/json
-      cf-ray: a4a5052fa9247dd2-ZRH
+      cf-ray: a4a53af878927dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -70,9 +70,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999882'
-      x-ratelimit-remaining-usd: '199.9882'
-      x-ratelimit-reset: '57890'
+      x-ratelimit-remaining: '1999814'
+      x-ratelimit-remaining-usd: '199.9814'
+      x-ratelimit-reset: '55687'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -82,11 +82,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964510"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964510"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966713"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966713"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 3652, "db_response_time_ms": 13, "page": null, "per_page":
+      string: '{"meta": {"count": 3652, "db_response_time_ms": 6, "page": null, "per_page":
         200, "next_cursor": null, "groups_count": 0, "x_query": {"oql": "get works
         where source is (S137773608) and published in 2020;\nthen, group those works
         by type", "x_new_oql": "break down works from 2020 in (S137773608) by type",
@@ -94,7 +94,7 @@ http_interactions:
         "value": "S137773608"}, {"column_id": "publication_year", "value": 2020}],
         "group_by": [{"column_id": "type"}]}, "url": "/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type&per_page=200&cursor=InJldHJhY3Rpb24i"},
         "cost_usd": 0.0001}, "group_by": []}'
-  recorded_at: 2026-10-14 07:55:10
+  recorded_at: 2026-10-14 08:31:53
 - request:
     method: POST
     uri: https://api.openalex.org/query
@@ -103,9 +103,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:11 GMT
+      date: Wed, 14 Oct 2026 08:31:54 GMT
       content-type: application/json
-      cf-ray: a4a50530edee7dd2-ZRH
+      cf-ray: a4a53af9ad5a7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -116,9 +116,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999882'
-      x-ratelimit-remaining-usd: '199.9882'
-      x-ratelimit-reset: '57889'
+      x-ratelimit-remaining: '1999814'
+      x-ratelimit-remaining-usd: '199.9814'
+      x-ratelimit-reset: '55686'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -128,13 +128,13 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964510"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mJUwhb7qY5EZEyb1kMZK4RQ4CILksKGtN4qWLHSgK5U%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964510"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966713"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rCVzY9kLw2MMfUcmA5hYCgH2GqpuPv1NvVSAnrQhUvs%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966713"
       content-encoding: gzip
     body:
       string: |
         {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type","oql":"get works where source is [Nature](S137773608) and published in 2020;\nthen, group those works by type","oql_oneline":"get works where source is [Nature](S137773608) and published in 2020; then, group those works by type","x_new_oql":"break down works from 2020 in [Nature](S137773608) by type","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n3","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[2]}],"implicit":true},"directives":[{"type":"group_by","text":"group by type","meta":{"dimensions":[{"column_id":"type","column_display_name":"type"}]}}],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"},{"t":"conn","id":"n3","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"},{"t":"kw","text":" group by type","label":"group by type"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}],"group_by":[{"column_id":"type"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
-  recorded_at: 2026-10-14 07:55:11
+  recorded_at: 2026-10-14 08:31:54
 - request:
     method: POST
     uri: https://api.openalex.org/
@@ -143,9 +143,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:11 GMT
+      date: Wed, 14 Oct 2026 08:31:54 GMT
       content-type: application/json
-      cf-ray: a4a505320a1d7dd2-ZRH
+      cf-ray: a4a53afaca3c7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -156,9 +156,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999881'
-      x-ratelimit-remaining-usd: '199.9881'
-      x-ratelimit-reset: '57889'
+      x-ratelimit-remaining: '1999813'
+      x-ratelimit-remaining-usd: '199.9813'
+      x-ratelimit-reset: '55686'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -168,13 +168,13 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964511"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964511"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=WDTO50XCRZJUQVSK7%2BKrtOn6Xn4OK6Z64n54rVZsyv8%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966714"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=WDTO50XCRZJUQVSK7%2BKrtOn6Xn4OK6Z64n54rVZsyv8%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966714"
       content-encoding: gzip
     body:
       string: |
-        {"meta":{"count":3652,"db_response_time_ms":3,"page":null,"per_page":200,"next_cursor":"InJldHJhY3Rpb24i","groups_count":8,"x_query":{"oql":"get works where source is (S137773608) and published in 2020;\nthen, group those works by type","x_new_oql":"break down works from 2020 in (S137773608) by type","oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}],"group_by":[{"column_id":"type"}]},"url":"/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a group by"}]},"cost_usd":0.0001},"group_by":[{"key":"https://openalex.org/types/article","key_display_name":"article","count":3131},{"key":"https://openalex.org/types/book-review","key_display_name":"book-review","count":44},{"key":"https://openalex.org/types/editorial","key_display_name":"editorial","count":62},{"key":"https://openalex.org/types/erratum","key_display_name":"erratum","count":129},{"key":"https://openalex.org/types/letter","key_display_name":"letter","count":15},{"key":"https://openalex.org/types/other","key_display_name":"other","count":262},{"key":"https://openalex.org/types/paratext","key_display_name":"paratext","count":1},{"key":"https://openalex.org/types/retraction","key_display_name":"retraction","count":8}]}
-  recorded_at: 2026-10-14 07:55:11
+        {"meta":{"count":3652,"db_response_time_ms":6,"page":null,"per_page":200,"next_cursor":"InJldHJhY3Rpb24i","groups_count":8,"x_query":{"oql":"get works where source is (S137773608) and published in 2020;\nthen, group those works by type","x_new_oql":"break down works from 2020 in (S137773608) by type","oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}],"group_by":[{"column_id":"type"}]},"url":"/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a group by"}]},"cost_usd":0.0001},"group_by":[{"key":"https://openalex.org/types/article","key_display_name":"article","count":3131},{"key":"https://openalex.org/types/book-review","key_display_name":"book-review","count":44},{"key":"https://openalex.org/types/editorial","key_display_name":"editorial","count":62},{"key":"https://openalex.org/types/erratum","key_display_name":"erratum","count":129},{"key":"https://openalex.org/types/letter","key_display_name":"letter","count":15},{"key":"https://openalex.org/types/other","key_display_name":"other","count":262},{"key":"https://openalex.org/types/paratext","key_display_name":"paratext","count":1},{"key":"https://openalex.org/types/retraction","key_display_name":"retraction","count":8}]}
+  recorded_at: 2026-10-14 08:31:54
 - request:
     method: POST
     uri: https://api.openalex.org/
@@ -183,9 +183,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:11 GMT
+      date: Wed, 14 Oct 2026 08:31:54 GMT
       content-type: application/json
-      cf-ray: a4a505331ee57dd2-ZRH
+      cf-ray: a4a53afbfef97dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -196,9 +196,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999880'
-      x-ratelimit-remaining-usd: '199.988'
-      x-ratelimit-reset: '57889'
+      x-ratelimit-remaining: '1999812'
+      x-ratelimit-remaining-usd: '199.9812'
+      x-ratelimit-reset: '55686'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -208,11 +208,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964511"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964511"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=WDTO50XCRZJUQVSK7%2BKrtOn6Xn4OK6Z64n54rVZsyv8%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966714"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=WDTO50XCRZJUQVSK7%2BKrtOn6Xn4OK6Z64n54rVZsyv8%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966714"
       content-encoding: gzip
     body:
       string: |
-        {"meta":{"count":3652,"db_response_time_ms":5,"page":null,"per_page":200,"next_cursor":null,"groups_count":0,"x_query":{"oql":"get works where source is (S137773608) and published in 2020;\nthen, group those works by type","x_new_oql":"break down works from 2020 in (S137773608) by type","oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}],"group_by":[{"column_id":"type"}]},"url":"/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type&per_page=200&cursor=InJldHJhY3Rpb24i"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a group by"}]},"cost_usd":0.0001},"group_by":[]}
-  recorded_at: 2026-10-14 07:55:11
+        {"meta":{"count":3652,"db_response_time_ms":21,"page":null,"per_page":200,"next_cursor":null,"groups_count":0,"x_query":{"oql":"get works where source is (S137773608) and published in 2020;\nthen, group those works by type","x_new_oql":"break down works from 2020 in (S137773608) by type","oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}],"group_by":[{"column_id":"type"}]},"url":"/works?filter=primary_location.source.id:S137773608,publication_year:2020&group_by=type&per_page=200&cursor=InJldHJhY3Rpb24i"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a group by"}]},"cost_usd":0.0001},"group_by":[]}
+  recorded_at: 2026-10-14 08:31:54
 recorded_with: VCR-vcr/2.1.0

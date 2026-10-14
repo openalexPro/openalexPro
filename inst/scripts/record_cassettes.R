@@ -50,7 +50,18 @@ Sys.setenv(OPENALEXPRO_RECORD_CASSETTES = "true")
 on.exit(Sys.unsetenv("OPENALEXPRO_RECORD_CASSETTES"), add = TRUE)
 
 message("Running tests to record new cassettes ...")
+# Snapshot failures are expected while recording (the live data has moved
+# on since the last recording); they are reviewed afterwards. testthat stops
+# after 10 failures by default, which would leave the remaining tests -- and
+# their cassettes -- unrecorded.
+old_max_fails <- Sys.getenv("TESTTHAT_MAX_FAILS", NA)
+Sys.setenv(TESTTHAT_MAX_FAILS = Inf) # what testthat::set_max_fails() sets
 devtools::test()
+if (is.na(old_max_fails)) {
+  Sys.unsetenv("TESTTHAT_MAX_FAILS")
+} else {
+  Sys.setenv(TESTTHAT_MAX_FAILS = old_max_fails)
+}
 
 new_cassettes <- list.files(
   cassette_dir,
@@ -87,3 +98,12 @@ if (length(leaks) > 0L) {
 }
 message("\nCassettes recorded:")
 message(paste(" -", basename(new_cassettes), collapse = "\n"))
+
+# Checked last, so the key is always scrubbed first.
+missing <- setdiff(basename(cassettes), basename(new_cassettes))
+if (length(missing) > 0L) {
+  stop(
+    length(missing), " cassette(s) were not re-created (did the test run ",
+    "stop early?):\n  ", paste(missing, collapse = "\n  ")
+  )
+}

@@ -131,7 +131,7 @@ test_that("the API key travels as a Bearer header, never in a URL", {
         body = charToRaw('{"rate_limit":{"daily_budget_usd":1}}')))
     }
     httr2::response(200, headers = list("content-type" = "application/json"),
-      body = charToRaw('{"meta":{"count":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}'))
+      body = charToRaw('{"meta":{"count":1,"db_response_time_ms":1,"page":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}'))
   })
   withr::local_options(openalexPro = NULL)
   key <- "secret-test-key"
