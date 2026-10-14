@@ -1,5 +1,22 @@
 # openalexPro 0.12.1
 
+## Readable query files for papers: `_query_oql.txt`, `_query_oql.html`
+
+Next to `_query.json`, each downloaded query now gets its OQL -- OpenAlex's
+readable rendering of the query that ran -- as plain text (to paste into a
+methods section) and as a self-contained HTML page with highlighted keywords,
+OpenAlex IDs linked to their records, and the exact OQO. Because OpenAlex's
+rendering can be lossy in some details, the OQL is translated back and
+compared: the files say whether it reproduces the query exactly. Both use
+OpenAlex's free `/query` endpoint (two calls per query); if it is unreachable
+the download is unaffected and the files are marked "not checked". Both are
+copied into the Parquet partition.
+
+For a list of queries, `_queries_oql.txt` and `_queries_oql.html` at the top
+of the output summarise all queries in list order -- name, records, whether
+the OQL is exact, the OQL -- with totals, for a paper's supplement (queries
+skipped by `resume` included, failed ones listed as not downloaded).
+
 ## Test recordings refreshed
 
 All recorded API responses were re-recorded from the live API (with the key

@@ -244,13 +244,15 @@ pro_request_parquet <- function(
   invisible(normalizePath(output))
 }
 
-#' Copy the `_query.json` of each query into its Parquet partition
+#' Copy each query's record (`_query.json`, `_query_oql.txt`, `_query_oql.html`)
+#' into its Parquet partition
 #'
 #' @keywords internal
 #' @noRd
 .prr_copy_query_records <- function(input_json, output) {
   records <- list.files(
-    input_json, pattern = "^_query\\.json$", full.names = TRUE, recursive = TRUE
+    input_json, pattern = "^_quer(y\\.json|y_oql\\.txt|y_oql\\.html|ies_oql\\.txt|ies_oql\\.html)$",
+    full.names = TRUE, recursive = TRUE
   )
   if (length(records) == 0L) {
     return(invisible(character(0)))
@@ -258,7 +260,7 @@ pro_request_parquet <- function(
   # Same leaf -> partition mapping as the page files
   targets <- file.path(
     dirname(.prr_output_paths(records, input_json, output)),
-    "_query.json"
+    basename(records)
   )
   for (d in unique(dirname(targets))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
   file.copy(records, targets, overwrite = TRUE)
