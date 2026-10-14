@@ -1,5 +1,24 @@
 # openalexPro 0.12.1
 
+## Lossless queries: `via = "oqo"`, query record, cost, key as header
+
+- **`via = "oqo"`** (`pro_request()`, `pro_fetch()`, `pro_count()`; default
+  `"url"`, unchanged): each query is translated once (free, with validation
+  before any credits are spent) into an OpenAlex Query Object and sent via
+  POST. Same results -- a new test downloads the same queries both ways and
+  compares the complete result sets. No URL length limit and more than 100
+  values per filter, so `pro_query(..., chunk_limit = 200)` fetches DOI and
+  OpenAlex ID lists in about one request per chunk, still in parallel. Single records stay GET.
+- **`_query.json`** per query records the URL, how it was sent, the query as
+  OpenAlex ran it (OQL, OQO), records, requests, credits, cost and time; it
+  is copied into the Parquet partition, so it survives `delete_input`.
+  `pro_request()` reports the total cost.
+- **The API key is sent as an `Authorization: Bearer` header**, never in the
+  URL, so it no longer appears in URLs, logs, error messages or recorded test
+  responses.
+- With `via = "url"`, a filter with more than 100 values now stops before
+  sending (OpenAlex rejects it), suggesting `chunk_limit` or `via = "oqo"`.
+
 ## OQL and OQO queries
 
 `pro_query()` gains `oql` and `oqo` (both default `NULL`, behaviour unchanged)

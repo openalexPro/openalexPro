@@ -134,15 +134,17 @@ testthat::test_that("pro_download_content handles multiple IDs", {
   testthat::expect_equal(length(list.files(out_dir, pattern = "\\.pdf$")), 3L)
 })
 
-testthat::test_that("pro_download_content works without api_key and omits api_key query param", {
+testthat::test_that("pro_download_content works without api_key and sends no key", {
   out_dir <- withr::local_tempdir()
   captured_url <- NULL
+  captured_auth <- NULL
   fake_pdf <- as.raw(c(0x25, 0x50, 0x44, 0x46))
 
   withr::with_envvar(c(openalexPro.api_key = ""), {
     httr2::with_mocked_responses(
       function(req) {
         captured_url <<- req$url
+        captured_auth <<- httr2::req_get_headers(req, redacted = "reveal")$Authorization
         httr2::response(200L,
           headers = list(`Content-Type` = "application/pdf"),
           body = fake_pdf)
@@ -160,15 +162,18 @@ testthat::test_that("pro_download_content works without api_key and omits api_ke
 
   testthat::expect_equal(result$status, "ok")
   testthat::expect_false(grepl("api_key=", captured_url))
+  testthat::expect_null(captured_auth)
 })
 
-testthat::test_that("pro_download_content URL includes api_key query param", {
+testthat::test_that("pro_download_content sends the api_key as a Bearer header, not in the URL", {
   out_dir <- withr::local_tempdir()
   captured_url <- NULL
+  captured_auth <- NULL
 
   httr2::with_mocked_responses(
     function(req) {
       captured_url <<- req$url
+      captured_auth <<- httr2::req_get_headers(req, redacted = "reveal")$Authorization
       httr2::response(200L,
         headers = list(`Content-Type` = "application/pdf"),
         body    = as.raw(c(0x25, 0x50, 0x44, 0x46)))
@@ -183,6 +188,7 @@ testthat::test_that("pro_download_content URL includes api_key query param", {
     }
   )
 
-  testthat::expect_true(grepl("api_key=my-secret-key", captured_url))
+  testthat::expect_equal(captured_auth, "Bearer my-secret-key")
+  testthat::expect_false(grepl("my-secret-key", captured_url, fixed = TRUE))
   testthat::expect_true(grepl("content\\.openalex\\.org/works/W123\\.pdf", captured_url))
 })

@@ -1,7 +1,7 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1&api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
   response:
     status: 200
     headers:
@@ -41,7 +41,7 @@ http_interactions:
   recorded_at: 2026-05-22 12:24:19
 - request:
     method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Afinance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1&api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Afinance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
   response:
     status: 200
     headers:

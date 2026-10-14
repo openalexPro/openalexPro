@@ -48,10 +48,7 @@ opt_filter_names <- function(update = FALSE, entity = "works") {
   req <- httr2::request("https://api.openalex.org") |>
     httr2::req_url_path_append(entity) |>
     httr2::req_url_query(!!!probe)
-  api_key <- pro_api_key()
-  if (!is.null(api_key) && nzchar(api_key)) {
-    req <- req |> httr2::req_url_query(api_key = api_key)
-  }
+  req <- .oa_auth(req, pro_api_key())
   resp <- api_call(req, get_html_response = NULL)
   msg <- tryCatch(
     httr2::resp_body_json(resp)$message,

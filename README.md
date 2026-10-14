@@ -128,6 +128,8 @@ query <- pro_query(
 
 The entity and all conditions are part of the query; `select` and `options` can be added as usual.
 
+Any query can also be sent as an OpenAlex Query Object via POST with `pro_request(..., via = "oqo")` or `pro_fetch(..., via = "oqo")`: the same results (the test suite compares complete result sets), checked before any credits are spent, no URL length limit (so `pro_query(..., chunk_limit = 200)` for DOI and ID lists), and the exact query recorded in a `_query.json` per query together with its cost.
+
 ## `pro_fetch()`
 
 For most use cases, `pro_fetch()` handles everything in one call:

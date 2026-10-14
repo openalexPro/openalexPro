@@ -248,6 +248,48 @@ pro_request(query_url = urls, output = "data/json", resume = TRUE)
 pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
 ```
 
+## Lossless Queries with `via = "oqo"`
+
+By default every query is sent as a GET request with the query in the URL.
+With `via = "oqo"` (also for `pro_fetch()` and `pro_count()`), each query is
+instead translated once into an OpenAlex Query Object (OQO) -- the form
+OpenAlex compiles every query to anyway -- and every page is sent as a POST
+request with the OQO in the body:
+
+```{r}
+pro_fetch(urls, project_folder = "data", via = "oqo")
+```
+
+- **Same results.** The test suite downloads the same queries both ways and
+  compares the complete result sets (filters, boolean, wildcard and proximity
+  search, samples, grouped results, other entities, DOI lists, OQL and OQO
+  input). Only semantic search can differ by a work or two -- as it does
+  between two identical GET requests.
+- **Checked before spending credits.** The translation is free and validates
+  the query; an invalid query stops with OpenAlex's message before any paid
+  request.
+- **No URL limits.** A URL may carry at most 100 values per filter (with
+  `via = "url"`, `pro_request()` stops early when a filter has more). An OQO
+  may carry more, so `pro_query(..., chunk_limit = 200)` fetches a DOI or
+  OpenAlex ID list in about one request per chunk -- and the chunks still download in parallel
+  with `workers`.
+- **The exact query is recorded** (see below).
+
+Single records (`works/W123`) are always fetched with GET; they are free.
+
+## What Was Asked, and What It Cost
+
+Each query directory gets a `_query.json`: the URL (without the key), how it
+was sent (`via`), the query as OpenAlex ran it (`oql`, `oqo`), the number of
+records, requests and credits, the cost in USD, and when it ran.
+`pro_request_parquet()` copies it into the matching Parquet partition, so it
+is kept when the JSON files are deleted. At the end, `pro_request()` reports
+the total, e.g. `i 12 requests, 12 credits ($0.0012)`. Arrow and DuckDB ignore
+the file (leading underscore, not `.parquet`).
+
+The API key is sent as an `Authorization: Bearer` header, never in the URL, so
+it does not appear in logs, error messages or recorded test responses.
+
 # Function Parameters Reference
 
 | Parameter | Type | Default | Description |
@@ -263,6 +305,7 @@ pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
 | `count_only` | logical | FALSE | Return count without downloading |
 | `error_log` | character/NULL | NULL | Path for error log file |
 | `resume` | logical | FALSE | Keep `output`, refetch only unfinished queries |
+| `via` | character | "url" | `"url"` (GET) or `"oqo"` (translated once, sent via POST) |
 
 # pro_request() Architecture
 

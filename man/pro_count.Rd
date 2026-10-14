@@ -4,7 +4,12 @@
 \alias{pro_count}
 \title{Retrieve metadata counts for a PRO API request}
 \usage{
-pro_count(query_url, api_key = pro_api_key(), error_log = NULL)
+pro_count(
+  query_url,
+  api_key = pro_api_key(),
+  error_log = NULL,
+  via = c("url", "oqo")
+)
 }
 \arguments{
 \item{query_url}{Character string containing the fully constructed OpenAlex
@@ -15,6 +20,8 @@ PRO endpoint URL.}
 without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{error_log}{location of error log of API calls. (default: `NULL` (none)).}
+
+\item{via}{`"url"` (default) or `"oqo"`; see [pro_request()].}
 }
 \value{
 A data.frame containing `count`, `db_response_time_ms`,

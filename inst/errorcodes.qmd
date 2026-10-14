@@ -73,4 +73,7 @@ Before February 2026, adding a contact email (`mailto=`) placed requests in a
 faster "polite pool". OpenAlex now ignores `mailto`; use a free API key
 instead. `openalexPro` reads it with `pro_api_key()`, from the option
 `openalexPro$api_key` or the environment variable `openalexPro.api_key`, and
-sends it with every request.
+sends it with every request as an `Authorization: Bearer` header (never in the
+URL). The cost of each download is summed from the
+`X-RateLimit-Credits-Used` / `X-RateLimit-Cost-USD` headers and recorded in
+`_query.json`.

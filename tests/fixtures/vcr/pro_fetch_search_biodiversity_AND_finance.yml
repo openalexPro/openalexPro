@@ -1,7 +1,7 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity+AND+finance%2Cto_publication_date%3A2010-01-01&per_page=200&cursor=%2A&api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity+AND+finance%2Cto_publication_date%3A2010-01-01&per_page=200&cursor=%2A
   response:
     status: 200
     headers:

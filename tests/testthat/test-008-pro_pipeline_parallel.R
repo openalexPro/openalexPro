@@ -55,7 +55,7 @@ test_that("pro_request with url list  and parallel", {
 
   # Check that the output file contains the expected data
   # Sort to ensure consistent ordering across platforms
-  fns <- sort(list.files(output_json, "*.json", full.names = TRUE, recursive = TRUE))
+  fns <- sort(list.files(output_json, "^results_page_[0-9]+\\.json$", full.names = TRUE, recursive = TRUE))
   expect_snapshot(
     {
       basename(fns)

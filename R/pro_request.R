@@ -46,6 +46,14 @@
 #'   the `00_in.progress` sentinel each leaf directory carries while it is
 #'   being written.  A single URL is treated as one leaf.  Default `FALSE`.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
+#' @param via How each query is sent. `"url"` (default): as a GET request with
+#'   the query in the URL, as built by [pro_query()]. `"oqo"`: translated once
+#'   (free) into an OpenAlex Query Object and sent via POST, with the same
+#'   results. It has no URL length limit, accepts more than 100 values per
+#'   filter (so `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list
+#'   in about one page per chunk), checks the query before any credits are spent, and records the
+#'   exact query in `_query.json`. Single records (`works/W123`) are always
+#'   fetched via GET.
 #'
 #' @return If `count_only` is `FALSE` (the default) the complete path to the expanded and
 #'   normalized `output`. If `count_only` is `TRUE`, a data.frame with metadata about
@@ -73,8 +81,10 @@ pro_request <- function(
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL,
-  resume = FALSE
+  resume = FALSE,
+  via = c("url", "oqo")
 ) {
+  via <- match.arg(via)
   if (
     is.null(api_key) ||
       (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -89,6 +99,12 @@ pro_request <- function(
 
   if (!is.null(error_log)) {
     message("error log file: ", error_log)
+  }
+
+  # A URL may carry at most 100 values per filter (OpenAlex answers HTTP 400
+  # otherwise); an OQO sent via POST may carry more.
+  if (via == "url") {
+    .oa_check_value_limit(unlist(query_url, use.names = FALSE))
   }
 
   # ---------------------------------------------------------------------------
@@ -129,7 +145,8 @@ pro_request <- function(
         function(i) {
           pro_count(
             query_url = leaf_urls[[i]],
-            api_key = api_key
+            api_key = api_key,
+            via = via
           )
         },
         future.seed = TRUE
@@ -202,9 +219,10 @@ pro_request <- function(
                   api_key = api_key,
                   verbose = verbose,
                   error_log = error_log,
-                  progressor = p
-                )
-                NULL
+                  progressor = p,
+                  via = via
+                ) |>
+                  attr("cost")
               },
               # api_call() wraps the HTTP error; its parent carries the status
               # and OpenAlex's message without the wrapper's call trace.
@@ -217,7 +235,12 @@ pro_request <- function(
       enable = progress
     )
 
-    failed <- which(!vapply(result, is.null, logical(1)))
+    # Per leaf: the cost (success), NULL (skipped by resume) or the error
+    # message (failure)
+    failed <- which(vapply(result, is.character, logical(1)))
+    if (progress || verbose) {
+      .pr_report_cost(result[!vapply(result, is.character, logical(1))])
+    }
     if (length(failed) > 0L) {
       .pr_report_failures(failed, result, leaf_paths, output)
     }
@@ -231,7 +254,8 @@ pro_request <- function(
   if (count_only) {
     out <- pro_count(
       query_url = query_url,
-      api_key = api_key
+      api_key = api_key,
+      via = via
     )
     return(out)
   }
@@ -243,7 +267,7 @@ pro_request <- function(
   }
 
   # Use helper function with cli progress for single query
-  fetch_query_pages(
+  res <- fetch_query_pages(
     query_url = query_url,
     pages = pages,
     output = output,
@@ -252,8 +276,13 @@ pro_request <- function(
     verbose = verbose,
     error_log = error_log,
     progressor = NULL,
-    use_cli_progress = progress
+    use_cli_progress = progress,
+    via = via
   )
+  if (progress || verbose) {
+    .pr_report_cost(list(attr(res, "cost")))
+  }
+  as.vector(res) # the output path, as before (without the cost attribute)
 }
 
 
@@ -281,7 +310,8 @@ fetch_query_pages <- function(
   verbose,
   error_log,
   progressor = NULL,
-  use_cli_progress = FALSE
+  use_cli_progress = FALSE,
+  via = "url"
 ) {
   # Argument Checks -----------------------------------------------------------
   if (is.null(output)) {
@@ -312,6 +342,17 @@ fetch_query_pages <- function(
   progress_file <- file.path(output, "00_in.progress")
   file.create(progress_file)
   success <- FALSE
+
+  # Cost of this query, summed from the response headers of every page
+  started <- Sys.time()
+  cost <- c(requests = 0, credits = 0, usd = 0)
+  add_cost <- function(resp) {
+    num <- function(h) {
+      x <- suppressWarnings(as.numeric(httr2::resp_header(resp, h, "0")))
+      if (is.na(x)) 0 else x
+    }
+    cost <<- cost + c(1, num("x-ratelimit-credits-used"), num("x-ratelimit-cost-usd"))
+  }
   on.exit(
     {
       if (isTRUE(success)) {
@@ -332,9 +373,22 @@ fetch_query_pages <- function(
   #   page number (up to OpenAlex's maximum sample of 10,000), which needs a
   #   `seed` once it spans several pages;
   # - everything else uses cursor paging.
+  #
+  # With via = "oqo" the query is translated once to an OQO and every page is
+  # a POST with the OQO in the body; the paging works the same way. A single
+  # record (`works/W123`) is never translated.
   user_q <- httr2::url_parse(query_url)$query
-  semantic <- "search.semantic" %in% names(user_q)
-  sampled <- !semantic && !is.null(user_q$sample)
+  oq <- if (identical(via, "oqo")) .oa_to_oqo(query_url, api_key) else NULL
+  if (is.null(oq)) {
+    semantic <- "search.semantic" %in% names(user_q)
+    sample_n <- user_q$sample
+    seed <- user_q$seed
+  } else {
+    semantic <- .oqo_is_semantic(oq$oqo)
+    sample_n <- oq$oqo$sample
+    seed <- oq$oqo$seed
+  }
+  sampled <- !semantic && !is.null(sample_n)
   per_page <- as.integer(user_q$per_page %||% if (semantic) 50L else 200L)
   replaced <- intersect(c("page", "cursor"), names(user_q))
   if (!semantic && length(replaced) > 0L) {
@@ -344,32 +398,48 @@ fetch_query_pages <- function(
       call. = FALSE
     )
   }
-  query <- if (semantic) {
+  paging <- if (semantic) {
     list(per_page = per_page)
   } else if (sampled) {
     list(per_page = per_page, page = 1L, cursor = NULL)
   } else {
     list(per_page = per_page, page = NULL, cursor = "*")
   }
-  if (sampled && is.null(user_q$seed) &&
-      isTRUE(as.numeric(user_q$sample) > per_page)) {
+  if (sampled && is.null(seed) && isTRUE(as.numeric(sample_n) > per_page)) {
     # Without a seed, OpenAlex rejects page 2 of a sample. Not drawn from R's
     # RNG, so the caller's random state is left alone.
-    query$seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
+    seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
     message(
       "`sample` spans several pages, which needs a `seed`: using seed = ",
-      query$seed, ". Add it to the query to reproduce this sample."
+      seed, ". Add it to the query to reproduce this sample."
     )
-  }
-  if (!is.null(api_key)) {
-    query$api_key <- api_key
+    if (is.null(oq)) paging$seed <- seed else oq$oqo$seed <- as.character(seed)
   }
 
-  req <- httr2::request(query_url)
-  req <- do.call(httr2::req_url_query, c(list(req), query)) |>
-    httr2::req_user_agent(
-      paste0("openalexPro/", packageVersion("openalexPro"))
-    )
+  # One request per page, built from the current paging state
+  make_req <- function(paging) {
+    req <- if (is.null(oq)) {
+      do.call(httr2::req_url_query, c(list(httr2::request(query_url)), paging))
+    } else {
+      body <- c(
+        list(oqo = oq$oqo),
+        oq$view,
+        Filter(Negate(is.null), paging[setdiff(names(paging), "seed")])
+      )
+      httr2::request(oq$root) |>
+        httr2::req_method("POST") |>
+        httr2::req_body_json(body, auto_unbox = TRUE)
+    }
+    req |>
+      .oa_auth(api_key) |>
+      httr2::req_user_agent(
+        paste0("openalexPro/", packageVersion("openalexPro"))
+      )
+  }
+  req <- make_req(paging)
+  if (verbose && !is.null(oq)) {
+    message("Query (OQL): ", oq$oql)
+  }
 
   # Initialize page counter
   page <- 1L
@@ -379,9 +449,13 @@ fetch_query_pages <- function(
     req,
     error_log = error_log
   )
+  add_cost(resp)
 
   data <- resp |>
     httr2::resp_body_json()
+  # OpenAlex echoes the query it ran (OQL, OQO, URL) and the result size
+  x_query <- data$meta$x_query
+  records <- data$meta$count
 
   # Decided from the response, not the URL: with OQL / OQO the grouping is
   # inside the query. Grouped responses carry a numeric `meta$groups_count`,
@@ -408,8 +482,10 @@ fetch_query_pages <- function(
     if (!is.null(progressor)) {
       progressor(amount = 1)
     }
+    .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
+                           oq %||% x_query, records, cost, started)
     success <- TRUE
-    return(output)
+    return(structure(output, cost = cost))
   }
 
   # Calculate max_pages for cli progress bar
@@ -470,21 +546,25 @@ fetch_query_pages <- function(
       break
     }
 
-    req <- if (sampled) {
-      httr2::req_url_query(req, page = page)
+    if (sampled) {
+      paging$page <- page
     } else {
-      httr2::req_url_query(req, cursor = data$meta$next_cursor)
+      paging$cursor <- data$meta$next_cursor
     }
+    req <- make_req(paging)
 
     if (verbose) {
       message("Downloading page ", page)
-      message("URL: ", sub("api_key=[^&]*", "api_key=<redacted>", req$url))
+      if (is.null(oq)) {
+        message("URL: ", sub("api_key=[^&]*", "api_key=<redacted>", req$url))
+      }
     }
 
     resp <- api_call(
       req,
       error_log = error_log
     )
+    add_cost(resp)
 
     data <- httr2::resp_body_json(resp)
 
@@ -522,9 +602,59 @@ fetch_query_pages <- function(
     cli::cli_progress_done()
   }
 
+  .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
+                         oq %||% x_query, records, cost, started)
   success <- TRUE
 
-  output
+  structure(output, cost = cost)
+}
+
+
+#' Write `_query.json`: what was asked, how, and what it cost
+#'
+#' The leading underscore keeps it out of the page discovery and out of
+#' arrow's `open_dataset()`.
+#'
+#' @keywords internal
+#' @noRd
+.pr_write_query_record <- function(output, query_url, via, x_query, records,
+                                   cost, started) {
+  record <- list(
+    query_url = sub("([?&])api_key=[^&]*&?", "\\1", query_url),
+    via = via,
+    oql = x_query$oql,
+    oqo = x_query$oqo,
+    records = records,
+    requests = unname(cost[["requests"]]),
+    credits = unname(cost[["credits"]]),
+    cost_usd = unname(cost[["usd"]]),
+    started = format(started, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    finished = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    openalexPro = as.character(utils::packageVersion("openalexPro"))
+  )
+  jsonlite::write_json(
+    record, file.path(output, "_query.json"),
+    auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA
+  )
+}
+
+
+#' Report the summed cost of the downloaded queries
+#'
+#' @param costs List of named numeric vectors (requests, credits, usd).
+#' @keywords internal
+#' @noRd
+.pr_report_cost <- function(costs) {
+  costs <- Filter(Negate(is.null), costs)
+  if (length(costs) == 0L) {
+    return(invisible(NULL))
+  }
+  total <- Reduce(`+`, costs)
+  cli::cli_alert_info(paste0(
+    "{total[['requests']]} request{?s}, {total[['credits']]} credit{?s} ",
+    "(${formatC(total[['usd']], format = 'f', digits = 4)})"
+  ))
+  invisible(total)
 }
 
 

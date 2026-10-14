@@ -215,3 +215,24 @@ api_call <- function(
   body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
   isTRUE(remaining <= 0) || identical(body$error, "not_enough_credits")
 }
+
+
+#' Add the API key to a request as a Bearer header
+#'
+#' The key goes into `Authorization: Bearer` rather than the URL, so it does not
+#' appear in URLs, logs, error messages or recorded test responses (httr2
+#' redacts the header when printing). OpenAlex accepts it on GET and POST
+#' (`api_key` in a POST body is rejected), on `/rate-limit` and on
+#' `content.openalex.org`.
+#'
+#' @param req An httr2 request.
+#' @param api_key API key, or `NULL` / `""` for none.
+#' @return The request.
+#' @keywords internal
+#' @noRd
+.oa_auth <- function(req, api_key) {
+  if (is.null(api_key) || !nzchar(api_key)) {
+    return(req)
+  }
+  httr2::req_auth_bearer_token(req, api_key)
+}

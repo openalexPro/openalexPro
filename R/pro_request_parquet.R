@@ -227,6 +227,11 @@ pro_request_parquet <- function(
     .prr_report_failures(failed, jsons, statuses, output, length(jsons), on_error)
   }
 
+  # Carry each query's record (`_query.json`, written by pro_request()) into
+  # its Parquet partition, so it survives `delete_input`. arrow and DuckDB
+  # ignore it: the leading underscore, and it is not a `.parquet` file.
+  .prr_copy_query_records(input_json, output)
+
   # Keep the input when anything failed (on_error = "warn"/"ignore"): it is the
   # only copy of the failed pages, and `resume` needs it.
   if (delete_input && length(failed) == 0L) {
@@ -237,6 +242,27 @@ pro_request_parquet <- function(
   # marks a partial conversion and can drive `resume`.
   success <- length(failed) == 0L
   invisible(normalizePath(output))
+}
+
+#' Copy the `_query.json` of each query into its Parquet partition
+#'
+#' @keywords internal
+#' @noRd
+.prr_copy_query_records <- function(input_json, output) {
+  records <- list.files(
+    input_json, pattern = "^_query\\.json$", full.names = TRUE, recursive = TRUE
+  )
+  if (length(records) == 0L) {
+    return(invisible(character(0)))
+  }
+  # Same leaf -> partition mapping as the page files
+  targets <- file.path(
+    dirname(.prr_output_paths(records, input_json, output)),
+    "_query.json"
+  )
+  for (d in unique(dirname(targets))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+  file.copy(records, targets, overwrite = TRUE)
+  invisible(targets)
 }
 
 #' Report per-file conversion failures according to `on_error`
@@ -300,7 +326,8 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_discover_jsons <- function(input_json) {
   jsons <- list.files(
-    input_json, pattern = "\\.json$", full.names = TRUE, recursive = TRUE
+    # Page files only: `_query.json` (the query record) is not data.
+    input_json, pattern = "^(results_page|group_by_page|single)_[0-9]+\\.json$", full.names = TRUE, recursive = TRUE
   )
   jsons <- jsons[order(as.numeric(
     sub(".*_([0-9]+)\\.json$", "\\1", jsons)

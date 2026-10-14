@@ -114,3 +114,37 @@ test_that("an OQL validation error shows OpenAlex's parse message", {
     "parse_error: unexpected text near \"wher\""
   )
 })
+
+test_that("the API key travels as a Bearer header, never in a URL", {
+  seen <- new.env()
+  seen$urls <- character(0)
+  seen$auth <- character(0)
+  httr2::local_mocked_responses(function(req) {
+    seen$urls <- c(seen$urls, req$url)
+    seen$auth <- c(seen$auth, httr2::req_get_headers(req, redacted = "reveal")$Authorization %||% NA)
+    if (grepl("DOESNTEXIST", req$url, fixed = TRUE)) {
+      return(httr2::response(400, headers = list("content-type" = "application/json"),
+        body = charToRaw('{"message":"x. Valid fields are underscore or hyphenated versions of: type"}')))
+    }
+    if (grepl("rate-limit", req$url, fixed = TRUE)) {
+      return(httr2::response(200, headers = list("content-type" = "application/json"),
+        body = charToRaw('{"rate_limit":{"daily_budget_usd":1}}')))
+    }
+    httr2::response(200, headers = list("content-type" = "application/json"),
+      body = charToRaw('{"meta":{"count":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}'))
+  })
+  withr::local_options(openalexPro = NULL)
+  key <- "secret-test-key"
+  url <- "https://api.openalex.org/works?filter=type:article"
+
+  pro_request(url, output = file.path(withr::local_tempdir(), "json"),
+              api_key = key, progress = FALSE)
+  pro_count(url, api_key = key)
+  pro_rate_limit_status(api_key = key, verbose = FALSE)
+  withr::with_envvar(c(openalexPro.api_key = key), opt_filter_names(update = TRUE))
+
+  expect_length(seen$urls, 4L)
+  expect_false(any(grepl(key, seen$urls, fixed = TRUE)))
+  expect_false(any(grepl("api_key", seen$urls, fixed = TRUE)))
+  expect_equal(seen$auth, rep(paste("Bearer", key), 4L))
+})

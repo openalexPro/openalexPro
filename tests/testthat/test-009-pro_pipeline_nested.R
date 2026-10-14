@@ -158,7 +158,7 @@ test_that("pro_request with nested list creates nested output dirs", {
     progress  = TRUE
   )
 
-  json_files <- sort(list.files(output_json_nested, "*.json", recursive = TRUE))
+  json_files <- sort(list.files(output_json_nested, "^results_page_[0-9]+\\.json$", recursive = TRUE))
   # All files should be under grp_a/* or grp_b/*
   expect_true(all(grepl("^grp_[ab]/", json_files)))
   expect_snapshot(json_files)
