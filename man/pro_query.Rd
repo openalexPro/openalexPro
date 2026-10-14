@@ -77,7 +77,9 @@ page number and needs a \code{seed} when it spans several pages;
 string. See section \emph{OQL and OQO}.}
 
 \item{...}{Filters as named arguments. Values may be scalars or vectors (vectors
-are collapsed with \code{"|"} to express OR).}
+are collapsed with \code{"|"} to express OR). Arguments of the functions
+that send the query, such as \code{via} or \code{workers}, belong to
+[pro_fetch()], [pro_request()] or [pro_count()], not here.}
 }
 \value{
 An individual URL or a list of URLs.

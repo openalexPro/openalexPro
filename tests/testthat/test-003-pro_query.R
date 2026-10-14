@@ -374,3 +374,22 @@ testthat::test_that("pro_query validates against the queried entity's names", {
     "Invalid filter name"
   )
 })
+
+testthat::test_that("arguments of the sending functions get a hint, not a filter error", {
+  # checked before any filter validation: no request needed
+  httr2::local_mocked_responses(function(req) stop("no request expected"))
+  testthat::expect_error(
+    pro_query(entity = "works", doi = "10.1234/x", via = "oqo", chunk_limit = 200),
+    "`via` is an argument of pro_fetch\\(\\), pro_request\\(\\), pro_count\\(\\).*pro_fetch\\(urls, via = \\.\\.\\.\\)"
+  )
+  testthat::expect_error(
+    pro_query(oql = "works where year is 2020", via = "oqo"),
+    "`via` is an argument of"
+  )
+  err <- testthat::expect_error(
+    pro_query(doi = "10.1234/x", workers = 4, compact_parquet = 250000)
+  )
+  testthat::expect_match(conditionMessage(err), "`workers` is an argument of pro_fetch(), pro_request(), pro_request_parquet().", fixed = TRUE)
+  testthat::expect_match(conditionMessage(err), "`compact_parquet` is an argument of pro_fetch(), pro_request_parquet().", fixed = TRUE)
+  testthat::expect_match(conditionMessage(err), "pass them there", fixed = TRUE)
+})
