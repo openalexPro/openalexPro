@@ -16,7 +16,8 @@ pro_request(
   count_only = FALSE,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo")
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 )
 }
 \arguments{

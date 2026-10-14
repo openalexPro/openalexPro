@@ -92,9 +92,11 @@ pro_request <- function(
   count_only = FALSE,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo")
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 ) {
   via <- match.arg(via)
+  inconsistency_on_resume <- match.arg(inconsistency_on_resume)
   if (
     is.null(api_key) ||
       (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -205,9 +207,9 @@ pro_request <- function(
             # when a leaf starts and unlinked when it completes, so its
             # absence from an existing directory means that leaf finished --
             # including the legitimate case of an empty result set. A leaf
-            # that still carries the sentinel was interrupted: cursor paging
-            # cannot be resumed mid-stream (the cursor token is not
-            # persisted), so it is refetched whole.
+            # that still carries the sentinel was interrupted: it continues
+            # after its last saved page if its `_paging.json` can be trusted
+            # (cursor paging), otherwise it is refetched whole.
             if (isTRUE(resume) && !is.null(query_output) &&
                 dir.exists(query_output) &&
                 !file.exists(file.path(query_output, "00_in.progress"))) {
@@ -230,7 +232,9 @@ pro_request <- function(
                   verbose = verbose,
                   error_log = error_log,
                   progressor = p,
-                  via = via
+                  via = via,
+                  resume = isTRUE(resume),
+                  inconsistency_on_resume = inconsistency_on_resume
                 ) |>
                   attr("cost")
               },
@@ -289,7 +293,9 @@ pro_request <- function(
     error_log = error_log,
     progressor = NULL,
     use_cli_progress = progress,
-    via = via
+    via = via,
+    resume = isTRUE(resume),
+    inconsistency_on_resume = inconsistency_on_resume
   )
   if (progress || verbose) {
     .pr_report_cost(list(attr(res, "cost")))
@@ -323,14 +329,23 @@ fetch_query_pages <- function(
   error_log,
   progressor = NULL,
   use_cli_progress = FALSE,
-  via = "url"
+  via = "url",
+  resume = FALSE,
+  inconsistency_on_resume = "error"
 ) {
   # Argument Checks -----------------------------------------------------------
   if (is.null(output)) {
     stop("No `output` specified!")
   }
 
-  if (dir.exists(output)) {
+  # Resume in the middle: continue from `_paging.json` if it can be trusted.
+  # Otherwise (NULL) the query is fetched again from page 1, as before.
+  state <- if (isTRUE(resume) && dir.exists(output)) {
+    .ps_read(output, query_url, via)
+  }
+  resuming <- !is.null(state)
+
+  if (dir.exists(output) && !resuming) {
     if (!overwrite) {
       stop(
         "Directory ",
@@ -365,10 +380,14 @@ fetch_query_pages <- function(
     }
     cost <<- cost + c(1, num("x-ratelimit-credits-used"), num("x-ratelimit-cost-usd"))
   }
+  if (resuming) { # cost and start of the query over all sessions
+    started <- .POSIXct(state$started, tz = "UTC")
+    cost[] <- unlist(state$cost)[names(cost)]
+  }
   on.exit(
     {
       if (isTRUE(success)) {
-        unlink(progress_file)
+        unlink(c(progress_file, .ps_file(output)))
       }
     },
     add = TRUE
@@ -390,7 +409,12 @@ fetch_query_pages <- function(
   # a POST with the OQO in the body; the paging works the same way. A single
   # record (`works/W123`) is never translated.
   user_q <- httr2::url_parse(query_url)$query
-  oq <- if (identical(via, "oqo")) .oa_to_oqo(query_url, api_key) else NULL
+  # Resuming: the stored OQO, exactly as it ran (a new translation could differ)
+  oq <- if (resuming) {
+    state$oq
+  } else if (identical(via, "oqo")) {
+    .oa_to_oqo(query_url, api_key)
+  }
   if (is.null(oq)) {
     semantic <- "search.semantic" %in% names(user_q)
     sample_n <- user_q$sample
@@ -456,18 +480,27 @@ fetch_query_pages <- function(
   # Initialize page counter
   page <- 1L
 
-  # First request to inspect meta
-  resp <- api_call(
-    req,
-    error_log = error_log
-  )
-  add_cost(resp)
+  if (!resuming) {
+    # First request to inspect meta
+    resp <- api_call(
+      req,
+      error_log = error_log
+    )
+    add_cost(resp)
 
-  data <- resp |>
-    httr2::resp_body_json()
-  # OpenAlex echoes the query it ran (OQL, OQO, URL) and the result size
-  x_query <- data$meta$x_query
-  records <- data$meta$count
+    data <- resp |>
+      httr2::resp_body_json()
+    # OpenAlex echoes the query it ran (OQL, OQO, URL) and the result size
+    x_query <- data$meta$x_query
+    records <- data$meta$count
+  } else {
+    # Continue after the last saved page, which .ps_read() read from disk: its
+    # meta holds the cursor, count, per_page and groups_count
+    page <- as.integer(state$page)
+    data <- state$data
+    x_query <- state$x_query
+    records <- state$records
+  }
 
   # Decided from the response, not the URL: with OQL / OQO the grouping is
   # inside the query. Grouped responses carry a numeric `meta$groups_count`,
@@ -479,6 +512,26 @@ fetch_query_pages <- function(
     "group_by_page_"
   } else {
     "results_page_"
+  }
+
+  # Resume state, written after each saved page that has a next cursor (cursor
+  # paging only; samples and semantic search restart from page 1)
+  resumed_at <- if (resuming) c(unlist(state$resumed), .ps_now()) else character(0)
+  cursor_created <- if (resuming) state$cursor_created else NA_character_
+  save_state <- function(status = "downloading", records_end = NULL) {
+    if (status == "downloading") {
+      if (sampled || semantic || is.null(data$meta$next_cursor)) {
+        return(invisible(NULL))
+      }
+      cursor_created <<- .ps_now()
+    }
+    .ps_write(output, list(
+      format = 1L, status = status, query_url = .pr_strip_key(query_url),
+      via = via, oq = oq, page_prefix = page_prefix, page = page,
+      cursor_created = cursor_created, x_query = x_query[c("oql", "oqo")],
+      records = records, records_end = records_end, cost = as.list(cost),
+      started = as.numeric(started), resumed = as.list(resumed_at)
+    ))
   }
 
   # SINGLE-RECORD CASE --------------------------------------------------------
@@ -531,22 +584,49 @@ fetch_query_pages <- function(
   }
 
   # PAGINATED CASE ------------------------------------------------------------
-  # Save the first page (already fetched above for meta inspection)
-  resp |>
-    httr2::resp_body_string() |>
-    writeLines(
-      con = file.path(
-        output,
-        paste0(page_prefix, page, ".json")
+  if (!resuming) {
+    # Save the first page (already fetched above for meta inspection)
+    resp |>
+      httr2::resp_body_string() |>
+      writeLines(
+        con = file.path(
+          output,
+          paste0(page_prefix, page, ".json")
+        )
       )
-    )
+    save_state()
 
-  # Update progress for first page
-  if (!is.null(progressor)) {
-    tick()
-  } else if (show_cli_progress && cli_progress_count < max_pages) {
-    cli_progress_count <- cli_progress_count + 1L
-    cli::cli_progress_update(force = TRUE)
+    # Update progress for first page
+    if (!is.null(progressor)) {
+      tick()
+    } else if (show_cli_progress && cli_progress_count < max_pages) {
+      cli_progress_count <- cli_progress_count + 1L
+      cli::cli_progress_update(force = TRUE)
+    }
+  } else {
+    message(if (identical(state$status, "check_pending")) {
+      paste0(
+        "All pages of `", basename(output), "` were downloaded before; ",
+        "checking them with inconsistency_on_resume = \"",
+        inconsistency_on_resume, "\"."
+      )
+    } else {
+      paste0(
+        "Resuming `", basename(output), "` at page ", page + 1L,
+        " with a cursor from ", cursor_created, " (", .ps_age(cursor_created),
+        " ago). Records that changed since then may appear twice or be ",
+        "missing; see `inconsistency_on_resume`. To fetch the query whole ",
+        "instead, delete `_paging.json`."
+      )
+    })
+    # Catch up the progress with the pages saved before
+    if (!is.null(progressor)) {
+      share_done <- min(page * page_share, 1)
+      progressor(amount = share_done)
+    } else if (show_cli_progress) {
+      cli_progress_count <- min(page, max_pages)
+      cli::cli_progress_update(set = cli_progress_count, force = TRUE)
+    }
   }
 
   # Continue with remaining pages if needed. For a sample, meta$count is the
@@ -595,6 +675,7 @@ fetch_query_pages <- function(
           paste0(page_prefix, page, ".json")
         )
       )
+    save_state()
 
     # Update progress (only if we haven't reached the total yet)
     if (!is.null(progressor)) {
@@ -615,8 +696,38 @@ fetch_query_pages <- function(
     cli::cli_progress_done()
   }
 
+  # After a resume: duplicates and (net) missing records, handled by
+  # `inconsistency_on_resume`. Not for grouped results.
+  extra <- NULL
+  if (resuming) {
+    extra <- list(resumed = as.list(resumed_at))
+    if (page_prefix == "results_page_") {
+      limit_hit <- !is.null(pages) && page > pages
+      records_end <- if (identical(state$status, "check_pending")) {
+        state$records_end
+      } else if (!limit_hit) {
+        data$meta$count
+      }
+      check <- tryCatch(
+        .ps_check(output, inconsistency_on_resume, records_end,
+                  cursor_created, basename(output)),
+        openalexPro_inconsistency = function(e) {
+          # Keep everything, so a rerun with another choice needs no download
+          save_state(status = "check_pending", records_end = records_end)
+          stop(e)
+        }
+      )
+      extra <- c(
+        extra,
+        list(records_end = records_end),
+        check,
+        list(inconsistency_on_resume = inconsistency_on_resume)
+      )
+    }
+  }
+
   .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
-                         oq %||% x_query, records, cost, started)
+                         oq %||% x_query, records, cost, started, extra = extra)
   .pr_write_query_text_for(output, oq, x_query, query_url, api_key, records)
   success <- TRUE
 
@@ -632,9 +743,9 @@ fetch_query_pages <- function(
 #' @keywords internal
 #' @noRd
 .pr_write_query_record <- function(output, query_url, via, x_query, records,
-                                   cost, started) {
+                                   cost, started, extra = NULL) {
   record <- list(
-    query_url = sub("([?&])api_key=[^&]*&?", "\\1", query_url),
+    query_url = .pr_strip_key(query_url),
     via = via,
     oql = x_query$oql,
     oqo = x_query$oqo,
@@ -646,6 +757,7 @@ fetch_query_pages <- function(
     finished = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
     openalexPro = as.character(utils::packageVersion("openalexPro"))
   )
+  record <- c(record, extra) # only after a resume
   jsonlite::write_json(
     record, file.path(output, "_query.json"),
     auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA
@@ -739,6 +851,14 @@ collect_leaf_queries <- function(x, path_parts = character(0)) {
     },
     "\nOutput: ", output,
     "\nRe-run with `resume = TRUE` to fetch only the failed and unfinished queries.",
+    # The reasons above are shortened; keep the way out of an inconsistency
+    if (any(grepl("inconsistency_on_resume", unlist(result[failed]), fixed = TRUE))) {
+      paste0(
+        "\nFor queries inconsistent after a resume: rerun with `resume = TRUE` ",
+        "and `inconsistency_on_resume = \"newest\"`, `\"oldest\"`, `\"warning\"` ",
+        "or `\"ignore\"` -- nothing is downloaded again."
+      )
+    },
     call. = FALSE
   )
 }

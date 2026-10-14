@@ -67,9 +67,11 @@ pro_fetch <- function(
   count_only,
   error_log      = NULL,
   resume         = FALSE,
-  via            = c("url", "oqo")
+  via            = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 ) {
   via <- match.arg(via)
+  inconsistency_on_resume <- match.arg(inconsistency_on_resume)
   if (
     is.null(api_key) ||
     (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -129,7 +131,8 @@ pro_fetch <- function(
     count_only = FALSE,
     error_log  = error_log,
     resume     = resume,
-    via        = via
+    via        = via,
+    inconsistency_on_resume = inconsistency_on_resume
   ) |>
     pro_request_parquet(
       output       = parquet_dir,
