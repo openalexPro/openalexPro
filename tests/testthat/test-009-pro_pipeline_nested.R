@@ -138,7 +138,6 @@ unlink(output_parquet_nested, recursive = TRUE, force = TRUE)
 dois <- readRDS(testthat::test_path("..", "fixtures", "dois.rds"))
 
 build_nested_req <- function(dois) {
-  vcr::local_cassette("opt_filter_names")
   flat <- pro_query(entity = "works", doi = dois)
   # wrap two flat chunks into a two-level nested list
   list(

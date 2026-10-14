@@ -21,7 +21,6 @@ dois <- readRDS(
 )
 
 build_parallel_req <- function(dois) {
-  vcr::local_cassette("opt_filter_names")
   pro_query(
     entity = "works",
     doi = dois
