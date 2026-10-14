@@ -5,77 +5,90 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Fri, 22 May 2026 12:24:19 GMT
+      date: Wed, 14 Oct 2026 08:31:35 GMT
       content-type: application/json
-      cf-ray: 9ffbcc0fc9381e6d-ZRH
+      cf-ray: a4a53a851b3f7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
+      via: 2.0 heroku-router
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1998080'
-      x-ratelimit-remaining-usd: '199.808'
-      x-ratelimit-reset: '41741'
+      x-ratelimit-remaining: '1999838'
+      x-ratelimit-remaining-usd: '199.9838'
+      x-ratelimit-reset: '55705'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
       access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
         X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966695"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966695"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 148174, "db_response_time_ms": 28, "page": 1, "per_page":
-        1, "groups_count": null, "cost_usd": 0.0001}, "results": [{"ids": {"openalex":
-        "https://openalex.org/W2162348455", "doi": "https://doi.org/10.1038/35002501",
-        "mag": "2162348455", "pmid": "https://pubmed.ncbi.nlm.nih.gov/10706275"}}],
+      string: '{"meta": {"count": 140753, "db_response_time_ms": 21, "page": 1, "per_page":
+        1, "groups_count": null, "x_query": {"oql": "get works where title-abstract
+        has (biodiversity)\n  and published through 2010-01-01", "x_new_oql": "get
+        works through 2010-01-01 with biodiversity in the title or abstract", "oqo":
+        {"get_rows": "works", "filter_rows": [{"column_id": "title_and_abstract.search",
+        "value": "biodiversity", "operator": "has"}, {"column_id": "to_publication_date",
+        "value": "2010-01-01"}]}, "url": "/works?filter=title_and_abstract.search:biodiversity,to_publication_date:2010-01-01&per_page=1&page=1"},
+        "cost_usd": 0.0001}, "results": [{"ids": {"openalex": "https://openalex.org/W1983356040",
+        "doi": "https://doi.org/10.1023/b:bioc.0000011728.46362.3c", "mag": "1983356040"}}],
         "group_by": []}'
-  recorded_at: 2026-05-22 12:24:19
+  recorded_at: 2026-10-14 08:31:35
 - request:
     method: GET
     uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Afinance%2Cto_publication_date%3A2010-01-01&per_page=1&select=ids&page=1
   response:
     status: 200
     headers:
-      date: Fri, 22 May 2026 12:24:19 GMT
+      date: Wed, 14 Oct 2026 08:31:35 GMT
       content-type: application/json
-      cf-ray: 9ffbcc10ec1c1e6d-ZRH
+      cf-ray: a4a53a862f4b7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
+      via: 2.0 heroku-router
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1998079'
-      x-ratelimit-remaining-usd: '199.8079'
-      x-ratelimit-reset: '41741'
+      x-ratelimit-remaining: '1999837'
+      x-ratelimit-remaining-usd: '199.9837'
+      x-ratelimit-reset: '55705'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
       access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
         X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966695"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966695"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 248534, "db_response_time_ms": 31, "page": 1, "per_page":
-        1, "groups_count": null, "cost_usd": 0.0001}, "results": [{"ids": {"openalex":
-        "https://openalex.org/W3121759882", "doi": "https://doi.org/10.1086/250042",
-        "mag": "3121759882"}}], "group_by": []}'
-  recorded_at: 2026-05-22 12:24:19
+      string: '{"meta": {"count": 256379, "db_response_time_ms": 29, "page": 1, "per_page":
+        1, "groups_count": null, "x_query": {"oql": "get works where title-abstract
+        has (finance) and published through 2010-01-01", "x_new_oql": "get works through
+        2010-01-01 with finance in the title or abstract", "oqo": {"get_rows": "works",
+        "filter_rows": [{"column_id": "title_and_abstract.search", "value": "finance",
+        "operator": "has"}, {"column_id": "to_publication_date", "value": "2010-01-01"}]},
+        "url": "/works?filter=title_and_abstract.search:finance,to_publication_date:2010-01-01&per_page=1&page=1"},
+        "cost_usd": 0.0001}, "results": [{"ids": {"openalex": "https://openalex.org/W4211239526",
+        "doi": "https://doi.org/10.1111/j.1540-6261.2006.00883.x"}}], "group_by":
+        []}'
+  recorded_at: 2026-10-14 08:31:35
 recorded_with: VCR-vcr/2.1.0

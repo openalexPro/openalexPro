@@ -5,9 +5,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:07 GMT
+      date: Wed, 14 Oct 2026 08:31:50 GMT
       content-type: application/json
-      cf-ray: a4a505190e7b7dd2-ZRH
+      cf-ray: a4a53ae019d17dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -18,9 +18,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999891'
-      x-ratelimit-remaining-usd: '199.9891'
-      x-ratelimit-reset: '57893'
+      x-ratelimit-remaining: '1999823'
+      x-ratelimit-remaining-usd: '199.9823'
+      x-ratelimit-reset: '55690'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -30,11 +30,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=0qeU5xSX6lKHfwNodidT7WaXEVpwUYy17Jz%2FguhsYLA%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791964507"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=0qeU5xSX6lKHfwNodidT7WaXEVpwUYy17Jz%2FguhsYLA%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791964507"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Ipit1NrCVp6lxwfWLvOtdjrqyFRk9qkvX9ReaIjWkXw%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966709"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=Ipit1NrCVp6lxwfWLvOtdjrqyFRk9qkvX9ReaIjWkXw%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966709"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 141, "db_response_time_ms": 123, "page": null, "per_page":
+      string: '{"meta": {"count": 141, "db_response_time_ms": 110, "page": null, "per_page":
         200, "next_cursor": null, "groups_count": null, "x_query": {"oql": "get works
         where full text has (microbio*)\n  and source is (S137773608)\n  and published
         in 2020", "x_new_oql": "get works from 2020 with microbio* in the full text
@@ -114,7 +114,7 @@ http_interactions:
         {"id": "https://openalex.org/W2999703472"}, {"id": "https://openalex.org/W3000629496"},
         {"id": "https://openalex.org/W4230095787"}, {"id": "https://openalex.org/W4247111652"}],
         "group_by": []}'
-  recorded_at: 2026-10-14 07:55:07
+  recorded_at: 2026-10-14 08:31:50
 - request:
     method: POST
     uri: https://api.openalex.org/query
@@ -123,9 +123,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:07 GMT
+      date: Wed, 14 Oct 2026 08:31:50 GMT
       content-type: application/json
-      cf-ray: a4a5051c7ab57dd2-ZRH
+      cf-ray: a4a53ae36fe77dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -136,9 +136,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999891'
-      x-ratelimit-remaining-usd: '199.9891'
-      x-ratelimit-reset: '57893'
+      x-ratelimit-remaining: '1999823'
+      x-ratelimit-remaining-usd: '199.9823'
+      x-ratelimit-reset: '55690'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -148,13 +148,13 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=HOg0giAyzB4AEJ2vWR3jgBQ2OXXxSRulbd%2BvSJ%2BIcMA%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964507"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=HOg0giAyzB4AEJ2vWR3jgBQ2OXXxSRulbd%2BvSJ%2BIcMA%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964507"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=t9D9pMC%2F%2BF9%2B4eQCI41uSqKN3SF8VxCwefov05jKCek%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966710"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=t9D9pMC%2F%2BF9%2B4eQCI41uSqKN3SF8VxCwefov05jKCek%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966710"
       content-encoding: gzip
     body:
       string: |
         {"oxurl":"/works?filter=fulltext.search.exact:microbio%2A,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (microbio*)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (microbio*) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with microbio* in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search.exact","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search.exact"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"microbio*","meta":{"value":"microbio*"}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search.exact","value":"microbio*","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search.exact","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"microbio*","value":"microbio*","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search.exact","value":"microbio*","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
-  recorded_at: 2026-10-14 07:55:07
+  recorded_at: 2026-10-14 08:31:50
 - request:
     method: POST
     uri: https://api.openalex.org/
@@ -163,9 +163,9 @@ http_interactions:
   response:
     status: 200
     headers:
-      date: Wed, 14 Oct 2026 07:55:08 GMT
+      date: Wed, 14 Oct 2026 08:31:51 GMT
       content-type: application/json
-      cf-ray: a4a5051e28c57dd2-ZRH
+      cf-ray: a4a53ae48cd47dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
@@ -176,9 +176,9 @@ http_interactions:
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1999890'
-      x-ratelimit-remaining-usd: '199.989'
-      x-ratelimit-reset: '57892'
+      x-ratelimit-remaining: '1999822'
+      x-ratelimit-remaining-usd: '199.9822'
+      x-ratelimit-reset: '55689'
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
         Content-Type, X-OpenAlex-UI, X-Impersonate-User
       access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
@@ -188,11 +188,11 @@ http_interactions:
         X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
         Content-Disposition
       nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mW8NrxsyW2Fcqwxn0BVb%2BazZeCd0XnhwcgrKBnsIZ44%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964508"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mW8NrxsyW2Fcqwxn0BVb%2BazZeCd0XnhwcgrKBnsIZ44%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964508"
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=t9D9pMC%2F%2BF9%2B4eQCI41uSqKN3SF8VxCwefov05jKCek%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966710"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=t9D9pMC%2F%2BF9%2B4eQCI41uSqKN3SF8VxCwefov05jKCek%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966710"
       content-encoding: gzip
     body:
       string: |
-        {"meta":{"count":141,"db_response_time_ms":103,"page":null,"per_page":200,"next_cursor":null,"groups_count":null,"x_query":{"oql":"get works where full text has (microbio*)\n  and source is (S137773608)\n  and published in 2020","x_new_oql":"get works from 2020 with microbio* in the full text in (S137773608)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search.exact","value":"microbio*","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"url":"/works?filter=fulltext.search.exact:microbio%2A,primary_location.source.id:S137773608,publication_year:2020&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3010810358"},{"id":"https://openalex.org/W3097338697"},{"id":"https://openalex.org/W3107153021"},{"id":"https://openalex.org/W3036012425"},{"id":"https://openalex.org/W3007415664"},{"id":"https://openalex.org/W3088211674"},{"id":"https://openalex.org/W3012090404"},{"id":"https://openalex.org/W3089633091"},{"id":"https://openalex.org/W3022258762"},{"id":"https://openalex.org/W3040803262"},{"id":"https://openalex.org/W3088828252"},{"id":"https://openalex.org/W3045498347"},{"id":"https://openalex.org/W3004904380"},{"id":"https://openalex.org/W3045859819"},{"id":"https://openalex.org/W3047325596"},{"id":"https://openalex.org/W3000478494"},{"id":"https://openalex.org/W3003571560"},{"id":"https://openalex.org/W3003867040"},{"id":"https://openalex.org/W3110918806"},{"id":"https://openalex.org/W3004094041"},{"id":"https://openalex.org/W3003718115"},{"id":"https://openalex.org/W3111311798"},{"id":"https://openalex.org/W3004289340"},{"id":"https://openalex.org/W3028751854"},{"id":"https://openalex.org/W3058975363"},{"id":"https://openalex.org/W3196509866"},{"id":"https://openalex.org/W4237168571"},{"id":"https://openalex.org/W3000311037"},{"id":"https://openalex.org/W3008359597"},{"id":"https://openalex.org/W3006764495"},{"id":"https://openalex.org/W3016210073"},{"id":"https://openalex.org/W3006022816"},{"id":"https://openalex.org/W3104088357"},{"id":"https://openalex.org/W3006633140"},{"id":"https://openalex.org/W3026019136"},{"id":"https://openalex.org/W3016425662"},{"id":"https://openalex.org/W3108567773"},{"id":"https://openalex.org/W3035914962"},{"id":"https://openalex.org/W3035242809"},{"id":"https://openalex.org/W3108091462"},{"id":"https://openalex.org/W3084234242"},{"id":"https://openalex.org/W3045405700"},{"id":"https://openalex.org/W3007321348"},{"id":"https://openalex.org/W3021435052"},{"id":"https://openalex.org/W3094726667"},{"id":"https://openalex.org/W3012384859"},{"id":"https://openalex.org/W3003667701"},{"id":"https://openalex.org/W3112413645"},{"id":"https://openalex.org/W3012065626"},{"id":"https://openalex.org/W3108327164"},{"id":"https://openalex.org/W3025166920"},{"id":"https://openalex.org/W3111297775"},{"id":"https://openalex.org/W3009451127"},{"id":"https://openalex.org/W3045814549"},{"id":"https://openalex.org/W3107130960"},{"id":"https://openalex.org/W3004280078"},{"id":"https://openalex.org/W3013893137"},{"id":"https://openalex.org/W3014067025"},{"id":"https://openalex.org/W3022285953"},{"id":"https://openalex.org/W3015608194"},{"id":"https://openalex.org/W3013800395"},{"id":"https://openalex.org/W3006500278"},{"id":"https://openalex.org/W2998795792"},{"id":"https://openalex.org/W3087924281"},{"id":"https://openalex.org/W3090844627"},{"id":"https://openalex.org/W3092621662"},{"id":"https://openalex.org/W3025744748"},{"id":"https://openalex.org/W3013152614"},{"id":"https://openalex.org/W3018334611"},{"id":"https://openalex.org/W3036386821"},{"id":"https://openalex.org/W3047091198"},{"id":"https://openalex.org/W3048620154"},{"id":"https://openalex.org/W3080487846"},{"id":"https://openalex.org/W3022210384"},{"id":"https://openalex.org/W3112105690"},{"id":"https://openalex.org/W3025871232"},{"id":"https://openalex.org/W3044660350"},{"id":"https://openalex.org/W3045971896"},{"id":"https://openalex.org/W3032255042"},{"id":"https://openalex.org/W3049142173"},{"id":"https://openalex.org/W3021880084"},{"id":"https://openalex.org/W3038505425"},{"id":"https://openalex.org/W3042323010"},{"id":"https://openalex.org/W3020077371"},{"id":"https://openalex.org/W3088521725"},{"id":"https://openalex.org/W3042374389"},{"id":"https://openalex.org/W3021655800"},{"id":"https://openalex.org/W2999574254"},{"id":"https://openalex.org/W3041773269"},{"id":"https://openalex.org/W3081073771"},{"id":"https://openalex.org/W3084071750"},{"id":"https://openalex.org/W3040725637"},{"id":"https://openalex.org/W3042072141"},{"id":"https://openalex.org/W3105951520"},{"id":"https://openalex.org/W3082772719"},{"id":"https://openalex.org/W3110348288"},{"id":"https://openalex.org/W3097237895"},{"id":"https://openalex.org/W3002419408"},{"id":"https://openalex.org/W3035833199"},{"id":"https://openalex.org/W3045220852"},{"id":"https://openalex.org/W3048696433"},{"id":"https://openalex.org/W3045750571"},{"id":"https://openalex.org/W3097882514"},{"id":"https://openalex.org/W3109457440"},{"id":"https://openalex.org/W3081724017"},{"id":"https://openalex.org/W3110962967"},{"id":"https://openalex.org/W3020979633"},{"id":"https://openalex.org/W3092014111"},{"id":"https://openalex.org/W3009665504"},{"id":"https://openalex.org/W3014223170"},{"id":"https://openalex.org/W3095108941"},{"id":"https://openalex.org/W3118415022"},{"id":"https://openalex.org/W3035842044"},{"id":"https://openalex.org/W3013234381"},{"id":"https://openalex.org/W3011967855"},{"id":"https://openalex.org/W3024866623"},{"id":"https://openalex.org/W3049753425"},{"id":"https://openalex.org/W4231042008"},{"id":"https://openalex.org/W3092776779"},{"id":"https://openalex.org/W3037744932"},{"id":"https://openalex.org/W3003927370"},{"id":"https://openalex.org/W3002005073"},{"id":"https://openalex.org/W3003851443"},{"id":"https://openalex.org/W2997612598"},{"id":"https://openalex.org/W3002960076"},{"id":"https://openalex.org/W3003928948"},{"id":"https://openalex.org/W3007954652"},{"id":"https://openalex.org/W3010353186"},{"id":"https://openalex.org/W3046044526"},{"id":"https://openalex.org/W2997012646"},{"id":"https://openalex.org/W3015118093"},{"id":"https://openalex.org/W3003283677"},{"id":"https://openalex.org/W3011808483"},{"id":"https://openalex.org/W3003258373"},{"id":"https://openalex.org/W3036305013"},{"id":"https://openalex.org/W3045596050"},{"id":"https://openalex.org/W2998325425"},{"id":"https://openalex.org/W2999703472"},{"id":"https://openalex.org/W3000629496"},{"id":"https://openalex.org/W4230095787"},{"id":"https://openalex.org/W4247111652"}],"group_by":[]}
-  recorded_at: 2026-10-14 07:55:08
+        {"meta":{"count":141,"db_response_time_ms":109,"page":null,"per_page":200,"next_cursor":null,"groups_count":null,"x_query":{"oql":"get works where full text has (microbio*)\n  and source is (S137773608)\n  and published in 2020","x_new_oql":"get works from 2020 with microbio* in the full text in (S137773608)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search.exact","value":"microbio*","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"url":"/works?filter=fulltext.search.exact:microbio%2A,primary_location.source.id:S137773608,publication_year:2020&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3010810358"},{"id":"https://openalex.org/W3097338697"},{"id":"https://openalex.org/W3107153021"},{"id":"https://openalex.org/W3036012425"},{"id":"https://openalex.org/W3007415664"},{"id":"https://openalex.org/W3088211674"},{"id":"https://openalex.org/W3012090404"},{"id":"https://openalex.org/W3089633091"},{"id":"https://openalex.org/W3022258762"},{"id":"https://openalex.org/W3040803262"},{"id":"https://openalex.org/W3088828252"},{"id":"https://openalex.org/W3045498347"},{"id":"https://openalex.org/W3004904380"},{"id":"https://openalex.org/W3045859819"},{"id":"https://openalex.org/W3047325596"},{"id":"https://openalex.org/W3000478494"},{"id":"https://openalex.org/W3003571560"},{"id":"https://openalex.org/W3003867040"},{"id":"https://openalex.org/W3110918806"},{"id":"https://openalex.org/W3004094041"},{"id":"https://openalex.org/W3003718115"},{"id":"https://openalex.org/W3111311798"},{"id":"https://openalex.org/W3004289340"},{"id":"https://openalex.org/W3028751854"},{"id":"https://openalex.org/W3058975363"},{"id":"https://openalex.org/W3196509866"},{"id":"https://openalex.org/W4237168571"},{"id":"https://openalex.org/W3000311037"},{"id":"https://openalex.org/W3008359597"},{"id":"https://openalex.org/W3006764495"},{"id":"https://openalex.org/W3016210073"},{"id":"https://openalex.org/W3006022816"},{"id":"https://openalex.org/W3104088357"},{"id":"https://openalex.org/W3006633140"},{"id":"https://openalex.org/W3026019136"},{"id":"https://openalex.org/W3016425662"},{"id":"https://openalex.org/W3108567773"},{"id":"https://openalex.org/W3035914962"},{"id":"https://openalex.org/W3035242809"},{"id":"https://openalex.org/W3108091462"},{"id":"https://openalex.org/W3084234242"},{"id":"https://openalex.org/W3045405700"},{"id":"https://openalex.org/W3007321348"},{"id":"https://openalex.org/W3021435052"},{"id":"https://openalex.org/W3094726667"},{"id":"https://openalex.org/W3012384859"},{"id":"https://openalex.org/W3003667701"},{"id":"https://openalex.org/W3112413645"},{"id":"https://openalex.org/W3012065626"},{"id":"https://openalex.org/W3108327164"},{"id":"https://openalex.org/W3025166920"},{"id":"https://openalex.org/W3111297775"},{"id":"https://openalex.org/W3009451127"},{"id":"https://openalex.org/W3045814549"},{"id":"https://openalex.org/W3107130960"},{"id":"https://openalex.org/W3004280078"},{"id":"https://openalex.org/W3013893137"},{"id":"https://openalex.org/W3014067025"},{"id":"https://openalex.org/W3022285953"},{"id":"https://openalex.org/W3015608194"},{"id":"https://openalex.org/W3013800395"},{"id":"https://openalex.org/W3006500278"},{"id":"https://openalex.org/W2998795792"},{"id":"https://openalex.org/W3087924281"},{"id":"https://openalex.org/W3090844627"},{"id":"https://openalex.org/W3092621662"},{"id":"https://openalex.org/W3025744748"},{"id":"https://openalex.org/W3013152614"},{"id":"https://openalex.org/W3018334611"},{"id":"https://openalex.org/W3036386821"},{"id":"https://openalex.org/W3047091198"},{"id":"https://openalex.org/W3048620154"},{"id":"https://openalex.org/W3080487846"},{"id":"https://openalex.org/W3022210384"},{"id":"https://openalex.org/W3112105690"},{"id":"https://openalex.org/W3025871232"},{"id":"https://openalex.org/W3044660350"},{"id":"https://openalex.org/W3045971896"},{"id":"https://openalex.org/W3032255042"},{"id":"https://openalex.org/W3049142173"},{"id":"https://openalex.org/W3021880084"},{"id":"https://openalex.org/W3038505425"},{"id":"https://openalex.org/W3042323010"},{"id":"https://openalex.org/W3020077371"},{"id":"https://openalex.org/W3088521725"},{"id":"https://openalex.org/W3042374389"},{"id":"https://openalex.org/W3021655800"},{"id":"https://openalex.org/W2999574254"},{"id":"https://openalex.org/W3041773269"},{"id":"https://openalex.org/W3081073771"},{"id":"https://openalex.org/W3084071750"},{"id":"https://openalex.org/W3040725637"},{"id":"https://openalex.org/W3042072141"},{"id":"https://openalex.org/W3105951520"},{"id":"https://openalex.org/W3082772719"},{"id":"https://openalex.org/W3110348288"},{"id":"https://openalex.org/W3097237895"},{"id":"https://openalex.org/W3002419408"},{"id":"https://openalex.org/W3035833199"},{"id":"https://openalex.org/W3045220852"},{"id":"https://openalex.org/W3048696433"},{"id":"https://openalex.org/W3045750571"},{"id":"https://openalex.org/W3097882514"},{"id":"https://openalex.org/W3109457440"},{"id":"https://openalex.org/W3081724017"},{"id":"https://openalex.org/W3110962967"},{"id":"https://openalex.org/W3020979633"},{"id":"https://openalex.org/W3092014111"},{"id":"https://openalex.org/W3009665504"},{"id":"https://openalex.org/W3014223170"},{"id":"https://openalex.org/W3095108941"},{"id":"https://openalex.org/W3118415022"},{"id":"https://openalex.org/W3035842044"},{"id":"https://openalex.org/W3013234381"},{"id":"https://openalex.org/W3011967855"},{"id":"https://openalex.org/W3024866623"},{"id":"https://openalex.org/W3049753425"},{"id":"https://openalex.org/W4231042008"},{"id":"https://openalex.org/W3092776779"},{"id":"https://openalex.org/W3037744932"},{"id":"https://openalex.org/W3003927370"},{"id":"https://openalex.org/W3002005073"},{"id":"https://openalex.org/W3003851443"},{"id":"https://openalex.org/W2997612598"},{"id":"https://openalex.org/W3002960076"},{"id":"https://openalex.org/W3003928948"},{"id":"https://openalex.org/W3007954652"},{"id":"https://openalex.org/W3010353186"},{"id":"https://openalex.org/W3046044526"},{"id":"https://openalex.org/W2997012646"},{"id":"https://openalex.org/W3015118093"},{"id":"https://openalex.org/W3003283677"},{"id":"https://openalex.org/W3011808483"},{"id":"https://openalex.org/W3003258373"},{"id":"https://openalex.org/W3036305013"},{"id":"https://openalex.org/W3045596050"},{"id":"https://openalex.org/W2998325425"},{"id":"https://openalex.org/W2999703472"},{"id":"https://openalex.org/W3000629496"},{"id":"https://openalex.org/W4230095787"},{"id":"https://openalex.org/W4247111652"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:51
 recorded_with: VCR-vcr/2.1.0
