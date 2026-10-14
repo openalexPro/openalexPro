@@ -100,6 +100,16 @@ if (is.null(pro_api_key())) {
   Sys.setenv(openalexPro.api_key = "test-api-key")
 }
 
+# pro_query() validates filter names and select fields against lists that
+# opt_filter_names() / opt_select_fields() fetch once per R session (a "probe"
+# request). Fill both caches (works) here, each from its own cassette, so the
+# probes never happen inside another test's cassette. Otherwise whichever
+# test first called pro_query() in a session made the probe in its own
+# cassette: running a test file alone then recorded a live request into it,
+# and which cassettes held a probe depended on the order of earlier runs.
+vcr::use_cassette("opt_filter_names", opt_filter_names(update = TRUE))
+vcr::use_cassette("opt_select_fields", opt_select_fields(update = TRUE))
+
 # try(
 #   {
 #     Sys.setenv(openalexPro.api_key = keyring::key_get("API_openalex"))

@@ -117,6 +117,6 @@ This was a silent-data-loss bug before 0.12.0: failures were `message()`d only w
 
 ## Test Infrastructure
 
-- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses, matched on method, URI and body (POST). The `Authorization` header is masked when recording; `helper_vcr.R` injects `"test-api-key"` on CI. Running a single test file can record the live `opt_filter_names()` probe into that file's cassette (the per-session cache is filled by earlier files) — revert such changes.
+- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses, matched on method, URI and body (POST). The `Authorization` header is masked when recording; `helper_vcr.R` injects `"test-api-key"` on CI. `helper_vcr.R` fills the per-session caches of `opt_filter_names()` / `opt_select_fields()` (works) from their own cassettes before any test, so test files are independent of each other: each file passes alone and in any order without touching other cassettes. Run a single file with `NOT_CRAN=true` (as `devtools::test()` does), otherwise `skip_on_cran()` skips the cassette tests.
 - **Snapshot tests**: Custom comparators `compare_json()`, `compare_jsonl()`, `compare_json_ignore()` handle platform differences.
 - **Test numbering**: `test-000-*.R` through `test-900-*.R`; `test-900-*` are live API tests.

@@ -2,13 +2,15 @@
 testthat::test_that("opt_filter_names returns value", {
   testthat::local_edition(3)
   vcr::local_cassette("opt_filter_names")
-  testthat::expect_snapshot_value(opt_filter_names(), style = "json2")
+  # update = TRUE: make the request (under this cassette) rather than read the
+  # cache that helper_vcr.R filled
+  testthat::expect_snapshot_value(opt_filter_names(update = TRUE), style = "json2")
 })
 
 testthat::test_that("opt_select_fields returns value", {
   testthat::local_edition(3)
   vcr::local_cassette("opt_select_fields")
-  testthat::expect_snapshot_value(opt_select_fields(), style = "json2")
+  testthat::expect_snapshot_value(opt_select_fields(update = TRUE), style = "json2")
 })
 
 testthat::test_that("pro_query and legacy query return identical URLs (search + filters)", {
