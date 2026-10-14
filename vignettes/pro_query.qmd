@@ -708,7 +708,7 @@ See the [OpenAlex corpus documentation](https://help.openalex.org/data/works/cor
 
 When querying with large lists of DOIs or IDs, `pro_query()` automatically splits the request into chunks. This keeps each URL within OpenAlex's limits (at most 100 values per filter, about 4 KB per URL), and each chunk is a separate query, so `pro_request(..., workers = )` downloads the chunks in parallel.
 
-With `pro_request(..., via = "oqo")` the queries are sent via POST, where these limits do not apply; `chunk_limit = 200` then gives about one request (one page of 200 records) per chunk while keeping the parallel download.
+This applies to all chunked filters (`doi`, `openalex`, `ids.openalex`, `cites`, `cited_by`). With `pro_request(..., via = "oqo")` the queries are sent via POST, where these limits do not apply; `chunk_limit = 200` then gives about one request (one page of 200 records) per chunk while keeping the parallel download. (For `cites` / `cited_by`, a chunk can match many more works and simply takes more pages.)
 
 ## Chunking Overview
 

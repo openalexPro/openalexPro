@@ -58,8 +58,8 @@ being written.  A single URL is treated as one leaf.  Default \code{FALSE}.}
 the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
 (free) into an OpenAlex Query Object and sent via POST, with the same
 results. It has no URL length limit, accepts more than 100 values per
-filter (so \code{pro_query(..., chunk_limit = 200)} fetches about one page per
-chunk), checks the query before any credits are spent, and records the
+filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
+in about one page per chunk), checks the query before any credits are spent, and records the
 exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
 fetched via GET.}
 }

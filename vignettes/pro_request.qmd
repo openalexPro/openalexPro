@@ -270,8 +270,8 @@ pro_fetch(urls, project_folder = "data", via = "oqo")
   request.
 - **No URL limits.** A URL may carry at most 100 values per filter (with
   `via = "url"`, `pro_request()` stops early when a filter has more). An OQO
-  may carry more, so `pro_query(..., chunk_limit = 200)` fetches a DOI list
-  in about one request per chunk -- and the chunks still download in parallel
+  may carry more, so `pro_query(..., chunk_limit = 200)` fetches a DOI or
+  OpenAlex ID list in about one request per chunk -- and the chunks still download in parallel
   with `workers`.
 - **The exact query is recorded** (see below).
 

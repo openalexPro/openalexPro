@@ -7,8 +7,8 @@
   before any credits are spent) into an OpenAlex Query Object and sent via
   POST. Same results -- a new test downloads the same queries both ways and
   compares the complete result sets. No URL length limit and more than 100
-  values per filter, so `pro_query(..., chunk_limit = 200)` fetches DOI lists
-  in about one request per chunk, still in parallel. Single records stay GET.
+  values per filter, so `pro_query(..., chunk_limit = 200)` fetches DOI and
+  OpenAlex ID lists in about one request per chunk, still in parallel. Single records stay GET.
 - **`_query.json`** per query records the URL, how it was sent, the query as
   OpenAlex ran it (OQL, OQO), records, requests, credits, cost and time; it
   is copied into the Parquet partition, so it survives `delete_input`.
