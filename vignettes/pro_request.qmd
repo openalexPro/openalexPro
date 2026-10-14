@@ -863,6 +863,11 @@ pro_request(urls, output = "data/json", workers = 4)
 
 # Conversion: CPU and memory bound; each worker gets a share of the memory
 pro_request_parquet("data/json", "data/parquet", workers = parallel::detectCores() - 1)
+
+# pro_fetch() does both: `download_workers` for the download (defaults to
+# `workers`), `workers` for the conversion
+pro_fetch(urls, project_folder = "data", download_workers = 4,
+          workers = parallel::detectCores() - 1)
 ```
 
 # See Also

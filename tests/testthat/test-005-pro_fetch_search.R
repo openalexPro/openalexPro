@@ -66,3 +66,34 @@ test_that("pro_fetch(resume = TRUE) returns a finished run without any request",
     normalizePath(parquet)
   )
 })
+
+test_that("pro_fetch passes download_workers to the download and workers to the conversion", {
+  seen <- new.env()
+  local_mocked_bindings(
+    pro_request = function(..., workers) {
+      seen$download <- workers
+      "json"
+    },
+    pro_request_parquet = function(input_json, ..., workers) {
+      force(input_json) # the download, piped in (lazy otherwise)
+      seen$convert <- workers
+      invisible("parquet")
+    }
+  )
+  tmp <- withr::local_tempdir()
+
+  # default: both steps use `workers`, as before
+  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+            workers = 3, progress = FALSE)
+  expect_equal(c(seen$download, seen$convert), c(3, 3))
+
+  # separate counts
+  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+            workers = 6, download_workers = 2, progress = FALSE)
+  expect_equal(c(seen$download, seen$convert), c(2, 6))
+
+  # unchanged default when neither is given
+  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+            progress = FALSE)
+  expect_equal(c(seen$download, seen$convert), c(1, 1))
+})

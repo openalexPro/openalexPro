@@ -12,6 +12,7 @@ pro_fetch(
   api_key = pro_api_key(),
   delete_input = TRUE,
   workers = 1,
+  download_workers = workers,
   verbose = FALSE,
   progress = TRUE,
   enrich = TRUE,
@@ -44,7 +45,13 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 \item{delete_input}{Logical. If \code{TRUE} (the default), the \code{json}
 subfolder is deleted after successful conversion to Parquet.}
 
-\item{workers}{Number of parallel workers to use if \code{query_url} is a list. Defaults to 1.}
+\item{workers}{Number of parallel workers for the conversion to Parquet
+(CPU and memory bound), and by default also for the download. Default 1.}
+
+\item{download_workers}{Number of parallel workers for the download, used
+when \code{query_url} is a list. Defaults to \code{workers}. Downloads
+are limited by the API rather than the machine, so a few (e.g. 2--4)
+are usually enough, while the conversion can use more.}
 
 \item{verbose}{Logical indicating whether to show verbose messages.}
 

@@ -789,7 +789,7 @@ flowchart TD
 |----------|---------|----------------|
 | `pro_query()` | Build API URL | entity, search, filters, select, oql, oqo |
 | `pro_count()` | Get result count | query_url |
-| `pro_fetch()` | **All-in-one download** | query_url, project_folder, resume |
+| `pro_fetch()` | **All-in-one download** | query_url, project_folder, workers, download_workers, resume |
 | `pro_request()` | Download JSON | query_url, output, pages, workers, resume |
 | `pro_request_parquet()` | Convert JSON to Parquet | input_json, output, workers, resume |
 | `pro_validate_credentials()` | Test credentials (optional helper) | api_key |
