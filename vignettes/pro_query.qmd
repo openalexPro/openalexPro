@@ -281,8 +281,12 @@ OpenAlex's parse error and its position.
 
 OpenAlex's free `/query` endpoint translates between classic URLs, OQL and OQO;
 see the [OQL API documentation](https://help.openalex.org/api/oql/). The query
-is sent in the URL, so very long queries (over about 8 KB) are not supported
-yet.
+is sent in the URL; for very long queries (over about 8 KB) use
+`pro_request(..., via = "oqo")`, which sends the OQO via POST.
+
+Any query from `pro_query()` -- classic or OQL / OQO -- can also be sent as an
+OQO with `pro_request(..., via = "oqo")`; the results are the same (see the
+`pro_request` vignette).
 
 ## Field Selection
 
@@ -702,7 +706,9 @@ See the [OpenAlex corpus documentation](https://help.openalex.org/data/works/cor
 
 # Automatic Chunking
 
-When querying with large lists of DOIs or IDs, `pro_query()` automatically splits the request into chunks to avoid API URL length limits (max ~4094 characters).
+When querying with large lists of DOIs or IDs, `pro_query()` automatically splits the request into chunks. This keeps each URL within OpenAlex's limits (at most 100 values per filter, about 4 KB per URL), and each chunk is a separate query, so `pro_request(..., workers = )` downloads the chunks in parallel.
+
+With `pro_request(..., via = "oqo")` the queries are sent via POST, where these limits do not apply; `chunk_limit = 200` then gives about one request (one page of 200 records) per chunk while keeping the parallel download.
 
 ## Chunking Overview
 

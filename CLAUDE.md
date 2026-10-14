@@ -47,16 +47,18 @@ Functions that query the live OpenAlex REST API:
 - `pro_request()` — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). `resume = TRUE` refetches only the leaf queries that did not complete, using the `00_in.progress` sentinel each leaf carries while it is being written (a single URL is one leaf). Leaves are dispatched one future each (`future.scheduling = Inf`); progress counts leaves, with no count request up front. Grouped results are detected from the response (`meta$groups_count`), not the URL. In list mode each leaf's error is caught and all failures are reported at the end (failed leaves keep `00_in.progress` for `resume`). A `per_page` in the URL is kept; `page`/`cursor` are replaced (warning); `search.semantic` is fetched without cursor (OpenAlex rejects it), as one page of up to 50; a `sample` is paged by page number (cursor paging of a sample stops after page 1), adding and reporting a `seed` when it spans several pages
 - `pro_request_parquet()` — converts JSON files from `pro_request()` directly to Parquet (schema inference + per-file DuckDB COPY, parallel via `future`; `workers` alone decides, `NULL`/1 forces sequential and the user's plan is restored). `resume = TRUE` converts only what is missing; `on_error` controls what happens to files that fail (see *Failure handling* below)
 - `pro_fetch()` — all-in-one: query → paginate → convert to Parquet (project folder); `resume = TRUE` completes an interrupted download and conversion; `download_workers` (default `workers`) for the download, `workers` for the conversion
-- `pro_count()` — counts matching records
+- `pro_count()` — counts matching records (`via` as for `pro_request()`)
 - `pro_download_content()` — downloads PDFs / TEI XML from `content.openalex.org`
 - `pro_rate_limit_status()` — queries the `/rate-limit` endpoint
 - `pro_validate_credentials()` — checks API key validity
+
+`via = "oqo"` (opt-in; default `"url"` leaves every request as before): `.oa_to_oqo()` (`R/oqo.R`) translates each query once with the free `POST /query` (validating it before any credits are spent; paging params and `sample`/`seed` are taken out first because the translator stores numbers as text, then put back into the OQO), and `fetch_query_pages()`'s `make_req()` sends every page as `POST /` with the OQO in the body. Single records stay GET. `tests/testthat/test-021-url_oqo_equivalence.R` asserts identical complete result sets for url vs oqo (semantic search only near-identical: OpenAlex varies at rank 50 between identical requests). Every query writes `_query.json` (URL, via, OQL/OQO, records, requests, credits, cost, times); page discovery reads only `results_page_N` / `group_by_page_N` / `single_N` files, and `pro_request_parquet()` copies the record into the partition.
 
 All HTTP calls route through `api_call()` (`R/api_call.R`), which handles retries,
 error inspection, and `httr2` plumbing: retries on 429/5xx and network failures,
 aborts stalled transfers (< 1 byte/s for 120 s), does not retry a 429 caused by
 the daily budget (`X-RateLimit-Remaining` 0 or `not_enough_credits`), and adds
-OpenAlex's `message` (or OQL `validation$errors`) to the error. Tests use VCR cassettes in
+OpenAlex's `message` (or OQL `validation$errors`) to the error. The API key is added by `.oa_auth()` as `Authorization: Bearer`, never in the URL (`api_key` in a POST body is rejected by OpenAlex). Tests use VCR cassettes in
 `tests/fixtures/vcr/`.
 
 ### SQL helpers
@@ -115,6 +117,6 @@ This was a silent-data-loss bug before 0.12.0: failures were `message()`d only w
 
 ## Test Infrastructure
 
-- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses. API keys filtered to `<api-key>`; `helper_vcr.R` injects `"test-api-key"` on CI.
+- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses, matched on method, URI and body (POST). The `Authorization` header is masked when recording; `helper_vcr.R` injects `"test-api-key"` on CI. Running a single test file can record the live `opt_filter_names()` probe into that file's cassette (the per-session cache is filled by earlier files) — revert such changes.
 - **Snapshot tests**: Custom comparators `compare_json()`, `compare_jsonl()`, `compare_json_ignore()` handle platform differences.
 - **Test numbering**: `test-000-*.R` through `test-900-*.R`; `test-900-*` are live API tests.
