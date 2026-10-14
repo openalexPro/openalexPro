@@ -20,7 +20,8 @@ pro_fetch(
   error_log = NULL,
   resume = FALSE,
   via = c("url", "oqo"),
-  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
+  compact_parquet = NULL
 )
 }
 \arguments{
@@ -93,6 +94,11 @@ applies that choice without downloading again. \code{"warning"} keeps both
 copies and warns, \code{"ignore"} keeps both silently, \code{"oldest"} / \code{"newest"}
 keep the first / last downloaded copy (removing the other from its page
 file) and warn about missing records.}
+
+\item{compact_parquet}{\code{NULL} (default) keeps one Parquet file per API
+page.  A number, e.g. \code{250000}, combines each query's page files into
+files of up to that many records once every file has converted -- much
+faster to read.  See \code{\link[=pro_compact_parquet]{pro_compact_parquet()}}.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder
@@ -115,7 +121,20 @@ The function
 
 \strong{This function assumes \code{count_only == FALSE}}
 }
+\examples{
+\dontrun{
+# Combine each query's page files into files of up to 250,000 records,
+# which are much faster to read
+pro_fetch(
+  pro_query(search = "coral reef", from_publication_date = "2020-01-01"),
+  project_folder = "coral_reef",
+  compact_parquet = 250000
+)
+}
+
+}
 \seealso{
 \code{\link[=pro_request]{pro_request()}} for the download step,
-\code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step.
+\code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step,
+\code{\link[=pro_compact_parquet]{pro_compact_parquet()}} to compact an existing dataset.
 }

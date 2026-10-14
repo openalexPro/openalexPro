@@ -25,6 +25,10 @@
 #' record with a value derived from the source filename (or subdirectory for
 #' multi-query inputs).
 #'
+#' With `compact_parquet`, the page files of each query are combined into
+#' files of up to that many records after the conversion (see
+#' [pro_compact_parquet()]).
+#'
 #' @param input_json Directory of JSON files returned by [pro_request()].
 #' @param output Output directory for the Parquet dataset.
 #' @param add_columns Named list of scalar constant columns to embed in every
@@ -57,6 +61,10 @@
 #'   letting every worker claim DuckDB's default of 80% of the machine.
 #' @param retry_memory_limit `memory_limit` for the sequential retry pass,
 #'   where no workers compete.  `NULL` (default) uses the whole budget.
+#' @param compact_parquet `NULL` (default) keeps one Parquet file per API
+#'   page.  A number, e.g. `250000`, combines each query's page files into
+#'   files of up to that many records once every file has converted -- much
+#'   faster to read.  See [pro_compact_parquet()].
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
@@ -82,7 +90,14 @@
 #'
 #' @return Output directory path (invisibly).
 #'
+#' @examples
+#' \dontrun{
+#' pro_request_parquet("my_project/json", "my_project/parquet",
+#'                     compact_parquet = 250000)
+#' }
+#'
 #' @seealso [pro_request()] to download the JSON files,
+#'   [pro_compact_parquet()] to compact an existing dataset,
 #'   [pro_request_jsonl()] and [pro_request_jsonl_parquet()] for the older
 #'   two-step pipeline (now deprecated).
 #'
@@ -111,11 +126,13 @@ pro_request_parquet <- function(
   resume = FALSE,
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
-  retry_memory_limit = NULL
+  retry_memory_limit = NULL,
+  compact_parquet = NULL
 ) {
   if (is.null(input_json)) stop("No `input_json` specified!")
   if (is.null(output))     stop("No `output` specified!")
   on_error <- match.arg(on_error)
+  if (!is.null(compact_parquet)) .pc_check_rows(compact_parquet, "compact_parquet")
 
   progress_file <- .prr_prepare_output(output, overwrite, resume)
   success <- FALSE
@@ -136,6 +153,13 @@ pro_request_parquet <- function(
   } else NULL
 
   output_files <- .prr_output_paths(disc$jsons, input_json, output)
+
+  # Resume: pages a compacted file already holds are converted, not missing
+  if (isTRUE(resume)) {
+    keep <- !.pc_covered(output_files)
+    disc$jsons   <- disc$jsons[keep]
+    output_files <- output_files[keep]
+  }
 
   # `workers` alone decides the parallelism, because the memory budget and
   # DuckDB threads below are sized from it. Leaving NULL / 1 to whatever plan
@@ -231,6 +255,13 @@ pro_request_parquet <- function(
   # its Parquet partition, so it survives `delete_input`. arrow and DuckDB
   # ignore it: the leading underscore, and it is not a `.parquet` file.
   .prr_copy_query_records(input_json, output)
+
+  # Only a complete conversion is compacted: a page converted later would fall
+  # into a compacted file's page range and be taken as done. Before
+  # `delete_input`, so an interrupted compaction can still be resumed.
+  if (!is.null(compact_parquet) && length(failed) == 0L) {
+    .pc_compact(output, compact_parquet, verbose)
+  }
 
   # Keep the input when anything failed (on_error = "warn"/"ignore"): it is the
   # only copy of the failed pages, and `resume` needs it.

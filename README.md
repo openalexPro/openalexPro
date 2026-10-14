@@ -204,6 +204,8 @@ corpus <- pro_query(...) |>
 
 The older two-step conversion via JSONL files (`pro_request_jsonl()` and `pro_request_jsonl_parquet()`) is deprecated.
 
+By default there is one `parquet` file per API page (up to 200 records), which keeps the conversion parallel and resumable. For large downloads, `compact_parquet = 250000` (in `pro_request_parquet()` or `pro_fetch()`) combines each query's page files into files of up to 250,000 records after the conversion; `pro_compact_parquet()` does the same for an existing dataset. Records, columns and their order do not change, but reading is much faster: for 1.1 million works, aggregates and lookups by ID ran 35 to 50 times faster, and the dataset was 40% smaller.
+
 ### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
 The `read_corpus()` function reads the corpus either as a arrow `Dataset` object if `return_data = FALSE`, which is essentially metadata to the dataset,  or a `data.frame`, if `return_data = TRUE`, in which case the whole dataset is loaded into memory.
 Especially the `return_data = FALSE` opens possiblilities on on-disc process =ing of mlarge datasets using the `dplyr` pipeline with `dplyr::collect()` at the end to retrieve the actual data:

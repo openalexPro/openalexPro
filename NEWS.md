@@ -1,5 +1,27 @@
 # openalexPro 0.12.1
 
+## Fewer, larger Parquet files: `compact_parquet`, `pro_compact_parquet()`
+
+`pro_request_parquet()` writes one Parquet file per API page (up to 200
+records), so a large query becomes thousands of small files, which are slow
+to read. New argument `compact_parquet` (`pro_request_parquet()`,
+`pro_fetch()`; default `NULL` keeps one file per page, as before) and new
+function `pro_compact_parquet()` (for an existing dataset) combine each
+query's page files into files of up to that many records, e.g. `250000`.
+Records, columns and their order do not change. For 1.1 million works,
+compaction took about 20 seconds; afterwards aggregates and lookups by ID ran
+35 to 50 times faster, reading full records with DuckDB 4 times faster, and
+the dataset was 40% smaller.
+
+A compacted file holds whole consecutive pages and is named after them
+(`results_pages_1-1250.parquet`). Files are written one at a time (`.part`,
+record count checked, renamed, then the pages deleted), so an interrupted
+compaction is completed by running it again, and `resume = TRUE` never
+converts a compacted page again. A query that cannot be compacted keeps its
+page files, with a warning. `pro_compact_parquet()` stops if an
+`openalexSnapshot` index (which points to files and row numbers) exists next
+to the dataset.
+
 ## Resume in the middle of a query
 
 `resume = TRUE` no longer fetches an interrupted query again from page 1:

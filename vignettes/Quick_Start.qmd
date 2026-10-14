@@ -129,6 +129,10 @@ parquet_path <- pro_fetch(
 
 That's it! Your data is now in `my_climate_data/parquet/`.
 
+For large downloads, add `compact_parquet = 250000`: the one-file-per-page
+output is combined into files of up to 250,000 records, which are much faster
+to read (see `pro_compact_parquet()`).
+
 ```{mermaid}
 flowchart TD
     subgraph pro_fetch["pro_fetch() does everything"]
