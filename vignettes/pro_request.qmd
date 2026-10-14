@@ -315,6 +315,14 @@ checked** (if OpenAlex's free `/query` endpoint could not be reached). Single
 records (`works/W123`) get no OQL files. Like `_query.json`, both files are
 copied into the Parquet partition.
 
+For a list of queries, `_queries_oql.txt` and `_queries_oql.html` at the top
+of the output summarise all queries for a supplement: in the order of the
+list, each query's name, number of records, whether its OQL is exact, and the
+OQL itself, with totals (records, credits, cost) in the header; the HTML adds
+an overview table linking to each query. Queries skipped by `resume = TRUE`
+are included, failed ones are listed as "Not downloaded". Both files are
+copied to the top of the Parquet folder.
+
 The API key is sent as an `Authorization: Bearer` header, never in the URL, so
 it does not appear in logs, error messages or recorded test responses.
 

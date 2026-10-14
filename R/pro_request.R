@@ -29,7 +29,9 @@
 #' formatted, self-contained `_query_oql.html` with the query in OpenAlex's
 #' readable query language (OQL). The OQL is translated back and compared with
 #' the query that ran; the files say whether it reproduces it exactly. Single
-#' records get only `_query.json`.
+#' records get only `_query.json`. For a list of queries, `_queries_oql.txt`
+#' and `_queries_oql.html` at the top of `output` summarise all queries
+#' (records, exactness, OQL), e.g. for a paper's supplement.
 #'
 #' @param query_url The URL of the API query or a list of URLs returned from `pro_query()`.
 #' @param pages The maximum number of pages (of 200 records) downloaded per
@@ -246,6 +248,8 @@ pro_request <- function(
     # Per leaf: the cost (success), NULL (skipped by resume) or the error
     # message (failure)
     failed <- which(vapply(result, is.character, logical(1)))
+    # One overview of all queries (also lists failed ones as not downloaded)
+    .pr_write_queries_summary(output, leaf_paths)
     if (progress || verbose) {
       .pr_report_cost(result[!vapply(result, is.character, logical(1))])
     }

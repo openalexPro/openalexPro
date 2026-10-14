@@ -100,5 +100,7 @@ requests, credits, cost, time), and for papers \verb{_query_oql.txt} and a
 formatted, self-contained \verb{_query_oql.html} with the query in OpenAlex's
 readable query language (OQL). The OQL is translated back and compared with
 the query that ran; the files say whether it reproduces it exactly. Single
-records get only \verb{_query.json}.
+records get only \verb{_query.json}. For a list of queries, \verb{_queries_oql.txt}
+and \verb{_queries_oql.html} at the top of \code{output} summarise all queries
+(records, exactness, OQL), e.g. for a paper's supplement.
 }

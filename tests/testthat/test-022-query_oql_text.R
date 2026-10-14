@@ -127,3 +127,77 @@ test_that("a single record gets no OQL files (nothing to describe)", {
   pro_request("https://api.openalex.org/works/W1", output = out, progress = FALSE)
   expect_false(file.exists(file.path(out, "_query_oql.txt")))
 })
+
+# Summary of all queries (_queries_oql.txt / .html) ---------------------------
+
+# mock_api(), plus one query that fails (HTTP 404)
+mock_api_with_failure <- function(oql) {
+  ok <- mock_api(oql)
+  function(req) {
+    if (grepl("doi:bad", utils::URLdecode(req$url), fixed = TRUE)) {
+      return(httr2::response(404, headers = list("content-type" = "application/json"),
+                             body = charToRaw('{"error":"Not found","message":"Not found"}')))
+    }
+    ok(req)
+  }
+}
+
+q_ok <- "https://api.openalex.org/works?filter=type:article,primary_location.source.id:S137773608"
+q_bad <- "https://api.openalex.org/works?filter=doi:bad"
+
+test_that("a list download writes one summary of all queries, in list order", {
+  httr2::local_mocked_responses(mock_api_with_failure(oql_nature))
+  out <- file.path(withr::local_tempdir(), "json")
+  expect_error(
+    pro_request(list(zeta = q_ok, alpha = q_ok, broken = q_bad),
+                output = out, progress = FALSE),
+    "1 of 3 queries failed"
+  )
+  txt <- readLines(file.path(out, "_queries_oql.txt"))
+  expect_equal(txt[1], "# OpenAlex queries (OQL)")
+  expect_match(txt[2], "^# 3 queries \\| 4 records \\| exact: 2 of 2 \\| ")
+  # list order, not alphabetical; the failed query is listed
+  expect_equal(
+    grep("^## ", txt, value = TRUE),
+    c("## zeta | 2 records | Exact", "## alpha | 2 records | Exact",
+      "## broken | - records | Not downloaded")
+  )
+  # each query's OQL follows its heading
+  i <- which(txt == "## zeta | 2 records | Exact")
+  expect_equal(txt[i + 1:2], strsplit(oql_nature, "\n")[[1]])
+
+  html <- paste(readLines(file.path(out, "_queries_oql.html")), collapse = "\n")
+  expect_match(html, '<td><a href="#q1">zeta</a></td>', fixed = TRUE)
+  expect_match(html, '<h2 id="q3">broken <span class="badge missing">Not downloaded</span></h2>', fixed = TRUE)
+  expect_match(html, '<a class="label" href="https://openalex.org/S137773608"', fixed = TRUE)
+  expect_false(grepl("<script|<link|src=", html))
+})
+
+test_that("the summary includes queries skipped by resume", {
+  httr2::local_mocked_responses(mock_api(oql_nature))
+  out <- file.path(withr::local_tempdir(), "json")
+  pro_request(list(a = q_ok, b = q_ok), output = out, progress = FALSE)
+  unlink(file.path(out, "_queries_oql.txt"))
+  unlink(file.path(out, "b"), recursive = TRUE) # b must be fetched again, a is skipped
+  pro_request(list(a = q_ok, b = q_ok), output = out, progress = FALSE, resume = TRUE)
+  expect_equal(
+    grep("^## ", readLines(file.path(out, "_queries_oql.txt")), value = TRUE),
+    c("## a | 2 records | Exact", "## b | 2 records | Exact")
+  )
+})
+
+test_that("the summary is carried to the top of the parquet folder", {
+  httr2::local_mocked_responses(mock_api(oql_nature))
+  tmp <- withr::local_tempdir()
+  pro_fetch(list(a = q_ok, b = q_ok), project_folder = tmp, progress = FALSE, enrich = FALSE)
+  expect_true(all(file.exists(file.path(tmp, "parquet", c("_queries_oql.txt", "_queries_oql.html")))))
+  expect_equal(nrow(dplyr::collect(arrow::open_dataset(file.path(tmp, "parquet")))), 4L)
+})
+
+test_that("a single URL gets no summary (its own files are at the top)", {
+  httr2::local_mocked_responses(mock_api(oql_nature))
+  out <- file.path(withr::local_tempdir(), "json")
+  pro_request(q_ok, output = out, progress = FALSE)
+  expect_false(file.exists(file.path(out, "_queries_oql.txt")))
+  expect_true(file.exists(file.path(out, "_query_oql.txt")))
+})

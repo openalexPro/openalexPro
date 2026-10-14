@@ -12,6 +12,11 @@ OpenAlex's free `/query` endpoint (two calls per query); if it is unreachable
 the download is unaffected and the files are marked "not checked". Both are
 copied into the Parquet partition.
 
+For a list of queries, `_queries_oql.txt` and `_queries_oql.html` at the top
+of the output summarise all queries in list order -- name, records, whether
+the OQL is exact, the OQL -- with totals, for a paper's supplement (queries
+skipped by `resume` included, failed ones listed as not downloaded).
+
 ## Test recordings refreshed
 
 All recorded API responses were re-recorded from the live API (with the key

@@ -251,7 +251,7 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_copy_query_records <- function(input_json, output) {
   records <- list.files(
-    input_json, pattern = "^_query(\\.json|_oql\\.txt|_oql\\.html)$",
+    input_json, pattern = "^_quer(y\\.json|y_oql\\.txt|y_oql\\.html|ies_oql\\.txt|ies_oql\\.html)$",
     full.names = TRUE, recursive = TRUE
   )
   if (length(records) == 0L) {

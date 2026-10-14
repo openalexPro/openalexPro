@@ -217,23 +217,11 @@
   paste(out, collapse = "")
 }
 
-#' Self-contained HTML version (no scripts, no external resources)
+#' Shared CSS of the query pages (light and dark)
 #' @keywords internal
 #' @noRd
-.oql_html <- function(oql, info, oqo, query_url) {
-  esc <- function(x) {
-    x <- gsub("&", "&amp;", x, fixed = TRUE)
-    x <- gsub("<", "&lt;", x, fixed = TRUE)
-    gsub(">", "&gt;", x, fixed = TRUE)
-  }
-  state <- if (isTRUE(info$exact)) "exact" else if (isFALSE(info$exact)) "inexact" else "unchecked"
-  oqo_json <- as.character(jsonlite::toJSON(oqo, auto_unbox = TRUE, pretty = TRUE, digits = NA))
+.oql_css <- function() {
   c(
-    "<!doctype html>",
-    '<html lang="en"><head><meta charset="utf-8">',
-    '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    "<title>OpenAlex query (OQL)</title>",
-    "<style>",
     ":root{--bg:#fff;--fg:#1f2328;--muted:#59636e;--box:#f6f8fa;--line:#d1d9e0;",
     "--kw:#8250df;--bool:#cf222e;--str:#0a3069;--num:#0550ae;--label:#116329;",
     "--ok:#1a7f37;--warn:#9a6700;}",
@@ -254,6 +242,34 @@
     ".note.exact{border-color:var(--ok)}.note.inexact{border-color:var(--warn)}",
     "details{margin-top:16px}summary{cursor:pointer;color:var(--muted)}",
     "code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;word-break:break-all}",
+    ".summary{border-collapse:collapse;width:100%;margin:0 0 20px}",
+    ".summary th,.summary td{text-align:left;padding:4px 10px;border-bottom:1px solid var(--line)}",
+    ".summary td.n{text-align:right;font-variant-numeric:tabular-nums}",
+    ".summary a{color:var(--fg)}",
+    "h2{font-size:16px;margin:28px 0 4px}",
+    ".badge{font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}",
+    ".badge.exact{color:var(--ok);border-color:var(--ok)}.badge.inexact{color:var(--warn);border-color:var(--warn)}"
+  )
+}
+
+#' Self-contained HTML version (no scripts, no external resources)
+#' @keywords internal
+#' @noRd
+.oql_html <- function(oql, info, oqo, query_url) {
+  esc <- function(x) {
+    x <- gsub("&", "&amp;", x, fixed = TRUE)
+    x <- gsub("<", "&lt;", x, fixed = TRUE)
+    gsub(">", "&gt;", x, fixed = TRUE)
+  }
+  state <- if (isTRUE(info$exact)) "exact" else if (isFALSE(info$exact)) "inexact" else "unchecked"
+  oqo_json <- as.character(jsonlite::toJSON(oqo, auto_unbox = TRUE, pretty = TRUE, digits = NA))
+  c(
+    "<!doctype html>",
+    '<html lang="en"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    "<title>OpenAlex query (OQL)</title>",
+    "<style>",
+    .oql_css(),
     "</style></head><body>",
     "<h1>OpenAlex query</h1>",
     sprintf(
@@ -270,6 +286,189 @@
         paste0("<p><code>", esc(query_url), "</code></p></details>")
       )
     },
+    "</body></html>"
+  )
+}
+
+# Summary of all queries -------------------------------------------------------
+
+#' Write `_queries_oql.txt` and `_queries_oql.html` for a list download
+#'
+#' One overview of all queries -- name, records, whether the OQL is exact, and
+#' the OQL -- in the order of the query list, for a paper's supplement. Built
+#' from the per-query files on disk, so queries skipped by `resume` are
+#' included and failed ones are listed as not downloaded. Best effort.
+#'
+#' @param output Top output directory of [pro_request()].
+#' @param leaf_paths List of name vectors, one per query (as in `pro_request`).
+#' @keywords internal
+#' @noRd
+.pr_write_queries_summary <- function(output, leaf_paths) {
+  if (is.null(output) || length(leaf_paths) == 0L || !dir.exists(output)) {
+    return(invisible(NULL))
+  }
+  tryCatch(
+    {
+      rows <- lapply(leaf_paths, .pr_query_summary_row, output = output)
+      info <- list(
+        date = format(Sys.time(), "%Y-%m-%d", tz = "UTC"),
+        version = as.character(utils::packageVersion("openalexPro"))
+      )
+      writeLines(.oql_summary_text(rows, info), file.path(output, "_queries_oql.txt"))
+      writeLines(.oql_summary_html(rows, info), file.path(output, "_queries_oql.html"))
+    },
+    error = function(e) invisible(NULL)
+  )
+  invisible(NULL)
+}
+
+#' One query's entry for the summary, read from its directory
+#' @keywords internal
+#' @noRd
+.pr_query_summary_row <- function(parts, output) {
+  dir <- do.call(file.path, c(list(output), as.list(parts)))
+  rec_file <- file.path(dir, "_query.json")
+  txt_file <- file.path(dir, "_query_oql.txt")
+  rec <- if (file.exists(rec_file)) jsonlite::read_json(rec_file) else NULL
+  status <- "missing"
+  oql <- character(0)
+  if (file.exists(txt_file)) {
+    txt <- readLines(txt_file, warn = FALSE)
+    status <- if (startsWith(txt[3], "# Exact")) {
+      "exact"
+    } else if (startsWith(txt[3], "# Not exact")) {
+      "inexact"
+    } else {
+      "unchecked"
+    }
+    oql <- txt[-(1:4)] # after the three header lines and the blank line
+  } else if (!is.null(rec)) {
+    status <- "none" # e.g. a single record: nothing to describe
+  }
+  records <- rec$records
+  if (is.null(records) && file.exists(file.path(dir, "single_1.json"))) {
+    records <- 1L # a single record carries no meta$count
+  }
+  list(
+    name = paste(parts, collapse = "/"),
+    records = records,
+    credits = rec$credits,
+    cost = rec$cost_usd,
+    status = status,
+    oql = oql
+  )
+}
+
+# "1 record", "366 records", "- records" (unknown)
+.oql_n_records <- function(n) {
+  if (is.null(n)) {
+    return("- records")
+  }
+  paste(format(n, big.mark = ","), if (identical(as.numeric(n), 1)) "record" else "records")
+}
+
+.oql_status_label <- function(status) {
+  c(
+    exact = "Exact", inexact = "Not exact", unchecked = "Not checked",
+    none = "No OQL (single record)", missing = "Not downloaded"
+  )[[status]]
+}
+
+.oql_summary_totals <- function(rows) {
+  num <- function(x) sum(vapply(rows, function(r) as.numeric(r[[x]] %||% 0), 0))
+  list(
+    n = length(rows),
+    records = num("records"),
+    credits = num("credits"),
+    cost = num("cost"),
+    exact = sum(vapply(rows, function(r) r$status == "exact", TRUE)),
+    with_oql = sum(vapply(rows, function(r) r$status %in% c("exact", "inexact", "unchecked"), TRUE))
+  )
+}
+
+.oql_summary_text <- function(rows, info) {
+  t <- .oql_summary_totals(rows)
+  head <- c(
+    "# OpenAlex queries (OQL)",
+    paste0(
+      "# ", t$n, " queries | ", format(t$records, big.mark = ","), " records",
+      " | exact: ", t$exact, " of ", t$with_oql,
+      " | ", t$credits, " credits ($", formatC(t$cost, format = "f", digits = 4), ")",
+      " | downloaded ", info$date, " (UTC) | openalexPro ", info$version
+    ),
+    paste(
+      "# Exact = the OQL translates back to exactly the query that ran;",
+      "otherwise the OQO in each query's _query.json is the exact query."
+    )
+  )
+  body <- unlist(lapply(rows, function(r) {
+    c(
+      "",
+      paste0(
+        "## ", r$name, " | ", .oql_n_records(r$records), " | ",
+        .oql_status_label(r$status)
+      ),
+      r$oql
+    )
+  }))
+  c(head, body)
+}
+
+.oql_summary_html <- function(rows, info) {
+  esc <- function(x) {
+    x <- gsub("&", "&amp;", x, fixed = TRUE)
+    x <- gsub("<", "&lt;", x, fixed = TRUE)
+    gsub(">", "&gt;", x, fixed = TRUE)
+  }
+  t <- .oql_summary_totals(rows)
+  ids <- paste0("q", seq_along(rows))
+  badge <- function(status) {
+    sprintf('<span class="badge %s">%s</span>', status, esc(.oql_status_label(status)))
+  }
+  table <- c(
+    '<table class="summary"><thead><tr><th>Query</th><th>Records</th><th>OQL</th></tr></thead><tbody>',
+    vapply(seq_along(rows), function(i) {
+      r <- rows[[i]]
+      sprintf(
+        '<tr><td><a href="#%s">%s</a></td><td class="n">%s</td><td>%s</td></tr>',
+        ids[i], esc(r$name), esc(format(r$records %||% "-", big.mark = ",")), badge(r$status)
+      )
+    }, ""),
+    "</tbody></table>"
+  )
+  sections <- unlist(lapply(seq_along(rows), function(i) {
+    r <- rows[[i]]
+    c(
+      sprintf('<h2 id="%s">%s %s</h2>', ids[i], esc(r$name), badge(r$status)),
+      sprintf('<p class="meta">%s</p>', esc(.oql_n_records(r$records))),
+      if (length(r$oql) > 0L) {
+        paste0("<pre>", .oql_highlight(paste(r$oql, collapse = "\n")), "</pre>")
+      }
+    )
+  }))
+  c(
+    "<!doctype html>",
+    '<html lang="en"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    "<title>OpenAlex queries (OQL)</title>",
+    "<style>", .oql_css(), "</style></head><body>",
+    "<h1>OpenAlex queries</h1>",
+    sprintf(
+      '<p class="meta">%d queries &middot; %s records &middot; %d credits ($%s) &middot; downloaded %s (UTC) &middot; openalexPro %s</p>',
+      t$n, esc(format(t$records, big.mark = ",")), as.integer(t$credits),
+      formatC(t$cost, format = "f", digits = 4), esc(info$date), esc(info$version)
+    ),
+    sprintf(
+      '<p class="note %s">%s</p>',
+      if (t$exact == t$with_oql) "exact" else "inexact",
+      esc(paste0(
+        "Exact for ", t$exact, " of ", t$with_oql, " queries: the OQL translates ",
+        "back to exactly the query that ran. Otherwise the OQO in that ",
+        "query's _query.json is the exact query."
+      ))
+    ),
+    table,
+    sections,
     "</body></html>"
   )
 }
