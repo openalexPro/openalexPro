@@ -19,7 +19,8 @@ pro_request_parquet(
   resume = FALSE,
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
-  retry_memory_limit = NULL
+  retry_memory_limit = NULL,
+  compact_parquet = NULL
 )
 }
 \arguments{
@@ -91,6 +92,11 @@ letting every worker claim DuckDB's default of 80\% of the machine.}
 
 \item{retry_memory_limit}{\code{memory_limit} for the sequential retry pass,
 where no workers compete.  \code{NULL} (default) uses the whole budget.}
+
+\item{compact_parquet}{\code{NULL} (default) keeps one Parquet file per API
+page.  A number, e.g. \code{250000}, combines each query's page files into
+files of up to that many records once every file has converted -- much
+faster to read.  See \code{\link[=pro_compact_parquet]{pro_compact_parquet()}}.}
 }
 \value{
 Output directory path (invisibly).
@@ -126,10 +132,22 @@ naming (\verb{query=<name>/}, \verb{query_l2=<name>/}, …) so that Arrow/DuckDB
 read the result as a partitioned dataset.  A \code{page} column is added to each
 record with a value derived from the source filename (or subdirectory for
 multi-query inputs).
+
+With \code{compact_parquet}, the page files of each query are combined into
+files of up to that many records after the conversion (see
+\code{\link[=pro_compact_parquet]{pro_compact_parquet()}}).
 }
 
+\examples{
+\dontrun{
+pro_request_parquet("my_project/json", "my_project/parquet",
+                    compact_parquet = 250000)
+}
+
+}
 \seealso{
 \code{\link[=pro_request]{pro_request()}} to download the JSON files,
+\code{\link[=pro_compact_parquet]{pro_compact_parquet()}} to compact an existing dataset,
 \code{\link[=pro_request_jsonl]{pro_request_jsonl()}} and \code{\link[=pro_request_jsonl_parquet]{pro_request_jsonl_parquet()}} for the older
 two-step pipeline (now deprecated).
 }

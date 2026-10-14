@@ -469,6 +469,38 @@ pro_request_parquet(
 )
 ```
 
+## Fewer, Larger Parquet Files
+
+By default `pro_request_parquet()` writes one Parquet file per API page (up to
+200 records). That keeps the conversion parallel and resumable, but a large
+query becomes thousands of small files, which are slow to read.
+`compact_parquet` combines each query's page files into files of up to that
+many records once the conversion is complete; `pro_compact_parquet()` does
+the same for an existing dataset:
+
+```{r}
+pro_fetch(query_url = urls, project_folder = "data", compact_parquet = 250000)
+
+# or, for a dataset converted before
+pro_compact_parquet("data/parquet", rows = 250000)
+```
+
+Measured for 1.1 million works (5,460 page files): compaction took about 20
+seconds; afterwards aggregates and lookups by ID ran 35 to 50 times faster,
+reading full records with DuckDB 4 times faster, and the dataset was 40%
+smaller. Files of 50,000 to 1 million records read equally fast.
+
+- Records, columns and their order do not change; the `page` column stays.
+- Each query (partition) is compacted on its own. A compacted file holds
+  whole consecutive pages and is named after them, e.g.
+  `results_pages_1-1250.parquet`.
+- Files are compacted one at a time; an interrupted compaction is completed
+  by running it again (or `resume = TRUE`), and `resume` never converts a
+  compacted page again.
+- If a query cannot be compacted, a warning says so and its page files stay.
+- Indexes built by `openalexSnapshot` point to files and row numbers:
+  `pro_compact_parquet()` stops if such an index exists next to the dataset.
+
 ## Progress Tracking
 
 All functions create a `00_in.progress` file during processing:

@@ -46,8 +46,20 @@
 #' @return Invisibly, the normalised path of the \code{parquet} subfolder
 #'   inside \code{project_folder}.
 #'
+#' @examples
+#' \dontrun{
+#' # Combine each query's page files into files of up to 250,000 records,
+#' # which are much faster to read
+#' pro_fetch(
+#'   pro_query(search = "coral reef", from_publication_date = "2020-01-01"),
+#'   project_folder = "coral_reef",
+#'   compact_parquet = 250000
+#' )
+#' }
+#'
 #' @seealso [pro_request()] for the download step,
-#'   [pro_request_parquet()] for the conversion step.
+#'   [pro_request_parquet()] for the conversion step,
+#'   [pro_compact_parquet()] to compact an existing dataset.
 #'
 #' @md
 #'
@@ -68,7 +80,8 @@ pro_fetch <- function(
   error_log      = NULL,
   resume         = FALSE,
   via            = c("url", "oqo"),
-  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
+  compact_parquet = NULL
 ) {
   via <- match.arg(via)
   inconsistency_on_resume <- match.arg(inconsistency_on_resume)
@@ -142,6 +155,7 @@ pro_fetch <- function(
       delete_input = delete_input,
       workers      = workers,
       enrich       = enrich,
-      resume       = resume
+      resume       = resume,
+      compact_parquet = compact_parquet
     )
 }
