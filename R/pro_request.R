@@ -46,6 +46,14 @@
 #'   the `00_in.progress` sentinel each leaf directory carries while it is
 #'   being written.  A single URL is treated as one leaf.  Default `FALSE`.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
+#' @param via How each query is sent. `"url"` (default): as a GET request with
+#'   the query in the URL, as built by [pro_query()]. `"oqo"`: translated once
+#'   (free) into an OpenAlex Query Object and sent via POST, with the same
+#'   results. It has no URL length limit, accepts more than 100 values per
+#'   filter (so `pro_query(..., chunk_limit = 200)` fetches about one page per
+#'   chunk), checks the query before any credits are spent, and records the
+#'   exact query in `_query.json`. Single records (`works/W123`) are always
+#'   fetched via GET.
 #'
 #' @return If `count_only` is `FALSE` (the default) the complete path to the expanded and
 #'   normalized `output`. If `count_only` is `TRUE`, a data.frame with metadata about
@@ -73,8 +81,10 @@ pro_request <- function(
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL,
-  resume = FALSE
+  resume = FALSE,
+  via = c("url", "oqo")
 ) {
+  via <- match.arg(via)
   if (
     is.null(api_key) ||
       (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -89,6 +99,12 @@ pro_request <- function(
 
   if (!is.null(error_log)) {
     message("error log file: ", error_log)
+  }
+
+  # A URL may carry at most 100 values per filter (OpenAlex answers HTTP 400
+  # otherwise); an OQO sent via POST may carry more.
+  if (via == "url") {
+    .oa_check_value_limit(unlist(query_url, use.names = FALSE))
   }
 
   # ---------------------------------------------------------------------------
@@ -129,7 +145,8 @@ pro_request <- function(
         function(i) {
           pro_count(
             query_url = leaf_urls[[i]],
-            api_key = api_key
+            api_key = api_key,
+            via = via
           )
         },
         future.seed = TRUE
@@ -202,7 +219,8 @@ pro_request <- function(
                   api_key = api_key,
                   verbose = verbose,
                   error_log = error_log,
-                  progressor = p
+                  progressor = p,
+                  via = via
                 ) |>
                   attr("cost")
               },
@@ -236,7 +254,8 @@ pro_request <- function(
   if (count_only) {
     out <- pro_count(
       query_url = query_url,
-      api_key = api_key
+      api_key = api_key,
+      via = via
     )
     return(out)
   }
@@ -257,7 +276,8 @@ pro_request <- function(
     verbose = verbose,
     error_log = error_log,
     progressor = NULL,
-    use_cli_progress = progress
+    use_cli_progress = progress,
+    via = via
   )
   if (progress || verbose) {
     .pr_report_cost(list(attr(res, "cost")))
@@ -290,7 +310,8 @@ fetch_query_pages <- function(
   verbose,
   error_log,
   progressor = NULL,
-  use_cli_progress = FALSE
+  use_cli_progress = FALSE,
+  via = "url"
 ) {
   # Argument Checks -----------------------------------------------------------
   if (is.null(output)) {
@@ -352,9 +373,22 @@ fetch_query_pages <- function(
   #   page number (up to OpenAlex's maximum sample of 10,000), which needs a
   #   `seed` once it spans several pages;
   # - everything else uses cursor paging.
+  #
+  # With via = "oqo" the query is translated once to an OQO and every page is
+  # a POST with the OQO in the body; the paging works the same way. A single
+  # record (`works/W123`) is never translated.
   user_q <- httr2::url_parse(query_url)$query
-  semantic <- "search.semantic" %in% names(user_q)
-  sampled <- !semantic && !is.null(user_q$sample)
+  oq <- if (identical(via, "oqo")) .oa_to_oqo(query_url, api_key) else NULL
+  if (is.null(oq)) {
+    semantic <- "search.semantic" %in% names(user_q)
+    sample_n <- user_q$sample
+    seed <- user_q$seed
+  } else {
+    semantic <- .oqo_is_semantic(oq$oqo)
+    sample_n <- oq$oqo$sample
+    seed <- oq$oqo$seed
+  }
+  sampled <- !semantic && !is.null(sample_n)
   per_page <- as.integer(user_q$per_page %||% if (semantic) 50L else 200L)
   replaced <- intersect(c("page", "cursor"), names(user_q))
   if (!semantic && length(replaced) > 0L) {
@@ -364,29 +398,48 @@ fetch_query_pages <- function(
       call. = FALSE
     )
   }
-  query <- if (semantic) {
+  paging <- if (semantic) {
     list(per_page = per_page)
   } else if (sampled) {
     list(per_page = per_page, page = 1L, cursor = NULL)
   } else {
     list(per_page = per_page, page = NULL, cursor = "*")
   }
-  if (sampled && is.null(user_q$seed) &&
-      isTRUE(as.numeric(user_q$sample) > per_page)) {
+  if (sampled && is.null(seed) && isTRUE(as.numeric(sample_n) > per_page)) {
     # Without a seed, OpenAlex rejects page 2 of a sample. Not drawn from R's
     # RNG, so the caller's random state is left alone.
-    query$seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
+    seed <- as.integer((as.numeric(Sys.time()) * 1000) %% .Machine$integer.max)
     message(
       "`sample` spans several pages, which needs a `seed`: using seed = ",
-      query$seed, ". Add it to the query to reproduce this sample."
+      seed, ". Add it to the query to reproduce this sample."
     )
+    if (is.null(oq)) paging$seed <- seed else oq$oqo$seed <- as.character(seed)
   }
-  req <- httr2::request(query_url)
-  req <- do.call(httr2::req_url_query, c(list(req), query)) |>
-    .oa_auth(api_key) |>
-    httr2::req_user_agent(
-      paste0("openalexPro/", packageVersion("openalexPro"))
-    )
+
+  # One request per page, built from the current paging state
+  make_req <- function(paging) {
+    req <- if (is.null(oq)) {
+      do.call(httr2::req_url_query, c(list(httr2::request(query_url)), paging))
+    } else {
+      body <- c(
+        list(oqo = oq$oqo),
+        oq$view,
+        Filter(Negate(is.null), paging[setdiff(names(paging), "seed")])
+      )
+      httr2::request(oq$root) |>
+        httr2::req_method("POST") |>
+        httr2::req_body_json(body, auto_unbox = TRUE)
+    }
+    req |>
+      .oa_auth(api_key) |>
+      httr2::req_user_agent(
+        paste0("openalexPro/", packageVersion("openalexPro"))
+      )
+  }
+  req <- make_req(paging)
+  if (verbose && !is.null(oq)) {
+    message("Query (OQL): ", oq$oql)
+  }
 
   # Initialize page counter
   page <- 1L
@@ -429,7 +482,8 @@ fetch_query_pages <- function(
     if (!is.null(progressor)) {
       progressor(amount = 1)
     }
-    .pr_write_query_record(output, query_url, "url", x_query, records, cost, started)
+    .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
+                           oq %||% x_query, records, cost, started)
     success <- TRUE
     return(structure(output, cost = cost))
   }
@@ -492,15 +546,18 @@ fetch_query_pages <- function(
       break
     }
 
-    req <- if (sampled) {
-      httr2::req_url_query(req, page = page)
+    if (sampled) {
+      paging$page <- page
     } else {
-      httr2::req_url_query(req, cursor = data$meta$next_cursor)
+      paging$cursor <- data$meta$next_cursor
     }
+    req <- make_req(paging)
 
     if (verbose) {
       message("Downloading page ", page)
-      message("URL: ", sub("api_key=[^&]*", "api_key=<redacted>", req$url))
+      if (is.null(oq)) {
+        message("URL: ", sub("api_key=[^&]*", "api_key=<redacted>", req$url))
+      }
     }
 
     resp <- api_call(
@@ -545,7 +602,8 @@ fetch_query_pages <- function(
     cli::cli_progress_done()
   }
 
-  .pr_write_query_record(output, query_url, "url", x_query, records, cost, started)
+  .pr_write_query_record(output, query_url, if (is.null(oq)) "url" else "oqo",
+                         oq %||% x_query, records, cost, started)
   success <- TRUE
 
   structure(output, cost = cost)

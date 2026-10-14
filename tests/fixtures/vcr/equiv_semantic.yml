@@ -1,0 +1,146 @@
+http_interactions:
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?search.semantic=coral+reef+bleaching+and+ocean+warming&select=id&per_page=50
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:20 GMT
+      content-type: application/json
+      cf-ray: a4a505595d7f7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.001'
+      x-ratelimit-credits-used: '10'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999860'
+      x-ratelimit-remaining-usd: '199.986'
+      x-ratelimit-reset: '57880'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=qY%2FvGEAG28V0F%2Bs0tHJIefK95uYPYAiGqN18ZdJOyfQ%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791964517"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=qY%2FvGEAG28V0F%2Bs0tHJIefK95uYPYAiGqN18ZdJOyfQ%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791964517"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 50, "db_response_time_ms": 2533, "page": 1, "per_page":
+        50, "groups_count": null, "cost_usd": 0.001}, "results": [{"id": "https://openalex.org/W2055911746"},
+        {"id": "https://openalex.org/W2023496514"}, {"id": "https://openalex.org/W2004619429"},
+        {"id": "https://openalex.org/W2053919646"}, {"id": "https://openalex.org/W2600378448"},
+        {"id": "https://openalex.org/W2068750674"}, {"id": "https://openalex.org/W1969081787"},
+        {"id": "https://openalex.org/W3134996968"}, {"id": "https://openalex.org/W4234820443"},
+        {"id": "https://openalex.org/W2127175042"}, {"id": "https://openalex.org/W2165509652"},
+        {"id": "https://openalex.org/W7128470761"}, {"id": "https://openalex.org/W2676011594"},
+        {"id": "https://openalex.org/W2936631122"}, {"id": "https://openalex.org/W2945983828"},
+        {"id": "https://openalex.org/W4381954476"}, {"id": "https://openalex.org/W2460719240"},
+        {"id": "https://openalex.org/W74465882"}, {"id": "https://openalex.org/W4241084590"},
+        {"id": "https://openalex.org/W2079030407"}, {"id": "https://openalex.org/W4298108978"},
+        {"id": "https://openalex.org/W6999460506"}, {"id": "https://openalex.org/W4413605299"},
+        {"id": "https://openalex.org/W7095101384"}, {"id": "https://openalex.org/W2297764233"},
+        {"id": "https://openalex.org/W1994388916"}, {"id": "https://openalex.org/W4396928748"},
+        {"id": "https://openalex.org/W7055448227"}, {"id": "https://openalex.org/W135962169"},
+        {"id": "https://openalex.org/W3157773755"}, {"id": "https://openalex.org/W7058096885"},
+        {"id": "https://openalex.org/W2938628941"}, {"id": "https://openalex.org/W7044016557"},
+        {"id": "https://openalex.org/W6997325750"}, {"id": "https://openalex.org/W2809901810"},
+        {"id": "https://openalex.org/W2792287996"}, {"id": "https://openalex.org/W2934524800"},
+        {"id": "https://openalex.org/W4394962706"}, {"id": "https://openalex.org/W2782506003"},
+        {"id": "https://openalex.org/W4413634539"}, {"id": "https://openalex.org/W3216996229"},
+        {"id": "https://openalex.org/W7100072552"}, {"id": "https://openalex.org/W1550504916"},
+        {"id": "https://openalex.org/W7014726201"}, {"id": "https://openalex.org/W2764087394"},
+        {"id": "https://openalex.org/W4391470596"}, {"id": "https://openalex.org/W7027189010"},
+        {"id": "https://openalex.org/W7098510819"}, {"id": "https://openalex.org/W4415326539"},
+        {"id": "https://openalex.org/W2625997601"}], "group_by": []}'
+  recorded_at: 2026-10-14 07:55:20
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?search.semantic=coral%20reef%20bleaching%20and%20ocean%20warming"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:20 GMT
+      content-type: application/json
+      cf-ray: a4a5056a6d4a7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999860'
+      x-ratelimit-remaining-usd: '199.986'
+      x-ratelimit-reset: '57880'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2BmOkXPu4UHvZxS72D3vGZTvDZoJHA2795O%2Bayf7GsB4%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964520"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2BmOkXPu4UHvZxS72D3vGZTvDZoJHA2795O%2Bayf7GsB4%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964520"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?search.semantic=coral reef bleaching and ocean warming","oql":"get works where abstract is similar to (\"coral reef bleaching and ocean warming\")","oql_oneline":"get works where abstract is similar to (\"coral reef bleaching and ocean warming\")","x_new_oql":"get works where abstract is similar to (\"coral reef bleaching and ocean warming\")","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"text","column_id":"abstract.search.semantic","column":"abstract","operator":"has","segments":[{"kind":"column","text":"abstract","meta":{"column_id":"abstract.search.semantic"}},{"kind":"operator","text":" is similar to "},{"kind":"text","text":"("},{"kind":"value","text":"\"coral reef bleaching and ocean warming\"","meta":{"value":"coral reef bleaching and ocean warming"}},{"kind":"text","text":")"}],"leaf":{"column_id":"abstract.search.semantic","value":"coral reef bleaching and ocean warming","operator":"has"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"abstract","column_id":"abstract.search.semantic","addr":"1"},{"t":"op","id":"n1","text":" is similar to ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"\"coral reef bleaching and ocean warming\"","value":"coral reef bleaching and ocean warming","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"abstract.search.semantic","value":"coral reef bleaching and ocean warming","operator":"has"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 07:55:20
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"abstract.search.semantic","value":"coral
+        reef bleaching and ocean warming","operator":"has"}]},"select":"id","per_page":50}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:21 GMT
+      content-type: application/json
+      cf-ray: a4a5056b89937dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999859'
+      x-ratelimit-remaining-usd: '199.9859'
+      x-ratelimit-reset: '57879'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2BmOkXPu4UHvZxS72D3vGZTvDZoJHA2795O%2Bayf7GsB4%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964520"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2BmOkXPu4UHvZxS72D3vGZTvDZoJHA2795O%2Bayf7GsB4%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964520"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":50,"db_response_time_ms":841,"page":1,"per_page":50,"groups_count":null,"x_query":{"oql":"get works where abstract is similar to (\"coral reef bleaching and ocean warming\")","x_new_oql":"get works where abstract is similar to (\"coral reef bleaching and ocean warming\")","oqo":{"get_rows":"works","filter_rows":[{"column_id":"abstract.search.semantic","value":"coral reef bleaching and ocean warming","operator":"has"}]},"url":"/works?search.semantic=coral reef bleaching and ocean warming&per_page=50"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W2055911746"},{"id":"https://openalex.org/W2023496514"},{"id":"https://openalex.org/W2004619429"},{"id":"https://openalex.org/W2053919646"},{"id":"https://openalex.org/W2600378448"},{"id":"https://openalex.org/W2068750674"},{"id":"https://openalex.org/W1969081787"},{"id":"https://openalex.org/W3134996968"},{"id":"https://openalex.org/W4234820443"},{"id":"https://openalex.org/W2127175042"},{"id":"https://openalex.org/W2165509652"},{"id":"https://openalex.org/W7128470761"},{"id":"https://openalex.org/W2676011594"},{"id":"https://openalex.org/W2936631122"},{"id":"https://openalex.org/W2945983828"},{"id":"https://openalex.org/W4381954476"},{"id":"https://openalex.org/W2460719240"},{"id":"https://openalex.org/W74465882"},{"id":"https://openalex.org/W4241084590"},{"id":"https://openalex.org/W2079030407"},{"id":"https://openalex.org/W4298108978"},{"id":"https://openalex.org/W6999460506"},{"id":"https://openalex.org/W4413605299"},{"id":"https://openalex.org/W7095101384"},{"id":"https://openalex.org/W2297764233"},{"id":"https://openalex.org/W1994388916"},{"id":"https://openalex.org/W4396928748"},{"id":"https://openalex.org/W7055448227"},{"id":"https://openalex.org/W135962169"},{"id":"https://openalex.org/W3157773755"},{"id":"https://openalex.org/W7058096885"},{"id":"https://openalex.org/W2938628941"},{"id":"https://openalex.org/W7044016557"},{"id":"https://openalex.org/W6997325750"},{"id":"https://openalex.org/W2809901810"},{"id":"https://openalex.org/W2792287996"},{"id":"https://openalex.org/W2934524800"},{"id":"https://openalex.org/W4394962706"},{"id":"https://openalex.org/W2782506003"},{"id":"https://openalex.org/W4413634539"},{"id":"https://openalex.org/W3216996229"},{"id":"https://openalex.org/W7100072552"},{"id":"https://openalex.org/W1550504916"},{"id":"https://openalex.org/W7014726201"},{"id":"https://openalex.org/W2764087394"},{"id":"https://openalex.org/W4391470596"},{"id":"https://openalex.org/W7027189010"},{"id":"https://openalex.org/W7098510819"},{"id":"https://openalex.org/W4415326539"},{"id":"https://openalex.org/W2625997601"}],"group_by":[]}
+  recorded_at: 2026-10-14 07:55:21
+recorded_with: VCR-vcr/2.1.0

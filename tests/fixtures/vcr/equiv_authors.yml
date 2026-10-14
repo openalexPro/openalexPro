@@ -1,0 +1,204 @@
+http_interactions:
+- request:
+    method: GET
+    uri: https://api.openalex.org/authors?filter=DOESNTEXIST%3A1
+  response:
+    status: 400
+    headers:
+      date: Wed, 14 Oct 2026 07:55:11 GMT
+      content-type: application/json
+      content-length: '1205'
+      cf-ray: a4a505344b447dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999880'
+      x-ratelimit-remaining-usd: '199.988'
+      x-ratelimit-reset: '57889'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964511"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964511"
+    body:
+      string: |
+        {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid field. Valid fields are underscore or hyphenated versions of: affiliations.institution.country_code, affiliations.institution.id, affiliations.institution.lineage, affiliations.institution.ror, affiliations.institution.type, block_key, cited_by_count, collection, concept.id, concepts.id, default.search, display_name, display_name.search, from_created_date, has_orcid, id, ids.openalex, last_known_authorships.institutions.lineage, last_known_institutions.continent, last_known_institutions.country_code, last_known_institutions.geo.city, last_known_institutions.geo.region, last_known_institutions.id, last_known_institutions.is_global_south, last_known_institutions.lineage, last_known_institutions.ror, last_known_institutions.type, openalex, openalex_id, orcid, parsed_longest_name.first, parsed_longest_name.last, parsed_longest_name.middle, parsed_longest_name.suffix, scopus, summary_stats.2yr_mean_citedness, summary_stats.h_index, summary_stats.i10_index, text.search, to_created_date, to_updated_date, topic_share.id, topics.domain.id, topics.field.id, topics.id, topics.subfield.id, works_count, x_concepts.id"}
+  recorded_at: 2026-10-14 07:55:11
+- request:
+    method: GET
+    uri: https://api.openalex.org/authors?select=DOESNTEXIST
+  response:
+    status: 400
+    headers:
+      date: Wed, 14 Oct 2026 07:55:11 GMT
+      content-type: application/json
+      content-length: '432'
+      cf-ray: a4a505356f4e7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999880'
+      x-ratelimit-remaining-usd: '199.988'
+      x-ratelimit-reset: '57889'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964511"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964511"
+    body:
+      string: |
+        {"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid select field. Valid fields for select are: id, orcid, observed_orcids, display_name, raw_author_names, full_name, relevance_score, works_count, cited_by_count, summary_stats, ids, affiliations, last_known_institutions, topics, topic_share, x_concepts, counts_by_year, display_name_alternatives, block_key, works_api_url, updated_date, created_date."}
+  recorded_at: 2026-10-14 07:55:11
+- request:
+    method: GET
+    uri: https://api.openalex.org/authors?filter=last_known_institutions.id%3AI4200000001&select=id&per_page=200&cursor=%2A
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:11 GMT
+      content-type: application/json
+      cf-ray: a4a505369b737dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999879'
+      x-ratelimit-remaining-usd: '199.9879'
+      x-ratelimit-reset: '57889'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964511"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=OHPXrdBjlBLZfGUu6CCdZ%2FPqnVOG68XLduL1GRktMp0%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964511"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 5, "db_response_time_ms": 25, "page": null, "per_page":
+        200, "next_cursor": null, "groups_count": null, "x_query": {"oql": "get authors
+        where last known institution is (I4200000001)", "x_new_oql": "get authors
+        where last known institution is (I4200000001)", "oqo": {"get_rows": "authors",
+        "filter_rows": [{"column_id": "last_known_institutions.id", "value": "I4200000001"}]},
+        "url": "/authors?filter=last_known_institutions.id:I4200000001&per_page=200&cursor=%2A"},
+        "cost_usd": 0.0001}, "results": [{"id": "https://openalex.org/A5048491430"},
+        {"id": "https://openalex.org/A5023888391"}, {"id": "https://openalex.org/A5086928770"},
+        {"id": "https://openalex.org/A5057272882"}, {"id": "https://openalex.org/A5060778558"}],
+        "group_by": []}'
+  recorded_at: 2026-10-14 07:55:12
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/authors?filter=last_known_institutions.id%3AI4200000001"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:12 GMT
+      content-type: application/json
+      cf-ray: a4a5053869ef7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999879'
+      x-ratelimit-remaining-usd: '199.9879'
+      x-ratelimit-reset: '57888'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=vZvNW6dRjISkmNiieWjLTrrptQP78frWfyYLeju9WIo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964512"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=vZvNW6dRjISkmNiieWjLTrrptQP78frWfyYLeju9WIo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964512"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/authors?filter=last_known_institutions.id:I4200000001","oql":"get authors where last known institution is [OpenAlex](I4200000001)","oql_oneline":"get authors where last known institution is [OpenAlex](I4200000001)","x_new_oql":"get authors where last known institution is [OpenAlex](I4200000001)","oql_render_v2":{"version":"2.0","entity":{"id":"authors","text":"authors"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"entity","column_id":"last_known_institutions.id","column":"last known institution","operator":"is","segments":[{"kind":"column","text":"last known institution","meta":{"column_id":"last_known_institutions.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"I4200000001","meta":{"column_id":"last_known_institutions.id","value":"I4200000001"}},{"kind":"text","text":" "},{"kind":"id","text":"[OpenAlex]","meta":{"entity_display_name":"OpenAlex","entity_display_id":"[OpenAlex]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"last_known_institutions.id","value":"I4200000001"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"authors","text":"authors","label":"authors"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"last known institution","column_id":"last_known_institutions.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"I4200000001","column_id":"last_known_institutions.id","value":"I4200000001","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[OpenAlex]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 07:55:12
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"select":"id","per_page":200,"cursor":"*"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 07:55:12 GMT
+      content-type: application/json
+      cf-ray: a4a505396db07dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999878'
+      x-ratelimit-remaining-usd: '199.9878'
+      x-ratelimit-reset: '57888'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=vZvNW6dRjISkmNiieWjLTrrptQP78frWfyYLeju9WIo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791964512"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=vZvNW6dRjISkmNiieWjLTrrptQP78frWfyYLeju9WIo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791964512"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":5,"db_response_time_ms":17,"page":null,"per_page":200,"next_cursor":null,"groups_count":null,"x_query":{"oql":"get authors where last known institution is (I4200000001)","x_new_oql":"get authors where last known institution is (I4200000001)","oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"url":"/authors?filter=last_known_institutions.id:I4200000001&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/A5048491430"},{"id":"https://openalex.org/A5023888391"},{"id":"https://openalex.org/A5086928770"},{"id":"https://openalex.org/A5057272882"},{"id":"https://openalex.org/A5060778558"}],"group_by":[]}
+  recorded_at: 2026-10-14 07:55:12
+recorded_with: VCR-vcr/2.1.0

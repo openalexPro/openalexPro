@@ -66,8 +66,10 @@ pro_fetch <- function(
   enrich         = TRUE,
   count_only,
   error_log      = NULL,
-  resume         = FALSE
+  resume         = FALSE,
+  via            = c("url", "oqo")
 ) {
+  via <- match.arg(via)
   if (
     is.null(api_key) ||
     (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -126,7 +128,8 @@ pro_fetch <- function(
     progress   = progress,
     count_only = FALSE,
     error_log  = error_log,
-    resume     = resume
+    resume     = resume,
+    via        = via
   ) |>
     pro_request_parquet(
       output       = parquet_dir,

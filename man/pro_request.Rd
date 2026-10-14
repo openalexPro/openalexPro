@@ -15,7 +15,8 @@ pro_request(
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL,
-  resume = FALSE
+  resume = FALSE,
+  via = c("url", "oqo")
 )
 }
 \arguments{
@@ -52,6 +53,15 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 only the leaf queries that did not complete.  Completion is detected with
 the \verb{00_in.progress} sentinel each leaf directory carries while it is
 being written.  A single URL is treated as one leaf.  Default \code{FALSE}.}
+
+\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
+the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+(free) into an OpenAlex Query Object and sent via POST, with the same
+results. It has no URL length limit, accepts more than 100 values per
+filter (so \code{pro_query(..., chunk_limit = 200)} fetches about one page per
+chunk), checks the query before any credits are spent, and records the
+exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
+fetched via GET.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and

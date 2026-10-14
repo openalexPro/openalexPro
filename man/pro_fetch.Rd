@@ -18,7 +18,8 @@ pro_fetch(
   enrich = TRUE,
   count_only,
   error_log = NULL,
-  resume = FALSE
+  resume = FALSE,
+  via = c("url", "oqo")
 )
 }
 \arguments{
@@ -71,6 +72,15 @@ add \code{abstract} and \code{citation} computed columns.}
 queries that did not finish are downloaded again, and only missing
 Parquet files are converted. A finished run is returned unchanged.
 \code{overwrite} is ignored. Default \code{FALSE}.}
+
+\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
+the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+(free) into an OpenAlex Query Object and sent via POST, with the same
+results. It has no URL length limit, accepts more than 100 values per
+filter (so \code{pro_query(..., chunk_limit = 200)} fetches about one page per
+chunk), checks the query before any credits are spent, and records the
+exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
+fetched via GET.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder
