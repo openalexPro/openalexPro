@@ -51,10 +51,24 @@
 #' @param verbose Logical indicating whether to show verbose messages.
 #' @param progress Logical indicating whether to show a progress bar. Default `TRUE`.
 #' @param count_only return count only as a data.frame.
-#' @param resume Logical.  When `TRUE`, keep an existing `output` and refetch
-#'   only the leaf queries that did not complete.  Completion is detected with
-#'   the `00_in.progress` sentinel each leaf directory carries while it is
-#'   being written.  A single URL is treated as one leaf.  Default `FALSE`.
+#' @param resume Logical.  When `TRUE`, keep an existing `output` and download
+#'   only what is missing: finished queries are skipped (detected by the
+#'   `00_in.progress` sentinel each query directory carries while it is being
+#'   written), and an interrupted query continues after its last saved page,
+#'   using the cursor stored in its `_paging.json` (the message says how old
+#'   it is). If that state cannot be trusted, or for samples and semantic
+#'   search, the query is fetched again from page 1. A single URL is treated
+#'   as one query.  Default `FALSE`.
+#' @param inconsistency_on_resume What to do when a query that was resumed in
+#'   the middle turns out inconsistent, because OpenAlex's data changed between
+#'   the sessions: records that appear twice (found exactly, by work ID) or
+#'   missing records (only as a net difference to OpenAlex's current count --
+#'   a record lost and another added cancel out). `"error"` (default) stops;
+#'   nothing is lost, and a rerun with `resume = TRUE` and another value
+#'   applies that choice without downloading again. `"warning"` keeps both
+#'   copies and warns, `"ignore"` keeps both silently, `"oldest"` / `"newest"`
+#'   keep the first / last downloaded copy (removing the other from its page
+#'   file) and warn about missing records.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
 #' @param via How each query is sent. `"url"` (default): as a GET request with
 #'   the query in the URL, as built by [pro_query()]. `"oqo"`: translated once
@@ -852,7 +866,9 @@ collect_leaf_queries <- function(x, path_parts = character(0)) {
     "\nOutput: ", output,
     "\nRe-run with `resume = TRUE` to fetch only the failed and unfinished queries.",
     # The reasons above are shortened; keep the way out of an inconsistency
-    if (any(grepl("inconsistency_on_resume", unlist(result[failed]), fixed = TRUE))) {
+    # (matched on the inconsistency message itself, not on the argument name,
+    # which can appear in unrelated errors)
+    if (any(grepl("^Resumed query `", unlist(result[failed])))) {
       paste0(
         "\nFor queries inconsistent after a resume: rerun with `resume = TRUE` ",
         "and `inconsistency_on_resume = \"newest\"`, `\"oldest\"`, `\"warning\"` ",

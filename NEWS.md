@@ -1,5 +1,25 @@
 # openalexPro 0.12.1
 
+## Resume in the middle of a query
+
+`resume = TRUE` no longer fetches an interrupted query again from page 1:
+it continues after the last saved page. OpenAlex's cursors are positions in
+the sort order that do not expire (a cursor from May still worked in
+October), but contain nothing about the query; so after each page the exact
+query (the URL, or for `via = "oqo"` the OQO that ran) and the cursor are
+written to `_paging.json`, with the time the cursor was created, which the
+resume message reports. Anything that cannot be trusted falls back to
+fetching the query again from page 1, with the reason. Samples and semantic
+search still start again.
+
+New argument `inconsistency_on_resume = c("error", "warning", "ignore",
+"oldest", "newest")` (`pro_request()`, `pro_fetch()`): after a resume,
+duplicates (found exactly, by work ID) and missing records (only as a net
+difference to OpenAlex's current count) stop the run by default; nothing is
+lost, and a rerun with another value applies the choice without downloading
+again. `"oldest"` / `"newest"` remove the other copy from its page file. The
+resume is recorded in `_query.json`.
+
 ## Readable query files for papers: `_query_oql.txt`, `_query_oql.html`
 
 Next to `_query.json`, each downloaded query now gets its OQL -- OpenAlex's

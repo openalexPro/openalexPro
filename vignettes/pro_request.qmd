@@ -237,15 +237,68 @@ OpenAlex's reason; `resume = TRUE` then fetches only those again.
 ## Resuming an Interrupted Download
 
 With `resume = TRUE`, an existing `output` is kept and only queries that did
-not finish are downloaded again. Each query directory carries a
-`00_in.progress` marker while it is being written; a query that was
-interrupted is fetched again from the start. This works for a single URL as
-well as for lists, and `pro_fetch(resume = TRUE)` also completes an
-interrupted Parquet conversion:
+not finish are downloaded. Each query directory carries a `00_in.progress`
+marker while it is being written. This works for a single URL as well as for
+lists, and `pro_fetch(resume = TRUE)` also completes an interrupted Parquet
+conversion:
 
 ```{r}
 pro_request(query_url = urls, output = "data/json", resume = TRUE)
 pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
+```
+
+### Continuing in the middle of a query
+
+An interrupted query does not start again: it **continues after its last
+saved page**. OpenAlex's cursors are positions in the sort order and do not
+expire, but they contain nothing about the query, so after each page the
+exact query and the cursor are saved in `_paging.json`, together with the
+time the cursor was created:
+
+```
+Resuming `json` at page 4001 with a cursor from 2026-10-14T08:31:48Z
+(3.2 hours ago). Records that changed since then may appear twice or be
+missing; see `inconsistency_on_resume`. ...
+```
+
+Whatever cannot be trusted -- a damaged `_paging.json`, a different query,
+missing pages -- leads back to fetching the query again from page 1, with a
+message saying why. Samples and semantic search always start again (they are
+at most 50 requests). To fetch a query whole on purpose, delete its
+`_paging.json`.
+
+### Inconsistencies after a resume
+
+Between the sessions OpenAlex's data can change -- citation counts, new
+works -- and records can move across the cursor position: they then appear
+twice, or are missing. After a resumed query, `pro_request()` checks:
+
+- **duplicates**, exactly, by work ID across all pages of the query;
+- **missing records**, as the **net** difference to the number OpenAlex now
+  reports. A record lost and another one added since cancel out, so this
+  check cannot see every gap.
+
+`inconsistency_on_resume` decides what happens:
+
+| Value | Duplicates | Missing records (net) |
+|---|---|---|
+| `"error"` (default) | stop | stop |
+| `"warning"` | keep both copies, warn | warn |
+| `"ignore"` | keep both copies | -- |
+| `"oldest"` | keep the first downloaded copy | warn |
+| `"newest"` | keep the last downloaded copy | warn |
+
+With `"error"`, nothing is lost: everything stays on disk, and a rerun with
+`resume = TRUE` and another value applies that choice **without downloading
+anything again**. `"oldest"` and `"newest"` remove the other copy from its
+page file. The resume and the result of the check are recorded in the
+query's `_query.json` (`resumed`, `duplicates`, `duplicates_removed`,
+`missing_net`, ...).
+
+```{r}
+# after an "error": keep the newest copy of each duplicate, no download
+pro_request(query_url = urls, output = "data/json", resume = TRUE,
+            inconsistency_on_resume = "newest")
 ```
 
 ## Lossless Queries with `via = "oqo"`
