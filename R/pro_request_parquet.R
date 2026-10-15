@@ -462,7 +462,25 @@ pro_request_parquet <- function(
       NULL
     }
   )
-  if (is.null(schema_df) || nrow(schema_df) == 0L) return(schema_df)
+  if (is.null(schema_df) || nrow(schema_df) == 0L) {
+    # Every sampled page is empty (`"results": []`, e.g. a query matching no
+    # works), so there is no record to infer a struct from. Take the columns
+    # from the baseline of the queried entity, so the conversion still writes
+    # zero-row Parquet files with the usual columns.
+    baseline_df <- .resolve_baseline(
+      schema, character(0L), entity = .prr_query_entity(jsons)
+    )
+    if (is.null(baseline_df)) return(schema_df)
+    schema_df <- data.frame(
+      column_name = baseline_df$col_name, column_type = baseline_df$col_type
+    )
+    if (verbose) {
+      message("No records to infer the schema from; using the baseline schema for entity '",
+              attr(baseline_df, "entity"), "'.")
+    }
+  } else {
+    schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
+  }
 
   # Force abstract_inverted_index to MAP — DuckDB sometimes infers STRUCT
   # when the sample has no duplicate-cased keys, which breaks map_entries().
@@ -471,13 +489,26 @@ pro_request_parquet <- function(
     schema_df$column_type[aii_idx] <- "MAP(VARCHAR, BIGINT[])"
   }
 
-  schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
-
   struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
   list_type <- paste0("STRUCT(", paste(struct_fields, collapse = ", "), ")[]")
   list_type <- .prr_fix_json_types(list_type)
   attr(schema_df, "list_type") <- list_type
   schema_df
+}
+
+#' Entity of the query, from the `_query.json` that pro_request() writes next
+#' to the pages: `get_rows` of the OQO, else the first path segment of the URL.
+#' NULL when there is no record.
+#'
+#' @keywords internal
+#' @noRd
+.prr_query_entity <- function(jsons) {
+  rec <- file.path(unique(dirname(jsons)), "_query.json")
+  rec <- rec[file.exists(rec)]
+  if (length(rec) == 0L) return(NULL)
+  q <- tryCatch(jsonlite::read_json(rec[[1L]]), error = function(e) NULL)
+  entity <- q$oqo$get_rows %||% sub("^https?://[^/]+/([a-z-]+).*$", "\\1", q$query_url %||% "")
+  if (grepl("^[a-z-]+$", entity)) entity else NULL
 }
 
 #' @keywords internal

@@ -196,3 +196,24 @@ test_that("schema harmonization handles nested struct variations", {
   unlink(input_jsonl, recursive = TRUE)
   unlink(output_parquet, recursive = TRUE)
 })
+
+test_that("a query with no results converts to a zero-row dataset", {
+  # `"results": []` gives DuckDB nothing to infer a struct from; the columns
+  # come from the baseline of the entity named in `_query.json`.
+  input_json <- withr::local_tempdir()
+  output <- file.path(withr::local_tempdir(), "parquet")
+  file.copy(
+    testthat::test_path("..", "fixtures", "keypaper_json", "results_page_2.json"),
+    file.path(input_json, "results_page_1.json")
+  )
+  jsonlite::write_json(
+    list(query_url = "https://api.openalex.org/", oqo = list(get_rows = "works")),
+    file.path(input_json, "_query.json"), auto_unbox = TRUE
+  )
+
+  pro_request_parquet(input_json, output, progress = FALSE, verbose = FALSE)
+
+  ds <- arrow::open_dataset(output)
+  expect_equal(nrow(ds), 0L)
+  expect_true(all(c("id", "doi", "title", "abstract", "citation", "page") %in% names(ds)))
+})
