@@ -21,6 +21,7 @@ Depends:
 Imports:
     arrow,
     cli,
+    curl,
     DBI,
     dplyr,
     duckdb,
