@@ -1,5 +1,20 @@
 # openalexPro 0.12.1
 
+## `extract_doi()`: fewer truncated and false DOIs, new `lower`
+
+- SICI DOIs ending in the check character `#`
+  (`...>3.0.CO;2-#`) are no longer cut before the `#`.
+- Percent-encoding is decoded first, also when encoded twice: `%5B` / `%5D`
+  and `%255B` / `%255D` become `[` / `]`, and an encoded line break (`%0A`)
+  ends the DOI. Such DOIs were cut at the first `%`, so the shortened DOI
+  was the one looked up in OpenAlex.
+- A DOI followed by an unfilled placeholder (`10.18461/ijfsd.v2i4.%x`,
+  `10.37002/biobrasil.v%vi%i.798`) is no longer recognised. Its part before
+  the `%` used to be returned as a valid DOI.
+- New argument `lower` (default `TRUE`): `lower = FALSE` keeps the upper and
+  lower case of the input, e.g. to compare the cleaned DOI with the field it
+  came from.
+
 ## A query with no results no longer fails to convert
 
 `pro_fetch()` / `pro_request_parquet()` stopped with "Cannot extract field
