@@ -82,14 +82,15 @@ oa_load_baseline_schema <- function(entity) {
 #' @param schema Value of the \code{schema} argument.
 #' @param present_cols Character vector of top-level column names from runtime
 #'   inference (used for entity auto-detection).
+#' @param entity Entity name; detected from \code{present_cols} by default.
 #' @return A \code{data.frame} with columns \code{col_name} / \code{col_type}
 #'   and attribute \code{"entity"}, or \code{NULL}.
 #' @noRd
-.resolve_baseline <- function(schema, present_cols) {
+.resolve_baseline <- function(schema, present_cols,
+                              entity = oa_detect_entity(present_cols)) {
   if (is.null(schema) || identical(schema, "none")) return(NULL)
 
   if (identical(schema, "auto")) {
-    entity <- oa_detect_entity(present_cols)
     if (is.null(entity)) return(NULL)
     return(oa_load_baseline_schema(entity))
   }
@@ -103,7 +104,6 @@ oa_load_baseline_schema <- function(entity) {
 
   # Explicit path to a directory - auto-detect entity, look for <entity>.csv
   if (dir.exists(schema)) {
-    entity <- oa_detect_entity(present_cols)
     if (is.null(entity)) return(NULL)
     csv_path <- file.path(schema, paste0(entity, ".csv"))
     if (!file.exists(csv_path)) return(NULL)

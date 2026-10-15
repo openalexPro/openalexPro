@@ -1,5 +1,14 @@
 # openalexPro 0.12.1
 
+## A query with no results no longer fails to convert
+
+`pro_fetch()` / `pro_request_parquet()` stopped with "Cannot extract field
+from expression "r.*" because it is not a struct" when a query matched no
+works: with `"results": []` DuckDB has no record to infer the columns from.
+The columns now come from the baseline schema of the entity named in the
+query record (`_query.json`), and the output is a zero-row dataset with the
+usual columns, which `arrow::open_dataset()` reads.
+
 ## Fewer, larger Parquet files: `compact_parquet`, `pro_compact_parquet()`
 
 `pro_request_parquet()` writes one Parquet file per API page (up to 200
