@@ -1,5 +1,359 @@
 # Changelog
 
+## openalexPro 0.13.0
+
+### `extract_doi()`: fewer truncated and false DOIs, new `lower`
+
+- SICI DOIs ending in the check character `#` (`...>3.0.CO;2-#`) are no
+  longer cut before the `#`.
+- Percent-encoding is decoded first, also when encoded twice: `%5B` /
+  `%5D` and `%255B` / `%255D` become `[` / `]`, and an encoded line
+  break (`%0A`) ends the DOI. Such DOIs were cut at the first `%`, so
+  the shortened DOI was the one looked up in OpenAlex.
+- A DOI followed by an unfilled placeholder (`10.18461/ijfsd.v2i4.%x`,
+  `10.37002/biobrasil.v%vi%i.798`) is no longer recognised. Its part
+  before the `%` used to be returned as a valid DOI.
+- A full stop or semicolon at the end is dropped as punctuation:
+  `doi:10.1098/rstb.2016.0173.` gives `10.1098/rstb.2016.0173`.
+- New argument `lower` (default `TRUE`): `lower = FALSE` keeps the upper
+  and lower case of the input, e.g. to compare the cleaned DOI with the
+  field it came from.
+
+### A query with no results no longer fails to convert
+
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+/
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+stopped with “Cannot extract field from expression”r.\*” because it is
+not a struct” when a query matched no works: with `"results": []` DuckDB
+has no record to infer the columns from. The columns now come from the
+baseline schema of the entity named in the query record (`_query.json`),
+and the output is a zero-row dataset with the usual columns, which
+[`arrow::open_dataset()`](https://arrow.apache.org/docs/r/reference/open_dataset.html)
+reads.
+
+### Fewer, larger Parquet files: `compact_parquet`, `pro_compact_parquet()`
+
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+writes one Parquet file per API page (up to 200 records), so a large
+query becomes thousands of small files, which are slow to read. New
+argument `compact_parquet`
+([`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md),
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md);
+default `NULL` keeps one file per page, as before) and new function
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+(for an existing dataset) combine each query’s page files into files of
+up to that many records, e.g. `250000`. Records, columns and their order
+do not change. For 1.1 million works, compaction took about 20 seconds;
+afterwards aggregates and lookups by ID ran 35 to 50 times faster,
+reading full records with DuckDB 4 times faster, and the dataset was 40%
+smaller.
+
+A compacted file holds whole consecutive pages and is named after them
+(`results_pages_1-1250.parquet`). Files are written one at a time
+(`.part`, record count checked, renamed, then the pages deleted), so an
+interrupted compaction is completed by running it again, and
+`resume = TRUE` never converts a compacted page again. A query that
+cannot be compacted keeps its page files, with a warning.
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+stops if an `openalexSnapshot` index (which points to files and row
+numbers) exists next to the dataset.
+
+### Resume in the middle of a query
+
+`resume = TRUE` no longer fetches an interrupted query again from page
+1: it continues after the last saved page. OpenAlex’s cursors are
+positions in the sort order that do not expire (a cursor from May still
+worked in October), but contain nothing about the query; so after each
+page the exact query (the URL, or for `via = "oqo"` the OQO that ran)
+and the cursor are written to `_paging.json`, with the time the cursor
+was created, which the resume message reports. Anything that cannot be
+trusted falls back to fetching the query again from page 1, with the
+reason. Samples and semantic search still start again.
+
+New argument
+`inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")`
+([`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)):
+after a resume, duplicates (found exactly, by work ID) and missing
+records (only as a net difference to OpenAlex’s current count) stop the
+run by default; nothing is lost, and a rerun with another value applies
+the choice without downloading again. `"oldest"` / `"newest"` remove the
+other copy from its page file. The resume is recorded in `_query.json`.
+
+### Readable query files for papers: `_query_oql.txt`, `_query_oql.html`
+
+Next to `_query.json`, each downloaded query now gets its OQL –
+OpenAlex’s readable rendering of the query that ran – as plain text (to
+paste into a methods section) and as a self-contained HTML page with
+highlighted keywords, OpenAlex IDs linked to their records, and the
+exact OQO. Because OpenAlex’s rendering can be lossy in some details,
+the OQL is translated back and compared: the files say whether it
+reproduces the query exactly. Both use OpenAlex’s free `/query` endpoint
+(two calls per query); if it is unreachable the download is unaffected
+and the files are marked “not checked”. Both are copied into the Parquet
+partition.
+
+For a list of queries, `_queries_oql.txt` and `_queries_oql.html` at the
+top of the output summarise all queries in list order – name, records,
+whether the OQL is exact, the OQL – with totals, for a paper’s
+supplement (queries skipped by `resume` included, failed ones listed as
+not downloaded).
+
+### Test recordings refreshed
+
+All recorded API responses were re-recorded from the live API (with the
+key sent as a header and masked). The snapshot differences were checked:
+only data drift (counts, citations, one record with fewer locations) and
+fields OpenAlex has added since spring (`study_designs`, `volume`,
+`awards` details, `observed_orcids`, location `doi` / `listed_in`,
+`meta.x_query`); no field was removed. The URL / OQO equivalence tests
+passed again on the fresh data, and a
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
+comparison was added. `inst/scripts/record_cassettes.R` now records all
+tests even when snapshots fail (testthat stopped after 10 failures and
+left later cassettes unrecorded, while reporting success) and stops if
+any cassette is missing.
+
+### Lossless queries: `via = "oqo"`, query record, cost, key as header
+
+- **`via = "oqo"`**
+  ([`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md),
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md);
+  default `"url"`, unchanged): each query is translated once (free, with
+  validation before any credits are spent) into an OpenAlex Query Object
+  and sent via POST. Same results – a new test downloads the same
+  queries both ways and compares the complete result sets. No URL length
+  limit and more than 100 values per filter, so
+  `pro_query(..., chunk_limit = 200)` fetches DOI and OpenAlex ID lists
+  in about one request per chunk, still in parallel. Single records stay
+  GET.
+- **`_query.json`** per query records the URL, how it was sent, the
+  query as OpenAlex ran it (OQL, OQO), records, requests, credits, cost
+  and time; it is copied into the Parquet partition, so it survives
+  `delete_input`.
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+  reports the total cost.
+- **The API key is sent as an `Authorization: Bearer` header**, never in
+  the URL, so it no longer appears in URLs, logs, error messages or
+  recorded test responses.
+- With `via = "url"`, a filter with more than 100 values now stops
+  before sending (OpenAlex rejects it), suggesting `chunk_limit` or
+  `via = "oqo"`.
+
+### OQL and OQO queries
+
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+gains `oql` and `oqo` (both default `NULL`, behaviour unchanged) for
+OpenAlex’s query language and its JSON form, which express what the
+classic filter syntax cannot, such as nested `and` / `or` conditions:
+
+``` r
+
+pro_query(oql = "works where year >= (2020) and (title has (coral) or title has (reef))")
+pro_query(oqo = list(get_rows = "works",
+                     filter_rows = list(list(column_id = "publication_year", value = 2020))))
+```
+
+The URL targets the API root and runs through
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
+and
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+unchanged. Entity, conditions, grouping, `sample` and `corpus` belong
+inside the query; combining it with `entity`, `id`, `doi`, search
+arguments, `group_by` or filters is an error, because OpenAlex would
+silently ignore them. `select` and `options` are passed alongside. An
+invalid query fails with OpenAlex’s parse error and position.
+
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+now detects grouped results from the response (`meta$groups_count`)
+instead of looking for `group_by=` in the URL, so grouping inside an OQL
+/ OQO query is saved and converted correctly.
+
+### `pro_fetch()` gains `download_workers`
+
+Downloading is limited by the API, converting by CPU and memory, so the
+best number of workers differs.
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+used `workers` for both steps. `download_workers` (default `workers`, so
+existing calls are unchanged) now sets the download workers separately;
+`workers` sets the conversion workers.
+
+### Download robustness: failing queries, paging parameters, semantic search
+
+- **A failing query no longer stops a list download.** With a list of
+  queries, an error in one (e.g. HTTP 404 for an ID that does not exist)
+  aborted the whole run. Now the other queries complete, and one error
+  at the end names each failed query with OpenAlex’s reason. Failed
+  queries keep their `00_in.progress` marker, so `resume = TRUE` fetches
+  only those again.
+- **Semantic search works with
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+  /
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md).**
+  The download always added `cursor=*`, which OpenAlex rejects for
+  semantic search (HTTP 400). Semantic search is now fetched as its
+  single page of at most 50 results.
+- **Paging parameters are no longer silently overwritten.** A `per_page`
+  in the query (1–200) is kept; `page` and `cursor` are replaced by
+  cursor paging with a warning (OpenAlex rejects `page` together with
+  `cursor`). Without them, paging is unchanged (`per_page = 200`,
+  cursor).
+- **`pro_request_parquet(workers = NULL)` is sequential, as
+  documented.** It ran under whatever `future` plan the user had set, so
+  a parallel plan converted in parallel with a single worker’s memory
+  budget and all cores per process. `workers` now alone decides; the
+  user’s plan is restored.
+- **Samples larger than one page are downloaded completely.** OpenAlex
+  ends cursor paging of a `sample` after the first page, so
+  `options = list(sample = 1000)` silently gave only 200 records. A
+  sample is now paged by page number, up to OpenAlex’s maximum of
+  10,000. Paging a sample needs a `seed`; if none is given, one is
+  chosen and reported in a message so the same sample can be fetched
+  again. Samples that fit in one page are unchanged.
+- **Grouped and list results in one conversion** stopped with “Mixed
+  entity types found”. The error now names the queries of each kind and
+  how to convert them separately; the JSON files are kept.
+
+### Filter and select validation per entity
+
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+checked filter names and `select` fields against the lists for
+**works**, whatever the entity, so valid entity-specific names were
+rejected before reaching OpenAlex –
+e.g. `pro_query(entity = "institutions", country_code = "US")` or
+`select = "orcid"` for authors. Refreshing with `update = TRUE` did not
+help, as it fetched the works list again.
+
+[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
+and
+[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)
+gain an `entity` argument (default `"works"`, so existing calls are
+unchanged) and cache one list per entity;
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+validates against the queried entity’s lists. The lists come from
+OpenAlex’s error message for an invalid name, which costs no credits. An
+entity without a list (the retired `"venues"`) skips validation and lets
+OpenAlex answer.
+
+Parsing that message also dropped the first name of every list (e.g. the
+`abstract.search` filter, and `id`, which was patched back in by hand)
+and left a trailing period on the last select field (`"created_date."`);
+both are fixed.
+
+An argument of the functions that send a query, given to
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+by mistake (e.g. `pro_query(doi = dois, via = "oqo")`), was taken as a
+filter and failed with “Invalid filter name(s): via”. It now says where
+it belongs: “`via` is an argument of pro_fetch(), pro_request(),
+pro_count()”, with an example.
+
+### Documentation brought up to date
+
+- **API key name:** the vignettes, `CLAUDE.md` and the message of
+  [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
+  told users to set `openalexPro.apikey`, which
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
+  never reads – a key set that way was silently ignored. The correct
+  name is the environment variable `openalexPro.api_key` (or the option
+  `openalexPro$api_key`), as the README already said.
+- **Search syntax:** wildcards (`microbio*`) and fuzzy terms work only
+  with `search.exact`; the stemmed `search` rejects wildcards with
+  HTTP 400. All three search types cost \$0.001 per call (the vignette
+  said \$0.0001), and semantic search does not require an API key.
+- **Entities:** `sources`, `topics` and `locations` replace `venues` and
+  `concepts` in the examples; `topics.id` replaces `concepts.id`.
+- **Corpus:** the deprecated `include_xpac` / `is_xpac` controls are
+  replaced by the `corpus` parameter (`"core"`, `"all"`, `"expansion"`);
+  combining them is an error at OpenAlex.
+- **Pipeline:** README, vignettes and diagrams describe
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  instead of the deprecated JSONL pipeline, and
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  no longer appears to write JSONL files. New sections cover OQL / OQO,
+  `resume`, error handling and budgets; `inst/errorcodes.qmd` is
+  rewritten (the “polite pool” no longer exists).
+- Links point to the current OpenAlex documentation at
+  `help.openalex.org`.
+- The `pro_request` vignette documents
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  (signature, schema inference, failure handling, `resume`) instead of
+  the deprecated JSONL functions, which are reduced to a pointer to
+  their help pages.
+- The snapshot vignettes install `openalexSnapshot` from r-universe (it
+  is available there) and no longer claim that error-raising stubs
+  exist.
+- `DESCRIPTION` has a real `Description`, and `jsonlite` moves from
+  Suggests to Imports: `pro_query(oqo = <list>)` and every JSON response
+  parse need it, and httr2 does not import it.
+- Six Mermaid diagrams in the `pro_query` and `pro_request` vignettes
+  showed “Syntax error” (unquoted labels containing `()` or `"`); they
+  render again.
+
+### `delete_input` no longer deletes pages that failed to convert
+
+With `on_error = "warn"` or `"ignore"`,
+`pro_request_parquet(delete_input = TRUE)` deleted the JSON input even
+when some files had failed – the only copy of those pages – so
+`resume = TRUE` could not recover them. The input is now kept unless
+every file converted.
+
+### Downloads survive network failures and stalls
+
+`api_call()` retried only on HTTP 429/5xx. A dropped connection or curl
+error aborted the whole leaf, and a stalled transfer could hang a worker
+forever. Network failures are now retried with the same backoff, and a
+transfer below 1 byte/s for 120 s is aborted and retried. Requires
+`httr2 >= 1.0.0`.
+
+### `resume` works for a single URL, and in `pro_fetch()`
+
+`pro_request(resume = TRUE)` was silently ignored for a single URL and
+failed with “Directory exists”. A single URL is now treated as one leaf.
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+gains `resume` (default `FALSE`, behaviour unchanged), which completes
+an interrupted download and conversion and returns a finished run
+unchanged.
+
+### No count request per query before a parallel download
+
+To size its progress bar,
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+with a list of queries first sent a count request for every leaf, one
+after another, before downloading anything. For a chunked DOI / ID list
+(one page per leaf) that doubled the requests and their cost. Progress
+now counts leaves, each advancing in fractions as its pages arrive, with
+no extra requests.
+
+### Clearer API errors, and no pointless retries on an exhausted budget
+
+A 4xx error now includes OpenAlex’s own explanation (e.g. which filter
+name is invalid) instead of only “HTTP 400 Bad Request”. A 429 caused by
+the daily budget – used up (`X-RateLimit-Remaining` at zero), or a query
+refused as costing more than is left (`"error": "not_enough_credits"`) –
+fails immediately and says when the budget resets, instead of backing
+off for about 17 minutes before failing. `verbose = TRUE` no longer
+prints the API key as part of the URL.
+
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+no longer fetches the list of valid `select` fields when no `select` is
+given, saving a request per session.
+
+### `pro_query()` knows the current entities
+
+`entity` now also accepts `"sources"`, `"topics"` and `"locations"`.
+`"venues"` and `"concepts"` (replaced by sources and topics in OpenAlex)
+are kept for compatibility. The default is still `"works"`.
+
+### Better load balancing for parallel downloads
+
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+with a list of queries pre-split the leaves into one block per worker,
+so a worker that drew the large leaves ran on while the others sat idle.
+Each leaf is now dispatched to the next free worker.
+
 ## openalexPro 0.12.1
 
 ### The startup banner pointed at the old r-universe

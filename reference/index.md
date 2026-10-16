@@ -49,6 +49,9 @@
 - [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
   : Retrieve the OpenAlex Pro API key
 
+- [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+  : Compact a Parquet dataset into fewer, larger files
+
 - [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   : Download full-text PDFs or TEI XML for OpenAlex works
 

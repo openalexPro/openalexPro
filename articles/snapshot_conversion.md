@@ -15,9 +15,10 @@
 
 ``` r
 
-# Install openalexSnapshot (once available on r-universe):
-pak::pak("openalexSnapshot")
+install.packages(
+  "openalexSnapshot",
+  repos = c("https://openalexpro.r-universe.dev", "https://cloud.r-project.org")
+)
 ```
 
-Calling these functions in `openalexPro` raises an informative error
-pointing to `openalexSnapshot`.
+Call them as `openalexSnapshot::snapshot_to_parquet()` and so on.

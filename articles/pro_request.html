@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
 <ul>
 <li>Basic usage patterns</li>
 <li>Progress bars and parallel processing</li>
-<li>The complete data pipeline (<code><a href="../reference/pro_request.html">pro_request()</a></code> → <code><a href="../reference/pro_request_jsonl.html">pro_request_jsonl()</a></code> → <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>)</li>
+<li>The complete data pipeline (<code><a href="../reference/pro_request.html">pro_request()</a></code> → <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code>)</li>
 <li>Internal architecture and flow diagrams</li>
 <li>Error handling and retry logic</li>
 </ul></section><section class="section level2"><h2 id="authentication">Authentication<a class="anchor" aria-label="anchor" href="#authentication"></a>
@@ -92,7 +92,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set credentials (typically in your .Renviron file)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>openalexPro.apikey <span class="op">=</span> <span class="st">"your-api-key-here"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>openalexPro.api_key <span class="op">=</span> <span class="st">"your-api-key-here"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Validate your credentials</span></span>
 <span><span class="fu"><a href="../reference/pro_validate_credentials.html">pro_validate_credentials</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -166,13 +166,12 @@
 <span>  output <span class="op">=</span> <span class="st">"data/json"</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># Default</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># ℹ Fetching query counts...</span></span>
-<span><span class="co"># ℹ Total pages to download: 229</span></span>
 <span><span class="co"># Downloading ████████████████░░░░░░░░░░░░░░░░ 120/229 [1m 23s]</span></span></code></pre></div>
 </div>
+<p>For a list of queries, the progress bar counts queries; each one advances it in fractions as its pages arrive. No extra count requests are made up front.</p>
 </section><section class="level2"><h3 id="limiting-pages">Limiting Pages<a class="anchor" aria-label="anchor" href="#limiting-pages"></a>
 </h3>
-<p>By default, <code><a href="../reference/pro_request.html">pro_request()</a></code> downloads up to 10,000 pages (2 million records at 200 per page). You can adjust this:</p>
+<p>By default, <code><a href="../reference/pro_request.html">pro_request()</a></code> downloads up to 100,000 pages per query (20 million records at 200 per page; <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> defaults to 10,000 pages). For a list of queries the limit applies to each query. You can adjust this:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download only first 100 pages (20,000 records)</span></span>
@@ -210,7 +209,7 @@
 </div>
 <section class="level2"><h3 id="nested-list-queries">Nested List Queries<a class="anchor" aria-label="anchor" href="#nested-list-queries"></a>
 </h3>
-<p><code><a href="../reference/pro_request.html">pro_request()</a></code> also accepts <strong>nested lists</strong> of URLs. Each nesting level is preserved as a subdirectory, and <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> converts the directory depth to hive-style partition keys:</p>
+<p><code><a href="../reference/pro_request.html">pro_request()</a></code> also accepts <strong>nested lists</strong> of URLs. Each nesting level is preserved as a subdirectory, and <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> converts the directory depth to hive-style partition keys:</p>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>Directory depth</th>
@@ -254,7 +253,7 @@
 <span><span class="co">#   data/json/institutions/usa/</span></span>
 <span><span class="co">#   data/json/institutions/uk/</span></span>
 <span></span>
-<span><span class="co"># After jsonl + parquet conversion the dataset is hive-partitioned:</span></span>
+<span><span class="co"># After parquet conversion the dataset is hive-partitioned:</span></span>
 <span><span class="co">#   data/parquet/query=year_2022/</span></span>
 <span><span class="co">#   data/parquet/query=year_2023/</span></span>
 <span><span class="co">#   data/parquet/query=institutions/query_l2=usa/</span></span>
@@ -277,6 +276,114 @@
 <span>  workers <span class="op">=</span> <span class="fl">4</span> <span class="co"># Use 4 parallel workers</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
+<p>Each query is handed to the next free worker, so a few large queries do not leave the other workers idle. Pages within one query are always fetched one after another (by cursor, or by page number for a <code>sample</code>), so <code>workers</code> only helps with a list of queries.</p>
+<p>If one query of a list fails (e.g. HTTP 404 for an ID that does not exist), the others still complete. At the end, one error names each failed query with OpenAlex’s reason; <code>resume = TRUE</code> then fetches only those again.</p>
+</section><section class="level2"><h3 id="resuming-an-interrupted-download">Resuming an Interrupted Download<a class="anchor" aria-label="anchor" href="#resuming-an-interrupted-download"></a>
+</h3>
+<p>With <code>resume = TRUE</code>, an existing <code>output</code> is kept and only queries that did not finish are downloaded. Each query directory carries a <code>00_in.progress</code> marker while it is being written. This works for a single URL as well as for lists, and <code>pro_fetch(resume = TRUE)</code> also completes an interrupted Parquet conversion:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">urls</span>, output <span class="op">=</span> <span class="st">"data/json"</span>, resume <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">urls</span>, project_folder <span class="op">=</span> <span class="st">"data"</span>, resume <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<section class="level3"><h4 id="continuing-in-the-middle-of-a-query">Continuing in the middle of a query<a class="anchor" aria-label="anchor" href="#continuing-in-the-middle-of-a-query"></a>
+</h4>
+<p>An interrupted query does not start again: it <strong>continues after its last saved page</strong>. OpenAlex’s cursors are positions in the sort order and do not expire, but they contain nothing about the query, so after each page the exact query and the cursor are saved in <code>_paging.json</code>, together with the time the cursor was created:</p>
+<pre><code>Resuming `json` at page 4001 with a cursor from 2026-10-14T08:31:48Z
+(3.2 hours ago). Records that changed since then may appear twice or be
+missing; see `inconsistency_on_resume`. ...</code></pre>
+<p>Whatever cannot be trusted – a damaged <code>_paging.json</code>, a different query, missing pages – leads back to fetching the query again from page 1, with a message saying why. Samples and semantic search always start again (they are at most 50 requests). To fetch a query whole on purpose, delete its <code>_paging.json</code>.</p>
+</section><section class="level3"><h4 id="inconsistencies-after-a-resume">Inconsistencies after a resume<a class="anchor" aria-label="anchor" href="#inconsistencies-after-a-resume"></a>
+</h4>
+<p>Between the sessions OpenAlex’s data can change – citation counts, new works – and records can move across the cursor position: they then appear twice, or are missing. After a resumed query, <code><a href="../reference/pro_request.html">pro_request()</a></code> checks:</p>
+<ul>
+<li>
+<strong>duplicates</strong>, exactly, by work ID across all pages of the query;</li>
+<li>
+<strong>missing records</strong>, as the <strong>net</strong> difference to the number OpenAlex now reports. A record lost and another one added since cancel out, so this check cannot see every gap.</li>
+</ul>
+<p><code>inconsistency_on_resume</code> decides what happens:</p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th>Value</th>
+<th>Duplicates</th>
+<th>Missing records (net)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>"error"</code> (default)</td>
+<td>stop</td>
+<td>stop</td>
+</tr>
+<tr class="even">
+<td><code>"warning"</code></td>
+<td>keep both copies, warn</td>
+<td>warn</td>
+</tr>
+<tr class="odd">
+<td><code>"ignore"</code></td>
+<td>keep both copies</td>
+<td>–</td>
+</tr>
+<tr class="even">
+<td><code>"oldest"</code></td>
+<td>keep the first downloaded copy</td>
+<td>warn</td>
+</tr>
+<tr class="odd">
+<td><code>"newest"</code></td>
+<td>keep the last downloaded copy</td>
+<td>warn</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>"error"</code>, nothing is lost: everything stays on disk, and a rerun with <code>resume = TRUE</code> and another value applies that choice <strong>without downloading anything again</strong>. <code>"oldest"</code> and <code>"newest"</code> remove the other copy from its page file. The resume and the result of the check are recorded in the query’s <code>_query.json</code> (<code>resumed</code>, <code>duplicates</code>, <code>duplicates_removed</code>, <code>missing_net</code>, …).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># after an "error": keep the newest copy of each duplicate, no download</span></span>
+<span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">urls</span>, output <span class="op">=</span> <span class="st">"data/json"</span>, resume <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>            inconsistency_on_resume <span class="op">=</span> <span class="st">"newest"</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h3 id="lossless-queries-with-via-oqo">Lossless Queries with <code>via = "oqo"</code>
+<a class="anchor" aria-label="anchor" href="#lossless-queries-with-via-oqo"></a>
+</h3>
+<p>By default every query is sent as a GET request with the query in the URL. With <code>via = "oqo"</code> (also for <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> and <code><a href="../reference/pro_count.html">pro_count()</a></code>), each query is instead translated once into an OpenAlex Query Object (OQO) – the form OpenAlex compiles every query to anyway – and every page is sent as a POST request with the OQO in the body:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="va">urls</span>, project_folder <span class="op">=</span> <span class="st">"data"</span>, via <span class="op">=</span> <span class="st">"oqo"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<ul>
+<li>
+<strong>Same results.</strong> The test suite downloads the same queries both ways and compares the complete result sets (filters, boolean, wildcard and proximity search, samples, grouped results, other entities, DOI lists, OQL and OQO input). Only semantic search can differ by a work or two – as it does between two identical GET requests.</li>
+<li>
+<strong>Checked before spending credits.</strong> The translation is free and validates the query; an invalid query stops with OpenAlex’s message before any paid request.</li>
+<li>
+<strong>No URL limits.</strong> A URL may carry at most 100 values per filter (with <code>via = "url"</code>, <code><a href="../reference/pro_request.html">pro_request()</a></code> stops early when a filter has more). An OQO may carry more, so <code>pro_query(..., chunk_limit = 200)</code> fetches a DOI or OpenAlex ID list in about one request per chunk – and the chunks still download in parallel with <code>workers</code>.</li>
+<li>
+<strong>The exact query is recorded</strong> (see below).</li>
+</ul>
+<p>Single records (<code>works/W123</code>) are always fetched with GET; they are free.</p>
+</section><section class="level2"><h3 id="what-was-asked-and-what-it-cost">What Was Asked, and What It Cost<a class="anchor" aria-label="anchor" href="#what-was-asked-and-what-it-cost"></a>
+</h3>
+<p>Each query directory gets a <code>_query.json</code>: the URL (without the key), how it was sent (<code>via</code>), the query as OpenAlex ran it (<code>oql</code>, <code>oqo</code>), the number of records, requests and credits, the cost in USD, and when it ran. <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> copies it into the matching Parquet partition, so it is kept when the JSON files are deleted. At the end, <code><a href="../reference/pro_request.html">pro_request()</a></code> reports the total, e.g. <code>i 12 requests, 12 credits ($0.0012)</code>. Arrow and DuckDB ignore the file (leading underscore, not <code>.parquet</code>).</p>
+<p>For methods sections and supplements, each query directory also gets the query in OpenAlex’s readable query language (OQL), in two forms:</p>
+<ul>
+<li>
+<p><code>_query_oql.txt</code>: plain text, ready to paste into a paper, e.g.</p>
+<pre><code># OpenAlex query (OQL)
+# Records: 141 | Downloaded: 2026-10-14 (UTC) | openalexPro 0.13.0
+# Exact: this OQL translates back to exactly the query that ran.
+
+get works where full text has (microbio*)
+  and source is [Nature](S137773608)
+  and published in 2020</code></pre>
+</li>
+<li><p><code>_query_oql.html</code>: the same, nicely formatted with highlighted keywords and OpenAlex IDs linked to their records; self-contained (no scripts, no external resources), with the exact OQO and the request URL in collapsible sections.</p></li>
+</ul>
+<p>The OQL is OpenAlex’s own rendering of the query that ran. Because that rendering can be lossy in some details, it is translated back and compared: the header says <strong>Exact</strong> if the printed OQL reproduces the query, otherwise <strong>Not exact</strong> (then the OQO in <code>_query.json</code> is the exact query) or <strong>Not checked</strong> (if OpenAlex’s free <code>/query</code> endpoint could not be reached). Single records (<code>works/W123</code>) get no OQL files. Like <code>_query.json</code>, both files are copied into the Parquet partition.</p>
+<p>For a list of queries, <code>_queries_oql.txt</code> and <code>_queries_oql.html</code> at the top of the output summarise all queries for a supplement: in the order of the list, each query’s name, number of records, whether its OQL is exact, and the OQL itself, with totals (records, credits, cost) in the header; the HTML adds an overview table linking to each query. Queries skipped by <code>resume = TRUE</code> are included, failed ones are listed as “Not downloaded”. Both files are copied to the top of the Parquet folder.</p>
+<p>The API key is sent as an <code>Authorization: Bearer</code> header, never in the URL, so it does not appear in logs, error messages or recorded test responses.</p>
 </section></section><section class="section level2"><h2 id="function-parameters-reference">Function Parameters Reference<a class="anchor" aria-label="anchor" href="#function-parameters-reference"></a>
 </h2>
 <table class="table caption-top">
@@ -303,8 +410,8 @@
 <tr class="even">
 <td><code>pages</code></td>
 <td>integer/NULL</td>
-<td>10000</td>
-<td>Max pages to download. <code>NULL</code> = all pages</td>
+<td>100000</td>
+<td>Max pages per query. <code>NULL</code> = all pages</td>
 </tr>
 <tr class="odd">
 <td><code>output</code></td>
@@ -354,6 +461,19 @@
 <td>NULL</td>
 <td>Path for error log file</td>
 </tr>
+<tr class="odd">
+<td><code>resume</code></td>
+<td>logical</td>
+<td>FALSE</td>
+<td>Keep <code>output</code>, refetch only unfinished queries</td>
+</tr>
+<tr class="even">
+<td><code>via</code></td>
+<td>character</td>
+<td>“url”</td>
+<td>
+<code>"url"</code> (GET) or <code>"oqo"</code> (translated once, sent via POST)</td>
+</tr>
 </tbody>
 </table></section><section class="section level2"><h2 id="pro_request-architecture">pro_request() Architecture<a class="anchor" aria-label="anchor" href="#pro_request-architecture"></a>
 </h2>
@@ -375,12 +495,10 @@
     ListMethod --&gt; SetupFutures[Setup future plan&lt;br/&gt;based on workers]
     SetupFutures --&gt; CountOnly1{count_only?}
 
-    CountOnly1 --&gt;|Yes| ParallelCount[Parallel pro_count()&lt;br/&gt;for each URL]
+    CountOnly1 --&gt;|Yes| ParallelCount["Parallel pro_count()&lt;br/&gt;for each URL"]
     ParallelCount --&gt; ReturnCounts([Return named vector])
 
-    CountOnly1 --&gt;|No| FetchCounts[Fetch counts for&lt;br/&gt;progress bar]
-    FetchCounts --&gt; CalcPages[Calculate total&lt;br/&gt;pages to download]
-    CalcPages --&gt; ParallelDownload[future_lapply:&lt;br/&gt;fetch_query_pages&lt;br/&gt;for each URL]
+    CountOnly1 --&gt;|No| ParallelDownload[future_lapply:&lt;br/&gt;fetch_query_pages&lt;br/&gt;for each URL]
     ParallelDownload --&gt; ReturnOutput([Return output path])
 
     %% Scalar Method Branch
@@ -430,16 +548,20 @@
     CheckSingle --&gt;|Yes| SaveSingle[Save single_1.json]
     SaveSingle --&gt; Success1([Success: Return path])
 
-    CheckSingle --&gt;|No| CalcMaxPages[Calculate max_pages&lt;br/&gt;from meta]
+    CheckSingle --&gt;|No| CheckGroup{meta.groups_count&lt;br/&gt;set?}
+    CheckGroup --&gt;|Yes| PrefixGroup[Prefix:&lt;br/&gt;group_by_page_]
+    CheckGroup --&gt;|No| PrefixResults[Prefix:&lt;br/&gt;results_page_]
+    PrefixGroup --&gt; CalcMaxPages[Calculate max_pages&lt;br/&gt;from meta]
+    PrefixResults --&gt; CalcMaxPages
     CalcMaxPages --&gt; StartProgress[Start CLI&lt;br/&gt;progress bar]
-    StartProgress --&gt; SaveFirst[Save first page:&lt;br/&gt;results_page_1.json]
+    StartProgress --&gt; SaveFirst[Save first page:&lt;br/&gt;PREFIX1.json]
 
     SaveFirst --&gt; PageLoop{More pages?&lt;br/&gt;next_cursor exists?}
 
     PageLoop --&gt;|Yes| CheckLimit{page &gt; pages&lt;br/&gt;limit?}
     CheckLimit --&gt;|Yes| Done[Exit loop]
-    CheckLimit --&gt;|No| NextRequest[Request next page&lt;br/&gt;with cursor]
-    NextRequest --&gt; SavePage[Save&lt;br/&gt;results_page_N.json]
+    CheckLimit --&gt;|No| NextRequest[Request next page&lt;br/&gt;by cursor, or page&lt;br/&gt;number for a sample]
+    NextRequest --&gt; SavePage[Save&lt;br/&gt;PREFIXN.json]
     SavePage --&gt; UpdateProgress[Update&lt;br/&gt;progress bar]
     UpdateProgress --&gt; PageLoop
 
@@ -458,9 +580,10 @@
 </div>
 </div>
 </div>
+<p>Whether a query is grouped is decided from the first response (grouped responses carry a numeric <code>meta$groups_count</code>), not from the URL, so grouping inside an OQL / OQO query is detected as well. Grouped pages are saved as <code>group_by_page_N.json</code>.</p>
 </section><section class="level2"><h3 id="api_call-retry-logic">api_call() Retry Logic<a class="anchor" aria-label="anchor" href="#api_call-retry-logic"></a>
 </h3>
-<p>All HTTP requests go through <code>api_call()</code> which provides robust retry logic:</p>
+<p>All HTTP requests go through <code>api_call()</code> which provides robust retry logic. Network failures (dropped connection, curl errors) are retried like transient statuses, and a transfer that stalls (less than 1 byte/s for 120 s) is aborted and retried. A 429 caused by the daily budget is not retried (see below):</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -475,7 +598,8 @@
 
     CheckStatus --&gt;|200 OK| ReturnSuccess([Return response])
 
-    CheckStatus --&gt;|429, 500-504| Transient[Transient error:&lt;br/&gt;wait and retry]
+    CheckStatus --&gt;|429 rate, 500-504,&lt;br/&gt;network failure| Transient[Transient error:&lt;br/&gt;wait and retry]
+    CheckStatus --&gt;|429 budget| Abort0([Abort: budget&lt;br/&gt;and reset time])
     Transient --&gt; RetryCount{Retries&lt;br/&gt;exhausted?}
     RetryCount --&gt;|No| Perform
     RetryCount --&gt;|Yes| LogError[Log error]
@@ -505,6 +629,11 @@
 </h4>
 <p>The following HTTP status codes are considered transient and trigger automatic retry:</p>
 <table class="table caption-top">
+<colgroup>
+<col style="width: 32%">
+<col style="width: 36%">
+<col style="width: 32%">
+</colgroup>
 <thead><tr class="header">
 <th>Status</th>
 <th>Meaning</th>
@@ -513,7 +642,7 @@
 <tbody>
 <tr class="odd">
 <td>429</td>
-<td>Too Many Requests</td>
+<td>Too Many Requests (more than 100 requests/s)</td>
 <td>Wait with exponential backoff</td>
 </tr>
 <tr class="even">
@@ -535,6 +664,31 @@
 <td>504</td>
 <td>Gateway Timeout</td>
 <td>Retry up to 10 times</td>
+</tr>
+</tbody>
+</table>
+<p>Not retried, because retrying cannot help:</p>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 32%">
+<col style="width: 39%">
+</colgroup>
+<thead><tr class="header">
+<th>Status</th>
+<th>Meaning</th>
+<th>Behaviour</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>429</td>
+<td>Daily budget used up (<code>X-RateLimit-Remaining</code> is 0), or <code>not_enough_credits</code> (the query costs more than is left)</td>
+<td>Abort at once; the error says when the budget resets (midnight UTC)</td>
+</tr>
+<tr class="even">
+<td>400, 403, 404</td>
+<td>Invalid query, no access, not found</td>
+<td>Abort; the error includes OpenAlex’s own message, e.g. which filter name is invalid, or the OQL parse error</td>
 </tr>
 </tbody>
 </table></section></section></section><section class="section level2"><h2 id="output-file-structure">Output File Structure<a class="anchor" aria-label="anchor" href="#output-file-structure"></a>
@@ -562,7 +716,9 @@
 <ul>
 <li>Download is still in progress, OR</li>
 <li>Download was interrupted and is incomplete</li>
-</ul></section></section><section class="section level2"><h2 id="the-complete-data-pipeline">The Complete Data Pipeline<a class="anchor" aria-label="anchor" href="#the-complete-data-pipeline"></a>
+</ul>
+<p><code>resume = TRUE</code> uses this marker to decide which queries to fetch again.</p>
+</section></section><section class="section level2"><h2 id="the-complete-data-pipeline">The Complete Data Pipeline<a class="anchor" aria-label="anchor" href="#the-complete-data-pipeline"></a>
 </h2>
 <section class="level2"><h3 id="pipeline-overview">Pipeline Overview<a class="anchor" aria-label="anchor" href="#pipeline-overview"></a>
 </h3>
@@ -581,38 +737,33 @@
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJL[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJLP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ --&gt;|URL/URLs| PR
-    PR --&gt;|JSON files| PRJL
-    PRJL --&gt;|JSONL files| PRJLP
-    PRJLP --&gt;|Parquet dataset| DB
+    PR --&gt;|JSON files| PRP
+    PRP --&gt;|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 </pre>
 </div>
 <p></p></figure><p></p>
 </div>
 </div>
 </div>
+<p><code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> runs steps 2 and 3 in one call.</p>
 </section><section class="level2"><h3 id="complete-example">Complete Example<a class="anchor" aria-label="anchor" href="#complete-example"></a>
 </h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/openalexPro/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Step 1: Build query</span></span>
@@ -621,7 +772,10 @@
 <span>  search <span class="op">=</span> <span class="st">"machine learning healthcare"</span>,</span>
 <span>  from_publication_date <span class="op">=</span> <span class="st">"2020-01-01"</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"article"</span>,</span>
-<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"abstract"</span>, <span class="st">"publication_year"</span>, <span class="st">"authorships"</span><span class="op">)</span></span>
+<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"abstract_inverted_index"</span>, <span class="st">"publication_year"</span>,</span>
+<span>    <span class="st">"authorships"</span>, <span class="st">"cited_by_count"</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Step 2: Download JSON from API</span></span>
@@ -632,22 +786,15 @@
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Step 3: Convert to JSONL (with abstract reconstruction)</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<span><span class="co"># Step 3: Convert to Parquet (adds `abstract` and `citation` columns)</span></span>
+<span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">4</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Step 4: Convert to Parquet (with schema harmonization)</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
-<span>  progress <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Step 5: Query with DuckDB</span></span>
+<span><span class="co"># Step 4: Query with DuckDB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
 <span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span></span>
@@ -660,24 +807,27 @@
 <span><span class="st">"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<hr></section></section><section class="section level2"><h2 id="pro_request_jsonl">pro_request_jsonl()<a class="anchor" aria-label="anchor" href="#pro_request_jsonl"></a>
+<hr></section></section><section class="section level2"><h2 id="pro_request_parquet">pro_request_parquet()<a class="anchor" aria-label="anchor" href="#pro_request_parquet"></a>
 </h2>
 <section class="level2"><h3 id="purpose">Purpose<a class="anchor" aria-label="anchor" href="#purpose"></a>
 </h3>
-<p>Converts the raw JSON files from OpenAlex into JSON Lines (JSONL) format, which is more efficient for processing with DuckDB. During conversion, it also:</p>
+<p>Converts the JSON files written by <code><a href="../reference/pro_request.html">pro_request()</a></code> into an Apache Parquet dataset using DuckDB, one Parquet file per JSON file, with no intermediate files. During conversion it:</p>
 <ol type="1">
 <li>
-<strong>Reconstructs abstracts</strong> from the <code>abstract_inverted_index</code> field</li>
+<strong>Reconstructs abstracts</strong> from <code>abstract_inverted_index</code> (column <code>abstract</code>)</li>
 <li>
-<strong>Generates citation strings</strong> (e.g., “Smith et al. (2023)”)</li>
+<strong>Generates citation strings</strong> such as “Smith et al. (2023)” (column <code>citation</code>)</li>
 <li>
-<strong>Adds a <code>page</code> field</strong> for tracking data provenance</li>
-<li><strong>Optionally adds custom columns</strong></li>
-</ol></section><section class="level2"><h3 id="function-signature">Function Signature<a class="anchor" aria-label="anchor" href="#function-signature"></a>
+<strong>Adds a <code>page</code> column</strong> for tracking data provenance</li>
+<li>
+<strong>Optionally adds constant columns</strong> (<code>add_columns</code>)</li>
+</ol>
+<p>Abstracts and citations are only added for works, when the needed fields are present and <code>enrich = TRUE</code> (the default). <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> calls <code><a href="../reference/pro_request.html">pro_request()</a></code> and then <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code>.</p>
+</section><section class="level2"><h3 id="function-signature">Function Signature<a class="anchor" aria-label="anchor" href="#function-signature"></a>
 </h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  add_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -685,7 +835,14 @@
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  delete_input <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  workers <span class="op">=</span> <span class="fl">1</span></span>
+<span>  sample_size <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  workers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  enrich <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  schema <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  resume <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  on_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"ignore"</span><span class="op">)</span>,</span>
+<span>  memory_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  retry_memory_limit <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="parameters">Parameters<a class="anchor" aria-label="anchor" href="#parameters"></a>
@@ -715,43 +872,88 @@
 <td><code>output</code></td>
 <td>character</td>
 <td>required</td>
-<td>Output directory for JSONL files</td>
+<td>Output directory for the Parquet dataset</td>
 </tr>
 <tr class="odd">
 <td><code>add_columns</code></td>
 <td>list</td>
 <td><code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code></td>
-<td>Named list of additional columns to add</td>
+<td>Named character scalars added as constant columns</td>
 </tr>
 <tr class="even">
 <td><code>overwrite</code></td>
 <td>logical</td>
 <td>FALSE</td>
-<td>Overwrite existing output</td>
+<td>Overwrite an existing <code>output</code>
+</td>
 </tr>
 <tr class="odd">
 <td><code>verbose</code></td>
 <td>logical</td>
 <td>TRUE</td>
-<td>Show detailed messages</td>
+<td>Show progress messages</td>
 </tr>
 <tr class="even">
 <td><code>progress</code></td>
 <td>logical</td>
 <td>TRUE</td>
-<td>Show progress bar</td>
+<td>Show a progress bar</td>
 </tr>
 <tr class="odd">
 <td><code>delete_input</code></td>
 <td>logical</td>
 <td>FALSE</td>
-<td>Delete input JSON after conversion</td>
+<td>Delete <code>input_json</code> after a complete conversion (kept if any file failed)</td>
 </tr>
 <tr class="even">
-<td><code>workers</code></td>
+<td><code>sample_size</code></td>
 <td>integer</td>
-<td>1</td>
-<td>Number of parallel workers</td>
+<td>1000</td>
+<td>Records per file sampled for schema inference (<code>-1</code> = all)</td>
+</tr>
+<tr class="odd">
+<td><code>workers</code></td>
+<td>integer/NULL</td>
+<td>NULL</td>
+<td>Parallel workers; <code>NULL</code> or 1 runs sequentially</td>
+</tr>
+<tr class="even">
+<td><code>enrich</code></td>
+<td>logical</td>
+<td>TRUE</td>
+<td>Add <code>abstract</code> and <code>citation</code> columns for works</td>
+</tr>
+<tr class="odd">
+<td><code>schema</code></td>
+<td>character/NULL</td>
+<td>“auto”</td>
+<td>Baseline schema for ambiguous column types (see below)</td>
+</tr>
+<tr class="even">
+<td><code>resume</code></td>
+<td>logical</td>
+<td>FALSE</td>
+<td>Keep <code>output</code> and convert only missing files</td>
+</tr>
+<tr class="odd">
+<td><code>on_error</code></td>
+<td>character</td>
+<td>“error”</td>
+<td>What to do with files that still fail: <code>"error"</code>, <code>"warn"</code>, <code>"ignore"</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>memory_limit</code></td>
+<td>character/NULL</td>
+<td>NULL</td>
+<td>DuckDB memory limit per worker; derived from RAM and <code>workers</code>
+</td>
+</tr>
+<tr class="odd">
+<td><code>retry_memory_limit</code></td>
+<td>character/NULL</td>
+<td>NULL</td>
+<td>Memory limit for the sequential retry pass</td>
 </tr>
 </tbody>
 </table></section><section class="level2"><h3 id="internal-flow">Internal Flow<a class="anchor" aria-label="anchor" href="#internal-flow"></a>
@@ -763,279 +965,25 @@
 <figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    Start([pro_request_jsonl]) --&gt; ValidateInputs[Validate inputs]
-    ValidateInputs --&gt; CheckOverwrite{Output exists?}
-
-    CheckOverwrite --&gt;|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite --&gt;|Yes, overwrite=TRUE| DeleteOutput[Delete output dir]
-    CheckOverwrite --&gt;|No| CreateOutput[Create output dir]
-
-    DeleteOutput --&gt; CreateOutput
-    CreateOutput --&gt; CreateProgress[Create 00_in.progress]
-    CreateProgress --&gt; ListJSONs[List all JSON files&lt;br/&gt;recursively]
-
-    ListJSONs --&gt; DetectType[Detect type:&lt;br/&gt;results, group_by, single]
-    DetectType --&gt; SetupFutures[Setup parallel plan&lt;br/&gt;if workers &gt; 1]
-
-    SetupFutures --&gt; ProcessLoop[future_lapply over&lt;br/&gt;JSON files]
-
-    ProcessLoop --&gt; ForEachJSON[For each JSON file]
-    ForEachJSON --&gt; ExtractPage[Extract page number&lt;br/&gt;from filename]
-    ExtractPage --&gt; CallJQ[jq_execute:&lt;br/&gt;transform JSON]
-    CallJQ --&gt; CheckSize{Output &gt; 5 bytes?}
-    CheckSize --&gt;|No| DeleteEmpty[Delete empty file]
-    CheckSize --&gt;|Yes| UpdateProgress[Update progress]
-    DeleteEmpty --&gt; UpdateProgress
-    UpdateProgress --&gt; MoreFiles{More files?}
-    MoreFiles --&gt;|Yes| ForEachJSON
-    MoreFiles --&gt;|No| Cleanup[Delete input if&lt;br/&gt;delete_input=TRUE]
-
-    Cleanup --&gt; Success([Return output path])
+    Start([pro_request_parquet]) --&gt; Prepare[Prepare output:&lt;br/&gt;overwrite / resume&lt;br/&gt;create 00_in.progress]
+    Prepare --&gt; Discover[Find JSON files&lt;br/&gt;results / group_by / single]
+    Discover --&gt; Infer[Infer schema from&lt;br/&gt;up to 20 sampled files]
+    Infer --&gt; Baseline[Resolve ambiguous types&lt;br/&gt;with baseline schema]
+    Baseline --&gt; Convert[Convert each file&lt;br/&gt;DuckDB COPY to .part&lt;br/&gt;rename on success]
+    Convert --&gt; Failed{Any file&lt;br/&gt;failed?}
+    Failed --&gt;|No| Done[Delete input if&lt;br/&gt;delete_input = TRUE&lt;br/&gt;remove 00_in.progress]
+    Failed --&gt;|Yes, workers &gt; 1| Retry[Retry failed files&lt;br/&gt;sequentially, full memory]
+    Failed --&gt;|Yes, sequential| OnError
+    Retry --&gt; Still{Still failing?}
+    Still --&gt;|No| Done
+    Still --&gt;|Yes| OnError[on_error:&lt;br/&gt;error / warn / ignore&lt;br/&gt;keep input and 00_in.progress]
+    Done --&gt; Return([Return output path])
+    OnError --&gt; Return
 
     style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style ProcessLoop fill:#cce5ff
-</pre>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-</section><section class="level2"><h3 id="jq_execute-transformation">jq_execute() Transformation<a class="anchor" aria-label="anchor" href="#jq_execute-transformation"></a>
-</h3>
-<p>The <code><a href="../reference/jq_execute.html">jq_execute()</a></code> function performs the actual JSON transformation using the <code>jqr</code> package:</p>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p>
-<figure class=""><p></p>
-<div>
-<pre class="mermaid mermaid-js">flowchart TD
-    Start([jq_execute]) --&gt; SelectRoot{Type?}
-
-    SelectRoot --&gt;|results| ExtractResults[".results[] |"]
-    SelectRoot --&gt;|group_by| ExtractGroups[".group_by[] |"]
-    SelectRoot --&gt;|single| NoExtract[Direct processing]
-
-    ExtractResults --&gt; Transform
-    ExtractGroups --&gt; Transform
-    NoExtract --&gt; Transform
-
-    Transform[Apply jq filter] --&gt; AbstractCheck{Has abstract_&lt;br/&gt;inverted_index?}
-
-    AbstractCheck --&gt;|Yes| ReconstructAbstract[Reconstruct abstract&lt;br/&gt;from inverted index]
-    AbstractCheck --&gt;|No| SkipAbstract[Keep as-is]
-
-    ReconstructAbstract --&gt; GenerateCitation
-    SkipAbstract --&gt; GenerateCitation
-
-    GenerateCitation[Generate citation string&lt;br/&gt;based on author count]
-    GenerateCitation --&gt; AddColumns{Custom columns?}
-
-    AddColumns --&gt;|Yes| InsertColumns[Add custom columns]
-    AddColumns --&gt;|No| SkipColumns[Skip]
-
-    InsertColumns --&gt; DeleteInverted
-    SkipColumns --&gt; DeleteInverted
-
-    DeleteInverted[Delete abstract_inverted_index]
-    DeleteInverted --&gt; AddPage{Page specified?}
-
-    AddPage --&gt;|Yes| InsertPage[Add page field]
-    AddPage --&gt;|No| SkipPage[Skip]
-
-    InsertPage --&gt; WriteJSONL[Write to JSONL file]
-    SkipPage --&gt; WriteJSONL
-
-    WriteJSONL --&gt; Done([Return output path])
-
-    style Start fill:#e1f5e1
-    style Done fill:#e1f5e1
-    style Transform fill:#cce5ff
-    style GenerateCitation fill:#fff3cd
-</pre>
-</div>
-<p></p></figure><p></p>
-</div>
-</div>
-</div>
-<section class="level3"><h4 id="abstract-reconstruction">Abstract Reconstruction<a class="anchor" aria-label="anchor" href="#abstract-reconstruction"></a>
-</h4>
-<p>OpenAlex stores abstracts as inverted indices for efficiency. The transformation reconstructs readable text:</p>
-<p><strong>Input (inverted index):</strong></p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"abstract_inverted_index"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"Climate"</span><span class="fu">:</span> <span class="ot">[</span><span class="dv">0</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"change"</span><span class="fu">:</span> <span class="ot">[</span><span class="dv">1</span><span class="ot">,</span> <span class="dv">5</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"affects"</span><span class="fu">:</span> <span class="ot">[</span><span class="dv">2</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"biodiversity"</span><span class="fu">:</span> <span class="ot">[</span><span class="dv">3</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"and"</span><span class="fu">:</span> <span class="ot">[</span><span class="dv">4</span><span class="ot">]</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p><strong>Output (reconstructed):</strong></p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"abstract"</span><span class="fu">:</span> <span class="st">"Climate change affects biodiversity and change"</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</section><section class="level3"><h4 id="citation-string-generation">Citation String Generation<a class="anchor" aria-label="anchor" href="#citation-string-generation"></a>
-</h4>
-<p>The function generates citation strings based on author count:</p>
-<table class="table caption-top">
-<thead><tr class="header">
-<th>Authors</th>
-<th>Citation Format</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>1</td>
-<td>“Smith (2023)”</td>
-</tr>
-<tr class="even">
-<td>2</td>
-<td>“Smith &amp; Jones (2023)”</td>
-</tr>
-<tr class="odd">
-<td>3+</td>
-<td>“Smith et al. (2023)”</td>
-</tr>
-</tbody>
-</table>
-<hr></section></section></section><section class="section level2"><h2 id="pro_request_jsonl_parquet">pro_request_jsonl_parquet()<a class="anchor" aria-label="anchor" href="#pro_request_jsonl_parquet"></a>
-</h2>
-<section class="level2"><h3 id="purpose-1">Purpose<a class="anchor" aria-label="anchor" href="#purpose-1"></a>
-</h3>
-<p>Converts JSONL files to Apache Parquet format for efficient analytical queries. Key features:</p>
-<ol type="1">
-<li>
-<strong>Automatic schema harmonization</strong> across all files</li>
-<li>
-<strong>Partitioning by page</strong> for efficient filtering</li>
-<li>
-<strong>SNAPPY compression</strong> for good compression/speed balance</li>
-<li>
-<strong>Streaming conversion</strong> - no memory limit on total dataset size</li>
-</ol></section><section class="level2"><h3 id="function-signature-1">Function Signature<a class="anchor" aria-label="anchor" href="#function-signature-1"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  output <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  delete_input <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  sample_size <span class="op">=</span> <span class="fl">1000</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h3 id="parameters-1">Parameters<a class="anchor" aria-label="anchor" href="#parameters-1"></a>
-</h3>
-<table class="table caption-top">
-<colgroup>
-<col style="width: 28%">
-<col style="width: 15%">
-<col style="width: 23%">
-<col style="width: 33%">
-</colgroup>
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>input_jsonl</code></td>
-<td>character</td>
-<td>required</td>
-<td>Directory of JSONL files</td>
-</tr>
-<tr class="even">
-<td><code>output</code></td>
-<td>character</td>
-<td>required</td>
-<td>Output directory for Parquet dataset</td>
-</tr>
-<tr class="odd">
-<td><code>overwrite</code></td>
-<td>logical</td>
-<td>FALSE</td>
-<td>Overwrite existing output</td>
-</tr>
-<tr class="even">
-<td><code>verbose</code></td>
-<td>logical</td>
-<td>TRUE</td>
-<td>Show detailed messages</td>
-</tr>
-<tr class="odd">
-<td><code>progress</code></td>
-<td>logical</td>
-<td>TRUE</td>
-<td>Show progress bar</td>
-</tr>
-<tr class="even">
-<td><code>delete_input</code></td>
-<td>logical</td>
-<td>FALSE</td>
-<td>Delete input JSONL after conversion</td>
-</tr>
-<tr class="odd">
-<td><code>sample_size</code></td>
-<td>integer</td>
-<td>1000</td>
-<td>Records to sample for schema inference</td>
-</tr>
-</tbody>
-</table></section><section class="level2"><h3 id="internal-flow-1">Internal Flow<a class="anchor" aria-label="anchor" href="#internal-flow-1"></a>
-</h3>
-<div class="cell" data-layout-align="default">
-<div class="cell-output-display">
-<div>
-<p></p>
-<figure class=""><p></p>
-<div>
-<pre class="mermaid mermaid-js">flowchart TD
-    Start([pro_request_jsonl_parquet]) --&gt; ValidateInputs[Validate inputs]
-    ValidateInputs --&gt; SetupDuckDB[Create in-memory&lt;br/&gt;DuckDB connection]
-    SetupDuckDB --&gt; LoadJSON[INSTALL json;&lt;br/&gt;LOAD json;]
-
-    LoadJSON --&gt; CheckOverwrite{Output exists?}
-    CheckOverwrite --&gt;|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite --&gt;|Yes, overwrite=TRUE| DeleteOutput[Delete output]
-    CheckOverwrite --&gt;|No| CreateOutput[Create output dir]
-
-    DeleteOutput --&gt; CreateOutput
-    CreateOutput --&gt; CreateProgress[Create 00_in.progress]
-    CreateProgress --&gt; ListJSONL[List all JSONL files]
-
-    ListJSONL --&gt; InferSchema[Infer unified schema&lt;br/&gt;from all files]
-
-    InferSchema --&gt; SchemaSQL["DESCRIBE SELECT *&lt;br/&gt;FROM read_json_auto&lt;br/&gt;(union_by_name=true)"]
-    SchemaSQL --&gt; SchemaSuccess{Schema&lt;br/&gt;inferred?}
-
-    SchemaSuccess --&gt;|Yes| BuildColumns[Build columns clause&lt;br/&gt;for explicit schema]
-    SchemaSuccess --&gt;|No| FallbackAuto[Fall back to&lt;br/&gt;per-file auto-detect]
-
-    BuildColumns --&gt; ConvertLoop
-    FallbackAuto --&gt; ConvertLoop
-
-    ConvertLoop[For each JSONL file]
-    ConvertLoop --&gt; CopySQL["COPY (...) TO output&lt;br/&gt;(FORMAT PARQUET,&lt;br/&gt;PARTITION_BY 'page',&lt;br/&gt;APPEND)"]
-    CopySQL --&gt; UpdateProgress[Update progress]
-    UpdateProgress --&gt; MoreFiles{More files?}
-    MoreFiles --&gt;|Yes| ConvertLoop
-    MoreFiles --&gt;|No| Cleanup
-
-    Cleanup[Delete input if requested]
-    Cleanup --&gt; CloseDB[Close DuckDB connection]
-    CloseDB --&gt; Success([Return output path])
-
-    style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style InferSchema fill:#cce5ff
-    style ConvertLoop fill:#fff3cd
+    style Return fill:#e1f5e1
+    style Retry fill:#fff3cd
+    style OnError fill:#f8d7da
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -1046,10 +994,10 @@
 </h3>
 <p>Different OpenAlex records can have different field structures. For example:</p>
 <ul>
-<li>Some works have <code>primary_location</code> as a struct, others as a string</li>
-<li>Some have nested arrays, others have null values</li>
+<li>A field can be a struct in one record and <code>null</code> in all records of another page</li>
+<li>Nested arrays can be empty in one file and populated in another</li>
 </ul>
-<p>The function samples records from all files to infer a unified schema that accommodates all variations:</p>
+<p><code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> therefore infers one schema from a sample of up to 20 files (<code>sample_size</code> records per file) and converts every file with these column types, so all Parquet files can be read together:</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -1057,28 +1005,28 @@
 <figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart LR
-    subgraph Input[Input JSONL Files]
-        F1[File 1:&lt;br/&gt;location: struct]
-        F2[File 2:&lt;br/&gt;location: string]
-        F3[File 3:&lt;br/&gt;location: null]
+    subgraph Input[Input JSON Files]
+        F1["File 1:&lt;br/&gt;location: struct"]
+        F2["File 2:&lt;br/&gt;location: null"]
+        F3["File 3:&lt;br/&gt;location: struct"]
     end
 
     subgraph Schema[Schema Inference]
-        Sample[Sample from&lt;br/&gt;all files]
-        Union[union_by_name=true]
-        Describe[DESCRIBE query]
+        Sample[Sample up to&lt;br/&gt;20 files]
+        Describe[DuckDB&lt;br/&gt;DESCRIBE]
+        Baseline[Baseline schema&lt;br/&gt;for JSON-typed columns]
     end
 
     subgraph Output[Unified Schema]
-        Unified[location: struct&lt;br/&gt;(accommodates all)]
+        Unified["location: struct&lt;br/&gt;(applied to all files)"]
     end
 
     F1 --&gt; Sample
     F2 --&gt; Sample
     F3 --&gt; Sample
-    Sample --&gt; Union
-    Union --&gt; Describe
-    Describe --&gt; Unified
+    Sample --&gt; Describe
+    Describe --&gt; Baseline
+    Baseline --&gt; Unified
 
     style Input fill:#f8d7da
     style Schema fill:#cce5ff
@@ -1089,6 +1037,32 @@
 </div>
 </div>
 </div>
+<p>When DuckDB can only infer the generic <code>JSON</code> type for a column (for example because it is <code>null</code> in every sampled record), the <code>schema</code> argument supplies the type:</p>
+<ul>
+<li>
+<code>"auto"</code> (default): detect the entity from the columns and use the matching baseline schema from the user cache (<code>oa_schema(update = TRUE)</code>) or the schemas bundled with the package</li>
+<li>
+<code>"none"</code> or <code>NULL</code>: use DuckDB’s inference only</li>
+<li>a CSV file (columns <code>col_name</code>, <code>col_type</code>) or a directory of <code>&lt;entity&gt;.csv</code> files</li>
+</ul></section><section class="level2"><h3 id="failure-handling-and-resume">Failure Handling and Resume<a class="anchor" aria-label="anchor" href="#failure-handling-and-resume"></a>
+</h3>
+<p>Each file is converted on its own, so one problematic page does not stop the others:</p>
+<ul>
+<li>Every file is written to a <code>.part</code> sidecar and renamed only on success, so a Parquet file that exists is always complete.</li>
+<li>With <code>workers &gt; 1</code>, files that fail (typically from memory pressure on large, deeply nested pages) are retried once, sequentially and with the whole memory budget.</li>
+<li>Files that still fail are handled according to <code>on_error</code>: <code>"error"</code> (default) stops and names them, <code>"warn"</code> warns and returns, <code>"ignore"</code> is silent. In every case the JSON input is kept and <code>00_in.progress</code> stays in <code>output</code>.</li>
+<li>
+<code>resume = TRUE</code> keeps an existing <code>output</code> and converts only the files that are missing:</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
+<span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
+<span>  resume <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>With <code>workers &gt; 1</code>, each worker gets its own DuckDB connection with a share of the memory budget, one thread and a private temporary directory.</p>
 </section><section class="level2"><h3 id="output-structure">Output Structure<a class="anchor" aria-label="anchor" href="#output-structure"></a>
 </h3>
 <p>For a flat (single-URL) input:</p>
@@ -1115,6 +1089,9 @@
     └── query_l2=uk/
         └── results_page_1.parquet</code></pre>
 <p>The hive partition columns (<code>query</code>, <code>query_l2</code>, …) become regular columns when you open the dataset with <code><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">arrow::open_dataset()</a></code>, enabling efficient predicate pushdown.</p>
+<hr></section><section class="level2"><h3 id="deprecated-the-jsonl-pipeline">Deprecated: the JSONL Pipeline<a class="anchor" aria-label="anchor" href="#deprecated-the-jsonl-pipeline"></a>
+</h3>
+<p><code><a href="../reference/pro_request_jsonl.html">pro_request_jsonl()</a></code> and <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> converted the JSON files in two steps via intermediate JSONL files. They still work but are deprecated; <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> replaces both. See their help pages (<code><a href="../reference/pro_request_jsonl.html">?pro_request_jsonl</a></code>, <code><a href="../reference/pro_request_jsonl_parquet.html">?pro_request_jsonl_parquet</a></code>) for existing code.</p>
 <hr></section></section><section class="section level2"><h2 id="error-handling">Error Handling<a class="anchor" aria-label="anchor" href="#error-handling"></a>
 </h2>
 <section class="level2"><h3 id="common-errors">Common Errors<a class="anchor" aria-label="anchor" href="#common-errors"></a>
@@ -1122,7 +1099,7 @@
 <section class="level3"><h4 id="output-directory-exists">Output Directory Exists<a class="anchor" aria-label="anchor" href="#output-directory-exists"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">url</span>, output <span class="op">=</span> <span class="st">"data/json"</span><span class="op">)</span></span>
 <span><span class="co"># Error: Directory data/json exists.</span></span>
 <span><span class="co"># Either specify `overwrite = TRUE` or delete it.</span></span>
@@ -1133,21 +1110,21 @@
 </section><section class="level3"><h4 id="no-output-specified">No Output Specified<a class="anchor" aria-label="anchor" href="#no-output-specified"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">url</span><span class="op">)</span></span>
 <span><span class="co"># Error: No `output` specified!</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h4 id="api-rate-limiting">API Rate Limiting<a class="anchor" aria-label="anchor" href="#api-rate-limiting"></a>
 </h4>
-<p>If you hit rate limits (HTTP 429), the function automatically retries with exponential backoff. To reduce rate limit issues:</p>
+<p>OpenAlex allows up to 100 requests per second and a daily budget ($0.10 without an API key, $1 with a free key). If you exceed the per-second limit (HTTP 429), the function retries with exponential backoff. If the daily budget is used up, it stops at once and reports when the budget resets (midnight UTC). To stay within the budget:</p>
 <ol type="1">
 <li>Use an API key (free from OpenAlex)</li>
-<li>Reduce parallel workers</li>
-<li>Add delays between large queries</li>
+<li>Check the cost first: searches cost ten times as much as filter queries</li>
+<li>Use <code>resume = TRUE</code> after the reset to complete an interrupted download</li>
 </ol>
 <p>You can check your current budget and remaining allowance at any time with:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_rate_limit_status.html">pro_rate_limit_status</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>This queries the <code>/rate-limit</code> endpoint and prints your daily budget, amount used, remaining balance, and seconds until the daily reset.</p>
@@ -1155,7 +1132,7 @@
 </h4>
 <p>OpenAlex has a maximum request size of 4094 characters. If exceeded:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pro_count.html">pro_count</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">very_long_url</span><span class="op">)</span></span>
 <span><span class="va">meta</span><span class="op">$</span><span class="va">count</span></span>
 <span><span class="co"># [1] -4195  # Negative indicates error</span></span>
@@ -1170,14 +1147,14 @@
 </h3>
 <p>Progress bars help monitor long downloads and estimate completion:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">url</span>, output <span class="op">=</span> <span class="st">"data"</span>, progress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="use-appropriate-page-limits">2. Use Appropriate Page Limits<a class="anchor" aria-label="anchor" href="#use-appropriate-page-limits"></a>
 </h3>
 <p>Start with smaller page limits during development:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Development: small sample</span></span>
 <span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">url</span>, output <span class="op">=</span> <span class="st">"test"</span>, pages <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span></span>
@@ -1187,7 +1164,7 @@
 </section><section class="level2"><h3 id="enable-error-logging-for-large-jobs">3. Enable Error Logging for Large Jobs<a class="anchor" aria-label="anchor" href="#enable-error-logging-for-large-jobs"></a>
 </h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">urls</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"data/json"</span>,</span>
@@ -1198,37 +1175,42 @@
 </h3>
 <p>Use <code>delete_input = TRUE</code> to save disk space:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Convert and delete JSON</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Convert and delete JSON (kept if any file failed to convert)</span></span>
+<span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
-<span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Convert and delete JSONL</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
 <span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
+<p><code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> deletes the JSON files by default (<code>delete_input = TRUE</code>).</p>
 </section><section class="level2"><h3 id="use-parallel-processing-wisely">5. Use Parallel Processing Wisely<a class="anchor" aria-label="anchor" href="#use-parallel-processing-wisely"></a>
 </h3>
 <p>More workers isn’t always better:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Good for many small chunks</span></span>
-<span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">urls</span>, output <span class="op">=</span> <span class="st">"data"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Downloads: limited by the API, a few workers for a list of queries</span></span>
+<span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">urls</span>, output <span class="op">=</span> <span class="st">"data/json"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># For JSONL conversion (CPU-bound)</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, workers <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Conversion: CPU and memory bound; each worker gets a share of the memory</span></span>
+<span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span><span class="st">"data/json"</span>, <span class="st">"data/parquet"</span>, workers <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># pro_fetch() does both: `download_workers` for the download (defaults to</span></span>
+<span><span class="co"># `workers`), `workers` for the conversion</span></span>
+<span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="va">urls</span>, project_folder <span class="op">=</span> <span class="st">"data"</span>, download_workers <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>          workers <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section></section><section class="section level2"><h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
 </h2>
 <ul>
 <li>
 <code><a href="../reference/pro_query.html">pro_query()</a></code> - Build OpenAlex API query URLs</li>
+<li>
+<code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> - Convert the JSON results to a Parquet dataset</li>
+<li>
+<code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> - Download and convert in one step</li>
+<li>
+<code><a href="../reference/read_corpus.html">read_corpus()</a></code> - Open the Parquet dataset</li>
 <li>
 <code><a href="../reference/pro_count.html">pro_count()</a></code> - Get result counts without downloading</li>
 <li>
@@ -1242,8 +1224,9 @@
 </ul></section><section class="section level2"><h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
-<li><a href="https://docs.openalex.org/" class="external-link">OpenAlex API Documentation</a></li>
-<li><a href="https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication" class="external-link">OpenAlex Rate Limits</a></li>
+<li><a href="https://help.openalex.org/api/" class="external-link">OpenAlex API Documentation</a></li>
+<li><a href="https://help.openalex.org/api/authentication/" class="external-link">OpenAlex Authentication and Rate Limits</a></li>
+<li><a href="https://help.openalex.org/api/errors/" class="external-link">OpenAlex Error Handling</a></li>
 <li><a href="https://parquet.apache.org/" class="external-link">Apache Parquet Format</a></li>
 <li><a href="https://duckdb.org/docs/" class="external-link">DuckDB Documentation</a></li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">

@@ -117,7 +117,8 @@ The supported filter names can be retrieved by running
 
 ``` r
 
-opt_filter_names()
+opt_filter_names()                        # works (default)
+opt_filter_names(entity = "institutions") # names differ per entity
 ```
 
 and supported select fields by running
@@ -125,7 +126,11 @@ and supported select fields by running
 ``` r
 
 opt_select_fields()
+opt_select_fields(entity = "authors")
 ```
+
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+validates against the lists for the queried `entity`.
 
 This defines a basic query.
 
@@ -146,9 +151,36 @@ If, however, for example 100 DOIs are given to be retrieved, the query
 is chunked into chunks of a maximum of the value of the argument
 `chunk_limit`, default is 50. In this case, the functions returns a
 [`list()`](https://rdrr.io/r/base/list.html) with each element named
-`Chunk_x` and containing the URL as a character vector.
+`chunk_x` and containing the URL as a character vector.
 
 The resulting URL(s) can be opened in the browser for evaluation.
+
+Queries the classic filter syntax cannot express, such as nested `and` /
+`or` conditions across fields, can be written in OpenAlex’s query
+language OQL, or as its JSON form OQO (see the [OQL
+documentation](https://help.openalex.org/api/oql/)):
+
+``` r
+
+query <- pro_query(
+  oql = "works where year >= (2020) and title-abstract has ((coral OR reef) AND bleaching)"
+)
+```
+
+The entity and all conditions are part of the query; `select` and
+`options` can be added as usual.
+
+Any query can also be sent as an OpenAlex Query Object via POST with
+`pro_request(..., via = "oqo")` or `pro_fetch(..., via = "oqo")`: the
+same results (the test suite compares complete result sets), checked
+before any credits are spent, no URL length limit (so
+`pro_query(..., chunk_limit = 200)` for DOI and ID lists), and the exact
+query recorded in a `_query.json` per query together with its cost. For
+papers, each query also gets `_query_oql.txt` and a formatted
+`_query_oql.html` with the query in OpenAlex’s readable query language
+(OQL), checked to reproduce the query exactly; for a list of queries,
+`_queries_oql.txt` / `_queries_oql.html` summarise them all for a
+supplement.
 
 ## `pro_fetch()`
 
@@ -198,7 +230,7 @@ are used to process the URLs in the list in parallel.
 [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 also accepts **nested lists**, which creates a mirrored nested directory
 structure. The subsequent
-[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
 step converts the directory depth into hive-style partition keys
 (`query=<name>`, `query_l2=<name>`, …), so the final parquet dataset can
 be filtered by group directly:
@@ -215,34 +247,21 @@ pro_fetch(query_url = queries, project_folder = "by_year")
 arrow::open_dataset("by_year/parquet") |> dplyr::filter(query == "year_2022")
 ```
 
-### 3. Processing `json` files (`openalexPro::pro_request_jsonl()`)
+An interrupted download can be completed with `resume = TRUE`: only the
+queries that did not finish are fetched again.
 
-This step prepares the json files for the final ingestion into a
-`parquet` database:
+### 2. Convert to `parquet` database (`openalexPro::pro_request_parquet()`)
 
-``` r
-
-openalex_jsonl_folder <- openalexPro::pro_request_jsonl(
-  input_json = json_files,
-  output = "jsonl_files",
-  verbose = TRUE
-)
-```
-
-The resulting json files can be found in the folder as specified in
-`output`.
-
-### 4. Convert to `parquet` database (`openalexPro::pro_request_jsonl_parquet()`)
-
-Here the files are converted into a parquet page partitioned dataset
-saved as individual `parquet` files in the folder provided by the
-`output` argument.
+Here the json files are converted into a page partitioned dataset saved
+as individual `parquet` files in the folder provided by the `output`
+argument. For works, the abstract text is re-constructed and a citation
+string is generated:
 
 ``` r
 
 parquet <- "./parquet"
-openalexPro::pro_request_jsonl_parquet(
-  input_jsonl = jsonl_files,
+openalexPro::pro_request_parquet(
+  input_json = json_files,
   output = parquet,
   verbose = TRUE
 )
@@ -254,9 +273,28 @@ These functions are pipeline ready and can be chained in a pipeline:
 
 corpus <- pro_query(...) |>
   pro_request(...) |>
-  pro_request_jsonl(...) |>
-  pro_request_jsonl_parquet(...)
+  pro_request_parquet(...)
 ```
+
+The older two-step conversion via JSONL files
+([`pro_request_jsonl()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl.md)
+and
+[`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
+is deprecated.
+
+By default there is one `parquet` file per API page (up to 200 records),
+which keeps the conversion parallel and resumable. For large downloads,
+`compact_parquet = 250000` (in
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+or
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md))
+combines each query’s page files into files of up to 250,000 records
+after the conversion;
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+does the same for an existing dataset. Records, columns and their order
+do not change, but reading is much faster: for 1.1 million works,
+aggregates and lookups by ID ran 35 to 50 times faster, and the dataset
+was 40% smaller.
 
 ### Convenience Function to Read the Retrieved Data (`openalexPro::read_corpus()`)
 
@@ -283,7 +321,7 @@ read_corpus("Biodiversity_from_sandwich_islands") |>
 # Design Principles
 
 The retrieval of works and the initial processing / preparation can be
-split into these three steps:
+split into these two steps:
 
 In a first step
 ([`openalexPro::pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)),
@@ -295,19 +333,12 @@ use custom made code to further process the responses, i.e. ingest it
 into a database.
 
 In a second step
-([`openalexPro::pro_request_jsonl()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl.md)),
-the json files are processed on a per file basis using the `jq`
-command-line json processor. In this step the abstract text is
-re-constructed, a citation string for each work is generated, and
-optionally add a `page` field is added. It writes the resulting json
-file as a newline-delimited JSON (.jsonl), suitable for further
-processing using `arrow` or DuckDB.
-
-In the third (and final) step
-([`openalexPro::pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
-converts the jsonl files into a parquet database partitioned by `page`
-using the `duckdb` package. Again, as the processing is done per page as
-well, the conversion is not limited by memory.
+([`openalexPro::pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)),
+the json files are converted on a per file basis into a parquet database
+partitioned by `page` using the `duckdb` package. In this step the
+abstract text is re-constructed, a citation string for each work is
+generated, and a `page` field is added. As the processing is done per
+page, the conversion is not limited by memory.
 
 This approach results in a stable pipeline which works for the retrieval
 of small as well as large to huge corpora. As the processing is done per
@@ -317,10 +348,9 @@ retrieved without problems).
 
 One point which needs to be taken into consideration when retrieving
 huge corpora, are rate limits by OpenAlex (see
-[here](https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication)
-and
-[here](https://help.openalex.org/hc/en-us/articles/24397762024087-Pricing)
-for further details). Use
+[here](https://help.openalex.org/api/authentication/) and
+[here](https://help.openalex.org/access/example-costs/) for further
+details). Use
 [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
 to inspect your current daily budget, usage, and remaining allowance at
 any time.

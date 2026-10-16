@@ -10,8 +10,10 @@
 
 ``` r
 
-# Install openalexSnapshot (once available on r-universe):
-pak::pak("openalexSnapshot")
+install.packages(
+  "openalexSnapshot",
+  repos = c("https://openalexpro.r-universe.dev", "https://cloud.r-project.org")
+)
 ```
 
 `snapshot_to_parquet()`, `build_corpus_index()` and `lookup_by_id()` are

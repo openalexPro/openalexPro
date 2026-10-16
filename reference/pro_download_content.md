@@ -43,9 +43,10 @@ pro_download_content(
 
 - api_key:
 
-  OpenAlex API key (character string) or \`NULL\`. Defaults to the
-  `openalexPro.apikey` environment variable. If \`NULL\` or \`""\`,
-  requests are sent without an API key.
+  OpenAlex API key (character string) or \`NULL\`. Defaults to
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
+  (option or the `openalexPro.api_key` environment variable). If
+  \`NULL\` or \`""\`, requests are sent without an API key.
 
 - endpoint:
 

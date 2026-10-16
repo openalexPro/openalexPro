@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Providing a more advanced access to OpenAlex for the power user">
-<meta name="description" content="More about what it does (maybe more than one line).">
-<meta property="og:description" content="More about what it does (maybe more than one line).">
+<meta name="description" content="Retrieves large result sets from the OpenAlex API (&lt;https://openalex.org&gt;) without holding them in memory. Queries are built and validated with classic filters and search, or written in OpenAlex query language (OQL) or its JSON form (OQO). Results are downloaded page by page to JSON files, with cursor paging, parallel downloads, retries and resume, and converted per page with DuckDB to a partitioned Apache Parquet dataset that includes reconstructed abstracts and citation strings. Full-text PDFs and TEI XML can be downloaded, and the daily API budget can be inspected.">
+<meta property="og:description" content="Retrieves large result sets from the OpenAlex API (&lt;https://openalex.org&gt;) without holding them in memory. Queries are built and validated with classic filters and search, or written in OpenAlex query language (OQL) or its JSON form (OQO). Results are downloaded page by page to JSON files, with cursor paging, parallel downloads, retries and resume, and converted per page with DuckDB to a partitioned Apache Parquet dataset that includes reconstructed abstracts and citation strings. Full-text PDFs and TEI XML can be downloaded, and the daily API budget can be inspected.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,10 +121,13 @@ To run online contract checks against the live OpenAlex API:</p>
 <p>The query is defined using the function <code><a href="reference/pro_query.html">openalexPro::pro_query()</a></code>. It follows the logic and arguments of <code><a href="https://docs.ropensci.org/openalexR/reference/oa_query.html" class="external-link">openalexR::oa_query()</a></code>. In addition to <code><a href="https://docs.ropensci.org/openalexR/reference/oa_query.html" class="external-link">openalexR::oa_query()</a></code>, the names of filters as well as fields selected for retrieval are verified before sending them to OpenAlex.</p>
 <p>The supported filter names can be retrieved by running</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/opt_filter_names.html">opt_filter_names</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/opt_filter_names.html">opt_filter_names</a></span><span class="op">(</span><span class="op">)</span>                        <span class="co"># works (default)</span></span>
+<span><span class="fu"><a href="reference/opt_filter_names.html">opt_filter_names</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"institutions"</span><span class="op">)</span> <span class="co"># names differ per entity</span></span></code></pre></div>
 <p>and supported select fields by running</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/opt_select_fields.html">opt_select_fields</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/opt_select_fields.html">opt_select_fields</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/opt_select_fields.html">opt_select_fields</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"authors"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/pro_query.html">pro_query()</a></code> validates against the lists for the queried <code>entity</code>.</p>
 <p>This defines a basic query.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span></span>
@@ -135,8 +138,15 @@ To run online contract checks against the live OpenAlex API:</p>
 <span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"publication_year"</span>, <span class="st">"cited_by_count"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This returns a URL, which one can open in the browser.</p>
-<p>If, however, for example 100 DOIs are given to be retrieved, the query is chunked into chunks of a maximum of the value of the argument <code>chunk_limit</code>, default is 50. In this case, the functions returns a <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> with each element named <code>Chunk_x</code> and containing the URL as a character vector.</p>
+<p>If, however, for example 100 DOIs are given to be retrieved, the query is chunked into chunks of a maximum of the value of the argument <code>chunk_limit</code>, default is 50. In this case, the functions returns a <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> with each element named <code>chunk_x</code> and containing the URL as a character vector.</p>
 <p>The resulting URL(s) can be opened in the browser for evaluation.</p>
+<p>Queries the classic filter syntax cannot express, such as nested <code>and</code> / <code>or</code> conditions across fields, can be written in OpenAlex’s query language OQL, or as its JSON form OQO (see the <a href="https://help.openalex.org/api/oql/" class="external-link">OQL documentation</a>):</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span></span>
+<span>  oql <span class="op">=</span> <span class="st">"works where year &gt;= (2020) and title-abstract has ((coral OR reef) AND bleaching)"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The entity and all conditions are part of the query; <code>select</code> and <code>options</code> can be added as usual.</p>
+<p>Any query can also be sent as an OpenAlex Query Object via POST with <code>pro_request(..., via = "oqo")</code> or <code>pro_fetch(..., via = "oqo")</code>: the same results (the test suite compares complete result sets), checked before any credits are spent, no URL length limit (so <code>pro_query(..., chunk_limit = 200)</code> for DOI and ID lists), and the exact query recorded in a <code>_query.json</code> per query together with its cost. For papers, each query also gets <code>_query_oql.txt</code> and a formatted <code>_query_oql.html</code> with the query in OpenAlex’s readable query language (OQL), checked to reproduce the query exactly; for a list of queries, <code>_queries_oql.txt</code> / <code>_queries_oql.html</code> summarise them all for a supplement.</p>
 </div>
 </div>
 <div class="section level2">
@@ -144,7 +154,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <code>pro_fetch()</code><a class="anchor" aria-label="anchor" href="#pro_fetch"></a>
 </h2>
 <p>For most use cases, <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> handles everything in one call:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download, transform, and convert to Parquet in one step</span></span>
 <span><span class="fu"><a href="reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">url</span>,</span>
@@ -157,20 +167,20 @@ To run online contract checks against the live OpenAlex API:</p>
 <h2 id="advanced-workflow-individual-functions">Advanced Workflow (Individual Functions)<a class="anchor" aria-label="anchor" href="#advanced-workflow-individual-functions"></a>
 </h2>
 <p>For more control over the pipeline, use the individual functions:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/openalexPro/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="id_1-retrieving-records-openalexpropro_request">1. Retrieving records (<code>openalexPro::pro_request()</code>)<a class="anchor" aria-label="anchor" href="#id_1-retrieving-records-openalexpropro_request"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">json_files</span> <span class="op">&lt;-</span> <span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request.html">pro_request</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">query</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"json"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Will retrieve the records and save them into the folder specified in output. One important difference is now between the query being a single URL or a list: if it is a list, the <code>future</code> and <code>future.apply</code> packages are used to process the URLs in the list in parallel.</p>
-<p><code><a href="reference/pro_request.html">pro_request()</a></code> also accepts <strong>nested lists</strong>, which creates a mirrored nested directory structure. The subsequent <code><a href="reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> step converts the directory depth into hive-style partition keys (<code>query=&lt;name&gt;</code>, <code>query_l2=&lt;name&gt;</code>, …), so the final parquet dataset can be filtered by group directly:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p><code><a href="reference/pro_request.html">pro_request()</a></code> also accepts <strong>nested lists</strong>, which creates a mirrored nested directory structure. The subsequent <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> step converts the directory depth into hive-style partition keys (<code>query=&lt;name&gt;</code>, <code>query_l2=&lt;name&gt;</code>, …), so the final parquet dataset can be filtered by group directly:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  year_2022 <span class="op">=</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"works"</span>, publication_year <span class="op">=</span> <span class="fl">2022</span><span class="op">)</span>,</span>
 <span>  year_2023 <span class="op">=</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"works"</span>, publication_year <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span>
@@ -179,27 +189,16 @@ To run online contract checks against the live OpenAlex API:</p>
 <span></span>
 <span><span class="co"># Parquet partitions: by_year/parquet/query=year_2022/ and query=year_2023/</span></span>
 <span><span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="st">"by_year/parquet"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">query</span> <span class="op">==</span> <span class="st">"year_2022"</span><span class="op">)</span></span></code></pre></div>
+<p>An interrupted download can be completed with <code>resume = TRUE</code>: only the queries that did not finish are fetched again.</p>
 </div>
 <div class="section level3">
-<h3 id="id_3-processing-json-files-openalexpropro_request_jsonl">3. Processing <code>json</code> files (<code>openalexPro::pro_request_jsonl()</code>)<a class="anchor" aria-label="anchor" href="#id_3-processing-json-files-openalexpropro_request_jsonl"></a>
+<h3 id="id_2-convert-to-parquet-database-openalexpropro_request_parquet">2. Convert to <code>parquet</code> database (<code>openalexPro::pro_request_parquet()</code>)<a class="anchor" aria-label="anchor" href="#id_2-convert-to-parquet-database-openalexpropro_request_parquet"></a>
 </h3>
-<p>This step prepares the json files for the final ingestion into a <code>parquet</code> database:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">openalex_jsonl_folder</span> <span class="op">&lt;-</span> <span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
-<span>  input_json <span class="op">=</span> <span class="va">json_files</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"jsonl_files"</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>The resulting json files can be found in the folder as specified in <code>output</code>.</p>
-</div>
-<div class="section level3">
-<h3 id="id_4-convert-to-parquet-database-openalexpropro_request_jsonl_parquet">4. Convert to <code>parquet</code> database (<code>openalexPro::pro_request_jsonl_parquet()</code>)<a class="anchor" aria-label="anchor" href="#id_4-convert-to-parquet-database-openalexpropro_request_jsonl_parquet"></a>
-</h3>
-<p>Here the files are converted into a parquet page partitioned dataset saved as individual <code>parquet</code> files in the folder provided by the <code>output</code> argument.</p>
+<p>Here the json files are converted into a page partitioned dataset saved as individual <code>parquet</code> files in the folder provided by the <code>output</code> argument. For works, the abstract text is re-constructed and a citation string is generated:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">parquet</span> <span class="op">&lt;-</span> <span class="st">"./parquet"</span></span>
-<span><span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="va">jsonl_files</span>,</span>
+<span><span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
+<span>  input_json <span class="op">=</span> <span class="va">json_files</span>,</span>
 <span>  output <span class="op">=</span> <span class="va">parquet</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -207,8 +206,9 @@ To run online contract checks against the live OpenAlex API:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<p>The older two-step conversion via JSONL files (<code><a href="reference/pro_request_jsonl.html">pro_request_jsonl()</a></code> and <code><a href="reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>) is deprecated.</p>
+<p>By default there is one <code>parquet</code> file per API page (up to 200 records), which keeps the conversion parallel and resumable. For large downloads, <code>compact_parquet = 250000</code> (in <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> or <code><a href="reference/pro_fetch.html">pro_fetch()</a></code>) combines each query’s page files into files of up to 250,000 records after the conversion; <code><a href="reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> does the same for an existing dataset. Records, columns and their order do not change, but reading is much faster: for 1.1 million works, aggregates and lookups by ID ran 35 to 50 times faster, and the dataset was 40% smaller.</p>
 </div>
 <div class="section level3">
 <h3 id="convenience-function-to-read-the-retrieved-data-openalexproread_corpus">Convenience Function to Read the Retrieved Data (<code>openalexPro::read_corpus()</code>)<a class="anchor" aria-label="anchor" href="#convenience-function-to-read-the-retrieved-data-openalexproread_corpus"></a>
@@ -226,12 +226,11 @@ To run online contract checks against the live OpenAlex API:</p>
 <div class="section level1">
 <h1 id="design-principles">Design Principles<a class="anchor" aria-label="anchor" href="#design-principles"></a>
 </h1>
-<p>The retrieval of works and the initial processing / preparation can be split into these three steps:</p>
+<p>The retrieval of works and the initial processing / preparation can be split into these two steps:</p>
 <p>In a first step (<code><a href="reference/pro_request.html">openalexPro::pro_request()</a></code>), each page from the API call is saved into an individual json file as returned by the API. The number of retrieved records is effectively only limited by the space on the drive where the json files are saved. As the complete responses including metadata are saved, one could end here and use custom made code to further process the responses, i.e. ingest it into a database.</p>
-<p>In a second step (<code><a href="reference/pro_request_jsonl.html">openalexPro::pro_request_jsonl()</a></code>), the json files are processed on a per file basis using the <code>jq</code> command-line json processor. In this step the abstract text is re-constructed, a citation string for each work is generated, and optionally add a <code>page</code> field is added. It writes the resulting json file as a newline-delimited JSON (.jsonl), suitable for further processing using <code>arrow</code> or DuckDB.</p>
-<p>In the third (and final) step (<code><a href="reference/pro_request_jsonl_parquet.html">openalexPro::pro_request_jsonl_parquet()</a></code>) converts the jsonl files into a parquet database partitioned by <code>page</code> using the <code>duckdb</code> package. Again, as the processing is done per page as well, the conversion is not limited by memory.</p>
+<p>In a second step (<code><a href="reference/pro_request_parquet.html">openalexPro::pro_request_parquet()</a></code>), the json files are converted on a per file basis into a parquet database partitioned by <code>page</code> using the <code>duckdb</code> package. In this step the abstract text is re-constructed, a citation string for each work is generated, and a <code>page</code> field is added. As the processing is done per page, the conversion is not limited by memory.</p>
 <p>This approach results in a stable pipeline which works for the retrieval of small as well as large to huge corpora. As the processing is done per page (which have a maximum of 200 works), the scaling should be more or less linear (in one application, more than 4 million works were retrieved without problems).</p>
-<p>One point which needs to be taken into consideration when retrieving huge corpora, are rate limits by OpenAlex (see <a href="https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication" class="external-link">here</a> and <a href="https://help.openalex.org/hc/en-us/articles/24397762024087-Pricing" class="external-link">here</a> for further details). Use <code><a href="reference/pro_rate_limit_status.html">pro_rate_limit_status()</a></code> to inspect your current daily budget, usage, and remaining allowance at any time.</p>
+<p>One point which needs to be taken into consideration when retrieving huge corpora, are rate limits by OpenAlex (see <a href="https://help.openalex.org/api/authentication/" class="external-link">here</a> and <a href="https://help.openalex.org/access/example-costs/" class="external-link">here</a> for further details). Use <code><a href="reference/pro_rate_limit_status.html">pro_rate_limit_status()</a></code> to inspect your current daily budget, usage, and remaining allowance at any time.</p>
 <p>The final format which is used in this package to save the retrieved data is the <code>parquet</code> format which is space efficient and allows on disc processing, therefore there is no need to load the complete data into memory (see <a href="https://parquet.apache.org/docs/" class="external-link">here</a> for a detailed description of the format as well as the <a href="https://arrow.apache.org/docs/r/" class="external-link">r-package <code>arrow</code></a>). To use the on disc processing in R, the <code>arrow</code> packages interfaces directly with <code>dplyr</code>, so that one can do a lot of processing before retrieving the actual data into memory (see the section on <a href="https://r4ds.hadley.nz/arrow.html#using-dplyr-with-arrow" class="external-link">dplyr and arrow</a> as well more general the <a href="https://r4ds.hadley.nz/arrow.html" class="external-link">arrow chapter</a> in Hadley Wickham’s <a href="https://r4ds.hadley.nz" class="external-link">R for Data Science (2e)</a> book).</p>
 </div>
 <div class="section level1">

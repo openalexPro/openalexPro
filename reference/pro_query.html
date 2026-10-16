@@ -9,7 +9,7 @@ supplied as named ... arguments (e.g., from_publication_date = "2020-01-01").'><
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@ supplied as named <code>...</code> arguments (e.g., <code>from_publication_date 
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pro_query</span><span class="op">(</span></span>
 <span>  entity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"works"</span>, <span class="st">"authors"</span>, <span class="st">"venues"</span>, <span class="st">"institutions"</span>, <span class="st">"concepts"</span>, <span class="st">"publishers"</span>,</span>
-<span>    <span class="st">"funders"</span><span class="op">)</span>,</span>
+<span>    <span class="st">"funders"</span>, <span class="st">"sources"</span>, <span class="st">"topics"</span>, <span class="st">"locations"</span><span class="op">)</span>,</span>
 <span>  id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  doi <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  search <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -64,6 +64,8 @@ supplied as named <code>...</code> arguments (e.g., <code>from_publication_date 
 <span>  options <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  endpoint <span class="op">=</span> <span class="st">"https://api.openalex.org"</span>,</span>
 <span>  chunk_limit <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>  oql <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  oqo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -73,8 +75,11 @@ supplied as named <code>...</code> arguments (e.g., <code>from_publication_date 
 
 
 <dl><dt id="arg-entity">entity<a class="anchor" aria-label="anchor" href="#arg-entity"></a></dt>
-<dd><p>Character; one of <code>"works"</code>, <code>"authors"</code>, <code>"venues"</code>,
-<code>"institutions"</code>, <code>"concepts"</code>, <code>"publishers"</code>, <code>"funders"</code>.</p></dd>
+<dd><p>Character; one of <code>"works"</code>, <code>"authors"</code>,
+<code>"institutions"</code>, <code>"publishers"</code>, <code>"funders"</code>,
+<code>"sources"</code>, <code>"topics"</code>, <code>"locations"</code>. <code>"venues"</code>
+(now <code>"sources"</code>) and <code>"concepts"</code> (now <code>"topics"</code>) are
+deprecated by OpenAlex and kept only for compatibility.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
@@ -92,17 +97,17 @@ separate requests when the number of DOIs exceeds <code>chunk_limit</code>.</p><
 <dt id="arg-search">search<a class="anchor" aria-label="anchor" href="#arg-search"></a></dt>
 <dd><p>Optional full-text search string. Applies stemming and
 stop-word removal. Supports boolean operators (<code>AND</code>, <code>OR</code>,
-<code>NOT</code> in uppercase), quoted phrases (<code>"exact phrase"</code>),
-proximity (<code>"word1 word2"~N</code>), wildcards (<code>*</code>, <code>?</code>), and
-fuzzy matching (<code>term~N</code>). Replaces the deprecated
+<code>NOT</code> in uppercase), quoted phrases (<code>"exact phrase"</code>) and
+proximity (<code>"word1 word2"~N</code>). Wildcards are rejected by the API
+(HTTP 400): use <code>search.exact</code>. Replaces the deprecated
 <code>filter = field.search:keyword</code> syntax.</p></dd>
 
 
 <dt id="arg-search-exact">search.exact<a class="anchor" aria-label="anchor" href="#arg-search-exact"></a></dt>
 <dd><p>Optional full-text search without stemming or stop-word
-removal. Supports the same boolean/phrase/wildcard syntax as <code>search</code>.
-Use when you need to match exact word forms (e.g. <code>"surgery"</code> should
-not match <code>"surgical"</code>).</p></dd>
+removal. Supports the boolean/phrase/proximity syntax of <code>search</code>,
+plus wildcards and fuzzy matching. Use when you need to match exact word
+forms (e.g. <code>"surgery"</code> should not match <code>"surgical"</code>).</p></dd>
 
 
 <dt id="arg-search-semantic">search.semantic<a class="anchor" aria-label="anchor" href="#arg-search-semantic"></a></dt>
@@ -121,7 +126,12 @@ to 1 request per second and returns at most 50 results per query.</p></dd>
 
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
 <dd><p>Optional named list of additional query parameters (e.g.,
-<code>list(per_page = 200, sort = "cited_by_count:desc", cursor = "*", sample = 100)</code>).</p></dd>
+<code>list(sort = "cited_by_count:desc", sample = 100, seed = 42)</code>).
+<code><a href="pro_request.html">pro_request()</a></code> does the paging, so <code>page</code> and
+<code>cursor</code> given here are replaced (with a warning); <code>per_page</code>
+is kept (1–200, default 200). A <code>sample</code> (up to 10,000) is paged by
+page number and needs a <code>seed</code> when it spans several pages;
+<code><a href="pro_request.html">pro_request()</a></code> picks and reports one if none is given.</p></dd>
 
 
 <dt id="arg-endpoint">endpoint<a class="anchor" aria-label="anchor" href="#arg-endpoint"></a></dt>
@@ -132,9 +142,22 @@ to 1 request per second and returns at most 50 results per query.</p></dd>
 <dd><p>Number of DOIS or ids per chunk if chunked. Default: 50</p></dd>
 
 
+<dt id="arg-oql">oql<a class="anchor" aria-label="anchor" href="#arg-oql"></a></dt>
+<dd><p>Optional OQL (OpenAlex Query Language) query string, e.g.
+<code>"works where year is (2020) and type is (article)"</code>. See section
+<em>OQL and OQO</em>.</p></dd>
+
+
+<dt id="arg-oqo">oqo<a class="anchor" aria-label="anchor" href="#arg-oqo"></a></dt>
+<dd><p>Optional OQO (OpenAlex Query Object): a nested list, or a JSON
+string. See section <em>OQL and OQO</em>.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Filters as named arguments. Values may be scalars or vectors (vectors
-are collapsed with <code>"|"</code> to express OR).</p></dd>
+are collapsed with <code>"|"</code> to express OR). Arguments of the functions
+that send the query, such as <code>via</code> or <code>workers</code>, belong to
+[pro_fetch()], [pro_request()] or [pro_count()], not here.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -143,9 +166,9 @@ are collapsed with <code>"|"</code> to express OR).</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Filter names are validated via <code>.validate_filter()</code> using
-<code><a href="opt_filter_names.html">opt_filter_names()</a></code>. <code>select</code> fields are validated via
-<code>.validate_select()</code> using <code>`opt_select_fields()`</code>.</p>
+    <p>Filter names are validated against <code>opt_filter_names(entity = entity)</code>
+and <code>select</code> fields against <code>opt_select_fields(entity = entity)</code>,
+i.e. against the names OpenAlex accepts for the queried entity.</p>
 <p>If multiple more then 50 `doi` or openalex `id`s are provided, the request
 is automatically split into chunks of 50 and a named list of URLs is returned.</p>
     </div>
@@ -156,13 +179,39 @@ is automatically split into chunks of 50 and a named list of URLs is returned.</
 <p>All three search parameters (<code>search</code>, <code>search.exact</code>,
 <code>search.semantic</code>) accept a query string. For <code>search</code> and
 <code>search.exact</code>, the following syntax is supported:</p><ul><li><p>Boolean: <code>biodiversity AND finance</code>, <code>climate OR weather</code>,
-    <code>ocean NOT pollution</code> (operators must be uppercase).</p></li>
+    <code>ocean NOT pollution</code> (operators must be uppercase); group with
+    parentheses. Words without an operator between them are combined with
+    <code>AND</code>.</p></li>
 <li><p>Exact phrase: <code>"biodiversity finance"</code> (double quotes).</p></li>
-<li><p>Proximity: <code>"biodiversity finance"~5</code> (words within 5 positions).</p></li>
-<li><p>Wildcard: <code>bio*</code> (zero or more characters), <code>organi?ation</code>.</p></li>
-<li><p>Fuzzy: <code>biodiversty~1</code> (allows 1 character edit).</p></li>
-</ul><p><code>search.semantic</code> does not use keyword syntax; pass a natural-language
+<li><p>Proximity: <code>"biodiversity finance"~5</code> (words within 5
+    positions), or two phrases near each other:
+    <code>"machine learning"~5~"neural network"</code>.</p></li>
+</ul><p>Only with <code>search.exact</code> (the stemmed <code>search</code> rejects wildcards
+with HTTP 400, and stemming distorts fuzzy terms):</p><ul><li><p>Wildcard: <code>microbio*</code> (zero or more characters),
+    <code>organi?ation</code> (exactly one). At least 3 characters before the
+    wildcard; no leading wildcard.</p></li>
+<li><p>Fuzzy: <code>biodiversty~1</code> (up to N character edits, N = 0–2;
+    at least 3 characters before the <code>~</code>).</p></li>
+</ul><p>See <a href="https://help.openalex.org/api/searching/" class="external-link">https://help.openalex.org/api/searching/</a>.
+<code>search.semantic</code> does not use keyword syntax; pass a natural-language
 phrase or even a full abstract. It returns at most 50 results per call.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="oql-and-oqo">OQL and OQO<a class="anchor" aria-label="anchor" href="#oql-and-oqo"></a></h2>
+
+
+<p>OpenAlex's query language (<code>oql</code>) and its JSON form (<code>oqo</code>)
+express queries the classic filter syntax cannot, such as nested
+<code>and</code> / <code>or</code> conditions. The entity, all conditions, grouping
+(<code>group by</code>), <code>sample</code> and <code>corpus</code> belong inside the query,
+so <code>entity</code>, <code>id</code>, <code>doi</code>, the search arguments,
+<code>group_by</code> and filters in <code>...</code> cannot be combined with it –
+OpenAlex would silently ignore them. <code>select</code> and <code>options</code>
+(e.g. <code>sort</code>) are passed alongside. The URL targets the API root
+(<code>https://api.openalex.org/?oql=...</code>) and works with
+<code><a href="pro_request.html">pro_request()</a></code>, <code><a href="pro_count.html">pro_count()</a></code> and <code><a href="pro_fetch.html">pro_fetch()</a></code> as usual.
+An invalid query fails at request time with OpenAlex's parse error.
+See <a href="https://help.openalex.org/api/oql/" class="external-link">https://help.openalex.org/api/oql/</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="deprecated-search-filters">Deprecated search filters<a class="anchor" aria-label="anchor" href="#deprecated-search-filters"></a></h2>
@@ -172,14 +221,14 @@ phrase or even a full abstract. It returns at most 50 results per call.</p>
 <code>title_and_abstract.search = "biodiversity"</code>) are deprecated by the
 OpenAlex API. They still work but emit a warning. Use the <code>search</code>,
 <code>search.exact</code>, or <code>search.semantic</code> parameters instead. See
-<a href="https://developers.openalex.org/guides/searching" class="external-link">https://developers.openalex.org/guides/searching</a> for details.</p>
+<a href="https://help.openalex.org/api/searching/" class="external-link">https://help.openalex.org/api/searching/</a> for details.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">req</span> <span class="op">&lt;-</span> <span class="fu">oa_build_req</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu">pro_query</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  entity <span class="op">=</span> <span class="st">"works"</span>,</span></span>
 <span class="r-in"><span>  search <span class="op">=</span> <span class="st">"biodiversity"</span>,</span></span>
 <span class="r-in"><span>  from_publication_date <span class="op">=</span> <span class="st">"2020-01-01"</span>,</span></span>
@@ -187,8 +236,17 @@ OpenAlex API. They still work but emit a warning. Use the <code>search</code>,
 <span class="r-in"><span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>,<span class="st">"title"</span>,<span class="st">"publication_year"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>per_page <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># resp &lt;- api_call(req)</span></span></span>
-<span class="r-in"><span><span class="co"># httr2::resp_body_json(resp)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># OQL: nested conditions the filter syntax cannot express</span></span></span>
+<span class="r-in"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu">pro_query</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  oql <span class="op">=</span> <span class="st">"works where year &gt;= (2020) and (title has (coral) or title has (reef))"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># OQO: the same kind of query as a nested list</span></span></span>
+<span class="r-in"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu">pro_query</span><span class="op">(</span>oqo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  get_rows <span class="op">=</span> <span class="st">"works"</span>,</span></span>
+<span class="r-in"><span>  filter_rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>column_id <span class="op">=</span> <span class="st">"publication_year"</span>, value <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

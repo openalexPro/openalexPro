@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,7 @@
     OA[("OpenAlex&lt;br/&gt;api.openalex.org · content.openalex.org")]
     SNAP[("OpenAlex Snapshot&lt;br/&gt;bulk ndjson.gz")]
 
-    PQ["pro_query()&lt;br/&gt;build URL · validate filters · chunk IDs"]
+    PQ["pro_query()&lt;br/&gt;build URL · validate filters · chunk IDs&lt;br/&gt;or OQL / OQO query"]
     PC["pro_count()"]
     PRL["pro_rate_limit_status()&lt;br/&gt;pro_validate_credentials()"]
 
@@ -98,16 +98,13 @@
 
     subgraph PF["pro_fetch()  —  convenience wrapper"]
         PR["pro_request()&lt;br/&gt;download metadata pages → JSON"]
-        PRJ["pro_request_jsonl()&lt;br/&gt;JSON → JSONL&lt;br/&gt;reconstruct abstract · build citation"]
-        PRJP["pro_request_jsonl_parquet()&lt;br/&gt;JSONL → partitioned Parquet"]
-        PR --&gt; PRJ --&gt; PRJP
+        PRP["pro_request_parquet()&lt;br/&gt;JSON → partitioned Parquet&lt;br/&gt;reconstruct abstract · build citation"]
+        PR --&gt; PRP
     end
 
     PDC["pro_download_content()&lt;br/&gt;download PDFs / TEI XML"]
 
-    STP["snapshot_to_parquet()"]
-    BCI["build_corpus_index()"]
-    LBI["lookup_by_id()&lt;br/&gt;snapshot_filter_ids()"]
+    SNP["openalexSnapshot package&lt;br/&gt;snapshot_to_parquet() · build_corpus_index()&lt;br/&gt;lookup_by_id()"]
 
     OUT[("Parquet dataset&lt;br/&gt;read_corpus() · DuckDB · arrow")]
     FILES[("PDF / TEI XML files&lt;br/&gt;on disk")]
@@ -121,10 +118,10 @@
     PRL -.-&gt;|via| AC
     PC -.-&gt;|via| AC
 
-    PRJP --&gt; OUT
+    PRP --&gt; OUT
     PDC --&gt; FILES
 
-    SNAP --&gt; STP --&gt; BCI --&gt; LBI --&gt; OUT
+    SNAP --&gt; SNP --&gt; OUT
 
     style OA    fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style SNAP  fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -230,14 +227,12 @@
 
     subgraph pro_fetch[pro_fetch]
         PR[pro_request&lt;br/&gt;Download JSON]
-        PRJ[pro_request_jsonl&lt;br/&gt;Transform]
-        PRJP[pro_request_jsonl_parquet&lt;br/&gt;Convert]
-        PR --&gt; PRJ --&gt; PRJP
+        PRP[pro_request_parquet&lt;br/&gt;Convert]
+        PR --&gt; PRP
     end
 
     subgraph Output[Project Folder]
-        JSON[json/]
-        JSONL[jsonl/]
+        JSON[json/&lt;br/&gt;deleted after conversion]
         PARQUET[parquet/]
     end
 
@@ -313,30 +308,24 @@
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJ[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ --&gt;|URL| PC
     PC --&gt;|Check size| PR
     PQ --&gt;|URL| PR
-    PR --&gt;|JSON files| PRJ
-    PRJ --&gt;|JSONL files| PRJP
-    PRJP --&gt;|Parquet dataset| DB
+    PR --&gt;|JSON files| PRP
+    PRP --&gt;|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -363,7 +352,7 @@
 <span>    <span class="st">"publication_year"</span>,</span>
 <span>    <span class="st">"cited_by_count"</span>,</span>
 <span>    <span class="st">"authorships"</span>,</span>
-<span>    <span class="st">"concepts"</span></span>
+<span>    <span class="st">"topics"</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -379,9 +368,9 @@
 <span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">url</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  pages <span class="op">=</span> <span class="fl">10000</span>, <span class="co"># Max pages (default)</span></span>
+<span>  pages <span class="op">=</span> <span class="fl">10000</span>, <span class="co"># Max pages per query (default: 100000)</span></span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># Show progress bar</span></span>
-<span>  workers <span class="op">=</span> <span class="fl">1</span> <span class="co"># Parallel workers for chunked queries</span></span>
+<span>  workers <span class="op">=</span> <span class="fl">1</span> <span class="co"># Parallel workers for a list of queries</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <section class="level3"><h4 id="output-structure">Output Structure<a class="anchor" aria-label="anchor" href="#output-structure"></a>
@@ -392,21 +381,22 @@
 ├── results_page_2.json
 ├── results_page_3.json
 └── ...</code></pre>
-</section></section><section class="level2"><h3 id="step-3-transform-to-jsonl">Step 3: Transform to JSONL<a class="anchor" aria-label="anchor" href="#step-3-transform-to-jsonl"></a>
+</section></section><section class="level2"><h3 id="step-3-convert-to-parquet">Step 3: Convert to Parquet<a class="anchor" aria-label="anchor" href="#step-3-convert-to-parquet"></a>
 </h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Convert JSON to JSONL with parallel processing</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="co"># Convert JSON to Parquet with parallel processing</span></span>
+<span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">4</span>, <span class="co"># Use 4 parallel workers</span></span>
 <span>  delete_input <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Keep JSON files</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="level3"><h4 id="what-happens-during-transformation">What Happens During Transformation<a class="anchor" aria-label="anchor" href="#what-happens-during-transformation"></a>
+<section class="level3"><h4 id="what-happens-during-conversion">What Happens During Conversion<a class="anchor" aria-label="anchor" href="#what-happens-during-conversion"></a>
 </h4>
+<p>Each JSON file becomes one Parquet file, converted with DuckDB. For works, two columns are added (<code>enrich = TRUE</code>, the default):</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -420,13 +410,13 @@
         Other[other fields...]
     end
 
-    subgraph Transform[jq_execute]
+    subgraph Transform[pro_request_parquet]
         T1[Reconstruct abstract&lt;br/&gt;from inverted index]
         T2[Generate citation string&lt;br/&gt;Smith et al. 2023]
         T3[Add page field&lt;br/&gt;for provenance]
     end
 
-    subgraph Output[JSONL Output]
+    subgraph Output[Parquet Output]
         Abstract[abstract: full text]
         Citation[citation: string]
         Page[page: identifier]
@@ -445,22 +435,10 @@
 </div>
 </div>
 </div>
-</section></section><section class="level2"><h3 id="step-4-convert-to-parquet">Step 4: Convert to Parquet<a class="anchor" aria-label="anchor" href="#step-4-convert-to-parquet"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Convert JSONL to Parquet with schema harmonization</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
-<span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  sample_size <span class="op">=</span> <span class="fl">1000</span>, <span class="co"># Records to sample for schema inference</span></span>
-<span>  delete_input <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Keep JSONL files</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<section class="level3"><h4 id="schema-harmonization">Schema Harmonization<a class="anchor" aria-label="anchor" href="#schema-harmonization"></a>
+<p>Files that fail to convert are retried once on their own; by default (<code>on_error = "error"</code>) remaining failures stop the run and name the files. With <code>delete_input = TRUE</code>, the JSON files are only deleted when every file converted, and <code>resume = TRUE</code> converts only what is still missing.</p>
+</section><section class="level3"><h4 id="schema-harmonization">Schema Harmonization<a class="anchor" aria-label="anchor" href="#schema-harmonization"></a>
 </h4>
-<p>Different OpenAlex records can have different field structures. The function automatically infers a unified schema:</p>
+<p>Different OpenAlex records can have different field structures. <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> infers one schema from a sample of files and applies it to all of them:</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -468,7 +446,7 @@
 <figure class=""><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    subgraph Input[JSONL Files with Varying Schemas]
+    subgraph Input[JSON Files with Varying Schemas]
         F1["File 1: location = struct"]
         F2["File 2: location = string"]
         F3["File 3: location = null"]
@@ -499,10 +477,10 @@
 </div>
 </div>
 </div>
-</section></section><section class="level2"><h3 id="step-5-analyze-with-duckdb">Step 5: Analyze with DuckDB<a class="anchor" aria-label="anchor" href="#step-5-analyze-with-duckdb"></a>
+</section></section><section class="level2"><h3 id="step-4-analyze-with-duckdb">Step 4: Analyze with DuckDB<a class="anchor" aria-label="anchor" href="#step-4-analyze-with-duckdb"></a>
 </h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dbi.r-dbi.org" class="external-link">DBI</a></span><span class="op">)</span></span>
 <span></span>
@@ -590,7 +568,7 @@
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Large DOI list - automatically chunked</span></span>
 <span><span class="va">dois</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"my_dois.txt"</span><span class="op">)</span> <span class="co"># 1000+ DOIs</span></span>
 <span></span>
@@ -600,7 +578,7 @@
 <span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"cited_by_count"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Parallel download</span></span>
+<span><span class="co"># Parallel download: each chunk goes to the next free worker</span></span>
 <span><span class="fu"><a href="../reference/pro_request.html">pro_request</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">urls</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"data/json"</span>,</span>
@@ -608,34 +586,43 @@
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Parallel JSONL conversion</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<span><span class="co"># Parallel Parquet conversion</span></span>
+<span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">4</span>, <span class="co"># 4 parallel conversions</span></span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="managing-disk-space">Managing Disk Space<a class="anchor" aria-label="anchor" href="#managing-disk-space"></a>
 </h3>
-<p>For very large datasets, delete intermediate files:</p>
+<p>For very large datasets, delete the JSON files after conversion (<code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> does this by default). They are kept if any file failed to convert:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Delete JSON after JSONL conversion</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl.html">pro_request_jsonl</a></span><span class="op">(</span></span>
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="st">"data/json"</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
-<span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># Remove JSON files</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Delete JSONL after Parquet conversion</span></span>
-<span><span class="fu"><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet</a></span><span class="op">(</span></span>
-<span>  input_jsonl <span class="op">=</span> <span class="st">"data/jsonl"</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"data/parquet"</span>,</span>
-<span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># Remove JSONL files</span></span>
+<span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># Remove JSON files after a complete conversion</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h3 id="progress-tracking">Progress Tracking<a class="anchor" aria-label="anchor" href="#progress-tracking"></a>
+</section><section class="level2"><h3 id="fewer-larger-parquet-files">Fewer, Larger Parquet Files<a class="anchor" aria-label="anchor" href="#fewer-larger-parquet-files"></a>
+</h3>
+<p>By default <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> writes one Parquet file per API page (up to 200 records). That keeps the conversion parallel and resumable, but a large query becomes thousands of small files, which are slow to read. <code>compact_parquet</code> combines each query’s page files into files of up to that many records once the conversion is complete; <code><a href="../reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> does the same for an existing dataset:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">urls</span>, project_folder <span class="op">=</span> <span class="st">"data"</span>, compact_parquet <span class="op">=</span> <span class="fl">250000</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># or, for a dataset converted before</span></span>
+<span><span class="fu"><a href="../reference/pro_compact_parquet.html">pro_compact_parquet</a></span><span class="op">(</span><span class="st">"data/parquet"</span>, rows <span class="op">=</span> <span class="fl">250000</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Measured for 1.1 million works (5,460 page files): compaction took about 20 seconds; afterwards aggregates and lookups by ID ran 35 to 50 times faster, reading full records with DuckDB 4 times faster, and the dataset was 40% smaller. Files of 50,000 to 1 million records read equally fast.</p>
+<ul>
+<li>Records, columns and their order do not change; the <code>page</code> column stays.</li>
+<li>Each query (partition) is compacted on its own. A compacted file holds whole consecutive pages and is named after them, e.g. <code>results_pages_1-1250.parquet</code>.</li>
+<li>Files are compacted one at a time; an interrupted compaction is completed by running it again (or <code>resume = TRUE</code>), and <code>resume</code> never converts a compacted page again.</li>
+<li>If a query cannot be compacted, a warning says so and its page files stay.</li>
+<li>Indexes built by <code>openalexSnapshot</code> point to files and row numbers: <code><a href="../reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> stops if such an index exists next to the dataset.</li>
+</ul></section><section class="level2"><h3 id="progress-tracking">Progress Tracking<a class="anchor" aria-label="anchor" href="#progress-tracking"></a>
 </h3>
 <p>All functions create a <code>00_in.progress</code> file during processing:</p>
 <div class="cell" data-layout-align="default">
@@ -669,13 +656,18 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Download complete"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
+<p>To complete an interrupted run, call the same function again with <code>resume = TRUE</code>; only unfinished queries (or unconverted files) are processed:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span>query_url <span class="op">=</span> <span class="va">urls</span>, project_folder <span class="op">=</span> <span class="st">"data"</span>, resume <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
 </section></section><section class="section level2"><h2 id="workflow-examples">Workflow Examples<a class="anchor" aria-label="anchor" href="#workflow-examples"></a>
 </h2>
 <section class="level2"><h3 id="example-1-institution-analysis">Example 1: Institution Analysis<a class="anchor" aria-label="anchor" href="#example-1-institution-analysis"></a>
 </h3>
 <p>Analyze research output from multiple institutions:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># MIT, Stanford, Harvard</span></span>
 <span><span class="va">institutions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I63966007"</span>, <span class="st">"I97018004"</span>, <span class="st">"I136199984"</span><span class="op">)</span></span>
 <span></span>
@@ -686,7 +678,7 @@
 <span>    `institutions.id` <span class="op">=</span> <span class="va">inst</span>,</span>
 <span>    from_publication_date <span class="op">=</span> <span class="st">"2020-01-01"</span>,</span>
 <span>    type <span class="op">=</span> <span class="st">"article"</span>,</span>
-<span>    select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"publication_year"</span>, <span class="st">"cited_by_count"</span>, <span class="st">"concepts"</span><span class="op">)</span></span>
+<span>    select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"publication_year"</span>, <span class="st">"cited_by_count"</span>, <span class="st">"topics"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">urls</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MIT"</span>, <span class="st">"Stanford"</span>, <span class="st">"Harvard"</span><span class="op">)</span></span>
@@ -733,7 +725,7 @@
 </h3>
 <p>Build a citation network for a set of papers:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Start with seed papers</span></span>
 <span><span class="va">seed_dois</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"10.1038/nature12373"</span>,</span>
@@ -770,7 +762,7 @@
 </h3>
 <p>Track research trends over time:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get publication counts by year using group_by</span></span>
 <span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pro_query.html">pro_query</a></span><span class="op">(</span></span>
 <span>  entity <span class="op">=</span> <span class="st">"works"</span>,</span>
@@ -788,44 +780,43 @@
 <span></span>
 <span><span class="co"># The JSON contains aggregated counts, not individual works</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h3 id="example-4-concept-co-occurrence">Example 4: Concept Co-occurrence<a class="anchor" aria-label="anchor" href="#example-4-concept-co-occurrence"></a>
+</section><section class="level2"><h3 id="example-4-topic-frequencies">Example 4: Topic Frequencies<a class="anchor" aria-label="anchor" href="#example-4-topic-frequencies"></a>
 </h3>
-<p>Analyze which concepts appear together:</p>
+<p>Count which research topics a set of works is about:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pro_query.html">pro_query</a></span><span class="op">(</span></span>
 <span>  entity <span class="op">=</span> <span class="st">"works"</span>,</span>
 <span>  search <span class="op">=</span> <span class="st">"climate change"</span>,</span>
 <span>  from_publication_date <span class="op">=</span> <span class="st">"2023-01-01"</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"article"</span>,</span>
-<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"concepts"</span><span class="op">)</span></span>
+<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ids"</span>, <span class="st">"title"</span>, <span class="st">"topics"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">url</span>,</span>
-<span>  project_folder <span class="op">=</span> <span class="st">"concept_analysis"</span></span>
+<span>  project_folder <span class="op">=</span> <span class="st">"topic_analysis"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Analyze concept co-occurrence with DuckDB</span></span>
+<span><span class="co"># Unnest topics and count with DuckDB</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
 <span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Unnest concepts and count</span></span>
-<span><span class="va">concept_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span></span>
+<span><span class="va">topic_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span></span>
 <span>  <span class="va">con</span>,</span>
 <span>  <span class="st">"</span></span>
 <span><span class="st">  WITH unnested AS (</span></span>
 <span><span class="st">    SELECT</span></span>
 <span><span class="st">      id,</span></span>
-<span><span class="st">      unnest(concepts) as concept</span></span>
-<span><span class="st">    FROM read_parquet('concept_analysis/parquet/**/*.parquet')</span></span>
+<span><span class="st">      unnest(topics) as topic</span></span>
+<span><span class="st">    FROM read_parquet('topic_analysis/parquet/**/*.parquet')</span></span>
 <span><span class="st">  )</span></span>
 <span><span class="st">  SELECT</span></span>
-<span><span class="st">    concept.display_name as concept_name,</span></span>
-<span><span class="st">    concept.level as concept_level,</span></span>
+<span><span class="st">    topic.display_name as topic_name,</span></span>
+<span><span class="st">    topic.field.display_name as field_name,</span></span>
 <span><span class="st">    COUNT(*) as count</span></span>
 <span><span class="st">  FROM unnested</span></span>
-<span><span class="st">  GROUP BY concept.display_name, concept.level</span></span>
+<span><span class="st">  GROUP BY topic.display_name, topic.field.display_name</span></span>
 <span><span class="st">  ORDER BY count DESC</span></span>
 <span><span class="st">  LIMIT 50</span></span>
 <span><span class="st">"</span></span>
@@ -837,7 +828,7 @@
 </h3>
 <p>OpenAlex provides full-text PDFs (~60 M works) and Grobid TEI XML (~43 M works) via <code>content.openalex.org</code>. Use <code><a href="../reference/pro_download_content.html">pro_download_content()</a></code> to retrieve them. Each file costs <strong>$0.01</strong>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Step 1: find works that have a PDF available</span></span>
 <span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pro_query.html">pro_query</a></span><span class="op">(</span></span>
 <span>  entity <span class="op">=</span> <span class="st">"works"</span>,</span>
@@ -879,7 +870,7 @@
 <p><code><a href="../reference/pro_download_content.html">pro_download_content()</a></code> never aborts on partial failures — inspect the <code>status</code> column to identify any files that need retrying.</p>
 <p>For TEI XML (structured full text parsed by Grobid):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results_xml</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pro_download_content.html">pro_download_content</a></span><span class="op">(</span></span>
 <span>  ids    <span class="op">=</span> <span class="va">ids</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"oa_works/xml"</span>,</span>
@@ -910,20 +901,15 @@
         JSON[(JSON Files&lt;br/&gt;~200 records/file)]
     end
 
-    subgraph Transform[3. Transform]
-        PRJ[pro_request_jsonl]
-        JSONL[(JSONL Files&lt;br/&gt;1 record/line)]
+    subgraph Convert[3. Convert]
+        PRP[pro_request_parquet]
         Abstract[Abstract reconstruction]
         Citation[Citation generation]
-    end
-
-    subgraph Convert[4. Convert]
-        PRJP[pro_request_jsonl_parquet]
         Schema[Schema harmonization]
         PARQUET[(Parquet Dataset&lt;br/&gt;Columnar, compressed)]
     end
 
-    subgraph Analyze[5. Analyze]
+    subgraph Analyze[4. Analyze]
         DUCK[(DuckDB)]
         R[R/tidyverse]
         Python[Python/pandas]
@@ -932,13 +918,12 @@
     OA --&gt; PR
     PQ --&gt; PR
     PR --&gt; JSON
-    JSON --&gt; PRJ
-    PRJ --&gt; Abstract
-    PRJ --&gt; Citation
-    Abstract --&gt; JSONL
-    Citation --&gt; JSONL
-    JSONL --&gt; PRJP
-    PRJP --&gt; Schema
+    JSON --&gt; PRP
+    PRP --&gt; Abstract
+    PRP --&gt; Citation
+    PRP --&gt; Schema
+    Abstract --&gt; PARQUET
+    Citation --&gt; PARQUET
     Schema --&gt; PARQUET
     PARQUET --&gt; DUCK
     PARQUET --&gt; R
@@ -947,7 +932,6 @@
     style API fill:#e1f5e1
     style Query fill:#cce5ff
     style Download fill:#fff3cd
-    style Transform fill:#f8d7da
     style Convert fill:#e1f5e1
     style Analyze fill:#cce5ff
 </pre>
@@ -973,7 +957,7 @@
 <tr class="odd">
 <td><code><a href="../reference/pro_query.html">pro_query()</a></code></td>
 <td>Build API URL</td>
-<td>entity, search, filters, select</td>
+<td>entity, search, filters, select, oql, oqo</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/pro_count.html">pro_count()</a></code></td>
@@ -983,34 +967,29 @@
 <tr class="odd">
 <td><code><a href="../reference/pro_fetch.html">pro_fetch()</a></code></td>
 <td><strong>All-in-one download</strong></td>
-<td>query_url, project_folder</td>
+<td>query_url, project_folder, workers, download_workers, resume</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/pro_request.html">pro_request()</a></code></td>
 <td>Download JSON</td>
-<td>query_url, output, pages, workers</td>
+<td>query_url, output, pages, workers, resume</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/pro_request_jsonl.html">pro_request_jsonl()</a></code></td>
-<td>Convert to JSONL</td>
-<td>input_json, output, workers</td>
+<td><code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code></td>
+<td>Convert JSON to Parquet</td>
+<td>input_json, output, workers, resume</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code></td>
-<td>Convert to Parquet</td>
-<td>input_jsonl, output, sample_size</td>
-</tr>
-<tr class="odd">
 <td><code><a href="../reference/pro_validate_credentials.html">pro_validate_credentials()</a></code></td>
 <td>Test credentials (optional helper)</td>
 <td>api_key</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code><a href="../reference/pro_rate_limit_status.html">pro_rate_limit_status()</a></code></td>
 <td>Check rate limit usage &amp; remaining budget</td>
 <td>api_key, verbose</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code><a href="../reference/pro_download_content.html">pro_download_content()</a></code></td>
 <td>Download full-text PDFs or TEI XML</td>
 <td>ids, output, format, workers</td>
@@ -1026,7 +1005,7 @@
 <li>
 <strong><a href="pro_request.html">pro_request() Documentation</a></strong> - Download pipeline details</li>
 <li>
-<strong><a href="https://docs.openalex.org" class="external-link">OpenAlex Documentation</a></strong> - API reference</li>
+<strong><a href="https://help.openalex.org/api/" class="external-link">OpenAlex Documentation</a></strong> - API reference</li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

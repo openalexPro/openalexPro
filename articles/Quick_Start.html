@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@
 <div>
 <pre class="mermaid mermaid-js">flowchart LR
     subgraph OpenAlex[OpenAlex API]
-        API[(250M+ Works&lt;br/&gt;Authors, Institutions&lt;br/&gt;Journals, Concepts)]
+        API[(250M+ Works&lt;br/&gt;Authors, Institutions&lt;br/&gt;Sources, Topics)]
     end
 
     subgraph openalexPro[openalexPro]
@@ -123,20 +123,20 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Or install development version from GitHub</span></span>
-<span><span class="co"># pak::pak("rkrug/openalexPro@dev")</span></span></code></pre></div>
+<span><span class="co"># pak::pak("openalexPro/openalexPro@dev")</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="setup-credentials">Setup Credentials<a class="anchor" aria-label="anchor" href="#setup-credentials"></a>
 </h2>
-<p>OpenAlex provides free API keys with higher rate limits. <code>openalexPro</code> can run without a key, but for anything beyond very small tests you should configure <code>openalexPro.apikey</code>. Get a key at <a href="https://openalex.org" class="external-link">openalex.org</a>.</p>
+<p>OpenAlex provides free API keys with higher rate limits. <code>openalexPro</code> can run without a key, but for anything beyond very small tests you should configure the environment variable <code>openalexPro.api_key</code>. Get a key at <a href="https://openalex.org" class="external-link">openalex.org</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Add to your .Renviron file (recommended)</span></span>
 <span><span class="co"># Run: usethis::edit_r_environ()</span></span>
 <span><span class="co"># Then add these lines:</span></span>
-<span><span class="co">#   openalexPro.apikey=your-api-key</span></span>
+<span><span class="co">#   openalexPro.api_key=your-api-key</span></span>
 <span></span>
 <span><span class="co"># Or set temporarily in your session:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>openalexPro.apikey <span class="op">=</span> <span class="st">"your-api-key"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>openalexPro.api_key <span class="op">=</span> <span class="st">"your-api-key"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Verify credentials (TRUE if key works, FALSE if missing/invalid)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/openalexPro/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span>
@@ -185,6 +185,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>That’s it! Your data is now in <code>my_climate_data/parquet/</code>.</p>
+<p>For large downloads, add <code>compact_parquet = 250000</code>: the one-file-per-page output is combined into files of up to 250,000 records, which are much faster to read (see <code><a href="../reference/pro_compact_parquet.html">pro_compact_parquet()</a></code>).</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -194,13 +195,11 @@
 <pre class="mermaid mermaid-js">flowchart TD
     subgraph pro_fetch["pro_fetch() does everything"]
         direction TB
-        A[Download from API] --&gt; B[Convert to JSONL]
-        B --&gt; C[Convert to Parquet]
+        A[Download from API] --&gt; C[Convert to Parquet]
     end
 
     subgraph Output[Project Folder Structure]
-        JSON[json/]
-        JSONL[jsonl/]
+        JSON[json/&lt;br/&gt;deleted after conversion]
         PARQUET[parquet/]
     end
 
@@ -332,7 +331,7 @@
 </h2>
 <p>For more control over the download process, see the <strong><a href="Workflow.html">Workflow Guide</a></strong> which covers:</p>
 <ul>
-<li>Using <code><a href="../reference/pro_request.html">pro_request()</a></code>, <code><a href="../reference/pro_request_jsonl.html">pro_request_jsonl()</a></code>, and <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> separately</li>
+<li>Using <code><a href="../reference/pro_request.html">pro_request()</a></code> and <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> separately</li>
 <li>Parallel processing with multiple workers</li>
 <li>Handling very large datasets</li>
 <li>Intermediate file management</li>
@@ -362,7 +361,7 @@
 </tr>
 <tr class="even">
 <td><code><a href="../reference/pro_fetch.html">pro_fetch()</a></code></td>
-<td><strong>One-step download + transform + convert</strong></td>
+<td><strong>One-step download + convert to Parquet</strong></td>
 </tr>
 <tr class="odd">
 <td><code><a href="../reference/pro_count.html">pro_count()</a></code></td>
@@ -389,10 +388,10 @@
 </h2>
 <ul>
 <li>
-<strong>GitHub Issues</strong>: <a href="https://github.com/rkrug/openalexPro/issues" class="external-link">github.com/rkrug/openalexPro/issues</a>
+<strong>GitHub Issues</strong>: <a href="https://github.com/openalexPro/openalexPro/issues" class="external-link">github.com/openalexPro/openalexPro/issues</a>
 </li>
 <li>
-<strong>OpenAlex Documentation</strong>: <a href="https://docs.openalex.org" class="external-link">docs.openalex.org</a>
+<strong>OpenAlex Documentation</strong>: <a href="https://help.openalex.org/api/" class="external-link">help.openalex.org</a>
 </li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {

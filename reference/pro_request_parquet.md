@@ -26,7 +26,8 @@ pro_request_parquet(
   resume = FALSE,
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
-  retry_memory_limit = NULL
+  retry_memory_limit = NULL,
+  compact_parquet = NULL
 )
 ```
 
@@ -61,8 +62,9 @@ pro_request_parquet(
 
 - delete_input:
 
-  Logical. Delete `input_json` after a successful conversion. Default
-  `FALSE`.
+  Logical. Delete `input_json` after a successful conversion. If any
+  file failed to convert, `input_json` is kept so the run can be
+  completed with `resume = TRUE`. Default `FALSE`.
 
 - sample_size:
 
@@ -142,6 +144,13 @@ pro_request_parquet(
   `memory_limit` for the sequential retry pass, where no workers
   compete. `NULL` (default) uses the whole budget.
 
+- compact_parquet:
+
+  `NULL` (default) keeps one Parquet file per API page. A number, e.g.
+  `250000`, combines each query's page files into files of up to that
+  many records once every file has converted – much faster to read. See
+  [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md).
+
 ## Value
 
 Output directory path (invisibly).
@@ -175,11 +184,26 @@ Arrow/DuckDB can read the result as a partitioned dataset. A `page`
 column is added to each record with a value derived from the source
 filename (or subdirectory for multi-query inputs).
 
+With `compact_parquet`, the page files of each query are combined into
+files of up to that many records after the conversion (see
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)).
+
 ## See also
 
 [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 to download the JSON files,
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+to compact an existing dataset,
 [`pro_request_jsonl()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl.md)
 and
 [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
 for the older two-step pipeline (now deprecated).
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+pro_request_parquet("my_project/json", "my_project/parquet",
+                    compact_parquet = 250000)
+} # }
+```

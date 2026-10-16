@@ -13,7 +13,7 @@ files are written."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,11 +65,16 @@ files are written.</p>
 <span>  api_key <span class="op">=</span> <span class="fu"><a href="pro_api_key.html">pro_api_key</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  delete_input <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  download_workers <span class="op">=</span> <span class="va">workers</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  enrich <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">count_only</span>,</span>
-<span>  error_log <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  error_log <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  resume <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  via <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"url"</span>, <span class="st">"oqo"</span><span class="op">)</span>,</span>
+<span>  inconsistency_on_resume <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warning"</span>, <span class="st">"ignore"</span>, <span class="st">"oldest"</span>, <span class="st">"newest"</span><span class="op">)</span>,</span>
+<span>  compact_parquet <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,10 +87,10 @@ files are written.</p>
 
 
 <dt id="arg-pages">pages<a class="anchor" aria-label="anchor" href="#arg-pages"></a></dt>
-<dd><p>The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If <code>NULL</code>,
-all pages will be downloaded. Default: 100000.</p></dd>
+<dd><p>The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If <code>NULL</code>,
+all pages will be downloaded.</p></dd>
 
 
 <dt id="arg-project-folder">project_folder<a class="anchor" aria-label="anchor" href="#arg-project-folder"></a></dt>
@@ -113,7 +118,15 @@ subfolder is deleted after successful conversion to Parquet.</p></dd>
 
 
 <dt id="arg-workers">workers<a class="anchor" aria-label="anchor" href="#arg-workers"></a></dt>
-<dd><p>Number of parallel workers to use if <code>query_url</code> is a list. Defaults to 1.</p></dd>
+<dd><p>Number of parallel workers for the conversion to Parquet
+(CPU and memory bound), and by default also for the download. Default 1.</p></dd>
+
+
+<dt id="arg-download-workers">download_workers<a class="anchor" aria-label="anchor" href="#arg-download-workers"></a></dt>
+<dd><p>Number of parallel workers for the download, used
+when <code>query_url</code> is a list. Defaults to <code>workers</code>. Downloads
+are limited by the API rather than the machine, so a few (e.g. 2–4)
+are usually enough, while the conversion can use more.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -138,6 +151,45 @@ add <code>abstract</code> and <code>citation</code> computed columns.</p></dd>
 <dt id="arg-error-log">error_log<a class="anchor" aria-label="anchor" href="#arg-error-log"></a></dt>
 <dd><p>location of error log of API calls. (default: <code>NULL</code> (none)).</p></dd>
 
+
+<dt id="arg-resume">resume<a class="anchor" aria-label="anchor" href="#arg-resume"></a></dt>
+<dd><p>Logical. When <code>TRUE</code>, keep existing <code>json</code> and
+<code>parquet</code> subfolders and complete an interrupted run: only leaf
+queries that did not finish are downloaded again, and only missing
+Parquet files are converted. A finished run is returned unchanged.
+<code>overwrite</code> is ignored. Default <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-via">via<a class="anchor" aria-label="anchor" href="#arg-via"></a></dt>
+<dd><p>How each query is sent. <code>"url"</code> (default): as a GET request with
+the query in the URL, as built by <code><a href="pro_query.html">pro_query()</a></code>. <code>"oqo"</code>: translated once
+(free) into an OpenAlex Query Object and sent via POST, with the same
+results. It has no URL length limit, accepts more than 100 values per
+filter (so <code>pro_query(..., chunk_limit = 200)</code> fetches a DOI or ID list
+in about one page per chunk), checks the query before any credits are spent, and records the
+exact query in <code>_query.json</code>. Single records (<code>works/W123</code>) are always
+fetched via GET.</p></dd>
+
+
+<dt id="arg-inconsistency-on-resume">inconsistency_on_resume<a class="anchor" aria-label="anchor" href="#arg-inconsistency-on-resume"></a></dt>
+<dd><p>What to do when a query that was resumed in
+the middle turns out inconsistent, because OpenAlex's data changed between
+the sessions: records that appear twice (found exactly, by work ID) or
+missing records (only as a net difference to OpenAlex's current count –
+a record lost and another added cancel out). <code>"error"</code> (default) stops;
+nothing is lost, and a rerun with <code>resume = TRUE</code> and another value
+applies that choice without downloading again. <code>"warning"</code> keeps both
+copies and warns, <code>"ignore"</code> keeps both silently, <code>"oldest"</code> / <code>"newest"</code>
+keep the first / last downloaded copy (removing the other from its page
+file) and warn about missing records.</p></dd>
+
+
+<dt id="arg-compact-parquet">compact_parquet<a class="anchor" aria-label="anchor" href="#arg-compact-parquet"></a></dt>
+<dd><p><code>NULL</code> (default) keeps one Parquet file per API
+page.  A number, e.g. <code>250000</code>, combines each query's page files into
+files of up to that many records once every file has converted – much
+faster to read.  See <code><a href="pro_compact_parquet.html">pro_compact_parquet()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -155,9 +207,24 @@ inside <code>project_folder</code>.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="pro_request.html">pro_request()</a></code> for the download step,
-<code><a href="pro_request_parquet.html">pro_request_parquet()</a></code> for the conversion step.</p></div>
+<code><a href="pro_request_parquet.html">pro_request_parquet()</a></code> for the conversion step,
+<code><a href="pro_compact_parquet.html">pro_compact_parquet()</a></code> to compact an existing dataset.</p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Combine each query's page files into files of up to 250,000 records,</span></span></span>
+<span class="r-in"><span><span class="co"># which are much faster to read</span></span></span>
+<span class="r-in"><span><span class="fu">pro_fetch</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>search <span class="op">=</span> <span class="st">"coral reef"</span>, from_publication_date <span class="op">=</span> <span class="st">"2020-01-01"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  project_folder <span class="op">=</span> <span class="st">"coral_reef"</span>,</span></span>
+<span class="r-in"><span>  compact_parquet <span class="op">=</span> <span class="fl">250000</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

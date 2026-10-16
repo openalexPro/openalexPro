@@ -9,7 +9,7 @@ Assumes that each element of `x` contains at most one DOI (with or without resol
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,7 @@ Assumes that each element of `x` contains at most one DOI (with or without resol
 <span>  <span class="va">x</span>,</span>
 <span>  non_doi_value <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  lower <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"doi"</span>, <span class="st">"resolver"</span>, <span class="st">"prefix"</span>, <span class="st">"suffix"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -77,6 +78,12 @@ found. If `NULL`, only matched elements are returned.</p></dd>
 <dd><p>Logical. If `TRUE` (default), convert extracted DOIs and
 suffixes to lowercase and trim surrounding whitespace. Has no effect for
 `what = "prefix"` or `what = "resolver"`.</p></dd>
+
+
+<dt id="arg-lower">lower<a class="anchor" aria-label="anchor" href="#arg-lower"></a></dt>
+<dd><p>Logical. With `normalize = TRUE`, convert to lowercase
+(default). `FALSE` keeps the upper and lower case of the input, e.g. to
+compare the cleaned DOI with the field it came from.</p></dd>
 
 
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
@@ -104,6 +111,16 @@ suffixes to lowercase and trim surrounding whitespace. Has no effect for
   - If `non_doi_value` is not `NULL`, a vector of the same length as `x`,
     with unmatched entries replaced.
   - If `non_doi_value` is `NULL`, a vector of only matched entries.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Percent-encoded characters are decoded first, also when encoded twice
+(`<!-- %255B` -&gt; `%5B` -&gt; `[`), so an encoded DOI is recognised in full and an -->
+encoded line break (`<!-- %0A`) ends it. A DOI followed directly by a `%` that is -->
+not an encoding, such as the unfilled placeholders in `10.18461/ijfsd.v2i4.<!-- %x` -->
+or `10.37002/biobrasil.v<!-- %vi%i.798`, is not recognised at all rather than -->
+cut short to something that looks valid.
+A full stop or semicolon at the end is taken as punctuation and dropped.</p>
     </div>
 
     <div class="section level2">

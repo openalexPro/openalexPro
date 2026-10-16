@@ -7,7 +7,12 @@ is requested and the first page is fetched to minimise API usage.
 ## Usage
 
 ``` r
-pro_count(query_url, api_key = pro_api_key(), error_log = NULL)
+pro_count(
+  query_url,
+  api_key = pro_api_key(),
+  error_log = NULL,
+  via = c("url", "oqo")
+)
 ```
 
 ## Arguments
@@ -26,6 +31,10 @@ pro_count(query_url, api_key = pro_api_key(), error_log = NULL)
 - error_log:
 
   location of error log of API calls. (default: \`NULL\` (none)).
+
+- via:
+
+  \`"url"\` (default) or \`"oqo"\`; see \[pro_request()\].
 
 ## Value
 

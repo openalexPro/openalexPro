@@ -87,7 +87,8 @@ Numeric conflicts → widest type wins (\`TINYINT \< SMALLINT \< INTEGER
 
 ## See also
 
-\[snapshot_to_parquet()\] which uses this function internally.
+\[pro_request_jsonl_parquet()\] (deprecated), which uses this function
+internally.
 
 ## Examples
 

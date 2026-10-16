@@ -13,7 +13,7 @@ Parquet file using DuckDB, with no intermediate JSONL on disk."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,8 @@ Parquet file using DuckDB, with no intermediate JSONL on disk.</p>
 <span>  resume <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  on_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"ignore"</span><span class="op">)</span>,</span>
 <span>  memory_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  retry_memory_limit <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  retry_memory_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  compact_parquet <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -109,7 +110,8 @@ Default <code>FALSE</code>.</p></dd>
 
 <dt id="arg-delete-input">delete_input<a class="anchor" aria-label="anchor" href="#arg-delete-input"></a></dt>
 <dd><p>Logical.  Delete <code>input_json</code> after a successful
-conversion.  Default <code>FALSE</code>.</p></dd>
+conversion.  If any file failed to convert, <code>input_json</code> is kept so the
+run can be completed with <code>resume = TRUE</code>.  Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-sample-size">sample_size<a class="anchor" aria-label="anchor" href="#arg-sample-size"></a></dt>
@@ -183,6 +185,13 @@ letting every worker claim DuckDB's default of 80% of the machine.</p></dd>
 <dd><p><code>memory_limit</code> for the sequential retry pass,
 where no workers compete.  <code>NULL</code> (default) uses the whole budget.</p></dd>
 
+
+<dt id="arg-compact-parquet">compact_parquet<a class="anchor" aria-label="anchor" href="#arg-compact-parquet"></a></dt>
+<dd><p><code>NULL</code> (default) keeps one Parquet file per API
+page.  A number, e.g. <code>250000</code>, combines each query's page files into
+files of up to that many records once every file has converted â€“ much
+faster to read.  See <code><a href="pro_compact_parquet.html">pro_compact_parquet()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -214,14 +223,27 @@ naming (<code>query=&lt;name&gt;/</code>, <code>query_l2=&lt;name&gt;/</code>, â
 read the result as a partitioned dataset.  A <code>page</code> column is added to each
 record with a value derived from the source filename (or subdirectory for
 multi-query inputs).</p>
+<p>With <code>compact_parquet</code>, the page files of each query are combined into
+files of up to that many records after the conversion (see
+<code><a href="pro_compact_parquet.html">pro_compact_parquet()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="pro_request.html">pro_request()</a></code> to download the JSON files,
+<code><a href="pro_compact_parquet.html">pro_compact_parquet()</a></code> to compact an existing dataset,
 <code><a href="pro_request_jsonl.html">pro_request_jsonl()</a></code> and <code><a href="pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code> for the older
 two-step pipeline (now deprecated).</p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="fu">pro_request_parquet</span><span class="op">(</span><span class="st">"my_project/json"</span>, <span class="st">"my_project/parquet"</span>,</span></span>
+<span class="r-in"><span>                    compact_parquet <span class="op">=</span> <span class="fl">250000</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -26,7 +26,7 @@ devtools::check()         # Full R CMD CHECK
 ``` r
 
 Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
-options(openalexPro.apikey = "<your-key>")
+Sys.setenv(openalexPro.api_key = "<your-key>")
 devtools::test(filter = "900")
 ```
 
@@ -43,10 +43,10 @@ source("inst/scripts/record_cassettes.R")
 The package has one functional area: **OpenAlex API access**.
 
 Snapshot conversion, corpus indexing, and ID-based record lookup have
-moved to the **`openalexSnapshot`** package. Calling
-`snapshot_to_parquet()`, `build_corpus_index()`, or `lookup_by_id()` in
-`openalexPro` raises an informative error pointing to
-`openalexSnapshot`.
+moved to the **`openalexSnapshot`** package. `snapshot_to_parquet()`,
+`build_corpus_index()` and `lookup_by_id()` are not in `openalexPro` at
+all – not even as error-raising stubs, because an exported stub masks
+the real function when both packages are attached.
 
 ### OpenAlex API (cloud)
 
@@ -54,23 +54,68 @@ Functions that query the live OpenAlex REST API:
 
 - [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
   — builds query URLs with filters, search, entity selection, ID
-  chunking
+  chunking; or, with `oql` / `oqo`, a root-endpoint URL
+  (`https://api.openalex.org/?oql=...`) for OpenAlex’s query language.
+  Classic arguments next to `oql`/`oqo` are an error (OpenAlex would
+  silently ignore them). Filter and select names are validated against
+  the lists for the queried entity
 - [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   — paginates through API results, writes JSON; accepts nested lists of
   URLs (each nesting level becomes a subdirectory). `resume = TRUE`
   refetches only the leaf queries that did not complete, using the
   `00_in.progress` sentinel each leaf carries while it is being written
+  (a single URL is one leaf). Leaves are dispatched one future each
+  (`future.scheduling = Inf`); progress counts leaves, with no count
+  request up front. Grouped results are detected from the response
+  (`meta$groups_count`), not the URL. In list mode each leaf’s error is
+  caught and all failures are reported at the end (failed leaves keep
+  `00_in.progress` for `resume`). Mid-query resume (`R/paging_state.R`):
+  after each saved page with a `next_cursor` (cursor paging only),
+  `_paging.json` holds the exact query (URL or OQO), position and
+  `cursor_created`; `.ps_read()` never errors and returns NULL (restart
+  from page 1, with a reason) for anything untrustworthy; after a resume
+  `.ps_check()` (DuckDB ID scan) applies `inconsistency_on_resume`
+  (`error` keeps state `check_pending` so a rerun needs no download). A
+  `per_page` in the URL is kept; `page`/`cursor` are replaced (warning);
+  `search.semantic` is fetched without cursor (OpenAlex rejects it), as
+  one page of up to 50; a `sample` is paged by page number (cursor
+  paging of a sample stops after page 1), adding and reporting a `seed`
+  when it spans several pages
 - [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   — converts JSON files from
   [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   directly to Parquet (schema inference + per-file DuckDB COPY, parallel
-  via `future`). `resume = TRUE` converts only what is missing;
-  `on_error` controls what happens to files that fail (see *Failure
-  handling* below)
+  via `future`; `workers` alone decides, `NULL`/1 forces sequential and
+  the user’s plan is restored). `resume = TRUE` converts only what is
+  missing; `on_error` controls what happens to files that fail (see
+  *Failure handling* below)
 - [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
-  — all-in-one: query → paginate → convert to Parquet (project folder)
+  — all-in-one: query → paginate → convert to Parquet (project folder);
+  `resume = TRUE` completes an interrupted download and conversion;
+  `download_workers` (default `workers`) for the download, `workers` for
+  the conversion
+- [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+  (`R/pro_compact_parquet.R`) — combines the one-file-per-page Parquet
+  output into files of up to `rows` records, per partition; also run by
+  `compact_parquet` (default `NULL` = no compaction) in
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  /
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  after a complete conversion (before `delete_input`). Whole consecutive
+  pages per file, named by page range (`results_pages_1-1250.parquet`),
+  rows in download order (explicit ORDER BY page number +
+  `file_row_number`, `preserve_order = TRUE`),
+  `hive_partitioning = false` so no `query` column is written into the
+  files. Committed file by file (`.part`, count check, rename, delete
+  pages); the names are the commit: `.pc_covered()` lets a rerun delete
+  pages already in a compacted file, and
+  `pro_request_parquet(resume = TRUE)` skip them. Failures warn and keep
+  the pages. Stops if an openalexSnapshot index (`<dir>_id_idx`,
+  `<dir>_doi_idx.parquet`) exists, since it points to files and row
+  numbers
 - [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
-  — counts matching records
+  — counts matching records (`via` as for
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md))
 - [`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
   — downloads PDFs / TEI XML from `content.openalex.org`
 - [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md)
@@ -78,8 +123,36 @@ Functions that query the live OpenAlex REST API:
 - [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   — checks API key validity
 
+`via = "oqo"` (opt-in; default `"url"` leaves every request as before):
+`.oa_to_oqo()` (`R/oqo.R`) translates each query once with the free
+`POST /query` (validating it before any credits are spent; paging params
+and `sample`/`seed` are taken out first because the translator stores
+numbers as text, then put back into the OQO), and
+`fetch_query_pages()`’s `make_req()` sends every page as `POST /` with
+the OQO in the body. Single records stay GET.
+`tests/testthat/test-021-url_oqo_equivalence.R` asserts identical
+complete result sets for url vs oqo (semantic search only
+near-identical: OpenAlex varies at rank 50 between identical requests).
+Every query writes `_query.json` (URL, via, OQL/OQO, records, requests,
+credits, cost, times) and, via `.pr_write_query_text()`
+(`R/query_text.R`, best effort, two free `/query` calls: render the OQO
+that ran, translate the OQL back, compare with `.oqo_equivalent()`),
+`_query_oql.txt` / `_query_oql.html` (self-contained, escaped, no
+scripts); list downloads also get `_queries_oql.txt` /
+`_queries_oql.html` at the top (`.pr_write_queries_summary()`, built
+from the per-query files on disk); page discovery reads only
+`results_page_N` / `group_by_page_N` / `single_N` files, and
+[`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+copies the record into the partition.
+
 All HTTP calls route through `api_call()` (`R/api_call.R`), which
-handles retries, error inspection, and `httr2` plumbing. Tests use VCR
+handles retries, error inspection, and `httr2` plumbing: retries on
+429/5xx and network failures, aborts stalled transfers (\< 1 byte/s for
+120 s), does not retry a 429 caused by the daily budget
+(`X-RateLimit-Remaining` 0 or `not_enough_credits`), and adds OpenAlex’s
+`message` (or OQL `validation$errors`) to the error. The API key is
+added by `.oa_auth()` as `Authorization: Bearer`, never in the URL
+(`api_key` in a POST body is rejected by OpenAlex). Tests use VCR
 cassettes in `tests/fixtures/vcr/`.
 
 ### SQL helpers
@@ -101,7 +174,10 @@ cassettes in `tests/fixtures/vcr/`.
   — per-file schema inference with two-level caching
 - [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md),
   [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
-  — helpers for building API queries
+  — accepted select fields / filter names per `entity` (default
+  `"works"`), parsed from OpenAlex’s error message for an invalid name
+  (free) and cached per entity for the session; `update = TRUE`
+  refetches
 - [`oa_schema()`](https://openalexpro.github.io/openalexPro/reference/oa_schema.md)
   — get or refresh the baseline entity schema used by
   `pro_request_parquet(schema = "auto")`
@@ -167,7 +243,9 @@ Per-file conversion failures are collected, retried once sequentially at
 the full memory budget (per-file peak memory varies with how large and
 nested a page is, so sizing the per-worker limit for the worst file
 would throttle all of them), and then dispatched on `on_error`:
-`"error"` (default), `"warn"`, `"ignore"`.
+`"error"` (default), `"warn"`, `"ignore"`. `delete_input = TRUE` deletes
+the JSON input only when every file converted — with `"warn"`/`"ignore"`
+the input is the only copy of the failed pages, and `resume` needs it.
 
 This was a silent-data-loss bug before 0.12.0: failures were
 [`message()`](https://rdrr.io/r/base/message.html)d only when `verbose`
@@ -194,9 +272,18 @@ read.
 
 ## Test Infrastructure
 
-- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses. API
-  keys filtered to `<api-key>`; `helper_vcr.R` injects `"test-api-key"`
-  on CI.
+- **VCR cassettes** in `tests/fixtures/vcr/`: Mock HTTP responses,
+  matched on method, URI and body (POST). The `Authorization` header is
+  masked when recording; `helper_vcr.R` injects `"test-api-key"` on CI.
+  `helper_vcr.R` fills the per-session caches of
+  [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
+  /
+  [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)
+  (works) from their own cassettes before any test, so test files are
+  independent of each other: each file passes alone and in any order
+  without touching other cassettes. Run a single file with
+  `NOT_CRAN=true` (as `devtools::test()` does), otherwise
+  `skip_on_cran()` skips the cassette tests.
 - **Snapshot tests**: Custom comparators `compare_json()`,
   `compare_jsonl()`, `compare_json_ignore()` handle platform
   differences.

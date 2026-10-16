@@ -9,7 +9,7 @@ scholarly research.
 ``` mermaid
 flowchart LR
     subgraph OpenAlex[OpenAlex API]
-        API[(250M+ Works<br/>Authors, Institutions<br/>Journals, Concepts)]
+        API[(250M+ Works<br/>Authors, Institutions<br/>Sources, Topics)]
     end
 
     subgraph openalexPro[openalexPro]
@@ -43,25 +43,25 @@ install.packages(
 )
 
 # Or install development version from GitHub
-# pak::pak("rkrug/openalexPro@dev")
+# pak::pak("openalexPro/openalexPro@dev")
 ```
 
 ## Setup Credentials
 
 OpenAlex provides free API keys with higher rate limits. `openalexPro`
 can run without a key, but for anything beyond very small tests you
-should configure `openalexPro.apikey`. Get a key at
-[openalex.org](https://openalex.org).
+should configure the environment variable `openalexPro.api_key`. Get a
+key at [openalex.org](https://openalex.org).
 
 ``` r
 
 # Add to your .Renviron file (recommended)
 # Run: usethis::edit_r_environ()
 # Then add these lines:
-#   openalexPro.apikey=your-api-key
+#   openalexPro.api_key=your-api-key
 
 # Or set temporarily in your session:
-Sys.setenv(openalexPro.apikey = "your-api-key")
+Sys.setenv(openalexPro.api_key = "your-api-key")
 
 # Verify credentials (TRUE if key works, FALSE if missing/invalid)
 library(openalexPro)
@@ -114,17 +114,20 @@ parquet_path <- pro_fetch(
 
 That’s it! Your data is now in `my_climate_data/parquet/`.
 
+For large downloads, add `compact_parquet = 250000`: the
+one-file-per-page output is combined into files of up to 250,000
+records, which are much faster to read (see
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)).
+
 ``` mermaid
 flowchart TD
     subgraph pro_fetch["pro_fetch() does everything"]
         direction TB
-        A[Download from API] --> B[Convert to JSONL]
-        B --> C[Convert to Parquet]
+        A[Download from API] --> C[Convert to Parquet]
     end
 
     subgraph Output[Project Folder Structure]
-        JSON[json/]
-        JSONL[jsonl/]
+        JSON[json/<br/>deleted after conversion]
         PARQUET[parquet/]
     end
 
@@ -244,10 +247,9 @@ Guide](https://openalexpro.github.io/openalexPro/articles/Workflow.md)**
 which covers:
 
 - Using
-  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
-  [`pro_request_jsonl()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl.md),
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
   and
-  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md)
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   separately
 - Parallel processing with multiple workers
 - Handling very large datasets
@@ -268,7 +270,7 @@ For detailed technical documentation, see:
 | Function | Purpose |
 |----|----|
 | [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md) | Build OpenAlex API query URLs |
-| [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) | **One-step download + transform + convert** |
+| [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) | **One-step download + convert to Parquet** |
 | [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md) | Get result count without downloading |
 | [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md) | Test your API credentials |
 | [`pro_rate_limit_status()`](https://openalexpro.github.io/openalexPro/reference/pro_rate_limit_status.md) | Check current rate limit usage and remaining budget |
@@ -278,6 +280,6 @@ For detailed technical documentation, see:
 ## Getting Help
 
 - **GitHub Issues**:
-  [github.com/rkrug/openalexPro/issues](https://github.com/rkrug/openalexPro/issues)
+  [github.com/openalexPro/openalexPro/issues](https://github.com/openalexPro/openalexPro/issues)
 - **OpenAlex Documentation**:
-  [docs.openalex.org](https://docs.openalex.org)
+  [help.openalex.org](https://help.openalex.org/api/)

@@ -25,17 +25,22 @@ including:
 
 ### Entities
 
-OpenAlex organizes scholarly data into seven main entity types:
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+supports these OpenAlex entity types:
 
-| Entity         | Description                                     | Example ID  |
-|----------------|-------------------------------------------------|-------------|
-| `works`        | Scholarly documents (articles, books, datasets) | W2741809807 |
-| `authors`      | People who create works                         | A2208157607 |
-| `institutions` | Universities, research organizations            | I4200000001 |
-| `venues`       | Journals, repositories, conferences             | V123456789  |
-| `concepts`     | Topics and fields of study                      | C12345678   |
-| `publishers`   | Organizations that publish venues               | P4310319965 |
-| `funders`      | Organizations that fund research                | F1234567    |
+| Entity | Description | Example ID |
+|----|----|----|
+| `works` | Scholarly documents (articles, books, datasets) | W2741809807 |
+| `authors` | People who create works | A2208157607 |
+| `sources` | Journals, repositories, conferences | S137773608 |
+| `institutions` | Universities, research organizations | I4200000001 |
+| `topics` | Research topics (replace concepts) | T12072 |
+| `publishers` | Organizations that publish sources | P4310319965 |
+| `funders` | Organizations that fund research | F1234567 |
+| `locations` | One row per harvested copy of a work | doi:10.7717/peerj.4375 |
+
+`venues` and `concepts` are still accepted for compatibility, but
+OpenAlex has replaced them with `sources` and `topics`.
 
 ### URL Structure
 
@@ -89,15 +94,20 @@ flowchart LR
 
 | Parameter | Type | Default | Description |
 |----|----|----|----|
-| `entity` | character | required | Entity type: “works”, “authors”, “venues”, “institutions”, “concepts”, “publishers”, “funders” |
+| `entity` | character | “works” | Entity type: “works”, “authors”, “sources”, “institutions”, “topics”, “publishers”, “funders”, “locations” (“venues” and “concepts” are deprecated) |
 | `id` | character | NULL | Single entity ID for direct retrieval. Multiple IDs are moved to `ids.openalex` filter |
-| `search` | character | NULL | Full-text search string |
+| `doi` | character | NULL | DOI(s); moved to the `doi` filter and chunked |
+| `search` | character | NULL | Stemmed full-text search string |
+| `search.exact` | character | NULL | Unstemmed search; needed for wildcards and fuzzy terms |
+| `search.semantic` | character | NULL | Semantic (embedding) search, max 50 results |
 | `group_by` | character | NULL | Field to group by for faceted counts |
-| `select` | character vector | NULL | Fields to return (validated against [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)) |
-| `options` | named list | NULL | Additional query parameters (per_page, sort, cursor, sample) |
+| `select` | character vector | NULL | Fields to return (validated against `opt_select_fields(entity = entity)`) |
+| `options` | named list | NULL | Additional query parameters (sort, sample, seed, per_page, corpus); paging is done by [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) |
 | `endpoint` | character | “https://api.openalex.org” | Base API URL |
 | `chunk_limit` | integer | 50 | Maximum items per chunk for chunkable filters |
-| `...` | named arguments | \- | Filters (validated against [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)) |
+| `oql` | character | NULL | OQL query string (see [OQL and OQO](#oql-and-oqo)) |
+| `oqo` | list/character | NULL | OQO query object, as a list or JSON string |
+| `...` | named arguments | \- | Filters (validated against `opt_filter_names(entity = entity)`) |
 
 ## Basic Usage
 
@@ -123,15 +133,21 @@ matching behaviour and cost:
 
 | Parameter | Matching | Max results | Cost |
 |----|----|----|----|
-| `search` | Stemmed keyword (stop-words removed) | Unlimited | \$0.0001/call |
-| `search.exact` | Unstemmed, supports boolean/phrase/wildcard | Unlimited | \$0.0001/call |
+| `search` | Stemmed keyword (stop-words removed) | Unlimited | \$0.001/call |
+| `search.exact` | Unstemmed; also supports wildcards and fuzzy terms | Unlimited | \$0.001/call |
 | `search.semantic` | AI embedding similarity | 50 per call | \$0.001/call |
+
+A plain filter query (no search) costs \$0.0001 per call; a
+single-entity lookup by ID is free. See the [OpenAlex example
+costs](https://help.openalex.org/access/example-costs/).
 
 #### `search` — Standard Keyword Search
 
 Searches title, abstract, and full text with stemming and stop-word
-removal. Supports the same boolean/phrase syntax as `search.exact` but
-also applies stemming (e.g. “run” also matches “running”, “ran”):
+removal (e.g. “run” also matches “running”, “ran”). Supports boolean
+operators, quoted phrases and proximity like `search.exact`, but **not
+wildcards**: the API rejects them with HTTP 400 because stemming would
+distort the prefix.
 
 ``` r
 
@@ -147,10 +163,19 @@ url
 
 Searches without stemming or stop-word removal. Supports:
 
-- Boolean operators: `AND`, `OR`, `NOT`
+- Boolean operators: `AND`, `OR`, `NOT` (uppercase), grouped with
+  parentheses; words without an operator between them are combined with
+  `AND`
 - Quoted phrases: `"deep learning"`
-- Proximity: `"climate change"~5` (within 5 words)
-- Wildcards: `microbio*`
+- Proximity: `"climate change"~5` (within 5 words), or two phrases near
+  each other: `"machine learning"~5~"neural network"` (also works with
+  `search`)
+- Wildcards: `microbio*` (any characters), `organi?ation` (exactly one);
+  at least 3 characters before the wildcard, no leading wildcard
+- Fuzzy terms: `biodiversty~1` (up to N = 0–2 character edits)
+
+See the [OpenAlex search
+documentation](https://help.openalex.org/api/searching/).
 
 ``` r
 
@@ -172,15 +197,16 @@ url <- pro_query(
 
 Converts your query to a 1 024-dimension embedding and returns the most
 conceptually similar works — regardless of whether they share any
-keywords. This is OpenAlex’s [“find similar
-works”](https://docs.openalex.org/how-to-use-the-api/find-similar-works)
-feature.
+keywords. This is OpenAlex’s [semantic
+search](https://help.openalex.org/api/semantic-search/).
 
 **Constraints:**
 
 - Maximum **50 results** per call (the API hard-codes this).
-- Requires an API key (costs \$0.001 per call).
+- Costs \$0.001 per call.
 - Rate-limited to **1 request per second**.
+- Cannot be combined with `search` or `search.exact` (one search
+  parameter per request); most filters and `select` work as usual.
 - Pass a sentence or short paragraph — not just a keyword.
 
 ``` r
@@ -208,6 +234,66 @@ url <- pro_query(
 > retrieval, combine `search` or `search.exact` with
 > [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md).
 
+### OQL and OQO
+
+The classic filter syntax cannot nest boolean logic: `OR` works only
+within one filter, never between filters. OpenAlex’s query language
+**OQL** and its JSON form **OQO** (OpenAlex Query Object) can.
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+accepts either:
+
+``` r
+
+# OQL: a readable query; a boolean search string goes inside has ( ... )
+url <- pro_query(
+  oql = "works where year >= (2020) and title-abstract has ((coral OR reef) AND bleaching)",
+  select = c("id", "title", "publication_year")
+)
+
+# OQO: the same structure as a nested list (or a JSON string)
+url <- pro_query(oqo = list(
+  get_rows = "works",
+  filter_rows = list(
+    list(column_id = "publication_year", value = 2020, operator = ">="),
+    list(join = "or", filters = list(
+      list(column_id = "type", value = "article"),
+      list(column_id = "type", value = "review")
+    ))
+  )
+))
+```
+
+The entity, all conditions, grouping (`group by`), `sample` and `corpus`
+belong inside the query. `entity`, `id`, `doi`, the search arguments,
+`group_by` and filters in `...` therefore cannot be combined with `oql`
+/ `oqo` — OpenAlex would silently ignore them, so
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+stops with an error instead. `select` and `options` (e.g. `sort`) are
+passed alongside.
+
+The URL targets the API root (`https://api.openalex.org/?oql=...`) and
+works with
+[`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md),
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+and
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+like any other query. Grouped results are detected from the response, so
+`group by` inside the query is saved and converted correctly. An invalid
+query fails at request time with OpenAlex’s parse error and its
+position.
+
+OpenAlex’s free `/query` endpoint translates between classic URLs, OQL
+and OQO; see the [OQL API
+documentation](https://help.openalex.org/api/oql/). The query is sent in
+the URL; for very long queries (over about 8 KB) use
+`pro_request(..., via = "oqo")`, which sends the OQO via POST.
+
+Any query from
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+– classic or OQL / OQO – can also be sent as an OQO with
+`pro_request(..., via = "oqo")`; the results are the same (see the
+`pro_request` vignette).
+
 ### Field Selection
 
 Use the `select` parameter to specify which fields to return. This
@@ -228,16 +314,19 @@ url
 
 Use
 [`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md)
-to see all available fields:
+to see all available fields. They differ per entity, so pass the entity
+you query:
 
 ``` r
 
-opt_select_fields()
-# [1] "abstract_inverted_index" "authorships"
-# [3] "biblio"                  "cited_by_count"
-# [5] "concepts"                "corresponding_author_ids"
+opt_select_fields() # works
+# [1] "id"           "doi"          "title"        "display_name"
 # ...
+opt_select_fields(entity = "authors")
 ```
+
+Each entity’s list is fetched once per R session and cached;
+`opt_select_fields(update = TRUE, entity = ...)` fetches it again.
 
 ### Single Entity Retrieval
 
@@ -440,16 +529,19 @@ pro_query(entity = "works", `institutions.id` = "I4200000001")
 pro_query(entity = "works", `institutions.country_code` = "US")
 ```
 
-#### By Concept/Topic
+#### By Topic
 
 ``` r
 
 # Works about machine learning
-pro_query(entity = "works", `concepts.id` = "C119857082")
+pro_query(entity = "works", `topics.id` = "T12072")
 
-# Works in multiple fields
-pro_query(entity = "works", `concepts.id` = c("C119857082", "C41008148"))
+# Works in multiple topics
+pro_query(entity = "works", `topics.id` = c("T12072", "T10036"))
 ```
+
+`concepts.id` still works but is deprecated by OpenAlex in favour of
+`topics.id`.
 
 ### Filter Reference Table
 
@@ -468,13 +560,14 @@ pro_query(entity = "works", `concepts.id` = c("C119857082", "C41008148"))
 | `openalex` | OpenAlex ID | “W2741809807” |
 | `author.id` | Author OpenAlex ID | “A2208157607” |
 | `institutions.id` | Institution ID | “I4200000001” |
-| `concepts.id` | Concept ID | “C119857082” |
+| `topics.id` | Topic ID | “T12072” |
 | `cites` | Works that cite this ID | “W2741809807” |
 | `cited_by` | Works cited by this ID | “W2741809807” |
 
 Use
 [`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
-to see all available filters.
+to see all available filters, and
+`opt_filter_names(entity = "institutions")` etc. for other entities.
 
 ## Advanced Features
 
@@ -544,23 +637,46 @@ url <- pro_query(
   entity = "works",
   search = "quantum computing",
   options = list(
-    per_page = 200, # Results per page (max 200)
     sort = "cited_by_count:desc", # Sort by citations descending
-    cursor = "*", # Enable cursor pagination
-    sample = 100 # Random sample of 100 works
+    sample = 100, # Random sample of 100 works
+    seed = 42 # Reproducible sample
   )
 )
 ```
 
 #### Options Reference
 
-| Option     | Description              | Values                      |
-|------------|--------------------------|-----------------------------|
-| `per_page` | Results per page         | 1-200 (default 25)          |
-| `sort`     | Sort field and order     | “field:asc” or “field:desc” |
-| `cursor`   | Cursor pagination        | “\*” for first page         |
-| `sample`   | Random sample size       | Integer                     |
-| `seed`     | Random seed for sampling | Integer                     |
+| Option | Description | Values |
+|----|----|----|
+| `sort` | Sort field and order | “field:asc” or “field:desc” |
+| `sample` | Random sample size | Integer, up to 10,000 |
+| `seed` | Random seed for sampling | Integer |
+| `per_page` | Results per page | 1-200; [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) uses 200 unless set |
+| `corpus` | Works corpus | “core” (default), “all”, “expansion” |
+
+Paging is done by
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md):
+`page` and `cursor` given in `options` are replaced, with a warning.
+Normally it pages with a cursor. Two exceptions, because OpenAlex does
+not support cursor paging for them:
+
+- **Semantic search** is fetched as its single page of at most 50
+  results.
+- **A `sample`** is fetched page by page (up to OpenAlex’s maximum of
+  10,000 records). Paging through a sample needs a `seed`; if the sample
+  spans more than one page and no `seed` is given,
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+  picks one and reports it in a message, so the same sample can be
+  fetched again:
+
+``` r
+
+url <- pro_query(entity = "works", publication_year = 2020,
+                 options = list(sample = 1000))
+pro_request(url, output = "data/sample")
+# `sample` spans several pages, which needs a `seed`: using seed = 877714475.
+# Add it to the query to reproduce this sample.
+```
 
 #### Sorting Options
 
@@ -580,85 +696,71 @@ pro_query(
 )
 ```
 
-#### XPAC — Expansion Pack Works
+#### Corpus — Core and Expansion Works
 
-OpenAlex XPAC (“expansion pack”) adds approximately 190 million
-additional works from DataCite and institutional/subject repositories to
-the standard ~278 million works, bringing the total to ~470 million.
-These works are excluded from API responses by default to avoid
-disrupting existing queries; they tend to have lower metadata quality
-than the standard corpus, though quality is improving over time.
+By default, `/works` returns the curated **core** corpus (about 324
+million works). The **expansion** corpus (formerly “XPAC”, about 193
+million works from DataCite and institutional/subject repositories) is
+excluded by default; its metadata quality tends to be lower. Choose with
+the `corpus` parameter via `options`:
 
-Enable XPAC by passing `include_xpac = TRUE` via the `options`
-parameter:
+| `corpus`           | Returns                  |
+|--------------------|--------------------------|
+| `"core"` (default) | core works only          |
+| `"all"`            | core and expansion works |
+| `"expansion"`      | expansion works only     |
 
 ``` r
 
-# Include XPAC works in results (~470 M total instead of ~278 M)
+# Include expansion works in results
 url <- pro_query(
   entity = "works",
   search = "grey literature",
-  options = list(include_xpac = TRUE)
+  options = list(corpus = "all")
 )
-```
 
-To retrieve **only** XPAC works (excluding standard works), combine
-`include_xpac = TRUE` with the `is_xpac` filter:
-
-``` r
-
-# Query XPAC-only works (must also set include_xpac = TRUE)
+# Expansion works only
 url <- pro_query(
   entity = "works",
-  is_xpac = TRUE,
   from_publication_date = "2024-01-01",
-  options = list(include_xpac = TRUE)
+  options = list(corpus = "expansion")
 )
-```
 
-XPAC works can be combined with any other filter or search mode,
-including semantic search:
-
-``` r
-
-# Semantic search across the full XPAC-inclusive corpus
-url <- pro_query(
-  entity = "works",
-  search.semantic = "institutional repository preprint data management",
-  options = list(include_xpac = TRUE)
-)
-```
-
-XPAC work IDs can be passed directly to
-[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
-— `include_xpac` is a discovery-phase parameter and is not needed at
-download time. To find XPAC works that also have downloadable full-text,
-combine the filters:
-
-``` r
-
-# Find XPAC works with PDFs, then download them
+# Works with downloadable PDFs across the full corpus
 urls <- pro_query(
   entity = "works",
   has_content.pdf = TRUE,
-  is_xpac = TRUE,
   from_publication_date = "2024-01-01",
-  options = list(include_xpac = TRUE)
+  options = list(corpus = "all")
 )
 # After fetching and extracting IDs from the metadata:
-# result <- pro_download_content(ids = xpac_ids, format = "pdf")
+# result <- pro_download_content(ids = ids, format = "pdf")
 ```
 
-See the [OpenAlex XPAC
-documentation](https://docs.openalex.org/how-to-use-the-api/xpac) for
-more details.
+`corpus` is only needed for discovery; IDs found this way can be passed
+to
+[`pro_download_content()`](https://openalexpro.github.io/openalexPro/reference/pro_download_content.md)
+directly. The older `include_xpac = TRUE` option and the `is_xpac`
+filter are deprecated and **cannot be combined with `corpus`** (HTTP
+400). Each work’s `is_xpac` field still tells which corpus it belongs
+to. See the [OpenAlex corpus
+documentation](https://help.openalex.org/data/works/corpus/).
 
 ## Automatic Chunking
 
 When querying with large lists of DOIs or IDs,
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
-automatically splits the request into chunks to avoid API URL length
-limits (max ~4094 characters).
+automatically splits the request into chunks. This keeps each URL within
+OpenAlex’s limits (at most 100 values per filter, about 4 KB per URL),
+and each chunk is a separate query, so `pro_request(..., workers = )`
+downloads the chunks in parallel.
+
+This applies to all chunked filters (`doi`, `openalex`, `ids.openalex`,
+`cites`, `cited_by`). With `pro_request(..., via = "oqo")` the queries
+are sent via POST, where these limits do not apply; `chunk_limit = 200`
+then gives about one request (one page of 200 records) per chunk while
+keeping the parallel download. (For `cites` / `cited_by`, a chunk can
+match many more works and simply takes more pages.)
 
 ### Chunking Overview
 
@@ -835,7 +937,7 @@ Researchers and their metadata:
 ``` r
 
 pro_query(entity = "authors", search = "Marie Curie")
-pro_query(entity = "authors", `last_known_institution.id` = "I4200000001")
+pro_query(entity = "authors", `last_known_institutions.id` = "I4200000001")
 ```
 
 ### Institutions
@@ -848,29 +950,30 @@ pro_query(entity = "institutions", search = "MIT")
 pro_query(entity = "institutions", type = "education", country_code = "US")
 ```
 
-### Venues
+### Sources
 
-Journals, repositories, conferences:
+Journals, repositories, conferences (formerly “venues”):
 
 ``` r
 
-pro_query(entity = "venues", search = "Nature")
-pro_query(entity = "venues", is_oa = TRUE, type = "journal")
+pro_query(entity = "sources", search = "Nature")
+pro_query(entity = "sources", is_oa = TRUE, type = "journal")
 ```
 
-### Concepts
+### Topics
 
-Topics and fields of study:
+Research topics, organised in a domain / field / subfield hierarchy
+(they replace the deprecated concepts):
 
 ``` r
 
-pro_query(entity = "concepts", search = "machine learning")
-pro_query(entity = "concepts", level = 0) # Top-level concepts only
+pro_query(entity = "topics", search = "machine learning")
+pro_query(entity = "topics", `field.id` = "17") # Computer Science
 ```
 
 ### Publishers
 
-Organizations that publish venues:
+Organizations that publish sources:
 
 ``` r
 
@@ -886,6 +989,15 @@ Organizations that fund research:
 
 pro_query(entity = "funders", search = "NSF")
 pro_query(entity = "funders", country_code = "US")
+```
+
+### Locations
+
+One row per harvested copy of a work; IDs are case-sensitive:
+
+``` r
+
+pro_query(entity = "locations", id = "doi:10.7717/peerj.4375")
 ```
 
 ## Validation System
@@ -925,8 +1037,10 @@ flowchart TD
 
 ### Filter Validation
 
-Filter names are validated against
-[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md):
+Filter names are validated against the names OpenAlex accepts for the
+queried entity, `opt_filter_names(entity = entity)`. A filter that
+exists for one entity is not accepted for another (e.g. `country_code`
+is valid for institutions, not for works):
 
 ``` r
 
@@ -939,13 +1053,13 @@ try(
 )
 # Error: Invalid filter name(s): publiction_year.
 # Did you mean: publiction_year → publication_year?
-# Valid filter names are defined in `opt_filter_names()`.
+# Valid filter name(s) are defined in `opt_filter_names(entity = "works")`.
 ```
 
 ### Select Field Validation
 
 Select fields are validated against
-[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md):
+`opt_select_fields(entity = entity)`:
 
 ``` r
 
@@ -953,12 +1067,12 @@ Select fields are validated against
 try(
   pro_query(
     entity = "works",
-    select = c("id", "titel") # "id" should be "ids", "titel" should be "title"
+    select = c("ids", "titel") # "titel" should be "title"
   )
 )
-# Error: Invalid select field(s): id, titel.
-# Did you mean: id → ids, titel → title?
-# Valid select fields are defined in `opt_select_fields()`.
+# Error: Invalid select field(s): titel.
+# Did you mean: titel → title?
+# Valid select field(s) are defined in `opt_select_fields(entity = "works")`.
 ```
 
 ### Entity Validation
@@ -970,7 +1084,8 @@ Entity type is validated using
 
 try(pro_query(entity = "paper"))
 # Error: 'arg' should be one of "works", "authors", "venues",
-#        "institutions", "concepts", "publishers", "funders"
+#        "institutions", "concepts", "publishers", "funders", "sources",
+#        "topics", "locations"
 ```
 
 ## Function Architecture
@@ -1021,11 +1136,11 @@ flowchart TD
 ``` mermaid
 flowchart TD
     subgraph Inputs[Input Components]
-        Entity[entity = "works"]
+        Entity["entity = #quot;works#quot;"]
         ID[id = NULL or single ID]
-        Search[search = "climate"]
-        Select[select = c&#40;"ids", "title"&#41;]
-        GroupBy[group_by = "year"]
+        Search["search = #quot;climate#quot;"]
+        Select["select = c(#quot;ids#quot;, #quot;title#quot;)"]
+        GroupBy["group_by = #quot;year#quot;"]
         Options[options = list<br/>per_page = 200]
         Filters[... filters]
     end
@@ -1156,12 +1271,12 @@ flowchart TD
     CheckEmpty -->|Yes| ReturnEmpty
 
     CheckEmpty -->|No| CheckLogical{Logical vector?}
-    CheckLogical -->|Yes| ConvertLogical[Convert to<br/>"true"/"false"]
+    CheckLogical -->|Yes| ConvertLogical["Convert to<br/>#quot;true#quot;/#quot;false#quot;"]
     CheckLogical -->|No| CheckLength{Length == 1?}
 
     ConvertLogical --> CheckLength
     CheckLength -->|Yes| ReturnSingle[Return as character]
-    CheckLength -->|No| Collapse[paste with "|"]
+    CheckLength -->|No| Collapse["paste with #quot;#124;#quot;"]
 
     Collapse --> ReturnCollapsed[Return collapsed string]
 
@@ -1202,7 +1317,7 @@ flowchart TD
     FilterEmpty --> CheckEmpty2{Empty after<br/>filtering?}
     CheckEmpty2 -->|Yes| ReturnNull2[Return NULL]
 
-    CheckEmpty2 -->|No| MapFilters[For each filter:<br/>collapse values with |<br/>create "key:value"]
+    CheckEmpty2 -->|No| MapFilters["For each filter:<br/>collapse values with #124;<br/>create #quot;key:value#quot;"]
     MapFilters --> JoinFilters[Join with commas]
     JoinFilters --> ReturnString[Return filter string]
 
@@ -1245,7 +1360,7 @@ flowchart TD
     FindBad --> CheckBad{Any invalid<br/>names?}
     CheckBad -->|No| ReturnTrue[Return TRUE invisibly]
 
-    CheckBad -->|Yes| BuildError[.build_validation_error:<br/>1. Get fuzzy suggestions<br/>2. Format error message<br/>3. Include "Did you mean?"]
+    CheckBad -->|Yes| BuildError[".build_validation_error:<br/>1. Get fuzzy suggestions<br/>2. Format error message<br/>3. Include #quot;Did you mean?#quot;"]
     BuildError --> StopError[stop with error message]
 
     style Input fill:#e1f5e1
@@ -1280,7 +1395,8 @@ Constructs helpful error messages with fuzzy suggestions:
 
 try(pro_query(entity = "paper"))
 # Error: 'arg' should be one of "works", "authors", "venues",
-#        "institutions", "concepts", "publishers", "funders"
+#        "institutions", "concepts", "publishers", "funders", "sources",
+#        "topics", "locations"
 ```
 
 **Solution:** Use a valid entity name.
@@ -1291,25 +1407,24 @@ try(pro_query(entity = "paper"))
 
 try(pro_query(entity = "works", invalid_filter = "value"))
 # Error: Invalid filter name(s): invalid_filter.
-# Valid filter names are defined in `opt_filter_names()`.
+# Valid filter name(s) are defined in `opt_filter_names(entity = "works")`.
 ```
 
-**Solution:** Check
-[`opt_filter_names()`](https://openalexpro.github.io/openalexPro/reference/opt_filter_names.md)
-for valid filter names.
+**Solution:** Check `opt_filter_names(entity = ...)` for the valid
+filter names of the entity you query.
 
 #### Invalid Select Field
 
 ``` r
 
-try(pro_query(entity = "works", select = c("id", "titel")))
-# Error: Invalid select field(s): id, titel.
-# Did you mean: id → ids, titel → title?
-# Valid select fields are defined in `opt_select_fields()`.
+try(pro_query(entity = "works", select = c("ids", "titel")))
+# Error: Invalid select field(s): titel.
+# Did you mean: titel → title?
+# Valid select field(s) are defined in `opt_select_fields(entity = "works")`.
 ```
 
 **Solution:** Use suggested corrections or check
-[`opt_select_fields()`](https://openalexpro.github.io/openalexPro/reference/opt_select_fields.md).
+`opt_select_fields(entity = ...)`.
 
 #### URL Too Long
 
@@ -1553,7 +1668,7 @@ limits can also be purchased.
 ``` r
 
 # Set credentials (typically in your .Renviron file)
-Sys.setenv(openalexPro.apikey = "your-api-key-here")
+Sys.setenv(openalexPro.api_key = "your-api-key-here")
 
 # Validate your credentials
 pro_validate_credentials()
@@ -1584,31 +1699,28 @@ flowchart LR
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJL[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJLP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ -->|URL/URLs| PR
-    PR -->|JSON files| PRJL
-    PRJL -->|JSONL files| PRJLP
-    PRJLP -->|Parquet dataset| DB
+    PR -->|JSON files| PRP
+    PRP -->|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 ```
 
 ### Complete Example
+
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+runs steps 2 and 3 in one call; the steps are shown separately here.
 
 ``` r
 
@@ -1620,7 +1732,10 @@ urls <- pro_query(
   search = "machine learning healthcare",
   from_publication_date = "2020-01-01",
   type = "article",
-  select = c("ids", "title", "abstract", "publication_year", "authorships")
+  select = c(
+    "ids", "title", "abstract_inverted_index", "publication_year",
+    "authorships", "cited_by_count"
+  )
 )
 
 # Step 2: Retrieve data (with progress bar)
@@ -1632,23 +1747,15 @@ pro_request(
   workers = 1
 )
 
-# Step 3: Convert to JSONL (with parallelization)
-pro_request_jsonl(
+# Step 3: Convert to Parquet (adds `abstract` and `citation` columns)
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
+  output = "data/parquet",
   progress = TRUE,
   workers = 4
 )
 
-# Step 4: Convert to Parquet (with schema harmonization)
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
-  output = "data/parquet",
-  progress = TRUE,
-  sample_size = 1000
-)
-
-# Step 5: Query with DuckDB
+# Step 4: Query with DuckDB
 library(duckdb)
 con <- dbConnect(duckdb())
 results <- dbGetQuery(
@@ -1675,19 +1782,19 @@ dbDisconnect(con)
   Get count of results without downloading
 - [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md) -
   Execute API requests and save results
-- [`pro_request_jsonl()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl.md) -
-  Convert JSON to JSONL format
-- [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md) -
-  Convert JSONL to Parquet format (with schema harmonization)
+- [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md) -
+  Convert the JSON results to a Parquet dataset
+- [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) -
+  Download and convert in one step
 
 ## References
 
-- [OpenAlex API Documentation](https://docs.openalex.org/)
-- [OpenAlex
-  Filters](https://docs.openalex.org/how-to-use-the-api/get-lists-of-entities/filter-entity-lists)
+- [OpenAlex API Documentation](https://help.openalex.org/api/)
+- [OpenAlex Filters](https://help.openalex.org/api/filtering/)
+- [OpenAlex Search](https://help.openalex.org/api/searching/)
+- [OpenAlex OQL API](https://help.openalex.org/api/oql/)
 - [OpenAlex Select
-  Fields](https://docs.openalex.org/how-to-use-the-api/get-lists-of-entities/select-fields)
-- [OpenAlex Entity
-  Types](https://docs.openalex.org/api-entities/entities-overview)
-- [OpenAlex Rate
-  Limits](https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication)
+  Fields](https://help.openalex.org/api/selecting-fields/)
+- [OpenAlex Entity Types](https://help.openalex.org/data/)
+- [OpenAlex Authentication and Rate
+  Limits](https://help.openalex.org/api/authentication/)

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@
 <h3 id="live-api-tests">Live API Tests<a class="anchor" aria-label="anchor" href="#live-api-tests"></a></h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OPENALEXPRO_LIVE_TESTS <span class="op">=</span> <span class="st">"true"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>openalexPro.apikey <span class="op">=</span> <span class="st">"&lt;your-key&gt;"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>openalexPro.api_key <span class="op">=</span> <span class="st">"&lt;your-key&gt;"</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span>filter <span class="op">=</span> <span class="st">"900"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -72,20 +72,22 @@
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
 <p>The package has one functional area: <strong>OpenAlex API access</strong>.</p>
-<p>Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the <strong><code>openalexSnapshot</code></strong> package. Calling <code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code>, or <code>lookup_by_id()</code> in <code>openalexPro</code> raises an informative error pointing to <code>openalexSnapshot</code>.</p>
+<p>Snapshot conversion, corpus indexing, and ID-based record lookup have moved to the <strong><code>openalexSnapshot</code></strong> package. <code>snapshot_to_parquet()</code>, <code>build_corpus_index()</code> and <code>lookup_by_id()</code> are not in <code>openalexPro</code> at all – not even as error-raising stubs, because an exported stub masks the real function when both packages are attached.</p>
 <div class="section level3">
 <h3 id="openalex-api-cloud">OpenAlex API (cloud)<a class="anchor" aria-label="anchor" href="#openalex-api-cloud"></a></h3>
 <p>Functions that query the live OpenAlex REST API:</p>
 <ul><li>
-<code><a href="reference/pro_query.html">pro_query()</a></code> — builds query URLs with filters, search, entity selection, ID chunking</li>
+<code><a href="reference/pro_query.html">pro_query()</a></code> — builds query URLs with filters, search, entity selection, ID chunking; or, with <code>oql</code> / <code>oqo</code>, a root-endpoint URL (<code>https://api.openalex.org/?oql=...</code>) for OpenAlex’s query language. Classic arguments next to <code>oql</code>/<code>oqo</code> are an error (OpenAlex would silently ignore them). Filter and select names are validated against the lists for the queried entity</li>
 <li>
-<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). <code>resume = TRUE</code> refetches only the leaf queries that did not complete, using the <code>00_in.progress</code> sentinel each leaf carries while it is being written</li>
+<code><a href="reference/pro_request.html">pro_request()</a></code> — paginates through API results, writes JSON; accepts nested lists of URLs (each nesting level becomes a subdirectory). <code>resume = TRUE</code> refetches only the leaf queries that did not complete, using the <code>00_in.progress</code> sentinel each leaf carries while it is being written (a single URL is one leaf). Leaves are dispatched one future each (<code>future.scheduling = Inf</code>); progress counts leaves, with no count request up front. Grouped results are detected from the response (<code>meta$groups_count</code>), not the URL. In list mode each leaf’s error is caught and all failures are reported at the end (failed leaves keep <code>00_in.progress</code> for <code>resume</code>). Mid-query resume (<code>R/paging_state.R</code>): after each saved page with a <code>next_cursor</code> (cursor paging only), <code>_paging.json</code> holds the exact query (URL or OQO), position and <code>cursor_created</code>; <code>.ps_read()</code> never errors and returns NULL (restart from page 1, with a reason) for anything untrustworthy; after a resume <code>.ps_check()</code> (DuckDB ID scan) applies <code>inconsistency_on_resume</code> (<code>error</code> keeps state <code>check_pending</code> so a rerun needs no download). A <code>per_page</code> in the URL is kept; <code>page</code>/<code>cursor</code> are replaced (warning); <code>search.semantic</code> is fetched without cursor (OpenAlex rejects it), as one page of up to 50; a <code>sample</code> is paged by page number (cursor paging of a sample stops after page 1), adding and reporting a <code>seed</code> when it spans several pages</li>
 <li>
-<code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> — converts JSON files from <code><a href="reference/pro_request.html">pro_request()</a></code> directly to Parquet (schema inference + per-file DuckDB COPY, parallel via <code>future</code>). <code>resume = TRUE</code> converts only what is missing; <code>on_error</code> controls what happens to files that fail (see <em>Failure handling</em> below)</li>
+<code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> — converts JSON files from <code><a href="reference/pro_request.html">pro_request()</a></code> directly to Parquet (schema inference + per-file DuckDB COPY, parallel via <code>future</code>; <code>workers</code> alone decides, <code>NULL</code>/1 forces sequential and the user’s plan is restored). <code>resume = TRUE</code> converts only what is missing; <code>on_error</code> controls what happens to files that fail (see <em>Failure handling</em> below)</li>
 <li>
-<code><a href="reference/pro_fetch.html">pro_fetch()</a></code> — all-in-one: query → paginate → convert to Parquet (project folder)</li>
+<code><a href="reference/pro_fetch.html">pro_fetch()</a></code> — all-in-one: query → paginate → convert to Parquet (project folder); <code>resume = TRUE</code> completes an interrupted download and conversion; <code>download_workers</code> (default <code>workers</code>) for the download, <code>workers</code> for the conversion</li>
 <li>
-<code><a href="reference/pro_count.html">pro_count()</a></code> — counts matching records</li>
+<code><a href="reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> (<code>R/pro_compact_parquet.R</code>) — combines the one-file-per-page Parquet output into files of up to <code>rows</code> records, per partition; also run by <code>compact_parquet</code> (default <code>NULL</code> = no compaction) in <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> / <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> after a complete conversion (before <code>delete_input</code>). Whole consecutive pages per file, named by page range (<code>results_pages_1-1250.parquet</code>), rows in download order (explicit ORDER BY page number + <code>file_row_number</code>, <code>preserve_order = TRUE</code>), <code>hive_partitioning = false</code> so no <code>query</code> column is written into the files. Committed file by file (<code>.part</code>, count check, rename, delete pages); the names are the commit: <code>.pc_covered()</code> lets a rerun delete pages already in a compacted file, and <code>pro_request_parquet(resume = TRUE)</code> skip them. Failures warn and keep the pages. Stops if an openalexSnapshot index (<code>&lt;dir&gt;_id_idx</code>, <code>&lt;dir&gt;_doi_idx.parquet</code>) exists, since it points to files and row numbers</li>
+<li>
+<code><a href="reference/pro_count.html">pro_count()</a></code> — counts matching records (<code>via</code> as for <code><a href="reference/pro_request.html">pro_request()</a></code>)</li>
 <li>
 <code><a href="reference/pro_download_content.html">pro_download_content()</a></code> — downloads PDFs / TEI XML from <code>content.openalex.org</code>
 </li>
@@ -93,7 +95,8 @@
 <code><a href="reference/pro_rate_limit_status.html">pro_rate_limit_status()</a></code> — queries the <code>/rate-limit</code> endpoint</li>
 <li>
 <code><a href="reference/pro_validate_credentials.html">pro_validate_credentials()</a></code> — checks API key validity</li>
-</ul><p>All HTTP calls route through <code>api_call()</code> (<code>R/api_call.R</code>), which handles retries, error inspection, and <code>httr2</code> plumbing. Tests use VCR cassettes in <code>tests/fixtures/vcr/</code>.</p>
+</ul><p><code>via = "oqo"</code> (opt-in; default <code>"url"</code> leaves every request as before): <code>.oa_to_oqo()</code> (<code>R/oqo.R</code>) translates each query once with the free <code>POST /query</code> (validating it before any credits are spent; paging params and <code>sample</code>/<code>seed</code> are taken out first because the translator stores numbers as text, then put back into the OQO), and <code>fetch_query_pages()</code>’s <code>make_req()</code> sends every page as <code>POST /</code> with the OQO in the body. Single records stay GET. <code>tests/testthat/test-021-url_oqo_equivalence.R</code> asserts identical complete result sets for url vs oqo (semantic search only near-identical: OpenAlex varies at rank 50 between identical requests). Every query writes <code>_query.json</code> (URL, via, OQL/OQO, records, requests, credits, cost, times) and, via <code>.pr_write_query_text()</code> (<code>R/query_text.R</code>, best effort, two free <code>/query</code> calls: render the OQO that ran, translate the OQL back, compare with <code>.oqo_equivalent()</code>), <code>_query_oql.txt</code> / <code>_query_oql.html</code> (self-contained, escaped, no scripts); list downloads also get <code>_queries_oql.txt</code> / <code>_queries_oql.html</code> at the top (<code>.pr_write_queries_summary()</code>, built from the per-query files on disk); page discovery reads only <code>results_page_N</code> / <code>group_by_page_N</code> / <code>single_N</code> files, and <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> copies the record into the partition.</p>
+<p>All HTTP calls route through <code>api_call()</code> (<code>R/api_call.R</code>), which handles retries, error inspection, and <code>httr2</code> plumbing: retries on 429/5xx and network failures, aborts stalled transfers (&lt; 1 byte/s for 120 s), does not retry a 429 caused by the daily budget (<code>X-RateLimit-Remaining</code> 0 or <code>not_enough_credits</code>), and adds OpenAlex’s <code>message</code> (or OQL <code>validation$errors</code>) to the error. The API key is added by <code>.oa_auth()</code> as <code>Authorization: Bearer</code>, never in the URL (<code>api_key</code> in a POST body is rejected by OpenAlex). Tests use VCR cassettes in <code>tests/fixtures/vcr/</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="sql-helpers">SQL helpers<a class="anchor" aria-label="anchor" href="#sql-helpers"></a></h3>
@@ -111,7 +114,7 @@
 <li>
 <code><a href="reference/infer_json_schema.html">infer_json_schema()</a></code> — per-file schema inference with two-level caching</li>
 <li>
-<code><a href="reference/opt_select_fields.html">opt_select_fields()</a></code>, <code><a href="reference/opt_filter_names.html">opt_filter_names()</a></code> — helpers for building API queries</li>
+<code><a href="reference/opt_select_fields.html">opt_select_fields()</a></code>, <code><a href="reference/opt_filter_names.html">opt_filter_names()</a></code> — accepted select fields / filter names per <code>entity</code> (default <code>"works"</code>), parsed from OpenAlex’s error message for an invalid name (free) and cached per entity for the session; <code>update = TRUE</code> refetches</li>
 <li>
 <code><a href="reference/oa_schema.html">oa_schema()</a></code> — get or refresh the baseline entity schema used by <code>pro_request_parquet(schema = "auto")</code>
 </li>
@@ -153,7 +156,7 @@
 <div class="section level3">
 <h3 id="failure-handling-in-pro_request_parquet">Failure handling in <code>pro_request_parquet()</code>
 <a class="anchor" aria-label="anchor" href="#failure-handling-in-pro_request_parquet"></a></h3>
-<p>Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on <code>on_error</code>: <code>"error"</code> (default), <code>"warn"</code>, <code>"ignore"</code>.</p>
+<p>Per-file conversion failures are collected, retried once sequentially at the full memory budget (per-file peak memory varies with how large and nested a page is, so sizing the per-worker limit for the worst file would throttle all of them), and then dispatched on <code>on_error</code>: <code>"error"</code> (default), <code>"warn"</code>, <code>"ignore"</code>. <code>delete_input = TRUE</code> deletes the JSON input only when every file converted — with <code>"warn"</code>/<code>"ignore"</code> the input is the only copy of the failed pages, and <code>resume</code> needs it.</p>
 <p>This was a silent-data-loss bug before 0.12.0: failures were <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code>d only when <code>verbose</code> and the run reported success regardless, so a page that failed to convert was simply absent from the corpus and every downstream count was quietly wrong. Each file is written to a <code>.part</code> sidecar and renamed on success, because a parquet footer is written last — a killed worker used to leave a file that passed <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists()</a></code> but could not be read.</p>
 </div>
 <div class="section level3">
@@ -169,7 +172,7 @@
 <div class="section level2">
 <h2 id="test-infrastructure">Test Infrastructure<a class="anchor" aria-label="anchor" href="#test-infrastructure"></a></h2>
 <ul><li>
-<strong>VCR cassettes</strong> in <code>tests/fixtures/vcr/</code>: Mock HTTP responses. API keys filtered to <code>&lt;api-key&gt;</code>; <code>helper_vcr.R</code> injects <code>"test-api-key"</code> on CI.</li>
+<strong>VCR cassettes</strong> in <code>tests/fixtures/vcr/</code>: Mock HTTP responses, matched on method, URI and body (POST). The <code>Authorization</code> header is masked when recording; <code>helper_vcr.R</code> injects <code>"test-api-key"</code> on CI. <code>helper_vcr.R</code> fills the per-session caches of <code><a href="reference/opt_filter_names.html">opt_filter_names()</a></code> / <code><a href="reference/opt_select_fields.html">opt_select_fields()</a></code> (works) from their own cassettes before any test, so test files are independent of each other: each file passes alone and in any order without touching other cassettes. Run a single file with <code>NOT_CRAN=true</code> (as <code>devtools::test()</code> does), otherwise <code>skip_on_cran()</code> skips the cassette tests.</li>
 <li>
 <strong>Snapshot tests</strong>: Custom comparators <code>compare_json()</code>, <code>compare_jsonl()</code>, <code>compare_json_ignore()</code> handle platform differences.</li>
 <li>

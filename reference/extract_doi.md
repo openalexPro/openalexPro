@@ -11,6 +11,7 @@ extract_doi(
   x,
   non_doi_value = "",
   normalize = TRUE,
+  lower = TRUE,
   what = c("doi", "resolver", "prefix", "suffix")
 )
 ```
@@ -32,6 +33,12 @@ extract_doi(
   Logical. If \`TRUE\` (default), convert extracted DOIs and suffixes to
   lowercase and trim surrounding whitespace. Has no effect for \`what =
   "prefix"\` or \`what = "resolver"\`.
+
+- lower:
+
+  Logical. With \`normalize = TRUE\`, convert to lowercase (default).
+  \`FALSE\` keeps the upper and lower case of the input, e.g. to compare
+  the cleaned DOI with the field it came from.
 
 - what:
 
@@ -60,6 +67,14 @@ extract_doi(
 A character vector: - If \`non_doi_value\` is not \`NULL\`, a vector of
 the same length as \`x\`, with unmatched entries replaced. - If
 \`non_doi_value\` is \`NULL\`, a vector of only matched entries.
+
+## Details
+
+Percent-encoded characters are decoded first, also when encoded twice
+(\` encoded line break (\` not an encoding, such as the unfilled
+placeholders in \`10.18461/ijfsd.v2i4. or \`10.37002/biobrasil.v cut
+short to something that looks valid. A full stop or semicolon at the end
+is taken as punctuation and dropped.
 
 ## Examples
 

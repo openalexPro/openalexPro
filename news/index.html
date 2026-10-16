@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,144 @@
       <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.13.0" id="openalexpro-0130">openalexPro 0.13.0<a class="anchor" aria-label="anchor" href="#openalexpro-0130"></a></h2>
+<div class="section level3">
+<h3 id="extract_doi-fewer-truncated-and-false-dois-new-lower-0-13-0">
+<code>extract_doi()</code>: fewer truncated and false DOIs, new <code>lower</code>
+<a class="anchor" aria-label="anchor" href="#extract_doi-fewer-truncated-and-false-dois-new-lower-0-13-0"></a></h3>
+<ul><li>SICI DOIs ending in the check character <code>#</code> (<code>...&gt;3.0.CO;2-#</code>) are no longer cut before the <code>#</code>.</li>
+<li>Percent-encoding is decoded first, also when encoded twice: <code>%5B</code> / <code>%5D</code> and <code>%255B</code> / <code>%255D</code> become <code>[</code> / <code>]</code>, and an encoded line break (<code>%0A</code>) ends the DOI. Such DOIs were cut at the first <code>%</code>, so the shortened DOI was the one looked up in OpenAlex.</li>
+<li>A DOI followed by an unfilled placeholder (<code>10.18461/ijfsd.v2i4.%x</code>, <code>10.37002/biobrasil.v%vi%i.798</code>) is no longer recognised. Its part before the <code>%</code> used to be returned as a valid DOI.</li>
+<li>A full stop or semicolon at the end is dropped as punctuation: <code>doi:10.1098/rstb.2016.0173.</code> gives <code>10.1098/rstb.2016.0173</code>.</li>
+<li>New argument <code>lower</code> (default <code>TRUE</code>): <code>lower = FALSE</code> keeps the upper and lower case of the input, e.g. to compare the cleaned DOI with the field it came from.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="a-query-with-no-results-no-longer-fails-to-convert-0-13-0">A query with no results no longer fails to convert<a class="anchor" aria-label="anchor" href="#a-query-with-no-results-no-longer-fails-to-convert-0-13-0"></a></h3>
+<p><code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> / <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> stopped with “Cannot extract field from expression”r.*” because it is not a struct” when a query matched no works: with <code>"results": []</code> DuckDB has no record to infer the columns from. The columns now come from the baseline schema of the entity named in the query record (<code>_query.json</code>), and the output is a zero-row dataset with the usual columns, which <code><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">arrow::open_dataset()</a></code> reads.</p>
+</div>
+<div class="section level3">
+<h3 id="fewer-larger-parquet-files-compact_parquet-pro_compact_parquet-0-13-0">Fewer, larger Parquet files: <code>compact_parquet</code>, <code>pro_compact_parquet()</code>
+<a class="anchor" aria-label="anchor" href="#fewer-larger-parquet-files-compact_parquet-pro_compact_parquet-0-13-0"></a></h3>
+<p><code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> writes one Parquet file per API page (up to 200 records), so a large query becomes thousands of small files, which are slow to read. New argument <code>compact_parquet</code> (<code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code>, <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>; default <code>NULL</code> keeps one file per page, as before) and new function <code><a href="../reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> (for an existing dataset) combine each query’s page files into files of up to that many records, e.g. <code>250000</code>. Records, columns and their order do not change. For 1.1 million works, compaction took about 20 seconds; afterwards aggregates and lookups by ID ran 35 to 50 times faster, reading full records with DuckDB 4 times faster, and the dataset was 40% smaller.</p>
+<p>A compacted file holds whole consecutive pages and is named after them (<code>results_pages_1-1250.parquet</code>). Files are written one at a time (<code>.part</code>, record count checked, renamed, then the pages deleted), so an interrupted compaction is completed by running it again, and <code>resume = TRUE</code> never converts a compacted page again. A query that cannot be compacted keeps its page files, with a warning. <code><a href="../reference/pro_compact_parquet.html">pro_compact_parquet()</a></code> stops if an <code>openalexSnapshot</code> index (which points to files and row numbers) exists next to the dataset.</p>
+</div>
+<div class="section level3">
+<h3 id="resume-in-the-middle-of-a-query-0-13-0">Resume in the middle of a query<a class="anchor" aria-label="anchor" href="#resume-in-the-middle-of-a-query-0-13-0"></a></h3>
+<p><code>resume = TRUE</code> no longer fetches an interrupted query again from page 1: it continues after the last saved page. OpenAlex’s cursors are positions in the sort order that do not expire (a cursor from May still worked in October), but contain nothing about the query; so after each page the exact query (the URL, or for <code>via = "oqo"</code> the OQO that ran) and the cursor are written to <code>_paging.json</code>, with the time the cursor was created, which the resume message reports. Anything that cannot be trusted falls back to fetching the query again from page 1, with the reason. Samples and semantic search still start again.</p>
+<p>New argument <code>inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")</code> (<code><a href="../reference/pro_request.html">pro_request()</a></code>, <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>): after a resume, duplicates (found exactly, by work ID) and missing records (only as a net difference to OpenAlex’s current count) stop the run by default; nothing is lost, and a rerun with another value applies the choice without downloading again. <code>"oldest"</code> / <code>"newest"</code> remove the other copy from its page file. The resume is recorded in <code>_query.json</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="readable-query-files-for-papers-_query_oqltxt-_query_oqlhtml-0-13-0">Readable query files for papers: <code>_query_oql.txt</code>, <code>_query_oql.html</code>
+<a class="anchor" aria-label="anchor" href="#readable-query-files-for-papers-_query_oqltxt-_query_oqlhtml-0-13-0"></a></h3>
+<p>Next to <code>_query.json</code>, each downloaded query now gets its OQL – OpenAlex’s readable rendering of the query that ran – as plain text (to paste into a methods section) and as a self-contained HTML page with highlighted keywords, OpenAlex IDs linked to their records, and the exact OQO. Because OpenAlex’s rendering can be lossy in some details, the OQL is translated back and compared: the files say whether it reproduces the query exactly. Both use OpenAlex’s free <code>/query</code> endpoint (two calls per query); if it is unreachable the download is unaffected and the files are marked “not checked”. Both are copied into the Parquet partition.</p>
+<p>For a list of queries, <code>_queries_oql.txt</code> and <code>_queries_oql.html</code> at the top of the output summarise all queries in list order – name, records, whether the OQL is exact, the OQL – with totals, for a paper’s supplement (queries skipped by <code>resume</code> included, failed ones listed as not downloaded).</p>
+</div>
+<div class="section level3">
+<h3 id="test-recordings-refreshed-0-13-0">Test recordings refreshed<a class="anchor" aria-label="anchor" href="#test-recordings-refreshed-0-13-0"></a></h3>
+<p>All recorded API responses were re-recorded from the live API (with the key sent as a header and masked). The snapshot differences were checked: only data drift (counts, citations, one record with fewer locations) and fields OpenAlex has added since spring (<code>study_designs</code>, <code>volume</code>, <code>awards</code> details, <code>observed_orcids</code>, location <code>doi</code> / <code>listed_in</code>, <code>meta.x_query</code>); no field was removed. The URL / OQO equivalence tests passed again on the fresh data, and a <code><a href="../reference/pro_count.html">pro_count()</a></code> comparison was added. <code>inst/scripts/record_cassettes.R</code> now records all tests even when snapshots fail (testthat stopped after 10 failures and left later cassettes unrecorded, while reporting success) and stops if any cassette is missing.</p>
+</div>
+<div class="section level3">
+<h3 id="lossless-queries-via--oqo-query-record-cost-key-as-header-0-13-0">Lossless queries: <code>via = "oqo"</code>, query record, cost, key as header<a class="anchor" aria-label="anchor" href="#lossless-queries-via--oqo-query-record-cost-key-as-header-0-13-0"></a></h3>
+<ul><li>
+<strong><code>via = "oqo"</code></strong> (<code><a href="../reference/pro_request.html">pro_request()</a></code>, <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>, <code><a href="../reference/pro_count.html">pro_count()</a></code>; default <code>"url"</code>, unchanged): each query is translated once (free, with validation before any credits are spent) into an OpenAlex Query Object and sent via POST. Same results – a new test downloads the same queries both ways and compares the complete result sets. No URL length limit and more than 100 values per filter, so <code>pro_query(..., chunk_limit = 200)</code> fetches DOI and OpenAlex ID lists in about one request per chunk, still in parallel. Single records stay GET.</li>
+<li>
+<strong><code>_query.json</code></strong> per query records the URL, how it was sent, the query as OpenAlex ran it (OQL, OQO), records, requests, credits, cost and time; it is copied into the Parquet partition, so it survives <code>delete_input</code>. <code><a href="../reference/pro_request.html">pro_request()</a></code> reports the total cost.</li>
+<li>
+<strong>The API key is sent as an <code>Authorization: Bearer</code> header</strong>, never in the URL, so it no longer appears in URLs, logs, error messages or recorded test responses.</li>
+<li>With <code>via = "url"</code>, a filter with more than 100 values now stops before sending (OpenAlex rejects it), suggesting <code>chunk_limit</code> or <code>via = "oqo"</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="oql-and-oqo-queries-0-13-0">OQL and OQO queries<a class="anchor" aria-label="anchor" href="#oql-and-oqo-queries-0-13-0"></a></h3>
+<p><code><a href="../reference/pro_query.html">pro_query()</a></code> gains <code>oql</code> and <code>oqo</code> (both default <code>NULL</code>, behaviour unchanged) for OpenAlex’s query language and its JSON form, which express what the classic filter syntax cannot, such as nested <code>and</code> / <code>or</code> conditions:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pro_query.html">pro_query</a></span><span class="op">(</span>oql <span class="op">=</span> <span class="st">"works where year &gt;= (2020) and (title has (coral) or title has (reef))"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/pro_query.html">pro_query</a></span><span class="op">(</span>oqo <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>get_rows <span class="op">=</span> <span class="st">"works"</span>,</span>
+<span>                     filter_rows <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>column_id <span class="op">=</span> <span class="st">"publication_year"</span>, value <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The URL targets the API root and runs through <code><a href="../reference/pro_request.html">pro_request()</a></code>, <code><a href="../reference/pro_count.html">pro_count()</a></code> and <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> unchanged. Entity, conditions, grouping, <code>sample</code> and <code>corpus</code> belong inside the query; combining it with <code>entity</code>, <code>id</code>, <code>doi</code>, search arguments, <code>group_by</code> or filters is an error, because OpenAlex would silently ignore them. <code>select</code> and <code>options</code> are passed alongside. An invalid query fails with OpenAlex’s parse error and position.</p>
+<p><code><a href="../reference/pro_request.html">pro_request()</a></code> now detects grouped results from the response (<code>meta$groups_count</code>) instead of looking for <code>group_by=</code> in the URL, so grouping inside an OQL / OQO query is saved and converted correctly.</p>
+</div>
+<div class="section level3">
+<h3 id="pro_fetch-gains-download_workers-0-13-0">
+<code>pro_fetch()</code> gains <code>download_workers</code>
+<a class="anchor" aria-label="anchor" href="#pro_fetch-gains-download_workers-0-13-0"></a></h3>
+<p>Downloading is limited by the API, converting by CPU and memory, so the best number of workers differs. <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> used <code>workers</code> for both steps. <code>download_workers</code> (default <code>workers</code>, so existing calls are unchanged) now sets the download workers separately; <code>workers</code> sets the conversion workers.</p>
+</div>
+<div class="section level3">
+<h3 id="download-robustness-failing-queries-paging-parameters-semantic-search-0-13-0">Download robustness: failing queries, paging parameters, semantic search<a class="anchor" aria-label="anchor" href="#download-robustness-failing-queries-paging-parameters-semantic-search-0-13-0"></a></h3>
+<ul><li>
+<strong>A failing query no longer stops a list download.</strong> With a list of queries, an error in one (e.g. HTTP 404 for an ID that does not exist) aborted the whole run. Now the other queries complete, and one error at the end names each failed query with OpenAlex’s reason. Failed queries keep their <code>00_in.progress</code> marker, so <code>resume = TRUE</code> fetches only those again.</li>
+<li>
+<strong>Semantic search works with <code><a href="../reference/pro_request.html">pro_request()</a></code> / <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code>.</strong> The download always added <code>cursor=*</code>, which OpenAlex rejects for semantic search (HTTP 400). Semantic search is now fetched as its single page of at most 50 results.</li>
+<li>
+<strong>Paging parameters are no longer silently overwritten.</strong> A <code>per_page</code> in the query (1–200) is kept; <code>page</code> and <code>cursor</code> are replaced by cursor paging with a warning (OpenAlex rejects <code>page</code> together with <code>cursor</code>). Without them, paging is unchanged (<code>per_page = 200</code>, cursor).</li>
+<li>
+<strong><code>pro_request_parquet(workers = NULL)</code> is sequential, as documented.</strong> It ran under whatever <code>future</code> plan the user had set, so a parallel plan converted in parallel with a single worker’s memory budget and all cores per process. <code>workers</code> now alone decides; the user’s plan is restored.</li>
+<li>
+<strong>Samples larger than one page are downloaded completely.</strong> OpenAlex ends cursor paging of a <code>sample</code> after the first page, so <code>options = list(sample = 1000)</code> silently gave only 200 records. A sample is now paged by page number, up to OpenAlex’s maximum of 10,000. Paging a sample needs a <code>seed</code>; if none is given, one is chosen and reported in a message so the same sample can be fetched again. Samples that fit in one page are unchanged.</li>
+<li>
+<strong>Grouped and list results in one conversion</strong> stopped with “Mixed entity types found”. The error now names the queries of each kind and how to convert them separately; the JSON files are kept.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="filter-and-select-validation-per-entity-0-13-0">Filter and select validation per entity<a class="anchor" aria-label="anchor" href="#filter-and-select-validation-per-entity-0-13-0"></a></h3>
+<p><code><a href="../reference/pro_query.html">pro_query()</a></code> checked filter names and <code>select</code> fields against the lists for <strong>works</strong>, whatever the entity, so valid entity-specific names were rejected before reaching OpenAlex – e.g. <code>pro_query(entity = "institutions", country_code = "US")</code> or <code>select = "orcid"</code> for authors. Refreshing with <code>update = TRUE</code> did not help, as it fetched the works list again.</p>
+<p><code><a href="../reference/opt_filter_names.html">opt_filter_names()</a></code> and <code><a href="../reference/opt_select_fields.html">opt_select_fields()</a></code> gain an <code>entity</code> argument (default <code>"works"</code>, so existing calls are unchanged) and cache one list per entity; <code><a href="../reference/pro_query.html">pro_query()</a></code> validates against the queried entity’s lists. The lists come from OpenAlex’s error message for an invalid name, which costs no credits. An entity without a list (the retired <code>"venues"</code>) skips validation and lets OpenAlex answer.</p>
+<p>Parsing that message also dropped the first name of every list (e.g. the <code>abstract.search</code> filter, and <code>id</code>, which was patched back in by hand) and left a trailing period on the last select field (<code>"created_date."</code>); both are fixed.</p>
+<p>An argument of the functions that send a query, given to <code><a href="../reference/pro_query.html">pro_query()</a></code> by mistake (e.g. <code>pro_query(doi = dois, via = "oqo")</code>), was taken as a filter and failed with “Invalid filter name(s): via”. It now says where it belongs: “<code>via</code> is an argument of pro_fetch(), pro_request(), pro_count()”, with an example.</p>
+</div>
+<div class="section level3">
+<h3 id="documentation-brought-up-to-date-0-13-0">Documentation brought up to date<a class="anchor" aria-label="anchor" href="#documentation-brought-up-to-date-0-13-0"></a></h3>
+<ul><li>
+<strong>API key name:</strong> the vignettes, <code>CLAUDE.md</code> and the message of <code><a href="../reference/pro_rate_limit_status.html">pro_rate_limit_status()</a></code> told users to set <code>openalexPro.apikey</code>, which <code><a href="../reference/pro_api_key.html">pro_api_key()</a></code> never reads – a key set that way was silently ignored. The correct name is the environment variable <code>openalexPro.api_key</code> (or the option <code>openalexPro$api_key</code>), as the README already said.</li>
+<li>
+<strong>Search syntax:</strong> wildcards (<code>microbio*</code>) and fuzzy terms work only with <code>search.exact</code>; the stemmed <code>search</code> rejects wildcards with HTTP 400. All three search types cost $0.001 per call (the vignette said $0.0001), and semantic search does not require an API key.</li>
+<li>
+<strong>Entities:</strong> <code>sources</code>, <code>topics</code> and <code>locations</code> replace <code>venues</code> and <code>concepts</code> in the examples; <code>topics.id</code> replaces <code>concepts.id</code>.</li>
+<li>
+<strong>Corpus:</strong> the deprecated <code>include_xpac</code> / <code>is_xpac</code> controls are replaced by the <code>corpus</code> parameter (<code>"core"</code>, <code>"all"</code>, <code>"expansion"</code>); combining them is an error at OpenAlex.</li>
+<li>
+<strong>Pipeline:</strong> README, vignettes and diagrams describe <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> instead of the deprecated JSONL pipeline, and <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> no longer appears to write JSONL files. New sections cover OQL / OQO, <code>resume</code>, error handling and budgets; <code>inst/errorcodes.qmd</code> is rewritten (the “polite pool” no longer exists).</li>
+<li>Links point to the current OpenAlex documentation at <code>help.openalex.org</code>.</li>
+<li>The <code>pro_request</code> vignette documents <code><a href="../reference/pro_request_parquet.html">pro_request_parquet()</a></code> (signature, schema inference, failure handling, <code>resume</code>) instead of the deprecated JSONL functions, which are reduced to a pointer to their help pages.</li>
+<li>The snapshot vignettes install <code>openalexSnapshot</code> from r-universe (it is available there) and no longer claim that error-raising stubs exist.</li>
+<li>
+<code>DESCRIPTION</code> has a real <code>Description</code>, and <code>jsonlite</code> moves from Suggests to Imports: <code>pro_query(oqo = &lt;list&gt;)</code> and every JSON response parse need it, and httr2 does not import it.</li>
+<li>Six Mermaid diagrams in the <code>pro_query</code> and <code>pro_request</code> vignettes showed “Syntax error” (unquoted labels containing <code>()</code> or <code>"</code>); they render again.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="delete_input-no-longer-deletes-pages-that-failed-to-convert-0-13-0">
+<code>delete_input</code> no longer deletes pages that failed to convert<a class="anchor" aria-label="anchor" href="#delete_input-no-longer-deletes-pages-that-failed-to-convert-0-13-0"></a></h3>
+<p>With <code>on_error = "warn"</code> or <code>"ignore"</code>, <code>pro_request_parquet(delete_input = TRUE)</code> deleted the JSON input even when some files had failed – the only copy of those pages – so <code>resume = TRUE</code> could not recover them. The input is now kept unless every file converted.</p>
+</div>
+<div class="section level3">
+<h3 id="downloads-survive-network-failures-and-stalls-0-13-0">Downloads survive network failures and stalls<a class="anchor" aria-label="anchor" href="#downloads-survive-network-failures-and-stalls-0-13-0"></a></h3>
+<p><code>api_call()</code> retried only on HTTP 429/5xx. A dropped connection or curl error aborted the whole leaf, and a stalled transfer could hang a worker forever. Network failures are now retried with the same backoff, and a transfer below 1 byte/s for 120 s is aborted and retried. Requires <code>httr2 &gt;= 1.0.0</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="resume-works-for-a-single-url-and-in-pro_fetch-0-13-0">
+<code>resume</code> works for a single URL, and in <code>pro_fetch()</code>
+<a class="anchor" aria-label="anchor" href="#resume-works-for-a-single-url-and-in-pro_fetch-0-13-0"></a></h3>
+<p><code>pro_request(resume = TRUE)</code> was silently ignored for a single URL and failed with “Directory exists”. A single URL is now treated as one leaf. <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> gains <code>resume</code> (default <code>FALSE</code>, behaviour unchanged), which completes an interrupted download and conversion and returns a finished run unchanged.</p>
+</div>
+<div class="section level3">
+<h3 id="no-count-request-per-query-before-a-parallel-download-0-13-0">No count request per query before a parallel download<a class="anchor" aria-label="anchor" href="#no-count-request-per-query-before-a-parallel-download-0-13-0"></a></h3>
+<p>To size its progress bar, <code><a href="../reference/pro_request.html">pro_request()</a></code> with a list of queries first sent a count request for every leaf, one after another, before downloading anything. For a chunked DOI / ID list (one page per leaf) that doubled the requests and their cost. Progress now counts leaves, each advancing in fractions as its pages arrive, with no extra requests.</p>
+</div>
+<div class="section level3">
+<h3 id="clearer-api-errors-and-no-pointless-retries-on-an-exhausted-budget-0-13-0">Clearer API errors, and no pointless retries on an exhausted budget<a class="anchor" aria-label="anchor" href="#clearer-api-errors-and-no-pointless-retries-on-an-exhausted-budget-0-13-0"></a></h3>
+<p>A 4xx error now includes OpenAlex’s own explanation (e.g. which filter name is invalid) instead of only “HTTP 400 Bad Request”. A 429 caused by the daily budget – used up (<code>X-RateLimit-Remaining</code> at zero), or a query refused as costing more than is left (<code>"error": "not_enough_credits"</code>) – fails immediately and says when the budget resets, instead of backing off for about 17 minutes before failing. <code>verbose = TRUE</code> no longer prints the API key as part of the URL.</p>
+<p><code><a href="../reference/pro_query.html">pro_query()</a></code> no longer fetches the list of valid <code>select</code> fields when no <code>select</code> is given, saving a request per session.</p>
+</div>
+<div class="section level3">
+<h3 id="pro_query-knows-the-current-entities-0-13-0">
+<code>pro_query()</code> knows the current entities<a class="anchor" aria-label="anchor" href="#pro_query-knows-the-current-entities-0-13-0"></a></h3>
+<p><code>entity</code> now also accepts <code>"sources"</code>, <code>"topics"</code> and <code>"locations"</code>. <code>"venues"</code> and <code>"concepts"</code> (replaced by sources and topics in OpenAlex) are kept for compatibility. The default is still <code>"works"</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="better-load-balancing-for-parallel-downloads-0-13-0">Better load balancing for parallel downloads<a class="anchor" aria-label="anchor" href="#better-load-balancing-for-parallel-downloads-0-13-0"></a></h3>
+<p><code><a href="../reference/pro_request.html">pro_request()</a></code> with a list of queries pre-split the leaves into one block per worker, so a worker that drew the large leaves ran on while the others sat idle. Each leaf is now dispatched to the next free worker.</p>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.1" id="openalexpro-0121">openalexPro 0.12.1<a class="anchor" aria-label="anchor" href="#openalexpro-0121"></a></h2>
 <div class="section level3">

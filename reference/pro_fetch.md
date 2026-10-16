@@ -17,11 +17,16 @@ pro_fetch(
   api_key = pro_api_key(),
   delete_input = TRUE,
   workers = 1,
+  download_workers = workers,
   verbose = FALSE,
   progress = TRUE,
   enrich = TRUE,
   count_only,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE,
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
+  compact_parquet = NULL
 )
 ```
 
@@ -34,10 +39,10 @@ pro_fetch(
 
 - pages:
 
-  The number of pages to be downloaded. The default is set to 10000,
-  which would be 2,000,000 works. It is recommended to not increase it
-  beyond 100000 due to server load and to use the snapshot instead. If
-  `NULL`, all pages will be downloaded. Default: 100000.
+  The maximum number of pages (of 200 records) downloaded per query; for
+  a list, the limit applies to each leaf query. 100000 pages are
+  20,000,000 records; for more, use the snapshot instead. If `NULL`, all
+  pages will be downloaded.
 
 - project_folder:
 
@@ -66,8 +71,15 @@ pro_fetch(
 
 - workers:
 
-  Number of parallel workers to use if `query_url` is a list. Defaults
-  to 1.
+  Number of parallel workers for the conversion to Parquet (CPU and
+  memory bound), and by default also for the download. Default 1.
+
+- download_workers:
+
+  Number of parallel workers for the download, used when `query_url` is
+  a list. Defaults to `workers`. Downloads are limited by the API rather
+  than the machine, so a few (e.g. 2–4) are usually enough, while the
+  conversion can use more.
 
 - verbose:
 
@@ -91,6 +103,47 @@ pro_fetch(
 - error_log:
 
   location of error log of API calls. (default: `NULL` (none)).
+
+- resume:
+
+  Logical. When `TRUE`, keep existing `json` and `parquet` subfolders
+  and complete an interrupted run: only leaf queries that did not finish
+  are downloaded again, and only missing Parquet files are converted. A
+  finished run is returned unchanged. `overwrite` is ignored. Default
+  `FALSE`.
+
+- via:
+
+  How each query is sent. `"url"` (default): as a GET request with the
+  query in the URL, as built by
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
+  `"oqo"`: translated once (free) into an OpenAlex Query Object and sent
+  via POST, with the same results. It has no URL length limit, accepts
+  more than 100 values per filter (so
+  `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list in about
+  one page per chunk), checks the query before any credits are spent,
+  and records the exact query in `_query.json`. Single records
+  (`works/W123`) are always fetched via GET.
+
+- inconsistency_on_resume:
+
+  What to do when a query that was resumed in the middle turns out
+  inconsistent, because OpenAlex's data changed between the sessions:
+  records that appear twice (found exactly, by work ID) or missing
+  records (only as a net difference to OpenAlex's current count – a
+  record lost and another added cancel out). `"error"` (default) stops;
+  nothing is lost, and a rerun with `resume = TRUE` and another value
+  applies that choice without downloading again. `"warning"` keeps both
+  copies and warns, `"ignore"` keeps both silently, `"oldest"` /
+  `"newest"` keep the first / last downloaded copy (removing the other
+  from its page file) and warn about missing records.
+
+- compact_parquet:
+
+  `NULL` (default) keeps one Parquet file per API page. A number, e.g.
+  `250000`, combines each query's page files into files of up to that
+  many records once every file has converted – much faster to read. See
+  [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md).
 
 ## Value
 
@@ -116,4 +169,20 @@ The function
 [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
 for the download step,
 [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
-for the conversion step.
+for the conversion step,
+[`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
+to compact an existing dataset.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Combine each query's page files into files of up to 250,000 records,
+# which are much faster to read
+pro_fetch(
+  pro_query(search = "coral reef", from_publication_date = "2020-01-01"),
+  project_folder = "coral_reef",
+  compact_parquet = 250000
+)
+} # }
+```
