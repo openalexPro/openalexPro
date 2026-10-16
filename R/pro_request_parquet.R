@@ -25,6 +25,10 @@
 #' record with a value derived from the source filename (or subdirectory for
 #' multi-query inputs).
 #'
+#' With `compact_parquet`, the page files of each query are combined into
+#' files of up to that many records after the conversion (see
+#' [pro_compact_parquet()]).
+#'
 #' @param input_json Directory of JSON files returned by [pro_request()].
 #' @param output Output directory for the Parquet dataset.
 #' @param add_columns Named list of scalar constant columns to embed in every
@@ -35,7 +39,8 @@
 #' @param verbose Logical.  Show progress messages.  Default `TRUE`.
 #' @param progress Logical.  Show a progress bar.  Default `TRUE`.
 #' @param delete_input Logical.  Delete `input_json` after a successful
-#'   conversion.  Default `FALSE`.
+#'   conversion.  If any file failed to convert, `input_json` is kept so the
+#'   run can be completed with `resume = TRUE`.  Default `FALSE`.
 #' @param sample_size Integer.  Number of records per file passed to DuckDB's
 #'   `sample_size` option during schema inference.  Use `-1` to read all
 #'   records (accurate but slow for large files).  Default `1000`.
@@ -56,6 +61,10 @@
 #'   letting every worker claim DuckDB's default of 80% of the machine.
 #' @param retry_memory_limit `memory_limit` for the sequential retry pass,
 #'   where no workers compete.  `NULL` (default) uses the whole budget.
+#' @param compact_parquet `NULL` (default) keeps one Parquet file per API
+#'   page.  A number, e.g. `250000`, combines each query's page files into
+#'   files of up to that many records once every file has converted -- much
+#'   faster to read.  See [pro_compact_parquet()].
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
@@ -81,7 +90,14 @@
 #'
 #' @return Output directory path (invisibly).
 #'
+#' @examples
+#' \dontrun{
+#' pro_request_parquet("my_project/json", "my_project/parquet",
+#'                     compact_parquet = 250000)
+#' }
+#'
 #' @seealso [pro_request()] to download the JSON files,
+#'   [pro_compact_parquet()] to compact an existing dataset,
 #'   [pro_request_jsonl()] and [pro_request_jsonl_parquet()] for the older
 #'   two-step pipeline (now deprecated).
 #'
@@ -110,11 +126,13 @@ pro_request_parquet <- function(
   resume = FALSE,
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
-  retry_memory_limit = NULL
+  retry_memory_limit = NULL,
+  compact_parquet = NULL
 ) {
   if (is.null(input_json)) stop("No `input_json` specified!")
   if (is.null(output))     stop("No `output` specified!")
   on_error <- match.arg(on_error)
+  if (!is.null(compact_parquet)) .pc_check_rows(compact_parquet, "compact_parquet")
 
   progress_file <- .prr_prepare_output(output, overwrite, resume)
   success <- FALSE
@@ -136,10 +154,23 @@ pro_request_parquet <- function(
 
   output_files <- .prr_output_paths(disc$jsons, input_json, output)
 
-  if (!is.null(workers) && workers > 1L) {
-    old_plan <- future::plan(future::multisession, workers = workers)
-    on.exit(future::plan(old_plan), add = TRUE)
+  # Resume: pages a compacted file already holds are converted, not missing
+  if (isTRUE(resume)) {
+    keep <- !.pc_covered(output_files)
+    disc$jsons   <- disc$jsons[keep]
+    output_files <- output_files[keep]
   }
+
+  # `workers` alone decides the parallelism, because the memory budget and
+  # DuckDB threads below are sized from it. Leaving NULL / 1 to whatever plan
+  # the user set ran a parallel plan with a single worker's budget and all
+  # cores per process. The user's plan is restored on exit.
+  old_plan <- if (!is.null(workers) && workers > 1L) {
+    future::plan(future::multisession, workers = workers)
+  } else {
+    future::plan(future::sequential)
+  }
+  on.exit(future::plan(old_plan), add = TRUE)
 
   if (progress) {
     cli::cli_alert_info("Converting {length(disc$jsons)} JSON file{?s} to Parquet")
@@ -220,12 +251,51 @@ pro_request_parquet <- function(
     .prr_report_failures(failed, jsons, statuses, output, length(jsons), on_error)
   }
 
-  if (delete_input) unlink(input_json, recursive = TRUE, force = TRUE)
+  # Carry each query's record (`_query.json`, written by pro_request()) into
+  # its Parquet partition, so it survives `delete_input`. arrow and DuckDB
+  # ignore it: the leading underscore, and it is not a `.parquet` file.
+  .prr_copy_query_records(input_json, output)
+
+  # Only a complete conversion is compacted: a page converted later would fall
+  # into a compacted file's page range and be taken as done. Before
+  # `delete_input`, so an interrupted compaction can still be resumed.
+  if (!is.null(compact_parquet) && length(failed) == 0L) {
+    .pc_compact(output, compact_parquet, verbose)
+  }
+
+  # Keep the input when anything failed (on_error = "warn"/"ignore"): it is the
+  # only copy of the failed pages, and `resume` needs it.
+  if (delete_input && length(failed) == 0L) {
+    unlink(input_json, recursive = TRUE, force = TRUE)
+  }
 
   # Only a wholly successful run clears the sentinel, so `00_in.progress`
   # marks a partial conversion and can drive `resume`.
   success <- length(failed) == 0L
   invisible(normalizePath(output))
+}
+
+#' Copy each query's record (`_query.json`, `_query_oql.txt`, `_query_oql.html`)
+#' into its Parquet partition
+#'
+#' @keywords internal
+#' @noRd
+.prr_copy_query_records <- function(input_json, output) {
+  records <- list.files(
+    input_json, pattern = "^_quer(y\\.json|y_oql\\.txt|y_oql\\.html|ies_oql\\.txt|ies_oql\\.html)$",
+    full.names = TRUE, recursive = TRUE
+  )
+  if (length(records) == 0L) {
+    return(invisible(character(0)))
+  }
+  # Same leaf -> partition mapping as the page files
+  targets <- file.path(
+    dirname(.prr_output_paths(records, input_json, output)),
+    basename(records)
+  )
+  for (d in unique(dirname(targets))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+  file.copy(records, targets, overwrite = TRUE)
+  invisible(targets)
 }
 
 #' Report per-file conversion failures according to `on_error`
@@ -289,19 +359,21 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_discover_jsons <- function(input_json) {
   jsons <- list.files(
-    input_json, pattern = "\\.json$", full.names = TRUE, recursive = TRUE
+    # Page files only: `_query.json` (the query record) is not data.
+    input_json, pattern = "^(results_page|group_by_page|single)_[0-9]+\\.json$", full.names = TRUE, recursive = TRUE
   )
   jsons <- jsons[order(as.numeric(
     sub(".*_([0-9]+)\\.json$", "\\1", jsons)
   ))]
   if (length(jsons) == 0) stop("No JSON files found in `input_json`!")
 
-  types <- unique(vapply(
+  file_types <- vapply(
     basename(jsons),
     function(b) strsplit(b, "_")[[1L]][1L],
     character(1L)
-  ))
-  if (length(types) > 1L) stop("Mixed entity types found in `input_json`!")
+  )
+  types <- unique(file_types)
+  if (length(types) > 1L) .prr_stop_mixed(jsons, file_types, input_json)
   entity_type <- if (identical(types, "group")) "group_by" else types
   array_field <- switch(
     entity_type, results = "results", group_by = "group_by", NULL
@@ -311,6 +383,40 @@ pro_request_parquet <- function(
     jsons       = jsons,
     array_field = array_field,
     has_subdirs = length(list.dirs(input_json, recursive = FALSE)) > 0
+  )
+}
+
+#' Stop because query results of different kinds cannot share one dataset
+#'
+#' Grouped results (counts per group), lists of records and single records
+#' have different structures. Names the query directories of each kind, so
+#' they can be converted separately.
+#'
+#' @keywords internal
+#' @noRd
+.prr_stop_mixed <- function(jsons, file_types, input_json) {
+  labels <- c(results = "lists of records", group = "grouped results (group_by)",
+              single = "single records")
+  dirs <- dirname(jsons)
+  lines <- vapply(unique(file_types), function(t) {
+    d <- unique(dirs[file_types == t])
+    rel <- substring(d, nchar(sub("/+$", "", input_json)) + 2L)
+    rel[!nzchar(rel)] <- "."
+    shown <- utils::head(rel, 5L)
+    paste0(
+      "  ", labels[[t]] %||% t, ": ", paste(shown, collapse = ", "),
+      if (length(rel) > length(shown)) paste0(", ... (", length(rel), " in total)") else ""
+    )
+  }, character(1))
+  stop(
+    "`input_json` mixes query results of different kinds, which cannot be ",
+    "combined in one Parquet dataset:\n",
+    paste(lines, collapse = "\n"),
+    "\nConvert each kind separately, e.g. ",
+    "`pro_request_parquet(input_json = file.path(input_json, \"<query>\"), ...)`, ",
+    "or download them with separate `pro_fetch()` calls. ",
+    "The JSON files are kept.",
+    call. = FALSE
   )
 }
 
@@ -356,7 +462,25 @@ pro_request_parquet <- function(
       NULL
     }
   )
-  if (is.null(schema_df) || nrow(schema_df) == 0L) return(schema_df)
+  if (is.null(schema_df) || nrow(schema_df) == 0L) {
+    # Every sampled page is empty (`"results": []`, e.g. a query matching no
+    # works), so there is no record to infer a struct from. Take the columns
+    # from the baseline of the queried entity, so the conversion still writes
+    # zero-row Parquet files with the usual columns.
+    baseline_df <- .resolve_baseline(
+      schema, character(0L), entity = .prr_query_entity(jsons)
+    )
+    if (is.null(baseline_df)) return(schema_df)
+    schema_df <- data.frame(
+      column_name = baseline_df$col_name, column_type = baseline_df$col_type
+    )
+    if (verbose) {
+      message("No records to infer the schema from; using the baseline schema for entity '",
+              attr(baseline_df, "entity"), "'.")
+    }
+  } else {
+    schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
+  }
 
   # Force abstract_inverted_index to MAP — DuckDB sometimes infers STRUCT
   # when the sample has no duplicate-cased keys, which breaks map_entries().
@@ -365,13 +489,26 @@ pro_request_parquet <- function(
     schema_df$column_type[aii_idx] <- "MAP(VARCHAR, BIGINT[])"
   }
 
-  schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
-
   struct_fields <- paste(schema_df$column_name, schema_df$column_type, sep = " ")
   list_type <- paste0("STRUCT(", paste(struct_fields, collapse = ", "), ")[]")
   list_type <- .prr_fix_json_types(list_type)
   attr(schema_df, "list_type") <- list_type
   schema_df
+}
+
+#' Entity of the query, from the `_query.json` that pro_request() writes next
+#' to the pages: `get_rows` of the OQO, else the first path segment of the URL.
+#' NULL when there is no record.
+#'
+#' @keywords internal
+#' @noRd
+.prr_query_entity <- function(jsons) {
+  rec <- file.path(unique(dirname(jsons)), "_query.json")
+  rec <- rec[file.exists(rec)]
+  if (length(rec) == 0L) return(NULL)
+  q <- tryCatch(jsonlite::read_json(rec[[1L]]), error = function(e) NULL)
+  entity <- q$oqo$get_rows %||% sub("^https?://[^/]+/([a-z-]+).*$", "\\1", q$query_url %||% "")
+  if (grepl("^[a-z-]+$", entity)) entity else NULL
 }
 
 #' @keywords internal

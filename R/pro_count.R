@@ -10,6 +10,7 @@
 #'   `pro_api_key()`. If `NULL` or `""`, the request is sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
+#' @param via `"url"` (default) or `"oqo"`; see [pro_request()].
 #'
 #' @return A data.frame containing `count`, `db_response_time_ms`,
 #'   `page`, and `per_page` elements. If count is negative, the size of the
@@ -28,8 +29,10 @@
 pro_count <- function(
   query_url,
   api_key = pro_api_key(),
-  error_log = NULL
+  error_log = NULL,
+  via = c("url", "oqo")
 ) {
+  via <- match.arg(via)
   if (
     is.null(api_key) ||
       (is.character(api_key) && length(api_key) == 1 && !nzchar(api_key))
@@ -47,12 +50,19 @@ pro_count <- function(
     select = "ids",
     page = 1
   )
-  if (!is.null(api_key)) {
-    query$api_key <- api_key
+  oq <- if (via == "oqo") .oa_to_oqo(query_url, api_key) else NULL
+  req <- if (is.null(oq)) {
+    do.call(httr2::req_url_query, c(list(httr2::request(query_url)), query))
+  } else {
+    httr2::request(oq$root) |>
+      httr2::req_method("POST") |>
+      httr2::req_body_json(
+        list(oqo = oq$oqo, per_page = 1L, page = 1L, select = "id"),
+        auto_unbox = TRUE
+      )
   }
-
-  req <- httr2::request(query_url)
-  req <- do.call(httr2::req_url_query, c(list(req), query)) |>
+  req <- req |>
+    .oa_auth(api_key) |>
     httr2::req_user_agent(
       paste0("openalexPro/", packageVersion("openalexPro"))
     )

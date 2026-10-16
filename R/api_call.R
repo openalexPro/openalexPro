@@ -29,7 +29,7 @@
 #' temporarily set to \code{FALSE} during the nested rate-limit call to prevent
 #' infinite recursion.
 #'
-#' @importFrom httr2 req_retry req_error req_perform resp_status resp_header
+#' @importFrom httr2 req_retry req_error req_perform resp_status resp_header req_options
 #' @importFrom rlang caller_env abort
 #' @noRd
 api_call <- function(
@@ -59,49 +59,51 @@ api_call <- function(
     }
   }
 
-  # Retry logic for transient statuses
+  # Retry logic for transient statuses and network failures (dropped
+  # connection, curl timeout). A transfer that stalls (< 1 byte/s for 120 s)
+  # is aborted and so retried, instead of hanging the worker forever.
   req <- req |>
+    httr2::req_options(low_speed_limit = 1L, low_speed_time = 120L) |>
     httr2::req_retry(
       max_tries = max_retries,
+      retry_on_failure = TRUE,
       backoff = ~ 2^.x,
+      # An exhausted daily budget also returns 429, but retrying cannot help
+      # before it resets at midnight UTC -- fail at once instead of backing off.
       is_transient = function(resp) {
         status <- httr2::resp_status(resp)
-        status %in% transient_responses
+        status %in% transient_responses && !.oa_budget_exhausted(resp)
       }
     )
 
-  # IMPORTANT: control when httr2 should throw vs return the response
+  # IMPORTANT: control when httr2 should throw vs return the response.
+  # NULL keeps httr2's default (throw on 4xx/5xx).
+  is_error <- NULL
   if (!missing(get_html_response) && is.null(get_html_response)) {
     # Return ALL non-200 responses (never auto-throw)
-    req <- req |> httr2::req_error(is_error = function(resp) FALSE)
+    is_error <- function(resp) FALSE
   } else if (!missing(get_html_response) && is.numeric(get_html_response)) {
     # Return only when status matches the integer AND content is HTML
-    req <- req |>
-      httr2::req_error(is_error = function(resp) {
-        status <- httr2::resp_status(resp)
-        if (status == get_html_response) {
-          ct <- httr2::resp_header(resp, "content-type")
-          is_html <- !is.na(ct) &&
-            grepl("text/html|application/xhtml\\+xml", ct, ignore.case = TRUE)
-          return(!is_html) # don't throw if HTML; throw otherwise
-        }
-        # default: throw on other 4xx/5xx
-        return(status >= 400)
-      })
-    # If get_html_response is missing: leave default erroring behavior
+    is_error <- function(resp) {
+      status <- httr2::resp_status(resp)
+      if (status == get_html_response) {
+        ct <- httr2::resp_header(resp, "content-type")
+        is_html <- !is.na(ct) &&
+          grepl("text/html|application/xhtml\\+xml", ct, ignore.case = TRUE)
+        return(!is_html) # don't throw if HTML; throw otherwise
+      }
+      # default: throw on other 4xx/5xx
+      return(status >= 400)
+    }
   }
+  req <- httr2::req_error(req, is_error = is_error, body = .oa_error_body)
 
   # Perform the request
   resp <- tryCatch(
     httr2::req_perform(req, error_call = rlang::caller_env()),
     error = function(e) {
       log_fun(
-        paste0(
-          "\u274C API call failed after ",
-          max_retries,
-          " attempts: ",
-          e$message
-        ),
+        paste0("\u274C API call failed: ", conditionMessage(e)),
         error_log
       )
       rlang::abort(message = e$message, class = "api_call_error", parent = e)
@@ -155,4 +157,82 @@ api_call <- function(
       class = "unexpected_http_status"
     )
   }
+}
+
+
+#' Error details for a failed OpenAlex response
+#'
+#' Passed to `httr2::req_error(body = )`: adds OpenAlex's own explanation
+#' (e.g. which filter name is invalid) to the "HTTP 400 Bad Request" error, and
+#' for an exhausted daily budget when it resets.
+#'
+#' @keywords internal
+#' @noRd
+.oa_error_body <- function(resp) {
+  body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
+  msg <- if (is.list(body)) body$message %||% body$error else NULL
+  # OQL / OQO errors come as {"validation": {"errors": [{type, message}]}}
+  errors <- if (is.list(body) && is.list(body$validation)) body$validation$errors
+  if (length(errors) > 0L) {
+    msg <- vapply(
+      errors,
+      function(e) paste0(e$type %||% "error", ": ", e$message %||% ""),
+      character(1)
+    )
+  }
+  if (is.character(msg) && length(msg) == 1L && nchar(msg) > 500L) {
+    msg <- paste0(substr(msg, 1L, 500L), " [...]")
+  }
+  if (.oa_budget_exhausted(resp)) {
+    reset <- suppressWarnings(
+      as.numeric(httr2::resp_header(resp, "x-ratelimit-reset", NA))
+    )
+    msg <- c(msg, paste0(
+      "Not enough OpenAlex credits left today",
+      if (!is.na(reset)) sprintf("; it resets in %.1f h (midnight UTC)", reset / 3600),
+      "."
+    ))
+  }
+  msg
+}
+
+#' Is this a 429 caused by the daily budget?
+#'
+#' OpenAlex returns 429 both for > 100 requests/s and for the daily budget:
+#' either it is used up (`X-RateLimit-Remaining` at zero), or the query costs
+#' more than what is left (`"error": "not_enough_credits"`). Retrying helps
+#' only in the first case.
+#'
+#' @keywords internal
+#' @noRd
+.oa_budget_exhausted <- function(resp) {
+  if (httr2::resp_status(resp) != 429L) {
+    return(FALSE)
+  }
+  remaining <- suppressWarnings(
+    as.numeric(httr2::resp_header(resp, "x-ratelimit-remaining", NA))
+  )
+  body <- tryCatch(httr2::resp_body_json(resp), error = function(e) NULL)
+  isTRUE(remaining <= 0) || identical(body$error, "not_enough_credits")
+}
+
+
+#' Add the API key to a request as a Bearer header
+#'
+#' The key goes into `Authorization: Bearer` rather than the URL, so it does not
+#' appear in URLs, logs, error messages or recorded test responses (httr2
+#' redacts the header when printing). OpenAlex accepts it on GET and POST
+#' (`api_key` in a POST body is rejected), on `/rate-limit` and on
+#' `content.openalex.org`.
+#'
+#' @param req An httr2 request.
+#' @param api_key API key, or `NULL` / `""` for none.
+#' @return The request.
+#' @keywords internal
+#' @noRd
+.oa_auth <- function(req, api_key) {
+  if (is.null(api_key) || !nzchar(api_key)) {
+    return(req)
+  }
+  httr2::req_auth_bearer_token(req, api_key)
 }

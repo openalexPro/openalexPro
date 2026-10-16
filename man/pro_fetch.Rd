@@ -12,20 +12,25 @@ pro_fetch(
   api_key = pro_api_key(),
   delete_input = TRUE,
   workers = 1,
+  download_workers = workers,
   verbose = FALSE,
   progress = TRUE,
   enrich = TRUE,
   count_only,
-  error_log = NULL
+  error_log = NULL,
+  resume = FALSE,
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
+  compact_parquet = NULL
 )
 }
 \arguments{
 \item{query_url}{The URL of the API query or a list of URLs returned from \code{pro_query()}.}
 
-\item{pages}{The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
-all pages will be downloaded. Default: 100000.}
+\item{pages}{The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If \code{NULL},
+all pages will be downloaded.}
 
 \item{project_folder}{Directory where intermediate (\code{json}) and final
 (\code{parquet}) results are stored.  If it does not exist, it is created.
@@ -43,7 +48,13 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 \item{delete_input}{Logical. If \code{TRUE} (the default), the \code{json}
 subfolder is deleted after successful conversion to Parquet.}
 
-\item{workers}{Number of parallel workers to use if \code{query_url} is a list. Defaults to 1.}
+\item{workers}{Number of parallel workers for the conversion to Parquet
+(CPU and memory bound), and by default also for the download. Default 1.}
+
+\item{download_workers}{Number of parallel workers for the download, used
+when \code{query_url} is a list. Defaults to \code{workers}. Downloads
+are limited by the API rather than the machine, so a few (e.g. 2--4)
+are usually enough, while the conversion can use more.}
 
 \item{verbose}{Logical indicating whether to show verbose messages.}
 
@@ -57,6 +68,37 @@ add \code{abstract} and \code{citation} computed columns.}
 \code{TRUE} and give a warning if \code{FALSE}.}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
+
+\item{resume}{Logical. When \code{TRUE}, keep existing \code{json} and
+\code{parquet} subfolders and complete an interrupted run: only leaf
+queries that did not finish are downloaded again, and only missing
+Parquet files are converted. A finished run is returned unchanged.
+\code{overwrite} is ignored. Default \code{FALSE}.}
+
+\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
+the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+(free) into an OpenAlex Query Object and sent via POST, with the same
+results. It has no URL length limit, accepts more than 100 values per
+filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
+in about one page per chunk), checks the query before any credits are spent, and records the
+exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
+fetched via GET.}
+
+\item{inconsistency_on_resume}{What to do when a query that was resumed in
+the middle turns out inconsistent, because OpenAlex's data changed between
+the sessions: records that appear twice (found exactly, by work ID) or
+missing records (only as a net difference to OpenAlex's current count --
+a record lost and another added cancel out). \code{"error"} (default) stops;
+nothing is lost, and a rerun with \code{resume = TRUE} and another value
+applies that choice without downloading again. \code{"warning"} keeps both
+copies and warns, \code{"ignore"} keeps both silently, \code{"oldest"} / \code{"newest"}
+keep the first / last downloaded copy (removing the other from its page
+file) and warn about missing records.}
+
+\item{compact_parquet}{\code{NULL} (default) keeps one Parquet file per API
+page.  A number, e.g. \code{250000}, combines each query's page files into
+files of up to that many records once every file has converted -- much
+faster to read.  See \code{\link[=pro_compact_parquet]{pro_compact_parquet()}}.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder
@@ -79,7 +121,20 @@ The function
 
 \strong{This function assumes \code{count_only == FALSE}}
 }
+\examples{
+\dontrun{
+# Combine each query's page files into files of up to 250,000 records,
+# which are much faster to read
+pro_fetch(
+  pro_query(search = "coral reef", from_publication_date = "2020-01-01"),
+  project_folder = "coral_reef",
+  compact_parquet = 250000
+)
+}
+
+}
 \seealso{
 \code{\link[=pro_request]{pro_request()}} for the download step,
-\code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step.
+\code{\link[=pro_request_parquet]{pro_request_parquet()}} for the conversion step,
+\code{\link[=pro_compact_parquet]{pro_compact_parquet()}} to compact an existing dataset.
 }

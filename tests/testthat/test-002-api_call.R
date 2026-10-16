@@ -48,3 +48,103 @@ test_that("api_call returns response object on success (200)", {
 #     expect_error(api_call(req), "OpenAlex API request failed \\[404\\]")
 #   })
 # })
+
+mock_json <- function(status, body, headers = list()) {
+  function(req) {
+    httr2::response(
+      status,
+      headers = c(list("content-type" = "application/json"), headers),
+      body = charToRaw(body)
+    )
+  }
+}
+
+test_that("api_call includes OpenAlex's own message in a 4xx error", {
+  httr2::local_mocked_responses(mock_json(
+    400,
+    '{"error":"Invalid query parameters error.","message":"DOESNTEXIST is not a valid field."}'
+  ))
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "DOESNTEXIST is not a valid field"
+  )
+})
+
+test_that("an exhausted daily budget fails at once instead of retrying", {
+  calls <- 0L
+  mock <- mock_json(
+    429, '{"error":"Rate limit exceeded"}',
+    list("x-ratelimit-remaining" = "0", "x-ratelimit-reset" = "7200")
+  )
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    mock(req)
+  })
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "credits left today; it resets in 2.0 h"
+  )
+  expect_equal(calls, 1L)
+})
+
+test_that("a not_enough_credits refusal fails at once", {
+  calls <- 0L
+  mock <- mock_json(
+    429, '{"error":"not_enough_credits","message":"Query costs 10 credits."}',
+    list("x-ratelimit-remaining" = "5")
+  )
+  httr2::local_mocked_responses(function(req) {
+    calls <<- calls + 1L
+    mock(req)
+  })
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/works")),
+    "Query costs 10 credits"
+  )
+  expect_equal(calls, 1L)
+})
+
+test_that("an OQL validation error shows OpenAlex's parse message", {
+  httr2::local_mocked_responses(mock_json(
+    400,
+    '{"validation":{"valid":false,"errors":[{"type":"parse_error","message":"unexpected text near \\"wher\\" (position 6)","position":6}],"warnings":[]}}'
+  ))
+  expect_error(
+    api_call(httr2::request("https://api.openalex.org/?oql=works%20wher")),
+    "parse_error: unexpected text near \"wher\""
+  )
+})
+
+test_that("the API key travels as a Bearer header, never in a URL", {
+  seen <- new.env()
+  seen$urls <- character(0)
+  seen$auth <- character(0)
+  httr2::local_mocked_responses(function(req) {
+    seen$urls <- c(seen$urls, req$url)
+    seen$auth <- c(seen$auth, httr2::req_get_headers(req, redacted = "reveal")$Authorization %||% NA)
+    if (grepl("DOESNTEXIST", req$url, fixed = TRUE)) {
+      return(httr2::response(400, headers = list("content-type" = "application/json"),
+        body = charToRaw('{"message":"x. Valid fields are underscore or hyphenated versions of: type"}')))
+    }
+    if (grepl("rate-limit", req$url, fixed = TRUE)) {
+      return(httr2::response(200, headers = list("content-type" = "application/json"),
+        body = charToRaw('{"rate_limit":{"daily_budget_usd":1}}')))
+    }
+    httr2::response(200, headers = list("content-type" = "application/json"),
+      body = charToRaw('{"meta":{"count":1,"db_response_time_ms":1,"page":1,"per_page":200,"next_cursor":null},"results":[{"id":"W1"}]}'))
+  })
+  withr::local_options(openalexPro = NULL)
+  key <- "secret-test-key"
+  url <- "https://api.openalex.org/works?filter=type:article"
+
+  pro_request(url, output = file.path(withr::local_tempdir(), "json"),
+              api_key = key, progress = FALSE)
+  pro_count(url, api_key = key)
+  pro_rate_limit_status(api_key = key, verbose = FALSE)
+  withr::with_envvar(c(openalexPro.api_key = key), opt_filter_names(update = TRUE))
+
+  expect_length(seen$urls, 4L)
+  expect_false(any(grepl(key, seen$urls, fixed = TRUE)))
+  expect_false(any(grepl("api_key", seen$urls, fixed = TRUE)))
+  expect_equal(seen$auth, rep(paste("Bearer", key), 4L))
+})

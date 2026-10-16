@@ -1,10 +1,18 @@
 Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
-Version: 0.12.1
+Version: 0.13.0
 Author: Rainer M Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
-Description: More about what it does (maybe more than one line).
+Description: Retrieves large result sets from the 'OpenAlex' API
+    (<https://openalex.org>) without holding them in memory. Queries are
+    built and validated with classic filters and search, or written in
+    'OpenAlex' query language (OQL) or its JSON form (OQO). Results are
+    downloaded page by page to JSON files, with cursor paging, parallel
+    downloads, retries and resume, and converted per page with 'DuckDB' to a
+    partitioned 'Apache Parquet' dataset that includes reconstructed
+    abstracts and citation strings. Full-text PDFs and TEI XML can be
+    downloaded, and the daily API budget can be inspected.
 URL: https://github.com/openalexPro/openalexPro, https://openalexpro.github.io/openalexPro/, https://doi.org/10.5281/zenodo.17453180
 BugReports: https://github.com/openalexPro/openalexPro/issues
 License: GPL (>= 2)
@@ -13,19 +21,20 @@ Depends:
 Imports:
     arrow,
     cli,
+    curl,
     DBI,
     dplyr,
     duckdb,
     future,
     future.apply,
-    httr2,
+    httr2 (>= 1.0.0),
     jqr,
+    jsonlite,
     progressr,
     rlang
 Additional_repositories: 
     https://ropensci.r-universe.dev
 Suggests: 
-    jsonlite,
     keyring,
     knitr,
     openalexR (>= 1.4.0),

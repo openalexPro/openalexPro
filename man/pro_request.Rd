@@ -15,19 +15,21 @@ pro_request(
   progress = TRUE,
   count_only = FALSE,
   error_log = NULL,
-  resume = FALSE
+  resume = FALSE,
+  via = c("url", "oqo"),
+  inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 )
 }
 \arguments{
 \item{query_url}{The URL of the API query or a list of URLs returned from \code{pro_query()}.}
 
-\item{pages}{The number of pages to be downloaded. The default is set to
-10000, which would be 2,000,000 works. It is recommended to not increase it
-beyond 100000 due to server load and to use the snapshot instead. If \code{NULL},
-all pages will be downloaded. Default: 100000.}
+\item{pages}{The maximum number of pages (of 200 records) downloaded per
+query; for a list, the limit applies to each leaf query. 100000 pages
+are 20,000,000 records; for more, use the snapshot instead. If \code{NULL},
+all pages will be downloaded.}
 
-\item{output}{directory where the JSON files are saved. Default is a
-temporary directory. Needs to be specified.}
+\item{output}{directory where the JSON files are saved. Required (the
+default \code{NULL} stops with an error) unless \code{count_only = TRUE}.}
 
 \item{overwrite}{Logical. If \code{TRUE}, \code{output} will be deleted before
 downloading. For a list \code{query_url}, the entire top-level \code{output}
@@ -48,10 +50,34 @@ without an API key (subject to OpenAlex's unauthenticated limits).}
 
 \item{error_log}{location of error log of API calls. (default: \code{NULL} (none)).}
 
-\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and refetch
-only the leaf queries that did not complete.  Completion is detected with
-the \verb{00_in.progress} sentinel each leaf directory carries while it is
-being written.  Default \code{FALSE}.}
+\item{resume}{Logical.  When \code{TRUE}, keep an existing \code{output} and download
+only what is missing: finished queries are skipped (detected by the
+\verb{00_in.progress} sentinel each query directory carries while it is being
+written), and an interrupted query continues after its last saved page,
+using the cursor stored in its \verb{_paging.json} (the message says how old
+it is). If that state cannot be trusted, or for samples and semantic
+search, the query is fetched again from page 1. A single URL is treated
+as one query.  Default \code{FALSE}.}
+
+\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
+the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+(free) into an OpenAlex Query Object and sent via POST, with the same
+results. It has no URL length limit, accepts more than 100 values per
+filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
+in about one page per chunk), checks the query before any credits are spent, and records the
+exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
+fetched via GET.}
+
+\item{inconsistency_on_resume}{What to do when a query that was resumed in
+the middle turns out inconsistent, because OpenAlex's data changed between
+the sessions: records that appear twice (found exactly, by work ID) or
+missing records (only as a net difference to OpenAlex's current count --
+a record lost and another added cancel out). \code{"error"} (default) stops;
+nothing is lost, and a rerun with \code{resume = TRUE} and another value
+applies that choice without downloading again. \code{"warning"} keeps both
+copies and warns, \code{"ignore"} keeps both silently, \code{"oldest"} / \code{"newest"}
+keep the first / last downloaded copy (removing the other from its page
+file) and warn about missing records.}
 }
 \value{
 If \code{count_only} is \code{FALSE} (the default) the complete path to the expanded and
@@ -71,4 +97,26 @@ in the list are returned in a folder named after the names of the list elements 
 \code{output} folder.
 
 When starting the download, a file \verb{00_in.progress} which is deleted upon completion.
+
+If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+the other queries still complete. At the end, one error names each failed
+query with OpenAlex's reason. The failed queries keep their
+\verb{00_in.progress}, so \code{resume = TRUE} fetches only them again.
+
+Pages are fetched with cursor paging. A \code{per_page} in the query is kept;
+\code{page} and \code{cursor} are replaced, with a warning. A \code{sample} is fetched by
+page number, as OpenAlex ends cursor paging of a sample after the first
+page; if it spans several pages and has no \code{seed}, one is chosen and
+reported. Semantic search (\code{search.semantic}) is fetched as its single page
+of at most 50 results.
+
+Each query directory also gets a record of the query: \verb{_query.json} (the
+URL, how it was sent, the query as OpenAlex ran it as OQL and OQO, records,
+requests, credits, cost, time), and for papers \verb{_query_oql.txt} and a
+formatted, self-contained \verb{_query_oql.html} with the query in OpenAlex's
+readable query language (OQL). The OQL is translated back and compared with
+the query that ran; the files say whether it reproduces it exactly. Single
+records get only \verb{_query.json}. For a list of queries, \verb{_queries_oql.txt}
+and \verb{_queries_oql.html} at the top of \code{output} summarise all queries
+(records, exactness, OQL), e.g. for a paper's supplement.
 }

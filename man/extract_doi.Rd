@@ -8,6 +8,7 @@ extract_doi(
   x,
   non_doi_value = "",
   normalize = TRUE,
+  lower = TRUE,
   what = c("doi", "resolver", "prefix", "suffix")
 )
 }
@@ -21,6 +22,10 @@ found. If `NULL`, only matched elements are returned.}
 \item{normalize}{Logical. If `TRUE` (default), convert extracted DOIs and
 suffixes to lowercase and trim surrounding whitespace. Has no effect for
 `what = "prefix"` or `what = "resolver"`.}
+
+\item{lower}{Logical. With `normalize = TRUE`, convert to lowercase
+(default). `FALSE` keeps the upper and lower case of the input, e.g. to
+compare the cleaned DOI with the field it came from.}
 
 \item{what}{What to extract from each element. One of:
 \describe{
@@ -41,6 +46,15 @@ A character vector:
 \description{
 Extracts DOIs or specific DOI components (resolver, prefix, or suffix) from a character vector.
 Assumes that each element of `x` contains at most one DOI (with or without resolver).
+}
+\details{
+Percent-encoded characters are decoded first, also when encoded twice
+(`%255B` -> `%5B` -> `[`), so an encoded DOI is recognised in full and an
+encoded line break (`%0A`) ends it. A DOI followed directly by a `%` that is
+not an encoding, such as the unfilled placeholders in `10.18461/ijfsd.v2i4.%x`
+or `10.37002/biobrasil.v%vi%i.798`, is not recognised at all rather than
+cut short to something that looks valid.
+A full stop or semicolon at the end is taken as punctuation and dropped.
 }
 \examples{
 x <- c(

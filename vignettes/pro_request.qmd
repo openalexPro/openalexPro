@@ -31,7 +31,7 @@ This vignette provides a comprehensive guide to using `pro_request()` and relate
 
 - Basic usage patterns
 - Progress bars and parallel processing
-- The complete data pipeline (`pro_request()` → `pro_request_jsonl()` → `pro_request_jsonl_parquet()`)
+- The complete data pipeline (`pro_request()` → `pro_request_parquet()`)
 - Internal architecture and flow diagrams
 - Error handling and retry logic
 
@@ -43,7 +43,7 @@ OpenAlex offers limited API access without credentials. Free API keys with subst
 
 ```{r}
 # Set credentials (typically in your .Renviron file)
-Sys.setenv(openalexPro.apikey = "your-api-key-here")
+Sys.setenv(openalexPro.api_key = "your-api-key-here")
 
 # Validate your credentials
 pro_validate_credentials()
@@ -121,14 +121,15 @@ pro_request(
   output = "data/json",
   progress = TRUE # Default
 )
-# ℹ Fetching query counts...
-# ℹ Total pages to download: 229
 # Downloading ████████████████░░░░░░░░░░░░░░░░ 120/229 [1m 23s]
 ```
 
+For a list of queries, the progress bar counts queries; each one advances it
+in fractions as its pages arrive. No extra count requests are made up front.
+
 ## Limiting Pages
 
-By default, `pro_request()` downloads up to 10,000 pages (2 million records at 200 per page). You can adjust this:
+By default, `pro_request()` downloads up to 100,000 pages per query (20 million records at 200 per page; `pro_fetch()` defaults to 10,000 pages). For a list of queries the limit applies to each query. You can adjust this:
 
 ```{r}
 # Download only first 100 pages (20,000 records)
@@ -168,7 +169,7 @@ pro_request(
 
 ## Nested List Queries
 
-`pro_request()` also accepts **nested lists** of URLs. Each nesting level is preserved as a subdirectory, and `pro_request_jsonl_parquet()` converts the directory depth to hive-style partition keys:
+`pro_request()` also accepts **nested lists** of URLs. Each nesting level is preserved as a subdirectory, and `pro_request_parquet()` converts the directory depth to hive-style partition keys:
 
 | Directory depth | Partition key |
 |----------------|--------------|
@@ -198,7 +199,7 @@ pro_request(
 #   data/json/institutions/usa/
 #   data/json/institutions/uk/
 
-# After jsonl + parquet conversion the dataset is hive-partitioned:
+# After parquet conversion the dataset is hive-partitioned:
 #   data/parquet/query=year_2022/
 #   data/parquet/query=year_2023/
 #   data/parquet/query=institutions/query_l2=usa/
@@ -224,12 +225,166 @@ pro_request(
 )
 ```
 
+Each query is handed to the next free worker, so a few large queries do not
+leave the other workers idle. Pages within one query are always fetched one
+after another (by cursor, or by page number for a `sample`), so `workers` only
+helps with a list of queries.
+
+If one query of a list fails (e.g. HTTP 404 for an ID that does not exist),
+the others still complete. At the end, one error names each failed query with
+OpenAlex's reason; `resume = TRUE` then fetches only those again.
+
+## Resuming an Interrupted Download
+
+With `resume = TRUE`, an existing `output` is kept and only queries that did
+not finish are downloaded. Each query directory carries a `00_in.progress`
+marker while it is being written. This works for a single URL as well as for
+lists, and `pro_fetch(resume = TRUE)` also completes an interrupted Parquet
+conversion:
+
+```{r}
+pro_request(query_url = urls, output = "data/json", resume = TRUE)
+pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
+```
+
+### Continuing in the middle of a query
+
+An interrupted query does not start again: it **continues after its last
+saved page**. OpenAlex's cursors are positions in the sort order and do not
+expire, but they contain nothing about the query, so after each page the
+exact query and the cursor are saved in `_paging.json`, together with the
+time the cursor was created:
+
+```
+Resuming `json` at page 4001 with a cursor from 2026-10-14T08:31:48Z
+(3.2 hours ago). Records that changed since then may appear twice or be
+missing; see `inconsistency_on_resume`. ...
+```
+
+Whatever cannot be trusted -- a damaged `_paging.json`, a different query,
+missing pages -- leads back to fetching the query again from page 1, with a
+message saying why. Samples and semantic search always start again (they are
+at most 50 requests). To fetch a query whole on purpose, delete its
+`_paging.json`.
+
+### Inconsistencies after a resume
+
+Between the sessions OpenAlex's data can change -- citation counts, new
+works -- and records can move across the cursor position: they then appear
+twice, or are missing. After a resumed query, `pro_request()` checks:
+
+- **duplicates**, exactly, by work ID across all pages of the query;
+- **missing records**, as the **net** difference to the number OpenAlex now
+  reports. A record lost and another one added since cancel out, so this
+  check cannot see every gap.
+
+`inconsistency_on_resume` decides what happens:
+
+| Value | Duplicates | Missing records (net) |
+|---|---|---|
+| `"error"` (default) | stop | stop |
+| `"warning"` | keep both copies, warn | warn |
+| `"ignore"` | keep both copies | -- |
+| `"oldest"` | keep the first downloaded copy | warn |
+| `"newest"` | keep the last downloaded copy | warn |
+
+With `"error"`, nothing is lost: everything stays on disk, and a rerun with
+`resume = TRUE` and another value applies that choice **without downloading
+anything again**. `"oldest"` and `"newest"` remove the other copy from its
+page file. The resume and the result of the check are recorded in the
+query's `_query.json` (`resumed`, `duplicates`, `duplicates_removed`,
+`missing_net`, ...).
+
+```{r}
+# after an "error": keep the newest copy of each duplicate, no download
+pro_request(query_url = urls, output = "data/json", resume = TRUE,
+            inconsistency_on_resume = "newest")
+```
+
+## Lossless Queries with `via = "oqo"`
+
+By default every query is sent as a GET request with the query in the URL.
+With `via = "oqo"` (also for `pro_fetch()` and `pro_count()`), each query is
+instead translated once into an OpenAlex Query Object (OQO) -- the form
+OpenAlex compiles every query to anyway -- and every page is sent as a POST
+request with the OQO in the body:
+
+```{r}
+pro_fetch(urls, project_folder = "data", via = "oqo")
+```
+
+- **Same results.** The test suite downloads the same queries both ways and
+  compares the complete result sets (filters, boolean, wildcard and proximity
+  search, samples, grouped results, other entities, DOI lists, OQL and OQO
+  input). Only semantic search can differ by a work or two -- as it does
+  between two identical GET requests.
+- **Checked before spending credits.** The translation is free and validates
+  the query; an invalid query stops with OpenAlex's message before any paid
+  request.
+- **No URL limits.** A URL may carry at most 100 values per filter (with
+  `via = "url"`, `pro_request()` stops early when a filter has more). An OQO
+  may carry more, so `pro_query(..., chunk_limit = 200)` fetches a DOI or
+  OpenAlex ID list in about one request per chunk -- and the chunks still download in parallel
+  with `workers`.
+- **The exact query is recorded** (see below).
+
+Single records (`works/W123`) are always fetched with GET; they are free.
+
+## What Was Asked, and What It Cost
+
+Each query directory gets a `_query.json`: the URL (without the key), how it
+was sent (`via`), the query as OpenAlex ran it (`oql`, `oqo`), the number of
+records, requests and credits, the cost in USD, and when it ran.
+`pro_request_parquet()` copies it into the matching Parquet partition, so it
+is kept when the JSON files are deleted. At the end, `pro_request()` reports
+the total, e.g. `i 12 requests, 12 credits ($0.0012)`. Arrow and DuckDB ignore
+the file (leading underscore, not `.parquet`).
+
+For methods sections and supplements, each query directory also gets the query
+in OpenAlex's readable query language (OQL), in two forms:
+
+- `_query_oql.txt`: plain text, ready to paste into a paper, e.g.
+
+  ```
+  # OpenAlex query (OQL)
+  # Records: 141 | Downloaded: 2026-10-14 (UTC) | openalexPro 0.13.0
+  # Exact: this OQL translates back to exactly the query that ran.
+
+  get works where full text has (microbio*)
+    and source is [Nature](S137773608)
+    and published in 2020
+  ```
+
+- `_query_oql.html`: the same, nicely formatted with highlighted keywords and
+  OpenAlex IDs linked to their records; self-contained (no scripts, no
+  external resources), with the exact OQO and the request URL in collapsible
+  sections.
+
+The OQL is OpenAlex's own rendering of the query that ran. Because that
+rendering can be lossy in some details, it is translated back and compared:
+the header says **Exact** if the printed OQL reproduces the query, otherwise
+**Not exact** (then the OQO in `_query.json` is the exact query) or **Not
+checked** (if OpenAlex's free `/query` endpoint could not be reached). Single
+records (`works/W123`) get no OQL files. Like `_query.json`, both files are
+copied into the Parquet partition.
+
+For a list of queries, `_queries_oql.txt` and `_queries_oql.html` at the top
+of the output summarise all queries for a supplement: in the order of the
+list, each query's name, number of records, whether its OQL is exact, and the
+OQL itself, with totals (records, credits, cost) in the header; the HTML adds
+an overview table linking to each query. Queries skipped by `resume = TRUE`
+are included, failed ones are listed as "Not downloaded". Both files are
+copied to the top of the Parquet folder.
+
+The API key is sent as an `Authorization: Bearer` header, never in the URL, so
+it does not appear in logs, error messages or recorded test responses.
+
 # Function Parameters Reference
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `query_url` | character/list | required | URL or list of URLs from `pro_query()` |
-| `pages` | integer/NULL | 10000 | Max pages to download. `NULL` = all pages |
+| `pages` | integer/NULL | 100000 | Max pages per query. `NULL` = all pages |
 | `output` | character | required | Directory for JSON output files |
 | `overwrite` | logical | FALSE | Delete existing output directory if it exists |
 | `api_key` | character/NULL | env var | Optional API key. If `NULL` or `""`, requests are sent without key. |
@@ -238,6 +393,8 @@ pro_request(
 | `progress` | logical | TRUE | Show progress bar |
 | `count_only` | logical | FALSE | Return count without downloading |
 | `error_log` | character/NULL | NULL | Path for error log file |
+| `resume` | logical | FALSE | Keep `output`, refetch only unfinished queries |
+| `via` | character | "url" | `"url"` (GET) or `"oqo"` (translated once, sent via POST) |
 
 # pro_request() Architecture
 
@@ -254,12 +411,10 @@ flowchart TD
     ListMethod --> SetupFutures[Setup future plan<br/>based on workers]
     SetupFutures --> CountOnly1{count_only?}
 
-    CountOnly1 -->|Yes| ParallelCount[Parallel pro_count()<br/>for each URL]
+    CountOnly1 -->|Yes| ParallelCount["Parallel pro_count()<br/>for each URL"]
     ParallelCount --> ReturnCounts([Return named vector])
 
-    CountOnly1 -->|No| FetchCounts[Fetch counts for<br/>progress bar]
-    FetchCounts --> CalcPages[Calculate total<br/>pages to download]
-    CalcPages --> ParallelDownload[future_lapply:<br/>fetch_query_pages<br/>for each URL]
+    CountOnly1 -->|No| ParallelDownload[future_lapply:<br/>fetch_query_pages<br/>for each URL]
     ParallelDownload --> ReturnOutput([Return output path])
 
     %% Scalar Method Branch
@@ -301,16 +456,20 @@ flowchart TD
     CheckSingle -->|Yes| SaveSingle[Save single_1.json]
     SaveSingle --> Success1([Success: Return path])
 
-    CheckSingle -->|No| CalcMaxPages[Calculate max_pages<br/>from meta]
+    CheckSingle -->|No| CheckGroup{meta.groups_count<br/>set?}
+    CheckGroup -->|Yes| PrefixGroup[Prefix:<br/>group_by_page_]
+    CheckGroup -->|No| PrefixResults[Prefix:<br/>results_page_]
+    PrefixGroup --> CalcMaxPages[Calculate max_pages<br/>from meta]
+    PrefixResults --> CalcMaxPages
     CalcMaxPages --> StartProgress[Start CLI<br/>progress bar]
-    StartProgress --> SaveFirst[Save first page:<br/>results_page_1.json]
+    StartProgress --> SaveFirst[Save first page:<br/>PREFIX1.json]
 
     SaveFirst --> PageLoop{More pages?<br/>next_cursor exists?}
 
     PageLoop -->|Yes| CheckLimit{page > pages<br/>limit?}
     CheckLimit -->|Yes| Done[Exit loop]
-    CheckLimit -->|No| NextRequest[Request next page<br/>with cursor]
-    NextRequest --> SavePage[Save<br/>results_page_N.json]
+    CheckLimit -->|No| NextRequest[Request next page<br/>by cursor, or page<br/>number for a sample]
+    NextRequest --> SavePage[Save<br/>PREFIXN.json]
     SavePage --> UpdateProgress[Update<br/>progress bar]
     UpdateProgress --> PageLoop
 
@@ -325,9 +484,17 @@ flowchart TD
     style PageLoop fill:#fff3cd
 ```
 
+Whether a query is grouped is decided from the first response (grouped
+responses carry a numeric `meta$groups_count`), not from the URL, so grouping
+inside an OQL / OQO query is detected as well. Grouped pages are saved as
+`group_by_page_N.json`.
+
 ## api_call() Retry Logic
 
-All HTTP requests go through `api_call()` which provides robust retry logic:
+All HTTP requests go through `api_call()` which provides robust retry logic.
+Network failures (dropped connection, curl errors) are retried like transient
+statuses, and a transfer that stalls (less than 1 byte/s for 120 s) is aborted
+and retried. A 429 caused by the daily budget is not retried (see below):
 
 ```{mermaid}
 flowchart TD
@@ -338,7 +505,8 @@ flowchart TD
 
     CheckStatus -->|200 OK| ReturnSuccess([Return response])
 
-    CheckStatus -->|429, 500-504| Transient[Transient error:<br/>wait and retry]
+    CheckStatus -->|429 rate, 500-504,<br/>network failure| Transient[Transient error:<br/>wait and retry]
+    CheckStatus -->|429 budget| Abort0([Abort: budget<br/>and reset time])
     Transient --> RetryCount{Retries<br/>exhausted?}
     RetryCount -->|No| Perform
     RetryCount -->|Yes| LogError[Log error]
@@ -366,11 +534,18 @@ The following HTTP status codes are considered transient and trigger automatic r
 
 | Status | Meaning | Action |
 |--------|---------|--------|
-| 429 | Too Many Requests | Wait with exponential backoff |
+| 429 | Too Many Requests (more than 100 requests/s) | Wait with exponential backoff |
 | 500 | Internal Server Error | Retry up to 10 times |
 | 502 | Bad Gateway | Retry up to 10 times |
 | 503 | Service Unavailable | Retry up to 10 times |
 | 504 | Gateway Timeout | Retry up to 10 times |
+
+Not retried, because retrying cannot help:
+
+| Status | Meaning | Behaviour |
+|--------|---------|-----------|
+| 429 | Daily budget used up (`X-RateLimit-Remaining` is 0), or `not_enough_credits` (the query costs more than is left) | Abort at once; the error says when the budget resets (midnight UTC) |
+| 400, 403, 404 | Invalid query, no access, not found | Abort; the error includes OpenAlex's own message, e.g. which filter name is invalid, or the OQL parse error |
 
 # Output File Structure
 
@@ -406,6 +581,8 @@ During download, a `00_in.progress` file exists in the output directory. This fi
 - Download is still in progress, OR
 - Download was interrupted and is incomplete
 
+`resume = TRUE` uses this marker to decide which queries to fetch again.
+
 # The Complete Data Pipeline
 
 ## Pipeline Overview
@@ -420,29 +597,25 @@ flowchart LR
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJL[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJLP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ -->|URL/URLs| PR
-    PR -->|JSON files| PRJL
-    PRJL -->|JSONL files| PRJLP
-    PRJLP -->|Parquet dataset| DB
+    PR -->|JSON files| PRP
+    PRP -->|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 ```
+
+`pro_fetch()` runs steps 2 and 3 in one call.
 
 ## Complete Example
 
@@ -455,7 +628,10 @@ urls <- pro_query(
   search = "machine learning healthcare",
   from_publication_date = "2020-01-01",
   type = "article",
-  select = c("ids", "title", "abstract", "publication_year", "authorships")
+  select = c(
+    "ids", "title", "abstract_inverted_index", "publication_year",
+    "authorships", "cited_by_count"
+  )
 )
 
 # Step 2: Download JSON from API
@@ -466,22 +642,15 @@ pro_request(
   progress = TRUE
 )
 
-# Step 3: Convert to JSONL (with abstract reconstruction)
-pro_request_jsonl(
+# Step 3: Convert to Parquet (adds `abstract` and `citation` columns)
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
+  output = "data/parquet",
   progress = TRUE,
   workers = 4
 )
 
-# Step 4: Convert to Parquet (with schema harmonization)
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
-  output = "data/parquet",
-  progress = TRUE
-)
-
-# Step 5: Query with DuckDB
+# Step 4: Query with DuckDB
 library(duckdb)
 con <- dbConnect(duckdb())
 dbGetQuery(
@@ -497,21 +666,27 @@ dbGetQuery(
 
 ---
 
-# pro_request_jsonl()
+# pro_request_parquet()
 
 ## Purpose
 
-Converts the raw JSON files from OpenAlex into JSON Lines (JSONL) format, which is more efficient for processing with DuckDB. During conversion, it also:
+Converts the JSON files written by `pro_request()` into an Apache Parquet
+dataset using DuckDB, one Parquet file per JSON file, with no intermediate
+files. During conversion it:
 
-1. **Reconstructs abstracts** from the `abstract_inverted_index` field
-2. **Generates citation strings** (e.g., "Smith et al. (2023)")
-3. **Adds a `page` field** for tracking data provenance
-4. **Optionally adds custom columns**
+1. **Reconstructs abstracts** from `abstract_inverted_index` (column `abstract`)
+2. **Generates citation strings** such as "Smith et al. (2023)" (column `citation`)
+3. **Adds a `page` column** for tracking data provenance
+4. **Optionally adds constant columns** (`add_columns`)
+
+Abstracts and citations are only added for works, when the needed fields are
+present and `enrich = TRUE` (the default). `pro_fetch()` calls
+`pro_request()` and then `pro_request_parquet()`.
 
 ## Function Signature
 
 ```{r}
-pro_request_jsonl(
+pro_request_parquet(
   input_json = NULL,
   output = NULL,
   add_columns = list(),
@@ -519,7 +694,14 @@ pro_request_jsonl(
   verbose = TRUE,
   progress = TRUE,
   delete_input = FALSE,
-  workers = 1
+  sample_size = 1000,
+  workers = NULL,
+  enrich = TRUE,
+  schema = "auto",
+  resume = FALSE,
+  on_error = c("error", "warn", "ignore"),
+  memory_limit = NULL,
+  retry_memory_limit = NULL
 )
 ```
 
@@ -528,260 +710,125 @@ pro_request_jsonl(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `input_json` | character | required | Directory of JSON files from `pro_request()` |
-| `output` | character | required | Output directory for JSONL files |
-| `add_columns` | list | `list()` | Named list of additional columns to add |
-| `overwrite` | logical | FALSE | Overwrite existing output |
-| `verbose` | logical | TRUE | Show detailed messages |
-| `progress` | logical | TRUE | Show progress bar |
-| `delete_input` | logical | FALSE | Delete input JSON after conversion |
-| `workers` | integer | 1 | Number of parallel workers |
+| `output` | character | required | Output directory for the Parquet dataset |
+| `add_columns` | list | `list()` | Named character scalars added as constant columns |
+| `overwrite` | logical | FALSE | Overwrite an existing `output` |
+| `verbose` | logical | TRUE | Show progress messages |
+| `progress` | logical | TRUE | Show a progress bar |
+| `delete_input` | logical | FALSE | Delete `input_json` after a complete conversion (kept if any file failed) |
+| `sample_size` | integer | 1000 | Records per file sampled for schema inference (`-1` = all) |
+| `workers` | integer/NULL | NULL | Parallel workers; `NULL` or 1 runs sequentially |
+| `enrich` | logical | TRUE | Add `abstract` and `citation` columns for works |
+| `schema` | character/NULL | "auto" | Baseline schema for ambiguous column types (see below) |
+| `resume` | logical | FALSE | Keep `output` and convert only missing files |
+| `on_error` | character | "error" | What to do with files that still fail: `"error"`, `"warn"`, `"ignore"` |
+| `memory_limit` | character/NULL | NULL | DuckDB memory limit per worker; derived from RAM and `workers` |
+| `retry_memory_limit` | character/NULL | NULL | Memory limit for the sequential retry pass |
 
 ## Internal Flow
 
 ```{mermaid}
 flowchart TD
-    Start([pro_request_jsonl]) --> ValidateInputs[Validate inputs]
-    ValidateInputs --> CheckOverwrite{Output exists?}
-
-    CheckOverwrite -->|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite -->|Yes, overwrite=TRUE| DeleteOutput[Delete output dir]
-    CheckOverwrite -->|No| CreateOutput[Create output dir]
-
-    DeleteOutput --> CreateOutput
-    CreateOutput --> CreateProgress[Create 00_in.progress]
-    CreateProgress --> ListJSONs[List all JSON files<br/>recursively]
-
-    ListJSONs --> DetectType[Detect type:<br/>results, group_by, single]
-    DetectType --> SetupFutures[Setup parallel plan<br/>if workers > 1]
-
-    SetupFutures --> ProcessLoop[future_lapply over<br/>JSON files]
-
-    ProcessLoop --> ForEachJSON[For each JSON file]
-    ForEachJSON --> ExtractPage[Extract page number<br/>from filename]
-    ExtractPage --> CallJQ[jq_execute:<br/>transform JSON]
-    CallJQ --> CheckSize{Output > 5 bytes?}
-    CheckSize -->|No| DeleteEmpty[Delete empty file]
-    CheckSize -->|Yes| UpdateProgress[Update progress]
-    DeleteEmpty --> UpdateProgress
-    UpdateProgress --> MoreFiles{More files?}
-    MoreFiles -->|Yes| ForEachJSON
-    MoreFiles -->|No| Cleanup[Delete input if<br/>delete_input=TRUE]
-
-    Cleanup --> Success([Return output path])
+    Start([pro_request_parquet]) --> Prepare[Prepare output:<br/>overwrite / resume<br/>create 00_in.progress]
+    Prepare --> Discover[Find JSON files<br/>results / group_by / single]
+    Discover --> Infer[Infer schema from<br/>up to 20 sampled files]
+    Infer --> Baseline[Resolve ambiguous types<br/>with baseline schema]
+    Baseline --> Convert[Convert each file<br/>DuckDB COPY to .part<br/>rename on success]
+    Convert --> Failed{Any file<br/>failed?}
+    Failed -->|No| Done[Delete input if<br/>delete_input = TRUE<br/>remove 00_in.progress]
+    Failed -->|Yes, workers > 1| Retry[Retry failed files<br/>sequentially, full memory]
+    Failed -->|Yes, sequential| OnError
+    Retry --> Still{Still failing?}
+    Still -->|No| Done
+    Still -->|Yes| OnError[on_error:<br/>error / warn / ignore<br/>keep input and 00_in.progress]
+    Done --> Return([Return output path])
+    OnError --> Return
 
     style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style ProcessLoop fill:#cce5ff
-```
-
-## jq_execute() Transformation
-
-The `jq_execute()` function performs the actual JSON transformation using the `jqr` package:
-
-```{mermaid}
-flowchart TD
-    Start([jq_execute]) --> SelectRoot{Type?}
-
-    SelectRoot -->|results| ExtractResults[".results[] |"]
-    SelectRoot -->|group_by| ExtractGroups[".group_by[] |"]
-    SelectRoot -->|single| NoExtract[Direct processing]
-
-    ExtractResults --> Transform
-    ExtractGroups --> Transform
-    NoExtract --> Transform
-
-    Transform[Apply jq filter] --> AbstractCheck{Has abstract_<br/>inverted_index?}
-
-    AbstractCheck -->|Yes| ReconstructAbstract[Reconstruct abstract<br/>from inverted index]
-    AbstractCheck -->|No| SkipAbstract[Keep as-is]
-
-    ReconstructAbstract --> GenerateCitation
-    SkipAbstract --> GenerateCitation
-
-    GenerateCitation[Generate citation string<br/>based on author count]
-    GenerateCitation --> AddColumns{Custom columns?}
-
-    AddColumns -->|Yes| InsertColumns[Add custom columns]
-    AddColumns -->|No| SkipColumns[Skip]
-
-    InsertColumns --> DeleteInverted
-    SkipColumns --> DeleteInverted
-
-    DeleteInverted[Delete abstract_inverted_index]
-    DeleteInverted --> AddPage{Page specified?}
-
-    AddPage -->|Yes| InsertPage[Add page field]
-    AddPage -->|No| SkipPage[Skip]
-
-    InsertPage --> WriteJSONL[Write to JSONL file]
-    SkipPage --> WriteJSONL
-
-    WriteJSONL --> Done([Return output path])
-
-    style Start fill:#e1f5e1
-    style Done fill:#e1f5e1
-    style Transform fill:#cce5ff
-    style GenerateCitation fill:#fff3cd
-```
-
-### Abstract Reconstruction
-
-OpenAlex stores abstracts as inverted indices for efficiency. The transformation reconstructs readable text:
-
-**Input (inverted index):**
-```json
-{
-  "abstract_inverted_index": {
-    "Climate": [0],
-    "change": [1, 5],
-    "affects": [2],
-    "biodiversity": [3],
-    "and": [4]
-  }
-}
-```
-
-**Output (reconstructed):**
-```json
-{
-  "abstract": "Climate change affects biodiversity and change"
-}
-```
-
-### Citation String Generation
-
-The function generates citation strings based on author count:
-
-| Authors | Citation Format |
-|---------|----------------|
-| 1 | "Smith (2023)" |
-| 2 | "Smith & Jones (2023)" |
-| 3+ | "Smith et al. (2023)" |
-
----
-
-# pro_request_jsonl_parquet()
-
-## Purpose
-
-Converts JSONL files to Apache Parquet format for efficient analytical queries. Key features:
-
-1. **Automatic schema harmonization** across all files
-2. **Partitioning by page** for efficient filtering
-3. **SNAPPY compression** for good compression/speed balance
-4. **Streaming conversion** - no memory limit on total dataset size
-
-## Function Signature
-
-```{r}
-pro_request_jsonl_parquet(
-  input_jsonl = NULL,
-  output = NULL,
-  overwrite = FALSE,
-  verbose = TRUE,
-  progress = TRUE,
-  delete_input = FALSE,
-  sample_size = 1000
-)
-```
-
-## Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `input_jsonl` | character | required | Directory of JSONL files |
-| `output` | character | required | Output directory for Parquet dataset |
-| `overwrite` | logical | FALSE | Overwrite existing output |
-| `verbose` | logical | TRUE | Show detailed messages |
-| `progress` | logical | TRUE | Show progress bar |
-| `delete_input` | logical | FALSE | Delete input JSONL after conversion |
-| `sample_size` | integer | 1000 | Records to sample for schema inference |
-
-## Internal Flow
-
-```{mermaid}
-flowchart TD
-    Start([pro_request_jsonl_parquet]) --> ValidateInputs[Validate inputs]
-    ValidateInputs --> SetupDuckDB[Create in-memory<br/>DuckDB connection]
-    SetupDuckDB --> LoadJSON[INSTALL json;<br/>LOAD json;]
-
-    LoadJSON --> CheckOverwrite{Output exists?}
-    CheckOverwrite -->|Yes, overwrite=FALSE| ErrorExists[Stop: Output exists]
-    CheckOverwrite -->|Yes, overwrite=TRUE| DeleteOutput[Delete output]
-    CheckOverwrite -->|No| CreateOutput[Create output dir]
-
-    DeleteOutput --> CreateOutput
-    CreateOutput --> CreateProgress[Create 00_in.progress]
-    CreateProgress --> ListJSONL[List all JSONL files]
-
-    ListJSONL --> InferSchema[Infer unified schema<br/>from all files]
-
-    InferSchema --> SchemaSQL["DESCRIBE SELECT *<br/>FROM read_json_auto<br/>(union_by_name=true)"]
-    SchemaSQL --> SchemaSuccess{Schema<br/>inferred?}
-
-    SchemaSuccess -->|Yes| BuildColumns[Build columns clause<br/>for explicit schema]
-    SchemaSuccess -->|No| FallbackAuto[Fall back to<br/>per-file auto-detect]
-
-    BuildColumns --> ConvertLoop
-    FallbackAuto --> ConvertLoop
-
-    ConvertLoop[For each JSONL file]
-    ConvertLoop --> CopySQL["COPY (...) TO output<br/>(FORMAT PARQUET,<br/>PARTITION_BY 'page',<br/>APPEND)"]
-    CopySQL --> UpdateProgress[Update progress]
-    UpdateProgress --> MoreFiles{More files?}
-    MoreFiles -->|Yes| ConvertLoop
-    MoreFiles -->|No| Cleanup
-
-    Cleanup[Delete input if requested]
-    Cleanup --> CloseDB[Close DuckDB connection]
-    CloseDB --> Success([Return output path])
-
-    style Start fill:#e1f5e1
-    style Success fill:#e1f5e1
-    style ErrorExists fill:#f8d7da
-    style InferSchema fill:#cce5ff
-    style ConvertLoop fill:#fff3cd
+    style Return fill:#e1f5e1
+    style Retry fill:#fff3cd
+    style OnError fill:#f8d7da
 ```
 
 ## Schema Harmonization
 
 Different OpenAlex records can have different field structures. For example:
 
-- Some works have `primary_location` as a struct, others as a string
-- Some have nested arrays, others have null values
+- A field can be a struct in one record and `null` in all records of another page
+- Nested arrays can be empty in one file and populated in another
 
-The function samples records from all files to infer a unified schema that accommodates all variations:
+`pro_request_parquet()` therefore infers one schema from a sample of up to 20
+files (`sample_size` records per file) and converts every file with these
+column types, so all Parquet files can be read together:
 
 ```{mermaid}
 flowchart LR
-    subgraph Input[Input JSONL Files]
-        F1[File 1:<br/>location: struct]
-        F2[File 2:<br/>location: string]
-        F3[File 3:<br/>location: null]
+    subgraph Input[Input JSON Files]
+        F1["File 1:<br/>location: struct"]
+        F2["File 2:<br/>location: null"]
+        F3["File 3:<br/>location: struct"]
     end
 
     subgraph Schema[Schema Inference]
-        Sample[Sample from<br/>all files]
-        Union[union_by_name=true]
-        Describe[DESCRIBE query]
+        Sample[Sample up to<br/>20 files]
+        Describe[DuckDB<br/>DESCRIBE]
+        Baseline[Baseline schema<br/>for JSON-typed columns]
     end
 
     subgraph Output[Unified Schema]
-        Unified[location: struct<br/>(accommodates all)]
+        Unified["location: struct<br/>(applied to all files)"]
     end
 
     F1 --> Sample
     F2 --> Sample
     F3 --> Sample
-    Sample --> Union
-    Union --> Describe
-    Describe --> Unified
+    Sample --> Describe
+    Describe --> Baseline
+    Baseline --> Unified
 
     style Input fill:#f8d7da
     style Schema fill:#cce5ff
     style Output fill:#e1f5e1
 ```
+
+When DuckDB can only infer the generic `JSON` type for a column (for example
+because it is `null` in every sampled record), the `schema` argument supplies
+the type:
+
+- `"auto"` (default): detect the entity from the columns and use the matching
+  baseline schema from the user cache (`oa_schema(update = TRUE)`) or the
+  schemas bundled with the package
+- `"none"` or `NULL`: use DuckDB's inference only
+- a CSV file (columns `col_name`, `col_type`) or a directory of
+  `<entity>.csv` files
+
+## Failure Handling and Resume
+
+Each file is converted on its own, so one problematic page does not stop the
+others:
+
+- Every file is written to a `.part` sidecar and renamed only on success, so a
+  Parquet file that exists is always complete.
+- With `workers > 1`, files that fail (typically from memory pressure on
+  large, deeply nested pages) are retried once, sequentially and with the
+  whole memory budget.
+- Files that still fail are handled according to `on_error`: `"error"`
+  (default) stops and names them, `"warn"` warns and returns, `"ignore"` is
+  silent. In every case the JSON input is kept and `00_in.progress` stays in
+  `output`.
+- `resume = TRUE` keeps an existing `output` and converts only the files that
+  are missing:
+
+```{r}
+pro_request_parquet(
+  input_json = "data/json",
+  output = "data/parquet",
+  resume = TRUE
+)
+```
+
+With `workers > 1`, each worker gets its own DuckDB connection with a share of
+the memory budget, one thread and a private temporary directory.
 
 ## Output Structure
 
@@ -824,6 +871,15 @@ The hive partition columns (`query`, `query_l2`, …) become regular columns whe
 
 ---
 
+## Deprecated: the JSONL Pipeline
+
+`pro_request_jsonl()` and `pro_request_jsonl_parquet()` converted the JSON
+files in two steps via intermediate JSONL files. They still work but are
+deprecated; `pro_request_parquet()` replaces both. See their help pages
+(`?pro_request_jsonl`, `?pro_request_jsonl_parquet`) for existing code.
+
+---
+
 # Error Handling
 
 ## Common Errors
@@ -848,11 +904,15 @@ pro_request(query_url = url)
 
 ### API Rate Limiting
 
-If you hit rate limits (HTTP 429), the function automatically retries with exponential backoff. To reduce rate limit issues:
+OpenAlex allows up to 100 requests per second and a daily budget ($0.10
+without an API key, $1 with a free key). If you exceed the per-second limit
+(HTTP 429), the function retries with exponential backoff. If the daily budget
+is used up, it stops at once and reports when the budget resets (midnight UTC).
+To stay within the budget:
 
 1. Use an API key (free from OpenAlex)
-2. Reduce parallel workers
-3. Add delays between large queries
+2. Check the cost first: searches cost ten times as much as filter queries
+3. Use `resume = TRUE` after the reset to complete an interrupted download
 
 You can check your current budget and remaining allowance at any time with:
 
@@ -915,36 +975,39 @@ pro_request(
 Use `delete_input = TRUE` to save disk space:
 
 ```{r}
-# Convert and delete JSON
-pro_request_jsonl(
+# Convert and delete JSON (kept if any file failed to convert)
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
-  delete_input = TRUE
-)
-
-# Convert and delete JSONL
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
   output = "data/parquet",
   delete_input = TRUE
 )
 ```
+
+`pro_fetch()` deletes the JSON files by default (`delete_input = TRUE`).
 
 ## 5. Use Parallel Processing Wisely
 
 More workers isn't always better:
 
 ```{r}
-# Good for many small chunks
-pro_request(urls, output = "data", workers = 4)
+# Downloads: limited by the API, a few workers for a list of queries
+pro_request(urls, output = "data/json", workers = 4)
 
-# For JSONL conversion (CPU-bound)
-pro_request_jsonl(input, output, workers = parallel::detectCores() - 1)
+# Conversion: CPU and memory bound; each worker gets a share of the memory
+pro_request_parquet("data/json", "data/parquet", workers = parallel::detectCores() - 1)
+
+# pro_fetch() does both: `download_workers` for the download (defaults to
+# `workers`), `workers` for the conversion
+pro_fetch(urls, project_folder = "data", download_workers = 4,
+          workers = parallel::detectCores() - 1)
 ```
 
 # See Also
 
 - `pro_query()` - Build OpenAlex API query URLs
+- `pro_request_parquet()` - Convert the JSON results to a Parquet dataset
+- `pro_fetch()` - Download and convert in one step
+- `read_corpus()` - Open the Parquet dataset
 - `pro_count()` - Get result counts without downloading
 - `pro_validate_credentials()` - Validate API credentials (optional helper)
 - `pro_rate_limit_status()` - Check current rate limit usage and remaining budget
@@ -953,7 +1016,8 @@ pro_request_jsonl(input, output, workers = parallel::detectCores() - 1)
 
 # References
 
-- [OpenAlex API Documentation](https://docs.openalex.org/)
-- [OpenAlex Rate Limits](https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication)
+- [OpenAlex API Documentation](https://help.openalex.org/api/)
+- [OpenAlex Authentication and Rate Limits](https://help.openalex.org/api/authentication/)
+- [OpenAlex Error Handling](https://help.openalex.org/api/errors/)
 - [Apache Parquet Format](https://parquet.apache.org/)
 - [DuckDB Documentation](https://duckdb.org/docs/)

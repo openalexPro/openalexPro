@@ -1,0 +1,383 @@
+http_interactions:
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=publication_year%3A2018-2020%2Ctype%3Aerratum%2Cprimary_location.source.id%3AS137773608&per_page=1&select=ids&page=1
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:29 GMT
+      content-type: application/json
+      cf-ray: a4a53ec159cd01eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999778'
+      x-ratelimit-remaining-usd: '199.9778'
+      x-ratelimit-reset: '55531'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=VC%2FO1NV7nvJmV0Co8dsG6CQlkGrXBk7KDA7H9i%2Fn0F4%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966868"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=VC%2FO1NV7nvJmV0Co8dsG6CQlkGrXBk7KDA7H9i%2Fn0F4%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966868"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 366, "db_response_time_ms": 17, "page": 1, "per_page":
+        1, "groups_count": null, "x_query": {"oql": "get works where source is (S137773608)\n  and
+        published from 2018 through 2020\n  and type is [erratum](erratum)", "x_new_oql":
+        "get works from 2018\u20132020 in (S137773608) where type is [erratum](erratum)",
+        "oqo": {"get_rows": "works", "filter_rows": [{"column_id": "primary_location.source.id",
+        "value": "S137773608"}, {"column_id": "publication_year", "value": 2018, "operator":
+        ">="}, {"column_id": "publication_year", "value": 2020, "operator": "<="},
+        {"column_id": "type", "value": "erratum"}]}, "url": "/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum&per_page=1&page=1"},
+        "cost_usd": 0.0001}, "results": [{"ids": {"openalex": "https://openalex.org/W3015059505",
+        "doi": "https://doi.org/10.1038/s41586-020-2202-3", "mag": "3015059505", "pmid":
+        "https://pubmed.ncbi.nlm.nih.gov/32296181"}}], "group_by": []}'
+  recorded_at: 2026-10-14 08:34:29
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?filter=publication_year%3A2018-2020%2Ctype%3Aerratum%2Cprimary_location.source.id%3AS137773608"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:29 GMT
+      content-type: application/json
+      cf-ray: a4a53ec39bb801eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999778'
+      x-ratelimit-remaining-usd: '199.9778'
+      x-ratelimit-reset: '55531'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=uuN25X75Q5LpSSXMjD%2Bde8ndLCjy7wMxFjcEDoqjjmY%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966869"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=uuN25X75Q5LpSSXMjD%2Bde8ndLCjy7wMxFjcEDoqjjmY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966869"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum","oql":"get works where source is [Nature](S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","oql_oneline":"get works where source is [Nature](S137773608) and published from 2018 through 2020 and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in [Nature](S137773608) where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n5","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":">=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" >= "},{"kind":"text","text":"("},{"kind":"value","text":"2018","meta":{"value":2018}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2018,"operator":">="},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"comparison","column_id":"publication_year","column":"year","operator":"<=","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020,"operator":"<="},"addr":[3]},{"node":"clause","id":"n4","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"source","column_id":"primary_location.source.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[Nature]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n2","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n2","text":" >= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2018","value":2018,"kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" <= ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","value":2020,"kind":"comparison","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n5","text":" and ","label":"and"},{"t":"col","id":"n4","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n4","text":" is ","addr":"4"},{"t":"text","id":"n4","text":"(","addr":"4"},{"t":"vbrick","id":"n4","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"4.1"},{"t":"text","id":"n4","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:34:29
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"per_page":1,"page":1,"select":"id"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:29 GMT
+      content-type: application/json
+      cf-ray: a4a53ec61d6101eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999777'
+      x-ratelimit-remaining-usd: '199.9777'
+      x-ratelimit-reset: '55531'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=uuN25X75Q5LpSSXMjD%2Bde8ndLCjy7wMxFjcEDoqjjmY%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966869"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=uuN25X75Q5LpSSXMjD%2Bde8ndLCjy7wMxFjcEDoqjjmY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966869"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":366,"db_response_time_ms":12,"page":1,"per_page":1,"groups_count":null,"x_query":{"oql":"get works where source is (S137773608)\n  and published from 2018 through 2020\n  and type is [erratum](erratum)","x_new_oql":"get works from 2018\u20132020 in (S137773608) where type is [erratum](erratum)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2018,"operator":">="},{"column_id":"publication_year","value":2020,"operator":"<="},{"column_id":"type","value":"erratum"}]},"url":"/works?filter=primary_location.source.id:S137773608,publication_year:2018-2020,type:erratum&per_page=1&page=1"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3015059505"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:34:29
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=publication_year%3A2020&search=%28coral+OR+reef%29+AND+bleaching+NOT+model&per_page=1&select=ids&page=1
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:30 GMT
+      content-type: application/json
+      cf-ray: a4a53ec7be9601eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999776'
+      x-ratelimit-remaining-usd: '199.9776'
+      x-ratelimit-reset: '55530'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=cdEaHaeOZL4CT%2F43udmkjKxH7L3F6%2BWFpt1iKU3Tf5Q%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966869"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=cdEaHaeOZL4CT%2F43udmkjKxH7L3F6%2BWFpt1iKU3Tf5Q%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966869"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 580, "db_response_time_ms": 32, "page": 1, "per_page":
+        1, "groups_count": null, "x_query": {"oql": "get works where full text has
+        (bleaching AND (coral OR reef) NOT model)\n  and published in 2020", "x_new_oql":
+        "get works from 2020 with (bleaching AND (coral OR reef) NOT model) in the
+        full text", "oqo": {"get_rows": "works", "filter_rows": [{"column_id": "fulltext.search",
+        "value": "model", "operator": "has", "is_negated": true}, {"column_id": "fulltext.search",
+        "value": "bleaching", "operator": "has"}, {"column_id": "publication_year",
+        "value": 2020}, {"join": "or", "filters": [{"column_id": "fulltext.search",
+        "value": "coral", "operator": "has"}, {"column_id": "fulltext.search", "value":
+        "reef", "operator": "has"}]}]}, "url": "/works?filter=fulltext.search:%21model,fulltext.search:bleaching,publication_year:2020,fulltext.search:coral|reef&per_page=1&page=1"},
+        "cost_usd": 0.0001}, "results": [{"ids": {"openalex": "https://openalex.org/W3094932260",
+        "doi": "https://doi.org/10.1016/j.marpolbul.2020.111810", "mag": "3094932260",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/33142139"}}], "group_by": []}'
+  recorded_at: 2026-10-14 08:34:30
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?filter=publication_year%3A2020&search=%28coral%20OR%20reef%29%20AND%20bleaching%20NOT%20model"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:30 GMT
+      content-type: application/json
+      cf-ray: a4a53ecad8c101eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999776'
+      x-ratelimit-remaining-usd: '199.9776'
+      x-ratelimit-reset: '55530'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=kkMMI3Hlx%2FtnskYEAdD0wiM4PHnj4QSSrb9LuKtQD1M%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966870"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=kkMMI3Hlx%2FtnskYEAdD0wiM4PHnj4QSSrb9LuKtQD1M%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966870"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,publication_year:2020,fulltext.search:coral|reef","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and published in 2020","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and published in 2020","x_new_oql":"get works from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n9","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"model","display":"model","negated":true,"addr":[1,1]},{"node":"vleaf","id":"n2","value":"bleaching","display":"bleaching","negated":false,"addr":[1,2]},{"node":"vgroup","id":"n5","join":"or","children":[{"node":"vleaf","id":"n3","value":"coral","display":"coral","negated":false,"addr":[1,3,1]},{"node":"vleaf","id":"n4","value":"reef","display":"reef","negated":false,"addr":[1,3,2]}],"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[2]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"not model","display":"model","value":"model","negated":true,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n2","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n5","text":"(","addr":"1.3"},{"t":"vbrick","id":"n3","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.3.1"},{"t":"conn","id":"n5","text":" or ","label":"or","addr":"1.3"},{"t":"vbrick","id":"n4","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.3.2"},{"t":"paren","id":"n5","text":")","addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n9","text":" and ","label":"and"},{"t":"col","id":"n8","text":"year","column_id":"publication_year","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"publication_year","value":2020},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:34:30
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"publication_year","value":2020},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"per_page":1,"page":1,"select":"id"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:31 GMT
+      content-type: application/json
+      cf-ray: a4a53ecd1a7201eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999775'
+      x-ratelimit-remaining-usd: '199.9775'
+      x-ratelimit-reset: '55530'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=kkMMI3Hlx%2FtnskYEAdD0wiM4PHnj4QSSrb9LuKtQD1M%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966870"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=kkMMI3Hlx%2FtnskYEAdD0wiM4PHnj4QSSrb9LuKtQD1M%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966870"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":580,"db_response_time_ms":42,"page":1,"per_page":1,"groups_count":null,"x_query":{"oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and published in 2020","x_new_oql":"get works from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"publication_year","value":2020},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"url":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,publication_year:2020,fulltext.search:coral|reef&per_page=1&page=1"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3107846761"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:34:31
+- request:
+    method: GET
+    uri: https://api.openalex.org/authors?filter=last_known_institutions.id%3AI4200000001&per_page=1&select=ids&page=1
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:31 GMT
+      content-type: application/json
+      cf-ray: a4a53ecffc5701eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999774'
+      x-ratelimit-remaining-usd: '199.9774'
+      x-ratelimit-reset: '55529'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966871"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966871"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 5, "db_response_time_ms": 12, "page": 1, "per_page":
+        1, "groups_count": null, "x_query": {"oql": "get authors where last known
+        institution is (I4200000001)", "x_new_oql": "get authors where last known
+        institution is (I4200000001)", "oqo": {"get_rows": "authors", "filter_rows":
+        [{"column_id": "last_known_institutions.id", "value": "I4200000001"}]}, "url":
+        "/authors?filter=last_known_institutions.id:I4200000001&per_page=1&page=1"},
+        "cost_usd": 0.0001}, "results": [{"ids": {"openalex": "https://openalex.org/A5048491430",
+        "orcid": "https://orcid.org/0000-0003-1613-5981", "observed_orcids": ["https://orcid.org/0000-0003-1613-5981"]}}],
+        "group_by": []}'
+  recorded_at: 2026-10-14 08:34:31
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/authors?filter=last_known_institutions.id%3AI4200000001"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:31 GMT
+      content-type: application/json
+      cf-ray: a4a53ed19d8801eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999774'
+      x-ratelimit-remaining-usd: '199.9774'
+      x-ratelimit-reset: '55529'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966871"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966871"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/authors?filter=last_known_institutions.id:I4200000001","oql":"get authors where last known institution is [OpenAlex](I4200000001)","oql_oneline":"get authors where last known institution is [OpenAlex](I4200000001)","x_new_oql":"get authors where last known institution is [OpenAlex](I4200000001)","oql_render_v2":{"version":"2.0","entity":{"id":"authors","text":"authors"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"entity","column_id":"last_known_institutions.id","column":"last known institution","operator":"is","segments":[{"kind":"column","text":"last known institution","meta":{"column_id":"last_known_institutions.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"I4200000001","meta":{"column_id":"last_known_institutions.id","value":"I4200000001"}},{"kind":"text","text":" "},{"kind":"id","text":"[OpenAlex]","meta":{"entity_display_name":"OpenAlex","entity_display_id":"[OpenAlex]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"last_known_institutions.id","value":"I4200000001"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"authors","text":"authors","label":"authors"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"last known institution","column_id":"last_known_institutions.id","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"I4200000001","column_id":"last_known_institutions.id","value":"I4200000001","kind":"entity","addr":"1.1"},{"t":"id","id":"n1","text":"[OpenAlex]","addr":"1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:34:31
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"per_page":1,"page":1,"select":"id"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:34:31 GMT
+      content-type: application/json
+      cf-ray: a4a53ed2be5b01eb-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '55529'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966871"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=ZTIp5l%2FWh5wxk1sq0BC9EBohx7uiBiqtuLM2JandKDM%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966871"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":5,"db_response_time_ms":10,"page":1,"per_page":1,"groups_count":null,"x_query":{"oql":"get authors where last known institution is (I4200000001)","x_new_oql":"get authors where last known institution is (I4200000001)","oqo":{"get_rows":"authors","filter_rows":[{"column_id":"last_known_institutions.id","value":"I4200000001"}]},"url":"/authors?filter=last_known_institutions.id:I4200000001&per_page=1&page=1"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a list"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/A5048491430"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:34:31
+recorded_with: VCR-vcr/2.1.0

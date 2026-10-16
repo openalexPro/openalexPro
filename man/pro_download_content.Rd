@@ -30,7 +30,7 @@ current working directory. Created if it does not exist.}
 content endpoint's rate limits.}
 
 \item{api_key}{OpenAlex API key (character string) or `NULL`. Defaults to
-the \code{openalexPro.apikey} environment variable. If `NULL` or `""`,
+\code{pro_api_key()} (option or the \code{openalexPro.api_key} environment variable). If `NULL` or `""`,
 requests are sent without an API key.}
 
 \item{endpoint}{Base URL of the content endpoint. Defaults to

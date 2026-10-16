@@ -36,7 +36,7 @@ flowchart TD
     OA[("OpenAlex<br/>api.openalex.org · content.openalex.org")]
     SNAP[("OpenAlex Snapshot<br/>bulk ndjson.gz")]
 
-    PQ["pro_query()<br/>build URL · validate filters · chunk IDs"]
+    PQ["pro_query()<br/>build URL · validate filters · chunk IDs<br/>or OQL / OQO query"]
     PC["pro_count()"]
     PRL["pro_rate_limit_status()<br/>pro_validate_credentials()"]
 
@@ -44,16 +44,13 @@ flowchart TD
 
     subgraph PF["pro_fetch()  —  convenience wrapper"]
         PR["pro_request()<br/>download metadata pages → JSON"]
-        PRJ["pro_request_jsonl()<br/>JSON → JSONL<br/>reconstruct abstract · build citation"]
-        PRJP["pro_request_jsonl_parquet()<br/>JSONL → partitioned Parquet"]
-        PR --> PRJ --> PRJP
+        PRP["pro_request_parquet()<br/>JSON → partitioned Parquet<br/>reconstruct abstract · build citation"]
+        PR --> PRP
     end
 
     PDC["pro_download_content()<br/>download PDFs / TEI XML"]
 
-    STP["snapshot_to_parquet()"]
-    BCI["build_corpus_index()"]
-    LBI["lookup_by_id()<br/>snapshot_filter_ids()"]
+    SNP["openalexSnapshot package<br/>snapshot_to_parquet() · build_corpus_index()<br/>lookup_by_id()"]
 
     OUT[("Parquet dataset<br/>read_corpus() · DuckDB · arrow")]
     FILES[("PDF / TEI XML files<br/>on disk")]
@@ -67,10 +64,10 @@ flowchart TD
     PRL -.->|via| AC
     PC -.->|via| AC
 
-    PRJP --> OUT
+    PRP --> OUT
     PDC --> FILES
 
-    SNAP --> STP --> BCI --> LBI --> OUT
+    SNAP --> SNP --> OUT
 
     style OA    fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style SNAP  fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -121,14 +118,12 @@ flowchart LR
 
     subgraph pro_fetch[pro_fetch]
         PR[pro_request<br/>Download JSON]
-        PRJ[pro_request_jsonl<br/>Transform]
-        PRJP[pro_request_jsonl_parquet<br/>Convert]
-        PR --> PRJ --> PRJP
+        PRP[pro_request_parquet<br/>Convert]
+        PR --> PRP
     end
 
     subgraph Output[Project Folder]
-        JSON[json/]
-        JSONL[jsonl/]
+        JSON[json/<br/>deleted after conversion]
         PARQUET[parquet/]
     end
 
@@ -196,30 +191,24 @@ flowchart TD
         PR[pro_request]
     end
 
-    subgraph Step3[Step 3: Transform]
-        PRJ[pro_request_jsonl]
+    subgraph Step3[Step 3: Convert]
+        PRP[pro_request_parquet]
     end
 
-    subgraph Step4[Step 4: Convert]
-        PRJP[pro_request_jsonl_parquet]
-    end
-
-    subgraph Step5[Step 5: Analyze]
+    subgraph Step4[Step 4: Analyze]
         DB[(DuckDB)]
     end
 
     PQ -->|URL| PC
     PC -->|Check size| PR
     PQ -->|URL| PR
-    PR -->|JSON files| PRJ
-    PRJ -->|JSONL files| PRJP
-    PRJP -->|Parquet dataset| DB
+    PR -->|JSON files| PRP
+    PRP -->|Parquet dataset| DB
 
     style Step1 fill:#e1f5e1
     style Step2 fill:#cce5ff
     style Step3 fill:#fff3cd
-    style Step4 fill:#f8d7da
-    style Step5 fill:#e1f5e1
+    style Step4 fill:#e1f5e1
 ```
 
 ## Step 1: Build and Validate Query
@@ -241,7 +230,7 @@ url <- pro_query(
     "publication_year",
     "cited_by_count",
     "authorships",
-    "concepts"
+    "topics"
   )
 )
 
@@ -257,9 +246,9 @@ print(paste("Results:", count$count))
 pro_request(
   query_url = url,
   output = "data/json",
-  pages = 10000, # Max pages (default)
+  pages = 10000, # Max pages per query (default: 100000)
   progress = TRUE, # Show progress bar
-  workers = 1 # Parallel workers for chunked queries
+  workers = 1 # Parallel workers for a list of queries
 )
 ```
 
@@ -274,20 +263,23 @@ data/json/
 └── ...
 ```
 
-## Step 3: Transform to JSONL
+## Step 3: Convert to Parquet
 
 ```{r}
-# Convert JSON to JSONL with parallel processing
-pro_request_jsonl(
+# Convert JSON to Parquet with parallel processing
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
+  output = "data/parquet",
   progress = TRUE,
   workers = 4, # Use 4 parallel workers
   delete_input = FALSE # Keep JSON files
 )
 ```
 
-### What Happens During Transformation
+### What Happens During Conversion
+
+Each JSON file becomes one Parquet file, converted with DuckDB. For works, two
+columns are added (`enrich = TRUE`, the default):
 
 ```{mermaid}
 flowchart LR
@@ -297,13 +289,13 @@ flowchart LR
         Other[other fields...]
     end
 
-    subgraph Transform[jq_execute]
+    subgraph Transform[pro_request_parquet]
         T1[Reconstruct abstract<br/>from inverted index]
         T2[Generate citation string<br/>Smith et al. 2023]
         T3[Add page field<br/>for provenance]
     end
 
-    subgraph Output[JSONL Output]
+    subgraph Output[Parquet Output]
         Abstract[abstract: full text]
         Citation[citation: string]
         Page[page: identifier]
@@ -318,26 +310,18 @@ flowchart LR
     style Transform fill:#fff3cd
 ```
 
-## Step 4: Convert to Parquet
-
-```{r}
-# Convert JSONL to Parquet with schema harmonization
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
-  output = "data/parquet",
-  progress = TRUE,
-  sample_size = 1000, # Records to sample for schema inference
-  delete_input = FALSE # Keep JSONL files
-)
-```
+Files that fail to convert are retried once on their own; by default
+(`on_error = "error"`) remaining failures stop the run and name the files. With
+`delete_input = TRUE`, the JSON files are only deleted when every file
+converted, and `resume = TRUE` converts only what is still missing.
 
 ### Schema Harmonization
 
-Different OpenAlex records can have different field structures. The function automatically infers a unified schema:
+Different OpenAlex records can have different field structures. `pro_request_parquet()` infers one schema from a sample of files and applies it to all of them:
 
 ```{mermaid}
 flowchart TD
-    subgraph Input[JSONL Files with Varying Schemas]
+    subgraph Input[JSON Files with Varying Schemas]
         F1["File 1: location = struct"]
         F2["File 2: location = string"]
         F3["File 3: location = null"]
@@ -364,7 +348,7 @@ flowchart TD
     style Output fill:#e1f5e1
 ```
 
-## Step 5: Analyze with DuckDB
+## Step 4: Analyze with DuckDB
 
 ```{r}
 library(duckdb)
@@ -455,7 +439,7 @@ urls <- pro_query(
   select = c("ids", "title", "cited_by_count")
 )
 
-# Parallel download
+# Parallel download: each chunk goes to the next free worker
 pro_request(
   query_url = urls,
   output = "data/json",
@@ -463,10 +447,10 @@ pro_request(
   progress = TRUE
 )
 
-# Parallel JSONL conversion
-pro_request_jsonl(
+# Parallel Parquet conversion
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
+  output = "data/parquet",
   workers = 4, # 4 parallel conversions
   progress = TRUE
 )
@@ -474,23 +458,48 @@ pro_request_jsonl(
 
 ## Managing Disk Space
 
-For very large datasets, delete intermediate files:
+For very large datasets, delete the JSON files after conversion (`pro_fetch()`
+does this by default). They are kept if any file failed to convert:
 
 ```{r}
-# Delete JSON after JSONL conversion
-pro_request_jsonl(
+pro_request_parquet(
   input_json = "data/json",
-  output = "data/jsonl",
-  delete_input = TRUE # Remove JSON files
-)
-
-# Delete JSONL after Parquet conversion
-pro_request_jsonl_parquet(
-  input_jsonl = "data/jsonl",
   output = "data/parquet",
-  delete_input = TRUE # Remove JSONL files
+  delete_input = TRUE # Remove JSON files after a complete conversion
 )
 ```
+
+## Fewer, Larger Parquet Files
+
+By default `pro_request_parquet()` writes one Parquet file per API page (up to
+200 records). That keeps the conversion parallel and resumable, but a large
+query becomes thousands of small files, which are slow to read.
+`compact_parquet` combines each query's page files into files of up to that
+many records once the conversion is complete; `pro_compact_parquet()` does
+the same for an existing dataset:
+
+```{r}
+pro_fetch(query_url = urls, project_folder = "data", compact_parquet = 250000)
+
+# or, for a dataset converted before
+pro_compact_parquet("data/parquet", rows = 250000)
+```
+
+Measured for 1.1 million works (5,460 page files): compaction took about 20
+seconds; afterwards aggregates and lookups by ID ran 35 to 50 times faster,
+reading full records with DuckDB 4 times faster, and the dataset was 40%
+smaller. Files of 50,000 to 1 million records read equally fast.
+
+- Records, columns and their order do not change; the `page` column stays.
+- Each query (partition) is compacted on its own. A compacted file holds
+  whole consecutive pages and is named after them, e.g.
+  `results_pages_1-1250.parquet`.
+- Files are compacted one at a time; an interrupted compaction is completed
+  by running it again (or `resume = TRUE`), and `resume` never converts a
+  compacted page again.
+- If a query cannot be compacted, a warning says so and its page files stay.
+- Indexes built by `openalexSnapshot` point to files and row numbers:
+  `pro_compact_parquet()` stops if such an index exists next to the dataset.
 
 ## Progress Tracking
 
@@ -519,6 +528,13 @@ if (file.exists("data/json/00_in.progress")) {
 }
 ```
 
+To complete an interrupted run, call the same function again with
+`resume = TRUE`; only unfinished queries (or unconverted files) are processed:
+
+```{r}
+pro_fetch(query_url = urls, project_folder = "data", resume = TRUE)
+```
+
 # Workflow Examples
 
 ## Example 1: Institution Analysis
@@ -536,7 +552,7 @@ urls <- lapply(institutions, function(inst) {
     `institutions.id` = inst,
     from_publication_date = "2020-01-01",
     type = "article",
-    select = c("ids", "title", "publication_year", "cited_by_count", "concepts")
+    select = c("ids", "title", "publication_year", "cited_by_count", "topics")
   )
 })
 names(urls) <- c("MIT", "Stanford", "Harvard")
@@ -641,9 +657,9 @@ pro_request(
 # The JSON contains aggregated counts, not individual works
 ```
 
-## Example 4: Concept Co-occurrence
+## Example 4: Topic Frequencies
 
-Analyze which concepts appear together:
+Count which research topics a set of works is about:
 
 ```{r}
 url <- pro_query(
@@ -651,34 +667,33 @@ url <- pro_query(
   search = "climate change",
   from_publication_date = "2023-01-01",
   type = "article",
-  select = c("ids", "title", "concepts")
+  select = c("ids", "title", "topics")
 )
 
 pro_fetch(
   query_url = url,
-  project_folder = "concept_analysis"
+  project_folder = "topic_analysis"
 )
 
-# Analyze concept co-occurrence with DuckDB
+# Unnest topics and count with DuckDB
 library(duckdb)
 con <- dbConnect(duckdb())
 
-# Unnest concepts and count
-concept_counts <- dbGetQuery(
+topic_counts <- dbGetQuery(
   con,
   "
   WITH unnested AS (
     SELECT
       id,
-      unnest(concepts) as concept
-    FROM read_parquet('concept_analysis/parquet/**/*.parquet')
+      unnest(topics) as topic
+    FROM read_parquet('topic_analysis/parquet/**/*.parquet')
   )
   SELECT
-    concept.display_name as concept_name,
-    concept.level as concept_level,
+    topic.display_name as topic_name,
+    topic.field.display_name as field_name,
     COUNT(*) as count
   FROM unnested
-  GROUP BY concept.display_name, concept.level
+  GROUP BY topic.display_name, topic.field.display_name
   ORDER BY count DESC
   LIMIT 50
 "
@@ -765,20 +780,15 @@ flowchart TD
         JSON[(JSON Files<br/>~200 records/file)]
     end
 
-    subgraph Transform[3. Transform]
-        PRJ[pro_request_jsonl]
-        JSONL[(JSONL Files<br/>1 record/line)]
+    subgraph Convert[3. Convert]
+        PRP[pro_request_parquet]
         Abstract[Abstract reconstruction]
         Citation[Citation generation]
-    end
-
-    subgraph Convert[4. Convert]
-        PRJP[pro_request_jsonl_parquet]
         Schema[Schema harmonization]
         PARQUET[(Parquet Dataset<br/>Columnar, compressed)]
     end
 
-    subgraph Analyze[5. Analyze]
+    subgraph Analyze[4. Analyze]
         DUCK[(DuckDB)]
         R[R/tidyverse]
         Python[Python/pandas]
@@ -787,13 +797,12 @@ flowchart TD
     OA --> PR
     PQ --> PR
     PR --> JSON
-    JSON --> PRJ
-    PRJ --> Abstract
-    PRJ --> Citation
-    Abstract --> JSONL
-    Citation --> JSONL
-    JSONL --> PRJP
-    PRJP --> Schema
+    JSON --> PRP
+    PRP --> Abstract
+    PRP --> Citation
+    PRP --> Schema
+    Abstract --> PARQUET
+    Citation --> PARQUET
     Schema --> PARQUET
     PARQUET --> DUCK
     PARQUET --> R
@@ -802,7 +811,6 @@ flowchart TD
     style API fill:#e1f5e1
     style Query fill:#cce5ff
     style Download fill:#fff3cd
-    style Transform fill:#f8d7da
     style Convert fill:#e1f5e1
     style Analyze fill:#cce5ff
 ```
@@ -811,12 +819,11 @@ flowchart TD
 
 | Function | Purpose | Key Parameters |
 |----------|---------|----------------|
-| `pro_query()` | Build API URL | entity, search, filters, select |
+| `pro_query()` | Build API URL | entity, search, filters, select, oql, oqo |
 | `pro_count()` | Get result count | query_url |
-| `pro_fetch()` | **All-in-one download** | query_url, project_folder |
-| `pro_request()` | Download JSON | query_url, output, pages, workers |
-| `pro_request_jsonl()` | Convert to JSONL | input_json, output, workers |
-| `pro_request_jsonl_parquet()` | Convert to Parquet | input_jsonl, output, sample_size |
+| `pro_fetch()` | **All-in-one download** | query_url, project_folder, workers, download_workers, resume |
+| `pro_request()` | Download JSON | query_url, output, pages, workers, resume |
+| `pro_request_parquet()` | Convert JSON to Parquet | input_json, output, workers, resume |
 | `pro_validate_credentials()` | Test credentials (optional helper) | api_key |
 | `pro_rate_limit_status()` | Check rate limit usage & remaining budget | api_key, verbose |
 | `pro_download_content()` | Download full-text PDFs or TEI XML | ids, output, format, workers |
@@ -826,4 +833,4 @@ flowchart TD
 - **[Quick Start Guide](Quick_Start.html)** - Get started in 5 minutes
 - **[pro_query() Documentation](pro_query.html)** - Query building details
 - **[pro_request() Documentation](pro_request.html)** - Download pipeline details
-- **[OpenAlex Documentation](https://docs.openalex.org)** - API reference
+- **[OpenAlex Documentation](https://help.openalex.org/api/)** - API reference

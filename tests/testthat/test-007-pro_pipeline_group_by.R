@@ -99,3 +99,22 @@ test_that("pro_request_jsonl_parquet `biodiversity` and group by type", {
 unlink(output_json, recursive = TRUE, force = TRUE)
 unlink(output_jsonl, recursive = TRUE, force = TRUE)
 unlink(output_parquet, recursive = TRUE, force = TRUE)
+
+test_that("grouping is detected from the response, e.g. inside an OQL query", {
+  httr2::local_mocked_responses(function(req) {
+    httr2::response(
+      200,
+      headers = list("content-type" = "application/json"),
+      body = charToRaw(paste0(
+        '{"meta":{"count":3,"per_page":200,"next_cursor":null,"groups_count":1},',
+        '"group_by":[{"key":"article","key_display_name":"article","count":3}]}'
+      ))
+    )
+  })
+  out <- file.path(withr::local_tempdir(), "json")
+  pro_request(
+    pro_query(oql = "works where year is (2020) group by type"),
+    output = out, progress = FALSE
+  )
+  expect_true(file.exists(file.path(out, "group_by_page_1.json")))
+})

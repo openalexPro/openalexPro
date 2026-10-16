@@ -1,57 +1,149 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&group_by=type&per_page=200&cursor=%2A&api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/works?filter=title_and_abstract.search%3Abiodiversity%2Cto_publication_date%3A2010-01-01&group_by=type&per_page=200&cursor=%2A
   response:
     status: 200
     headers:
-      date: Fri, 22 May 2026 12:24:19 GMT
+      date: Wed, 14 Oct 2026 08:31:35 GMT
       content-type: application/json
-      cf-ray: 9ffbcc12b89e1e6d-ZRH
+      cf-ray: a4a53a885eed7dd2-ZRH
       cf-cache-status: DYNAMIC
       access-control-allow-origin: '*'
       server: cloudflare
-      via: 1.1 heroku-router
-      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
-      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
-      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1779452659"}],"max_age":3600}'
-      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=%2F53Th5UR8logACkgBuq2mWcV2eChYCxJJU%2Fe2G5kJFk%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1779452659"
+      via: 2.0 heroku-router
       x-ratelimit-cost-usd: '0.0001'
       x-ratelimit-credits-used: '1'
       x-ratelimit-limit: '2000000'
       x-ratelimit-limit-usd: '200'
       x-ratelimit-onetime-remaining: '0'
       x-ratelimit-prepaid-remaining-usd: '0'
-      x-ratelimit-remaining: '1998078'
-      x-ratelimit-remaining-usd: '199.8078'
-      x-ratelimit-reset: '41741'
+      x-ratelimit-remaining: '1999836'
+      x-ratelimit-remaining-usd: '199.9836'
+      x-ratelimit-reset: '55705'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
       access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
         X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966695"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=MZPdZmMIbOHx0xBeYXXtsnsR93RRFblpS6NjOmlGgm4%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966695"
       content-encoding: gzip
     body:
-      string: '{"meta": {"count": 148174, "db_response_time_ms": 33, "page": null,
-        "per_page": 200, "next_cursor": "InN0YW5kYXJkIg==", "groups_count": 17, "cost_usd":
-        0.0001}, "group_by": [{"key": "https://openalex.org/types/article", "key_display_name":
-        "article", "count": 130804}, {"key": "https://openalex.org/types/book", "key_display_name":
-        "book", "count": 3073}, {"key": "https://openalex.org/types/book-chapter",
-        "key_display_name": "book-chapter", "count": 6220}, {"key": "https://openalex.org/types/database",
-        "key_display_name": "database", "count": 1}, {"key": "https://openalex.org/types/dataset",
-        "key_display_name": "dataset", "count": 278}, {"key": "https://openalex.org/types/dissertation",
-        "key_display_name": "dissertation", "count": 2193}, {"key": "https://openalex.org/types/editorial",
-        "key_display_name": "editorial", "count": 219}, {"key": "https://openalex.org/types/erratum",
-        "key_display_name": "erratum", "count": 60}, {"key": "https://openalex.org/types/letter",
-        "key_display_name": "letter", "count": 663}, {"key": "https://openalex.org/types/libguides",
-        "key_display_name": "libguides", "count": 22}, {"key": "https://openalex.org/types/other",
-        "key_display_name": "other", "count": 677}, {"key": "https://openalex.org/types/paratext",
-        "key_display_name": "paratext", "count": 188}, {"key": "https://openalex.org/types/preprint",
-        "key_display_name": "preprint", "count": 1396}, {"key": "https://openalex.org/types/reference-entry",
-        "key_display_name": "reference-entry", "count": 25}, {"key": "https://openalex.org/types/report",
-        "key_display_name": "report", "count": 411}, {"key": "https://openalex.org/types/review",
-        "key_display_name": "review", "count": 1943}, {"key": "https://openalex.org/types/standard",
-        "key_display_name": "standard", "count": 1}]}'
-  recorded_at: 2026-05-22 12:24:19
+      string: '{"meta": {"count": 140753, "db_response_time_ms": 19, "page": null,
+        "per_page": 200, "next_cursor": "InN1cHBsZW1lbnRhcnktbWF0ZXJpYWxzIg==", "groups_count":
+        21, "x_query": {"oql": "get works where title-abstract has (biodiversity)\n  and
+        published through 2010-01-01;\nthen, group those works by type", "x_new_oql":
+        "break down works through 2010-01-01 with biodiversity in the title or abstract
+        by type", "oqo": {"get_rows": "works", "filter_rows": [{"column_id": "title_and_abstract.search",
+        "value": "biodiversity", "operator": "has"}, {"column_id": "to_publication_date",
+        "value": "2010-01-01"}], "group_by": [{"column_id": "type"}]}, "url": "/works?filter=title_and_abstract.search:biodiversity,to_publication_date:2010-01-01&group_by=type&per_page=200&cursor=%2A"},
+        "cost_usd": 0.0001}, "group_by": [{"key": "https://openalex.org/types/article",
+        "key_display_name": "article", "count": 118010}, {"key": "https://openalex.org/types/book",
+        "key_display_name": "book", "count": 2685}, {"key": "https://openalex.org/types/book-chapter",
+        "key_display_name": "book-chapter", "count": 6355}, {"key": "https://openalex.org/types/book-review",
+        "key_display_name": "book-review", "count": 1079}, {"key": "https://openalex.org/types/conference-abstract",
+        "key_display_name": "conference-abstract", "count": 255}, {"key": "https://openalex.org/types/conference-paper",
+        "key_display_name": "conference-paper", "count": 2648}, {"key": "https://openalex.org/types/dataset",
+        "key_display_name": "dataset", "count": 123}, {"key": "https://openalex.org/types/dissertation",
+        "key_display_name": "dissertation", "count": 2948}, {"key": "https://openalex.org/types/editorial",
+        "key_display_name": "editorial", "count": 412}, {"key": "https://openalex.org/types/erratum",
+        "key_display_name": "erratum", "count": 111}, {"key": "https://openalex.org/types/letter",
+        "key_display_name": "letter", "count": 1119}, {"key": "https://openalex.org/types/libguides",
+        "key_display_name": "libguides", "count": 21}, {"key": "https://openalex.org/types/other",
+        "key_display_name": "other", "count": 1202}, {"key": "https://openalex.org/types/paratext",
+        "key_display_name": "paratext", "count": 629}, {"key": "https://openalex.org/types/peer-review",
+        "key_display_name": "peer-review", "count": 159}, {"key": "https://openalex.org/types/preprint",
+        "key_display_name": "preprint", "count": 889}, {"key": "https://openalex.org/types/reference-entry",
+        "key_display_name": "reference-entry", "count": 420}, {"key": "https://openalex.org/types/report",
+        "key_display_name": "report", "count": 1283}, {"key": "https://openalex.org/types/review",
+        "key_display_name": "review", "count": 354}, {"key": "https://openalex.org/types/standard",
+        "key_display_name": "standard", "count": 1}, {"key": "https://openalex.org/types/supplementary-materials",
+        "key_display_name": "supplementary-materials", "count": 50}]}'
+  recorded_at: 2026-10-14 08:31:35
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"title_and_abstract.search","value":"biodiversity","operator":"has"},{"column_id":"to_publication_date","value":"2010-01-01"}],"group_by":[{"column_id":"type"}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:13 GMT
+      content-type: application/json
+      cf-ray: a4a54b9308ce526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '55007'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=iGvYqSKwPrZa%2Ba9LewmdZVZFedE6iay2CX05en70mbo%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967393"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=iGvYqSKwPrZa%2Ba9LewmdZVZFedE6iay2CX05en70mbo%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967393"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=title_and_abstract.search:biodiversity,to_publication_date:2010-01-01&group_by=type","oql":"get works where title-abstract has (biodiversity)\n  and published through 2010-01-01;\nthen, group those works by type","oql_oneline":"get works where title-abstract has (biodiversity) and published through 2010-01-01; then, group those works by type","x_new_oql":"break down works through 2010-01-01 with biodiversity in the title or abstract by type","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n3","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"title_and_abstract.search","column":"title-abstract","operator":"has","segments":[{"kind":"column","text":"title-abstract","meta":{"column_id":"title_and_abstract.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"biodiversity","meta":{"value":"biodiversity"}},{"kind":"text","text":")"}],"leaf":{"column_id":"title_and_abstract.search","value":"biodiversity","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"to_publication_date","column":"date","operator":"<=","segments":[{"kind":"column","text":"date","meta":{"column_id":"to_publication_date"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2010-01-01","meta":{"value":"2010-01-01"}},{"kind":"text","text":")"}],"leaf":{"column_id":"to_publication_date","value":"2010-01-01"},"addr":[2]}],"implicit":true},"directives":[{"type":"group_by","text":"group by type","meta":{"dimensions":[{"column_id":"type","column_display_name":"type"}]}}],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"title-abstract","column_id":"title_and_abstract.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"biodiversity","value":"biodiversity","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"},{"t":"conn","id":"n3","text":" and ","label":"and"},{"t":"col","id":"n2","text":"date","column_id":"to_publication_date","addr":"2"},{"t":"op","id":"n2","text":" <= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2010-01-01","value":"2010-01-01","kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":1},{"indent":0,"tokens":[{"t":"kw","text":" group by type","label":"group by type"}],"n":2}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"title_and_abstract.search","value":"biodiversity","operator":"has"},{"column_id":"to_publication_date","value":"2010-01-01"}],"group_by":[{"column_id":"type"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:13
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where title-abstract has (biodiversity) and published
+        through 2010-01-01; then, group those works by type"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:14 GMT
+      content-type: application/json
+      cf-ray: a4a54b948a7e526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '55006'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=1uU4UAeAe%2Fjq%2Bxlv2TlLjyWJzNH1HWhgD8QOMpJNbtI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967394"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=1uU4UAeAe%2Fjq%2Bxlv2TlLjyWJzNH1HWhgD8QOMpJNbtI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967394"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=title_and_abstract.search:biodiversity,to_publication_date:2010-01-01&group_by=type","oql":"get works where title-abstract has (biodiversity)\n  and published through 2010-01-01;\nthen, group those works by type","oql_oneline":"get works where title-abstract has (biodiversity) and published through 2010-01-01; then, group those works by type","x_new_oql":"break down works through 2010-01-01 with biodiversity in the title or abstract by type","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n3","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"title_and_abstract.search","column":"title-abstract","operator":"has","segments":[{"kind":"column","text":"title-abstract","meta":{"column_id":"title_and_abstract.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"biodiversity","meta":{"value":"biodiversity"}},{"kind":"text","text":")"}],"leaf":{"column_id":"title_and_abstract.search","value":"biodiversity","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"comparison","column_id":"to_publication_date","column":"date","operator":"<=","segments":[{"kind":"column","text":"date","meta":{"column_id":"to_publication_date"}},{"kind":"operator","text":" <= "},{"kind":"text","text":"("},{"kind":"value","text":"2010-01-01","meta":{"value":"2010-01-01"}},{"kind":"text","text":")"}],"leaf":{"column_id":"to_publication_date","value":"2010-01-01"},"addr":[2]}],"implicit":true},"directives":[{"type":"group_by","text":"group by type","meta":{"dimensions":[{"column_id":"type","column_display_name":"type"}]}}],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"title-abstract","column_id":"title_and_abstract.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"biodiversity","value":"biodiversity","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"},{"t":"conn","id":"n3","text":" and ","label":"and"},{"t":"col","id":"n2","text":"date","column_id":"to_publication_date","addr":"2"},{"t":"op","id":"n2","text":" <= ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"2010-01-01","value":"2010-01-01","kind":"comparison","addr":"2.1"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":1},{"indent":0,"tokens":[{"t":"kw","text":" group by type","label":"group by type"}],"n":2}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"title_and_abstract.search","value":"biodiversity","operator":"has"},{"column_id":"to_publication_date","value":"2010-01-01"}],"group_by":[{"column_id":"type"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:14
 recorded_with: VCR-vcr/2.1.0

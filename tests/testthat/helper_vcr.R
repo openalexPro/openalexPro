@@ -81,36 +81,38 @@ vcr_record_mode <- if (nzchar(Sys.getenv("OPENALEXPRO_RECORD_CASSETTES"))) {
   "new_episodes"
 }
 
-if (vcr_record_mode == "all") {
-  # During recording: no query-parameter filtering so the real API key is sent
-  # to the server (authenticated requests). record_cassettes.R post-processes
-  # the cassette files afterward to replace the real key with the placeholder.
-  invisible(vcr::vcr_configure(
-    dir = vcr_dir,
-    record = vcr_record_mode
-  ))
-} else {
-  # During playback: filter_query_parameters normalises api_key in incoming
-  # requests so they match the <api-key> placeholder stored in cassettes.
-  invisible(vcr::vcr_configure(
-    dir = vcr_dir,
-    record = vcr_record_mode,
-    filter_request_headers = list(api_key = "<api-key>"),
-    filter_query_parameters = list(api_key = "<api-key>")
-  ))
-}
+# The API key travels in the `Authorization: Bearer` header. vcr masks it when
+# writing cassettes, so the real key reaches the server while recording but is
+# never stored. `api_key` in a URL (only if a user builds one by hand) is
+# normalised the same way. POST requests (OQO) are matched on their body too.
+invisible(vcr::vcr_configure(
+  dir = vcr_dir,
+  record = vcr_record_mode,
+  match_requests_on = c("method", "uri", "body"),
+  filter_request_headers = list(Authorization = "<api-key>"),
+  filter_query_parameters = list(api_key = "<api-key>")
+))
 
 # Ensure a dummy API key is set so validation passes during VCR-recorded tests.
 # Note: pro_api_key() reads Sys.getenv("openalexPro.api_key"); use that exact
-# name here so CI (which has no real key) still sends api_key=test-api-key and
-# VCR's filter_query_parameters can normalise it to <api-key> before matching.
+# name here so CI (which has no real key) still sends a key header.
 if (is.null(pro_api_key())) {
   Sys.setenv(openalexPro.api_key = "test-api-key")
 }
 
+# pro_query() validates filter names and select fields against lists that
+# opt_filter_names() / opt_select_fields() fetch once per R session (a "probe"
+# request). Fill both caches (works) here, each from its own cassette, so the
+# probes never happen inside another test's cassette. Otherwise whichever
+# test first called pro_query() in a session made the probe in its own
+# cassette: running a test file alone then recorded a live request into it,
+# and which cassettes held a probe depended on the order of earlier runs.
+vcr::use_cassette("opt_filter_names", opt_filter_names(update = TRUE))
+vcr::use_cassette("opt_select_fields", opt_select_fields(update = TRUE))
+
 # try(
 #   {
-#     Sys.setenv(openalexPro.apikey = keyring::key_get("API_openalex"))
+#     Sys.setenv(openalexPro.api_key = keyring::key_get("API_openalex"))
 #     Sys.setenv(openalexPro.email = "Rainer@krugs.de")
 #   }
 # )

@@ -89,5 +89,6 @@ DBI::dbDisconnect(con, shutdown = TRUE)
 
 }
 \seealso{
-[snapshot_to_parquet()] which uses this function internally.
+[pro_request_jsonl_parquet()] (deprecated), which uses this function
+  internally.
 }

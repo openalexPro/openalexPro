@@ -138,7 +138,6 @@ unlink(output_parquet_nested, recursive = TRUE, force = TRUE)
 dois <- readRDS(testthat::test_path("..", "fixtures", "dois.rds"))
 
 build_nested_req <- function(dois) {
-  vcr::local_cassette("opt_filter_names")
   flat <- pro_query(entity = "works", doi = dois)
   # wrap two flat chunks into a two-level nested list
   list(
@@ -158,7 +157,7 @@ test_that("pro_request with nested list creates nested output dirs", {
     progress  = TRUE
   )
 
-  json_files <- sort(list.files(output_json_nested, "*.json", recursive = TRUE))
+  json_files <- sort(list.files(output_json_nested, "^results_page_[0-9]+\\.json$", recursive = TRUE))
   # All files should be under grp_a/* or grp_b/*
   expect_true(all(grepl("^grp_[ab]/", json_files)))
   expect_snapshot(json_files)

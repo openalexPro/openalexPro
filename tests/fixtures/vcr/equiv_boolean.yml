@@ -1,0 +1,557 @@
+http_interactions:
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=publication_year%3A2020%2Cis_oa%3Atrue%2Ctype%3Aarticle&search=%28coral+OR+reef%29+AND+bleaching+NOT+model&select=id&per_page=200&cursor=%2A
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:48 GMT
+      content-type: application/json
+      cf-ray: a4a53ad5a9137dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999827'
+      x-ratelimit-remaining-usd: '199.9827'
+      x-ratelimit-reset: '55692'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ZiPWA3RE02Nm9HnsLu7D0WnfXwV2nMmtKUGraUa4luI%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966708"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=ZiPWA3RE02Nm9HnsLu7D0WnfXwV2nMmtKUGraUa4luI%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966708"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 346, "db_response_time_ms": 43, "page": null, "per_page":
+        200, "next_cursor": "IlsxLjQ0NzA1MDcsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg==",
+        "groups_count": null, "x_query": {"oql": "get works where full text has (bleaching
+        AND (coral OR reef) NOT model)\n  and it''s open access\n  and published in
+        2020\n  and type is [article](article)", "x_new_oql": "get open access articles
+        from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text",
+        "oqo": {"get_rows": "works", "filter_rows": [{"column_id": "fulltext.search",
+        "value": "model", "operator": "has", "is_negated": true}, {"column_id": "fulltext.search",
+        "value": "bleaching", "operator": "has"}, {"column_id": "open_access.is_oa",
+        "value": true}, {"column_id": "publication_year", "value": 2020}, {"column_id":
+        "type", "value": "article"}, {"join": "or", "filters": [{"column_id": "fulltext.search",
+        "value": "coral", "operator": "has"}, {"column_id": "fulltext.search", "value":
+        "reef", "operator": "has"}]}]}, "url": "/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef&per_page=200&cursor=%2A"},
+        "cost_usd": 0.0001}, "results": [{"id": "https://openalex.org/W3094932260"},
+        {"id": "https://openalex.org/W3107846761"}, {"id": "https://openalex.org/W3019761657"},
+        {"id": "https://openalex.org/W3025652561"}, {"id": "https://openalex.org/W3091348103"},
+        {"id": "https://openalex.org/W3013411632"}, {"id": "https://openalex.org/W3005593787"},
+        {"id": "https://openalex.org/W3004572232"}, {"id": "https://openalex.org/W3104346875"},
+        {"id": "https://openalex.org/W4387427031"}, {"id": "https://openalex.org/W3038754741"},
+        {"id": "https://openalex.org/W3094568821"}, {"id": "https://openalex.org/W3018012037"},
+        {"id": "https://openalex.org/W3087155369"}, {"id": "https://openalex.org/W2993969394"},
+        {"id": "https://openalex.org/W3108438795"}, {"id": "https://openalex.org/W3108685975"},
+        {"id": "https://openalex.org/W3089906985"}, {"id": "https://openalex.org/W3089466905"},
+        {"id": "https://openalex.org/W3117863810"}, {"id": "https://openalex.org/W3091753131"},
+        {"id": "https://openalex.org/W3092524921"}, {"id": "https://openalex.org/W3047723129"},
+        {"id": "https://openalex.org/W3100044620"}, {"id": "https://openalex.org/W3038476619"},
+        {"id": "https://openalex.org/W3044866999"}, {"id": "https://openalex.org/W3101672854"},
+        {"id": "https://openalex.org/W3023619355"}, {"id": "https://openalex.org/W3048278258"},
+        {"id": "https://openalex.org/W3037952418"}, {"id": "https://openalex.org/W3104006005"},
+        {"id": "https://openalex.org/W4245200768"}, {"id": "https://openalex.org/W3089228114"},
+        {"id": "https://openalex.org/W3086574526"}, {"id": "https://openalex.org/W3007515837"},
+        {"id": "https://openalex.org/W3039867409"}, {"id": "https://openalex.org/W3172320087"},
+        {"id": "https://openalex.org/W3037639522"}, {"id": "https://openalex.org/W3018511978"},
+        {"id": "https://openalex.org/W3080576288"}, {"id": "https://openalex.org/W3093073776"},
+        {"id": "https://openalex.org/W3089048343"}, {"id": "https://openalex.org/W3085764271"},
+        {"id": "https://openalex.org/W3113005332"}, {"id": "https://openalex.org/W3159770817"},
+        {"id": "https://openalex.org/W3041649582"}, {"id": "https://openalex.org/W3089998423"},
+        {"id": "https://openalex.org/W3036927186"}, {"id": "https://openalex.org/W3085575140"},
+        {"id": "https://openalex.org/W3006031165"}, {"id": "https://openalex.org/W3108023946"},
+        {"id": "https://openalex.org/W3035333833"}, {"id": "https://openalex.org/W3091499592"},
+        {"id": "https://openalex.org/W3112137197"}, {"id": "https://openalex.org/W3088654651"},
+        {"id": "https://openalex.org/W3006543294"}, {"id": "https://openalex.org/W3001777180"},
+        {"id": "https://openalex.org/W3169010998"}, {"id": "https://openalex.org/W3098096970"},
+        {"id": "https://openalex.org/W3088319938"}, {"id": "https://openalex.org/W3165655840"},
+        {"id": "https://openalex.org/W3046657107"}, {"id": "https://openalex.org/W3092367623"},
+        {"id": "https://openalex.org/W3004728976"}, {"id": "https://openalex.org/W3044306929"},
+        {"id": "https://openalex.org/W3084117221"}, {"id": "https://openalex.org/W3003267605"},
+        {"id": "https://openalex.org/W3022622933"}, {"id": "https://openalex.org/W3111913886"},
+        {"id": "https://openalex.org/W3111905137"}, {"id": "https://openalex.org/W3033576945"},
+        {"id": "https://openalex.org/W3047946967"}, {"id": "https://openalex.org/W3016799706"},
+        {"id": "https://openalex.org/W3087995741"}, {"id": "https://openalex.org/W3011708682"},
+        {"id": "https://openalex.org/W3003997767"}, {"id": "https://openalex.org/W3090978333"},
+        {"id": "https://openalex.org/W3009914299"}, {"id": "https://openalex.org/W3086981698"},
+        {"id": "https://openalex.org/W7207742206"}, {"id": "https://openalex.org/W3082032752"},
+        {"id": "https://openalex.org/W3090120888"}, {"id": "https://openalex.org/W3049621492"},
+        {"id": "https://openalex.org/W3040542510"}, {"id": "https://openalex.org/W3036748043"},
+        {"id": "https://openalex.org/W3022681299"}, {"id": "https://openalex.org/W3036406371"},
+        {"id": "https://openalex.org/W3033801807"}, {"id": "https://openalex.org/W3038881480"},
+        {"id": "https://openalex.org/W3011815573"}, {"id": "https://openalex.org/W3037390908"},
+        {"id": "https://openalex.org/W3216489681"}, {"id": "https://openalex.org/W3090173961"},
+        {"id": "https://openalex.org/W3089676295"}, {"id": "https://openalex.org/W3144566790"},
+        {"id": "https://openalex.org/W3037967572"}, {"id": "https://openalex.org/W3119468736"},
+        {"id": "https://openalex.org/W3006088595"}, {"id": "https://openalex.org/W3089426376"},
+        {"id": "https://openalex.org/W3111624599"}, {"id": "https://openalex.org/W3017475057"},
+        {"id": "https://openalex.org/W3082515479"}, {"id": "https://openalex.org/W3151536009"},
+        {"id": "https://openalex.org/W3032804742"}, {"id": "https://openalex.org/W3029087099"},
+        {"id": "https://openalex.org/W3027396750"}, {"id": "https://openalex.org/W4234481452"},
+        {"id": "https://openalex.org/W3021071371"}, {"id": "https://openalex.org/W3016882801"},
+        {"id": "https://openalex.org/W3005437018"}, {"id": "https://openalex.org/W3004870185"},
+        {"id": "https://openalex.org/W3088846159"}, {"id": "https://openalex.org/W3114797816"},
+        {"id": "https://openalex.org/W3009825250"}, {"id": "https://openalex.org/W3081781287"},
+        {"id": "https://openalex.org/W3109247279"}, {"id": "https://openalex.org/W3027826102"},
+        {"id": "https://openalex.org/W2999440136"}, {"id": "https://openalex.org/W3006380349"},
+        {"id": "https://openalex.org/W7215398953"}, {"id": "https://openalex.org/W3118323023"},
+        {"id": "https://openalex.org/W3119335141"}, {"id": "https://openalex.org/W3113310659"},
+        {"id": "https://openalex.org/W3092068152"}, {"id": "https://openalex.org/W3090889183"},
+        {"id": "https://openalex.org/W3044037422"}, {"id": "https://openalex.org/W3105722923"},
+        {"id": "https://openalex.org/W3043172308"}, {"id": "https://openalex.org/W3118736125"},
+        {"id": "https://openalex.org/W3097748481"}, {"id": "https://openalex.org/W3021784586"},
+        {"id": "https://openalex.org/W3048652606"}, {"id": "https://openalex.org/W3194022335"},
+        {"id": "https://openalex.org/W3036657921"}, {"id": "https://openalex.org/W3103530495"},
+        {"id": "https://openalex.org/W3090150116"}, {"id": "https://openalex.org/W3027960918"},
+        {"id": "https://openalex.org/W3102811657"}, {"id": "https://openalex.org/W4253737531"},
+        {"id": "https://openalex.org/W3038149519"}, {"id": "https://openalex.org/W3007110543"},
+        {"id": "https://openalex.org/W3007329074"}, {"id": "https://openalex.org/W3017900312"},
+        {"id": "https://openalex.org/W3044736438"}, {"id": "https://openalex.org/W3117323250"},
+        {"id": "https://openalex.org/W3081932718"}, {"id": "https://openalex.org/W3017126042"},
+        {"id": "https://openalex.org/W3080118992"}, {"id": "https://openalex.org/W3120066392"},
+        {"id": "https://openalex.org/W3035346687"}, {"id": "https://openalex.org/W3134755825"},
+        {"id": "https://openalex.org/W3134058961"}, {"id": "https://openalex.org/W3004755024"},
+        {"id": "https://openalex.org/W3018008053"}, {"id": "https://openalex.org/W3091948908"},
+        {"id": "https://openalex.org/W3011825547"}, {"id": "https://openalex.org/W3035238509"},
+        {"id": "https://openalex.org/W3033479539"}, {"id": "https://openalex.org/W3010733237"},
+        {"id": "https://openalex.org/W3116396624"}, {"id": "https://openalex.org/W3114397542"},
+        {"id": "https://openalex.org/W3110520501"}, {"id": "https://openalex.org/W3092173410"},
+        {"id": "https://openalex.org/W3005687666"}, {"id": "https://openalex.org/W3038703881"},
+        {"id": "https://openalex.org/W3085004731"}, {"id": "https://openalex.org/W3105202196"},
+        {"id": "https://openalex.org/W3010975088"}, {"id": "https://openalex.org/W3114737132"},
+        {"id": "https://openalex.org/W3118416966"}, {"id": "https://openalex.org/W3009986493"},
+        {"id": "https://openalex.org/W3089133222"}, {"id": "https://openalex.org/W3027288755"},
+        {"id": "https://openalex.org/W3106295708"}, {"id": "https://openalex.org/W3086437293"},
+        {"id": "https://openalex.org/W3044694030"}, {"id": "https://openalex.org/W3088245958"},
+        {"id": "https://openalex.org/W3096099182"}, {"id": "https://openalex.org/W3008794664"},
+        {"id": "https://openalex.org/W3118504703"}, {"id": "https://openalex.org/W2999072004"},
+        {"id": "https://openalex.org/W3205797634"}, {"id": "https://openalex.org/W3133073906"},
+        {"id": "https://openalex.org/W3005115674"}, {"id": "https://openalex.org/W3086717511"},
+        {"id": "https://openalex.org/W4378883242"}, {"id": "https://openalex.org/W3121468228"},
+        {"id": "https://openalex.org/W3013582958"}, {"id": "https://openalex.org/W3135833905"},
+        {"id": "https://openalex.org/W3000489016"}, {"id": "https://openalex.org/W3022524039"},
+        {"id": "https://openalex.org/W3023473727"}, {"id": "https://openalex.org/W4296289876"},
+        {"id": "https://openalex.org/W3096777408"}, {"id": "https://openalex.org/W7215866764"},
+        {"id": "https://openalex.org/W2999171411"}, {"id": "https://openalex.org/W3130820057"},
+        {"id": "https://openalex.org/W3111569149"}, {"id": "https://openalex.org/W3120748431"},
+        {"id": "https://openalex.org/W3016651324"}], "group_by": []}'
+  recorded_at: 2026-10-14 08:31:48
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=publication_year%3A2020%2Cis_oa%3Atrue%2Ctype%3Aarticle&search=%28coral+OR+reef%29+AND+bleaching+NOT+model&select=id&per_page=200&cursor=IlsxLjQ0NzA1MDcsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg%3D%3D
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:48 GMT
+      content-type: application/json
+      cf-ray: a4a53ad7fc2c7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999826'
+      x-ratelimit-remaining-usd: '199.9826'
+      x-ratelimit-reset: '55692'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ZiPWA3RE02Nm9HnsLu7D0WnfXwV2nMmtKUGraUa4luI%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966708"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=ZiPWA3RE02Nm9HnsLu7D0WnfXwV2nMmtKUGraUa4luI%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966708"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 346, "db_response_time_ms": 30, "page": null, "per_page":
+        200, "next_cursor": null, "groups_count": null, "x_query": {"oql": "get works
+        where full text has (bleaching AND (coral OR reef) NOT model)\n  and it''s
+        open access\n  and published in 2020\n  and type is [article](article)", "x_new_oql":
+        "get open access articles from 2020 with (bleaching AND (coral OR reef) NOT
+        model) in the full text", "oqo": {"get_rows": "works", "filter_rows": [{"column_id":
+        "fulltext.search", "value": "model", "operator": "has", "is_negated": true},
+        {"column_id": "fulltext.search", "value": "bleaching", "operator": "has"},
+        {"column_id": "open_access.is_oa", "value": true}, {"column_id": "publication_year",
+        "value": 2020}, {"column_id": "type", "value": "article"}, {"join": "or",
+        "filters": [{"column_id": "fulltext.search", "value": "coral", "operator":
+        "has"}, {"column_id": "fulltext.search", "value": "reef", "operator": "has"}]}]},
+        "url": "/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef&per_page=200&cursor=IlsxLjQ0NzA1MDcsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg%3D%3D"},
+        "cost_usd": 0.0001}, "results": [{"id": "https://openalex.org/W4402150863"},
+        {"id": "https://openalex.org/W3116034112"}, {"id": "https://openalex.org/W3095543418"},
+        {"id": "https://openalex.org/W3020762064"}, {"id": "https://openalex.org/W4380083538"},
+        {"id": "https://openalex.org/W4324100089"}, {"id": "https://openalex.org/W3093101455"},
+        {"id": "https://openalex.org/W3086525528"}, {"id": "https://openalex.org/W4254681371"},
+        {"id": "https://openalex.org/W3036090478"}, {"id": "https://openalex.org/W7208929871"},
+        {"id": "https://openalex.org/W3068220321"}, {"id": "https://openalex.org/W3022838787"},
+        {"id": "https://openalex.org/W3012831845"}, {"id": "https://openalex.org/W3026304544"},
+        {"id": "https://openalex.org/W3116197652"}, {"id": "https://openalex.org/W3022667728"},
+        {"id": "https://openalex.org/W3072222677"}, {"id": "https://openalex.org/W3107443061"},
+        {"id": "https://openalex.org/W3117144616"}, {"id": "https://openalex.org/W3107083841"},
+        {"id": "https://openalex.org/W3083544274"}, {"id": "https://openalex.org/W3047255073"},
+        {"id": "https://openalex.org/W4212972847"}, {"id": "https://openalex.org/W3013455666"},
+        {"id": "https://openalex.org/W3030907049"}, {"id": "https://openalex.org/W3111827521"},
+        {"id": "https://openalex.org/W3111827640"}, {"id": "https://openalex.org/W3047936436"},
+        {"id": "https://openalex.org/W3029165223"}, {"id": "https://openalex.org/W4234986719"},
+        {"id": "https://openalex.org/W3092222122"}, {"id": "https://openalex.org/W4411617268"},
+        {"id": "https://openalex.org/W3117523898"}, {"id": "https://openalex.org/W4210956161"},
+        {"id": "https://openalex.org/W3044158438"}, {"id": "https://openalex.org/W3009521456"},
+        {"id": "https://openalex.org/W3095674173"}, {"id": "https://openalex.org/W4237436415"},
+        {"id": "https://openalex.org/W3047802711"}, {"id": "https://openalex.org/W3005001127"},
+        {"id": "https://openalex.org/W3014326660"}, {"id": "https://openalex.org/W3023222069"},
+        {"id": "https://openalex.org/W3113272558"}, {"id": "https://openalex.org/W3094972405"},
+        {"id": "https://openalex.org/W3113115907"}, {"id": "https://openalex.org/W4249504704"},
+        {"id": "https://openalex.org/W3042428611"}, {"id": "https://openalex.org/W3097226940"},
+        {"id": "https://openalex.org/W3049447284"}, {"id": "https://openalex.org/W3035165532"},
+        {"id": "https://openalex.org/W3127250514"}, {"id": "https://openalex.org/W3037329745"},
+        {"id": "https://openalex.org/W3092625556"}, {"id": "https://openalex.org/W3011293054"},
+        {"id": "https://openalex.org/W3015706359"}, {"id": "https://openalex.org/W3026656656"},
+        {"id": "https://openalex.org/W3138856591"}, {"id": "https://openalex.org/W3017054678"},
+        {"id": "https://openalex.org/W3017630690"}, {"id": "https://openalex.org/W3093962070"},
+        {"id": "https://openalex.org/W3096595674"}, {"id": "https://openalex.org/W3025418050"},
+        {"id": "https://openalex.org/W3121803974"}, {"id": "https://openalex.org/W3011863518"},
+        {"id": "https://openalex.org/W3173745032"}, {"id": "https://openalex.org/W2997011032"},
+        {"id": "https://openalex.org/W3015231280"}, {"id": "https://openalex.org/W3092546108"},
+        {"id": "https://openalex.org/W3048412121"}, {"id": "https://openalex.org/W3013138606"},
+        {"id": "https://openalex.org/W3081131356"}, {"id": "https://openalex.org/W3092753731"},
+        {"id": "https://openalex.org/W3042521067"}, {"id": "https://openalex.org/W3018471369"},
+        {"id": "https://openalex.org/W4392024232"}, {"id": "https://openalex.org/W3173064209"},
+        {"id": "https://openalex.org/W3103164010"}, {"id": "https://openalex.org/W3109629107"},
+        {"id": "https://openalex.org/W3043975290"}, {"id": "https://openalex.org/W3044325085"},
+        {"id": "https://openalex.org/W4287757235"}, {"id": "https://openalex.org/W3113940736"},
+        {"id": "https://openalex.org/W3022761741"}, {"id": "https://openalex.org/W3098460106"},
+        {"id": "https://openalex.org/W3098556926"}, {"id": "https://openalex.org/W3109202002"},
+        {"id": "https://openalex.org/W3117314824"}, {"id": "https://openalex.org/W3117325534"},
+        {"id": "https://openalex.org/W4233411497"}, {"id": "https://openalex.org/W3115421294"},
+        {"id": "https://openalex.org/W3109348083"}, {"id": "https://openalex.org/W3115606324"},
+        {"id": "https://openalex.org/W3018141892"}, {"id": "https://openalex.org/W3042487379"},
+        {"id": "https://openalex.org/W3192632149"}, {"id": "https://openalex.org/W3045399661"},
+        {"id": "https://openalex.org/W112053536"}, {"id": "https://openalex.org/W3008703046"},
+        {"id": "https://openalex.org/W3081895010"}, {"id": "https://openalex.org/W3034150759"},
+        {"id": "https://openalex.org/W3020930262"}, {"id": "https://openalex.org/W3106947626"},
+        {"id": "https://openalex.org/W3077636776"}, {"id": "https://openalex.org/W3040623813"},
+        {"id": "https://openalex.org/W7145698241"}, {"id": "https://openalex.org/W3034350838"},
+        {"id": "https://openalex.org/W3091339440"}, {"id": "https://openalex.org/W3047897068"},
+        {"id": "https://openalex.org/W3035171845"}, {"id": "https://openalex.org/W3125192468"},
+        {"id": "https://openalex.org/W3003246914"}, {"id": "https://openalex.org/W3089739501"},
+        {"id": "https://openalex.org/W3083556617"}, {"id": "https://openalex.org/W3165474834"},
+        {"id": "https://openalex.org/W3202032079"}, {"id": "https://openalex.org/W3047476826"},
+        {"id": "https://openalex.org/W3011770835"}, {"id": "https://openalex.org/W157561929"},
+        {"id": "https://openalex.org/W3108766456"}, {"id": "https://openalex.org/W3023436100"},
+        {"id": "https://openalex.org/W3033930587"}, {"id": "https://openalex.org/W3119764135"},
+        {"id": "https://openalex.org/W3033142438"}, {"id": "https://openalex.org/W3014149837"},
+        {"id": "https://openalex.org/W7215266368"}, {"id": "https://openalex.org/W3116427376"},
+        {"id": "https://openalex.org/W3025264085"}, {"id": "https://openalex.org/W3022744924"},
+        {"id": "https://openalex.org/W7219952771"}, {"id": "https://openalex.org/W3037261461"},
+        {"id": "https://openalex.org/W3119344626"}, {"id": "https://openalex.org/W2403772040"},
+        {"id": "https://openalex.org/W195898089"}, {"id": "https://openalex.org/W3021079044"},
+        {"id": "https://openalex.org/W3094538051"}, {"id": "https://openalex.org/W7210795010"},
+        {"id": "https://openalex.org/W3004455066"}, {"id": "https://openalex.org/W3126321276"},
+        {"id": "https://openalex.org/W2521831683"}, {"id": "https://openalex.org/W3039805199"},
+        {"id": "https://openalex.org/W3108113245"}, {"id": "https://openalex.org/W4408535156"},
+        {"id": "https://openalex.org/W823701"}, {"id": "https://openalex.org/W7211350643"},
+        {"id": "https://openalex.org/W3011229142"}], "group_by": []}'
+  recorded_at: 2026-10-14 08:31:48
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?filter=publication_year%3A2020%2Cis_oa%3Atrue%2Ctype%3Aarticle&search=%28coral%20OR%20reef%29%20AND%20bleaching%20NOT%20model"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:48 GMT
+      content-type: application/json
+      cf-ray: a4a53ada1dff7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999826'
+      x-ratelimit-remaining-usd: '199.9826'
+      x-ratelimit-reset: '55692'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=rcA7ahNEDIiTo%2B3eF6SodLri7unzEMPX78G0zdkfDCA%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966708"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=rcA7ahNEDIiTo%2B3eF6SodLri7unzEMPX78G0zdkfDCA%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966708"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and it's open access and published in 2020 and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n11","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"model","display":"model","negated":true,"addr":[1,1]},{"node":"vleaf","id":"n2","value":"bleaching","display":"bleaching","negated":false,"addr":[1,2]},{"node":"vgroup","id":"n5","join":"or","children":[{"node":"vleaf","id":"n3","value":"coral","display":"coral","negated":false,"addr":[1,3,1]},{"node":"vleaf","id":"n4","value":"reef","display":"reef","negated":false,"addr":[1,3,2]}],"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"boolean","column_id":"open_access.is_oa","column":"open access","operator":"is","segments":[{"kind":"column","text":"open access","meta":{"column_id":"open_access.is_oa"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"true","meta":{"value":true}},{"kind":"text","text":")"}],"leaf":{"column_id":"open_access.is_oa","value":true},"addr":[2]},{"node":"clause","id":"n9","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]},{"node":"clause","id":"n10","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"article","meta":{"column_id":"type","value":"article"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"article"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"not model","display":"model","value":"model","negated":true,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n2","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n5","text":"(","addr":"1.3"},{"t":"vbrick","id":"n3","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.3.1"},{"t":"conn","id":"n5","text":" or ","label":"or","addr":"1.3"},{"t":"vbrick","id":"n4","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.3.2"},{"t":"paren","id":"n5","text":")","addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n8","text":"open access","column_id":"open_access.is_oa","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"true","value":true,"kind":"boolean","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n9","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n9","text":" is ","addr":"3"},{"t":"text","id":"n9","text":"(","addr":"3"},{"t":"vbrick","id":"n9","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n9","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n10","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n10","text":" is ","addr":"4"},{"t":"text","id":"n10","text":"(","addr":"4"},{"t":"vbrick","id":"n10","text":"article","column_id":"type","value":"article","kind":"other","addr":"4.1"},{"t":"text","id":"n10","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:31:48
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"select":"id","per_page":200,"cursor":"*"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:49 GMT
+      content-type: application/json
+      cf-ray: a4a53adb4c527dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999825'
+      x-ratelimit-remaining-usd: '199.9825'
+      x-ratelimit-reset: '55691'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=M4zB6GuS6im70kGfobE7iJHl3D73nrQEmP4WHnRh%2BUw%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966709"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=M4zB6GuS6im70kGfobE7iJHl3D73nrQEmP4WHnRh%2BUw%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966709"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":346,"db_response_time_ms":57,"page":null,"per_page":200,"next_cursor":"Ils3LjIzNTI1MzMsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg==","groups_count":null,"x_query":{"oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"url":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3107846761"},{"id":"https://openalex.org/W3025652561"},{"id":"https://openalex.org/W3013411632"},{"id":"https://openalex.org/W4387427031"},{"id":"https://openalex.org/W3038754741"},{"id":"https://openalex.org/W3019761657"},{"id":"https://openalex.org/W3091348103"},{"id":"https://openalex.org/W3018012037"},{"id":"https://openalex.org/W3104346875"},{"id":"https://openalex.org/W3047723129"},{"id":"https://openalex.org/W3004572232"},{"id":"https://openalex.org/W2993969394"},{"id":"https://openalex.org/W3087155369"},{"id":"https://openalex.org/W3108685975"},{"id":"https://openalex.org/W3086574526"},{"id":"https://openalex.org/W3044866999"},{"id":"https://openalex.org/W3038476619"},{"id":"https://openalex.org/W3117863810"},{"id":"https://openalex.org/W3094568821"},{"id":"https://openalex.org/W3089466905"},{"id":"https://openalex.org/W3092524921"},{"id":"https://openalex.org/W3080576288"},{"id":"https://openalex.org/W3093073776"},{"id":"https://openalex.org/W3108438795"},{"id":"https://openalex.org/W3085764271"},{"id":"https://openalex.org/W3089906985"},{"id":"https://openalex.org/W3041649582"},{"id":"https://openalex.org/W3100044620"},{"id":"https://openalex.org/W3089048343"},{"id":"https://openalex.org/W3089998423"},{"id":"https://openalex.org/W3037952418"},{"id":"https://openalex.org/W3037639522"},{"id":"https://openalex.org/W3036927186"},{"id":"https://openalex.org/W3112137197"},{"id":"https://openalex.org/W3039867409"},{"id":"https://openalex.org/W3172320087"},{"id":"https://openalex.org/W3089228114"},{"id":"https://openalex.org/W3018511978"},{"id":"https://openalex.org/W3165655840"},{"id":"https://openalex.org/W3092367623"},{"id":"https://openalex.org/W3044306929"},{"id":"https://openalex.org/W3084117221"},{"id":"https://openalex.org/W3035333833"},{"id":"https://openalex.org/W3004728976"},{"id":"https://openalex.org/W3088654651"},{"id":"https://openalex.org/W3003267605"},{"id":"https://openalex.org/W3009914299"},{"id":"https://openalex.org/W3086981698"},{"id":"https://openalex.org/W3104006005"},{"id":"https://openalex.org/W3091753131"},{"id":"https://openalex.org/W3011708682"},{"id":"https://openalex.org/W3023619355"},{"id":"https://openalex.org/W3088319938"},{"id":"https://openalex.org/W3169010998"},{"id":"https://openalex.org/W3037390908"},{"id":"https://openalex.org/W3159770817"},{"id":"https://openalex.org/W3085575140"},{"id":"https://openalex.org/W3049621492"},{"id":"https://openalex.org/W3094932260"},{"id":"https://openalex.org/W3089676295"},{"id":"https://openalex.org/W3040542510"},{"id":"https://openalex.org/W3048278258"},{"id":"https://openalex.org/W3022681299"},{"id":"https://openalex.org/W3090173961"},{"id":"https://openalex.org/W4245200768"},{"id":"https://openalex.org/W3011815573"},{"id":"https://openalex.org/W3087995741"},{"id":"https://openalex.org/W3111905137"},{"id":"https://openalex.org/W3016799706"},{"id":"https://openalex.org/W3006031165"},{"id":"https://openalex.org/W3113005332"},{"id":"https://openalex.org/W3098096970"},{"id":"https://openalex.org/W3111624599"},{"id":"https://openalex.org/W3046657107"},{"id":"https://openalex.org/W3017475057"},{"id":"https://openalex.org/W3001777180"},{"id":"https://openalex.org/W3119468736"},{"id":"https://openalex.org/W3108023946"},{"id":"https://openalex.org/W3033576945"},{"id":"https://openalex.org/W3007515837"},{"id":"https://openalex.org/W3022622933"},{"id":"https://openalex.org/W3101672854"},{"id":"https://openalex.org/W3082032752"},{"id":"https://openalex.org/W3091499592"},{"id":"https://openalex.org/W3216489681"},{"id":"https://openalex.org/W3006088595"},{"id":"https://openalex.org/W3111913886"},{"id":"https://openalex.org/W3006543294"},{"id":"https://openalex.org/W3090889183"},{"id":"https://openalex.org/W3006380349"},{"id":"https://openalex.org/W3090978333"},{"id":"https://openalex.org/W3036748043"},{"id":"https://openalex.org/W3003997767"},{"id":"https://openalex.org/W3036406371"},{"id":"https://openalex.org/W3105722923"},{"id":"https://openalex.org/W3151536009"},{"id":"https://openalex.org/W2999440136"},{"id":"https://openalex.org/W3032804742"},{"id":"https://openalex.org/W3048652606"},{"id":"https://openalex.org/W3113310659"},{"id":"https://openalex.org/W3027826102"},{"id":"https://openalex.org/W3029087099"},{"id":"https://openalex.org/W3102811657"},{"id":"https://openalex.org/W3109247279"},{"id":"https://openalex.org/W3090150116"},{"id":"https://openalex.org/W3005437018"},{"id":"https://openalex.org/W3004870185"},{"id":"https://openalex.org/W3017900312"},{"id":"https://openalex.org/W3044037422"},{"id":"https://openalex.org/W3117323250"},{"id":"https://openalex.org/W3007110543"},{"id":"https://openalex.org/W3081932718"},{"id":"https://openalex.org/W3120066392"},{"id":"https://openalex.org/W3044736438"},{"id":"https://openalex.org/W3081781287"},{"id":"https://openalex.org/W3007329074"},{"id":"https://openalex.org/W3004755024"},{"id":"https://openalex.org/W3018008053"},{"id":"https://openalex.org/W3017126042"},{"id":"https://openalex.org/W3116396624"},{"id":"https://openalex.org/W3047946967"},{"id":"https://openalex.org/W3090120888"},{"id":"https://openalex.org/W3033801807"},{"id":"https://openalex.org/W3038881480"},{"id":"https://openalex.org/W3144566790"},{"id":"https://openalex.org/W3037967572"},{"id":"https://openalex.org/W7207742206"},{"id":"https://openalex.org/W3027396750"},{"id":"https://openalex.org/W3082515479"},{"id":"https://openalex.org/W3016882801"},{"id":"https://openalex.org/W3009825250"},{"id":"https://openalex.org/W3021071371"},{"id":"https://openalex.org/W3088846159"},{"id":"https://openalex.org/W3089426376"},{"id":"https://openalex.org/W3114797816"},{"id":"https://openalex.org/W3005593787"},{"id":"https://openalex.org/W7215398953"},{"id":"https://openalex.org/W3118323023"},{"id":"https://openalex.org/W3119335141"},{"id":"https://openalex.org/W3092068152"},{"id":"https://openalex.org/W3043172308"},{"id":"https://openalex.org/W4234481452"},{"id":"https://openalex.org/W3118736125"},{"id":"https://openalex.org/W3097748481"},{"id":"https://openalex.org/W3194022335"},{"id":"https://openalex.org/W3103530495"},{"id":"https://openalex.org/W3027960918"},{"id":"https://openalex.org/W3036657921"},{"id":"https://openalex.org/W3038149519"},{"id":"https://openalex.org/W4253737531"},{"id":"https://openalex.org/W3021784586"},{"id":"https://openalex.org/W3080118992"},{"id":"https://openalex.org/W3134058961"},{"id":"https://openalex.org/W3134755825"},{"id":"https://openalex.org/W3091948908"},{"id":"https://openalex.org/W3035238509"},{"id":"https://openalex.org/W3011825547"},{"id":"https://openalex.org/W3010733237"},{"id":"https://openalex.org/W3035346687"},{"id":"https://openalex.org/W3033479539"},{"id":"https://openalex.org/W3114397542"},{"id":"https://openalex.org/W3110520501"},{"id":"https://openalex.org/W3092173410"},{"id":"https://openalex.org/W3005687666"},{"id":"https://openalex.org/W3105202196"},{"id":"https://openalex.org/W3038703881"},{"id":"https://openalex.org/W3010975088"},{"id":"https://openalex.org/W3118416966"},{"id":"https://openalex.org/W3009986493"},{"id":"https://openalex.org/W3085004731"},{"id":"https://openalex.org/W3114737132"},{"id":"https://openalex.org/W3027288755"},{"id":"https://openalex.org/W3106295708"},{"id":"https://openalex.org/W3089133222"},{"id":"https://openalex.org/W3086437293"},{"id":"https://openalex.org/W3044694030"},{"id":"https://openalex.org/W3088245958"},{"id":"https://openalex.org/W3096099182"},{"id":"https://openalex.org/W3008794664"},{"id":"https://openalex.org/W3118504703"},{"id":"https://openalex.org/W2999072004"},{"id":"https://openalex.org/W3205797634"},{"id":"https://openalex.org/W3133073906"},{"id":"https://openalex.org/W3005115674"},{"id":"https://openalex.org/W3086717511"},{"id":"https://openalex.org/W4378883242"},{"id":"https://openalex.org/W3121468228"},{"id":"https://openalex.org/W3013582958"},{"id":"https://openalex.org/W3135833905"},{"id":"https://openalex.org/W3000489016"},{"id":"https://openalex.org/W3022524039"},{"id":"https://openalex.org/W3023473727"},{"id":"https://openalex.org/W4296289876"},{"id":"https://openalex.org/W3096777408"},{"id":"https://openalex.org/W7215866764"},{"id":"https://openalex.org/W2999171411"},{"id":"https://openalex.org/W3130820057"},{"id":"https://openalex.org/W3111569149"},{"id":"https://openalex.org/W3120748431"},{"id":"https://openalex.org/W3016651324"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:49
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"select":"id","per_page":200,"cursor":"Ils3LjIzNTI1MzMsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg=="}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:49 GMT
+      content-type: application/json
+      cf-ray: a4a53add8e547dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999824'
+      x-ratelimit-remaining-usd: '199.9824'
+      x-ratelimit-reset: '55691'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=M4zB6GuS6im70kGfobE7iJHl3D73nrQEmP4WHnRh%2BUw%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966709"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=M4zB6GuS6im70kGfobE7iJHl3D73nrQEmP4WHnRh%2BUw%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966709"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":346,"db_response_time_ms":53,"page":null,"per_page":200,"next_cursor":null,"groups_count":null,"x_query":{"oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"url":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef&per_page=200&cursor=Ils3LjIzNTI1MzMsIDE1ODcwODE2MDAwMDAsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMzAxNjY1MTMyNCddIg%3D%3D"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W4402150863"},{"id":"https://openalex.org/W3116034112"},{"id":"https://openalex.org/W3095543418"},{"id":"https://openalex.org/W3020762064"},{"id":"https://openalex.org/W4380083538"},{"id":"https://openalex.org/W4324100089"},{"id":"https://openalex.org/W3093101455"},{"id":"https://openalex.org/W3086525528"},{"id":"https://openalex.org/W4254681371"},{"id":"https://openalex.org/W3036090478"},{"id":"https://openalex.org/W7208929871"},{"id":"https://openalex.org/W3068220321"},{"id":"https://openalex.org/W3022838787"},{"id":"https://openalex.org/W3012831845"},{"id":"https://openalex.org/W3026304544"},{"id":"https://openalex.org/W3116197652"},{"id":"https://openalex.org/W3022667728"},{"id":"https://openalex.org/W3072222677"},{"id":"https://openalex.org/W3107443061"},{"id":"https://openalex.org/W3117144616"},{"id":"https://openalex.org/W3107083841"},{"id":"https://openalex.org/W3083544274"},{"id":"https://openalex.org/W4249504704"},{"id":"https://openalex.org/W3047255073"},{"id":"https://openalex.org/W4212972847"},{"id":"https://openalex.org/W3013455666"},{"id":"https://openalex.org/W3030907049"},{"id":"https://openalex.org/W3111827521"},{"id":"https://openalex.org/W3111827640"},{"id":"https://openalex.org/W3047936436"},{"id":"https://openalex.org/W3029165223"},{"id":"https://openalex.org/W4234986719"},{"id":"https://openalex.org/W3092222122"},{"id":"https://openalex.org/W4411617268"},{"id":"https://openalex.org/W3117523898"},{"id":"https://openalex.org/W4210956161"},{"id":"https://openalex.org/W3044158438"},{"id":"https://openalex.org/W3009521456"},{"id":"https://openalex.org/W3095674173"},{"id":"https://openalex.org/W4237436415"},{"id":"https://openalex.org/W3047802711"},{"id":"https://openalex.org/W3005001127"},{"id":"https://openalex.org/W3014326660"},{"id":"https://openalex.org/W3023222069"},{"id":"https://openalex.org/W3113272558"},{"id":"https://openalex.org/W3094972405"},{"id":"https://openalex.org/W3113115907"},{"id":"https://openalex.org/W3042428611"},{"id":"https://openalex.org/W3097226940"},{"id":"https://openalex.org/W3049447284"},{"id":"https://openalex.org/W3035165532"},{"id":"https://openalex.org/W3127250514"},{"id":"https://openalex.org/W3037329745"},{"id":"https://openalex.org/W3092625556"},{"id":"https://openalex.org/W3011293054"},{"id":"https://openalex.org/W3015706359"},{"id":"https://openalex.org/W3026656656"},{"id":"https://openalex.org/W3138856591"},{"id":"https://openalex.org/W3017054678"},{"id":"https://openalex.org/W3017630690"},{"id":"https://openalex.org/W3093962070"},{"id":"https://openalex.org/W3096595674"},{"id":"https://openalex.org/W3025418050"},{"id":"https://openalex.org/W3121803974"},{"id":"https://openalex.org/W3011863518"},{"id":"https://openalex.org/W3173745032"},{"id":"https://openalex.org/W2997011032"},{"id":"https://openalex.org/W3015231280"},{"id":"https://openalex.org/W3092546108"},{"id":"https://openalex.org/W3048412121"},{"id":"https://openalex.org/W3013138606"},{"id":"https://openalex.org/W3081131356"},{"id":"https://openalex.org/W3092753731"},{"id":"https://openalex.org/W3042521067"},{"id":"https://openalex.org/W3018471369"},{"id":"https://openalex.org/W4392024232"},{"id":"https://openalex.org/W3173064209"},{"id":"https://openalex.org/W3103164010"},{"id":"https://openalex.org/W3109629107"},{"id":"https://openalex.org/W3043975290"},{"id":"https://openalex.org/W3044325085"},{"id":"https://openalex.org/W4287757235"},{"id":"https://openalex.org/W3113940736"},{"id":"https://openalex.org/W3022761741"},{"id":"https://openalex.org/W3098460106"},{"id":"https://openalex.org/W3098556926"},{"id":"https://openalex.org/W3109202002"},{"id":"https://openalex.org/W3117314824"},{"id":"https://openalex.org/W3117325534"},{"id":"https://openalex.org/W4233411497"},{"id":"https://openalex.org/W3115421294"},{"id":"https://openalex.org/W3109348083"},{"id":"https://openalex.org/W3115606324"},{"id":"https://openalex.org/W3018141892"},{"id":"https://openalex.org/W3042487379"},{"id":"https://openalex.org/W3192632149"},{"id":"https://openalex.org/W3045399661"},{"id":"https://openalex.org/W112053536"},{"id":"https://openalex.org/W3008703046"},{"id":"https://openalex.org/W3081895010"},{"id":"https://openalex.org/W3034150759"},{"id":"https://openalex.org/W3020930262"},{"id":"https://openalex.org/W3106947626"},{"id":"https://openalex.org/W3077636776"},{"id":"https://openalex.org/W3040623813"},{"id":"https://openalex.org/W7145698241"},{"id":"https://openalex.org/W3034350838"},{"id":"https://openalex.org/W3091339440"},{"id":"https://openalex.org/W3047897068"},{"id":"https://openalex.org/W3035171845"},{"id":"https://openalex.org/W3125192468"},{"id":"https://openalex.org/W3003246914"},{"id":"https://openalex.org/W3089739501"},{"id":"https://openalex.org/W3083556617"},{"id":"https://openalex.org/W3165474834"},{"id":"https://openalex.org/W3202032079"},{"id":"https://openalex.org/W3047476826"},{"id":"https://openalex.org/W3011770835"},{"id":"https://openalex.org/W157561929"},{"id":"https://openalex.org/W3108766456"},{"id":"https://openalex.org/W3023436100"},{"id":"https://openalex.org/W3033930587"},{"id":"https://openalex.org/W3119764135"},{"id":"https://openalex.org/W3033142438"},{"id":"https://openalex.org/W3014149837"},{"id":"https://openalex.org/W7215266368"},{"id":"https://openalex.org/W3116427376"},{"id":"https://openalex.org/W3025264085"},{"id":"https://openalex.org/W3022744924"},{"id":"https://openalex.org/W7219952771"},{"id":"https://openalex.org/W3037261461"},{"id":"https://openalex.org/W3119344626"},{"id":"https://openalex.org/W2403772040"},{"id":"https://openalex.org/W195898089"},{"id":"https://openalex.org/W3021079044"},{"id":"https://openalex.org/W3094538051"},{"id":"https://openalex.org/W7210795010"},{"id":"https://openalex.org/W3004455066"},{"id":"https://openalex.org/W3126321276"},{"id":"https://openalex.org/W2521831683"},{"id":"https://openalex.org/W3039805199"},{"id":"https://openalex.org/W3108113245"},{"id":"https://openalex.org/W4408535156"},{"id":"https://openalex.org/W823701"},{"id":"https://openalex.org/W7211350643"},{"id":"https://openalex.org/W3011229142"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:49
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:25 GMT
+      content-type: application/json
+      cf-ray: a4a54bd9b874526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54995'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967405"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967405"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and it's open access and published in 2020 and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n11","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"model","display":"model","negated":true,"addr":[1,1]},{"node":"vleaf","id":"n2","value":"bleaching","display":"bleaching","negated":false,"addr":[1,2]},{"node":"vgroup","id":"n5","join":"or","children":[{"node":"vleaf","id":"n3","value":"coral","display":"coral","negated":false,"addr":[1,3,1]},{"node":"vleaf","id":"n4","value":"reef","display":"reef","negated":false,"addr":[1,3,2]}],"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"boolean","column_id":"open_access.is_oa","column":"open access","operator":"is","segments":[{"kind":"column","text":"open access","meta":{"column_id":"open_access.is_oa"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"true","meta":{"value":true}},{"kind":"text","text":")"}],"leaf":{"column_id":"open_access.is_oa","value":true},"addr":[2]},{"node":"clause","id":"n9","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]},{"node":"clause","id":"n10","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"article","meta":{"column_id":"type","value":"article"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"article"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"not model","display":"model","value":"model","negated":true,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n2","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n5","text":"(","addr":"1.3"},{"t":"vbrick","id":"n3","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.3.1"},{"t":"conn","id":"n5","text":" or ","label":"or","addr":"1.3"},{"t":"vbrick","id":"n4","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.3.2"},{"t":"paren","id":"n5","text":")","addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n8","text":"open access","column_id":"open_access.is_oa","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"true","value":true,"kind":"boolean","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n9","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n9","text":" is ","addr":"3"},{"t":"text","id":"n9","text":"(","addr":"3"},{"t":"vbrick","id":"n9","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n9","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n10","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n10","text":" is ","addr":"4"},{"t":"text","id":"n10","text":"(","addr":"4"},{"t":"vbrick","id":"n10","text":"article","column_id":"type","value":"article","kind":"other","addr":"4.1"},{"t":"text","id":"n10","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:25
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where full text has (bleaching AND (coral OR reef)
+        NOT model) and it''s open access and published in 2020 and type is [article](article)"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:25 GMT
+      content-type: application/json
+      cf-ray: a4a54bdb09b2526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54995'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967405"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967405"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:bleaching,fulltext.search:coral|reef,fulltext.search:%21model,open_access.is_oa:true,publication_year:2020,type:article","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and it's open access and published in 2020 and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n11","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"bleaching","display":"bleaching","negated":false,"addr":[1,1]},{"node":"vgroup","id":"n4","join":"or","children":[{"node":"vleaf","id":"n2","value":"coral","display":"coral","negated":false,"addr":[1,2,1]},{"node":"vleaf","id":"n3","value":"reef","display":"reef","negated":false,"addr":[1,2,2]}],"addr":[1,2]},{"node":"vleaf","id":"n5","value":"model","display":"model","negated":true,"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"boolean","column_id":"open_access.is_oa","column":"open access","operator":"is","segments":[{"kind":"column","text":"open access","meta":{"column_id":"open_access.is_oa"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"true","meta":{"value":true}},{"kind":"text","text":")"}],"leaf":{"column_id":"open_access.is_oa","value":true},"addr":[2]},{"node":"clause","id":"n9","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]},{"node":"clause","id":"n10","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"article","meta":{"column_id":"type","value":"article"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"article"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n4","text":"(","addr":"1.2"},{"t":"vbrick","id":"n2","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.2.1"},{"t":"conn","id":"n4","text":" or ","label":"or","addr":"1.2"},{"t":"vbrick","id":"n3","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.2.2"},{"t":"paren","id":"n4","text":")","addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n5","text":"not model","display":"model","value":"model","negated":true,"addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n8","text":"open access","column_id":"open_access.is_oa","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"true","value":true,"kind":"boolean","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n9","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n9","text":" is ","addr":"3"},{"t":"text","id":"n9","text":"(","addr":"3"},{"t":"vbrick","id":"n9","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n9","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n10","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n10","text":" is ","addr":"4"},{"t":"text","id":"n10","text":"(","addr":"4"},{"t":"vbrick","id":"n10","text":"article","column_id":"type","value":"article","kind":"other","addr":"4.1"},{"t":"text","id":"n10","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]},{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:25
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:25 GMT
+      content-type: application/json
+      cf-ray: a4a54bdcfb38526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54995'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967405"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967405"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%21model,fulltext.search:bleaching,open_access.is_oa:true,publication_year:2020,type:article,fulltext.search:coral|reef","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and it's open access and published in 2020 and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n11","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"model","display":"model","negated":true,"addr":[1,1]},{"node":"vleaf","id":"n2","value":"bleaching","display":"bleaching","negated":false,"addr":[1,2]},{"node":"vgroup","id":"n5","join":"or","children":[{"node":"vleaf","id":"n3","value":"coral","display":"coral","negated":false,"addr":[1,3,1]},{"node":"vleaf","id":"n4","value":"reef","display":"reef","negated":false,"addr":[1,3,2]}],"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"boolean","column_id":"open_access.is_oa","column":"open access","operator":"is","segments":[{"kind":"column","text":"open access","meta":{"column_id":"open_access.is_oa"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"true","meta":{"value":true}},{"kind":"text","text":")"}],"leaf":{"column_id":"open_access.is_oa","value":true},"addr":[2]},{"node":"clause","id":"n9","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]},{"node":"clause","id":"n10","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"article","meta":{"column_id":"type","value":"article"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"article"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"not model","display":"model","value":"model","negated":true,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n2","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n5","text":"(","addr":"1.3"},{"t":"vbrick","id":"n3","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.3.1"},{"t":"conn","id":"n5","text":" or ","label":"or","addr":"1.3"},{"t":"vbrick","id":"n4","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.3.2"},{"t":"paren","id":"n5","text":")","addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n8","text":"open access","column_id":"open_access.is_oa","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"true","value":true,"kind":"boolean","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n9","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n9","text":" is ","addr":"3"},{"t":"text","id":"n9","text":"(","addr":"3"},{"t":"vbrick","id":"n9","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n9","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n10","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n10","text":" is ","addr":"4"},{"t":"text","id":"n10","text":"(","addr":"4"},{"t":"vbrick","id":"n10","text":"article","column_id":"type","value":"article","kind":"other","addr":"4.1"},{"t":"text","id":"n10","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:25
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where full text has (bleaching AND (coral OR reef)
+        NOT model) and it''s open access and published in 2020 and type is [article](article)"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:26 GMT
+      content-type: application/json
+      cf-ray: a4a54bde3c32526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54994'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967405"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=JHs4QtBdhfeXYup99P0nNEmjkaIcaJOf48C8yBflwSI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967405"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:bleaching,fulltext.search:coral|reef,fulltext.search:%21model,open_access.is_oa:true,publication_year:2020,type:article","oql":"get works where full text has (bleaching AND (coral OR reef) NOT model)\n  and it's open access\n  and published in 2020\n  and type is [article](article)","oql_oneline":"get works where full text has (bleaching AND (coral OR reef) NOT model) and it's open access and published in 2020 and type is [article](article)","x_new_oql":"get open access articles from 2020 with (bleaching AND (coral OR reef) NOT model) in the full text","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n11","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n7","clause_kind":"text","column_id":"fulltext.search","operator":"has","value":{"node":"vgroup","id":"n6","join":"and","children":[{"node":"vleaf","id":"n1","value":"bleaching","display":"bleaching","negated":false,"addr":[1,1]},{"node":"vgroup","id":"n4","join":"or","children":[{"node":"vleaf","id":"n2","value":"coral","display":"coral","negated":false,"addr":[1,2,1]},{"node":"vleaf","id":"n3","value":"reef","display":"reef","negated":false,"addr":[1,2,2]}],"addr":[1,2]},{"node":"vleaf","id":"n5","value":"model","display":"model","negated":true,"addr":[1,3]}]},"column":"full text","addr":[1]},{"node":"clause","id":"n8","clause_kind":"boolean","column_id":"open_access.is_oa","column":"open access","operator":"is","segments":[{"kind":"column","text":"open access","meta":{"column_id":"open_access.is_oa"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"true","meta":{"value":true}},{"kind":"text","text":")"}],"leaf":{"column_id":"open_access.is_oa","value":true},"addr":[2]},{"node":"clause","id":"n9","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]},{"node":"clause","id":"n10","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"article","meta":{"column_id":"type","value":"article"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"article"},"addr":[4]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n7","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n7","text":" has ","addr":"1"},{"t":"paren","id":"n6","text":"("},{"t":"vbrick","id":"n1","text":"bleaching","display":"bleaching","value":"bleaching","negated":false,"addr":"1.1"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"paren","id":"n4","text":"(","addr":"1.2"},{"t":"vbrick","id":"n2","text":"coral","display":"coral","value":"coral","negated":false,"addr":"1.2.1"},{"t":"conn","id":"n4","text":" or ","label":"or","addr":"1.2"},{"t":"vbrick","id":"n3","text":"reef","display":"reef","value":"reef","negated":false,"addr":"1.2.2"},{"t":"paren","id":"n4","text":")","addr":"1.2"},{"t":"conn","id":"n6","text":" and ","label":"and"},{"t":"vbrick","id":"n5","text":"not model","display":"model","value":"model","negated":true,"addr":"1.3"},{"t":"paren","id":"n6","text":")"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n8","text":"open access","column_id":"open_access.is_oa","addr":"2"},{"t":"op","id":"n8","text":" is ","addr":"2"},{"t":"text","id":"n8","text":"(","addr":"2"},{"t":"vbrick","id":"n8","text":"true","value":true,"kind":"boolean","addr":"2.1"},{"t":"text","id":"n8","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n9","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n9","text":" is ","addr":"3"},{"t":"text","id":"n9","text":"(","addr":"3"},{"t":"vbrick","id":"n9","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n9","text":")","addr":"3"}],"n":3},{"indent":2,"tokens":[{"t":"conn","id":"n11","text":" and ","label":"and"},{"t":"col","id":"n10","text":"type","column_id":"type","addr":"4"},{"t":"op","id":"n10","text":" is ","addr":"4"},{"t":"text","id":"n10","text":"(","addr":"4"},{"t":"vbrick","id":"n10","text":"article","column_id":"type","value":"article","kind":"other","addr":"4.1"},{"t":"text","id":"n10","text":")","addr":"4"}],"n":4}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"bleaching","operator":"has"},{"join":"or","filters":[{"column_id":"fulltext.search","value":"coral","operator":"has"},{"column_id":"fulltext.search","value":"reef","operator":"has"}]},{"column_id":"fulltext.search","value":"model","operator":"has","is_negated":true},{"column_id":"open_access.is_oa","value":true},{"column_id":"publication_year","value":2020},{"column_id":"type","value":"article"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:26
+recorded_with: VCR-vcr/2.1.0

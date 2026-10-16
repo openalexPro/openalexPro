@@ -4,7 +4,7 @@ library(testthat)
 #
 # Run these tests manually with:
 #   Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
-#   Sys.setenv(openalexPro.apikey = "your-real-key")
+#   Sys.setenv(openalexPro.api_key = "your-real-key")
 #   devtools::test(filter = "900-live")
 
 
@@ -52,7 +52,8 @@ test_that("live works request returns stable meta and result structure", {
     progress = FALSE
   )
 
-  json_files <- list.files(output_json, pattern = "\\.json$", full.names = TRUE)
+  # page files only: `_query.json` (the query record) sorts before them
+  json_files <- list.files(output_json, pattern = "^results_page_[0-9]+\\.json$", full.names = TRUE)
   expect_true(length(json_files) >= 1)
 
   payload <- jsonlite::read_json(json_files[[1]], simplifyVector = FALSE)
@@ -80,4 +81,29 @@ test_that("live opt_filter_names returns non-empty character vector", {
   expect_type(filters, "character")
   expect_gt(length(filters), 0)
   expect_true(all(c("from_publication_date", "institutions.id") %in% filters))
+})
+
+
+test_that("live: an old cursor is still accepted (cursors are durable)", {
+  api_key <- skip_if_not_live_openalex()
+
+  # Resuming a query in the middle (`_paging.json`) relies on OpenAlex cursors
+  # staying valid across sessions: they are stateless positions in the sort
+  # order. This cursor was created on 2026-10-14 for this query (the start of
+  # page 2, 50 per page), so every run of the live tests checks durability
+  # over a longer span. If OpenAlex changes its cursor format, this fails --
+  # and resume then has to fall back to fetching queries from page 1.
+  cursor <- "IlsnLUluZmluaXR5JywgNDEsICdodHRwczovL29wZW5hbGV4Lm9yZy9XMjYxMzg2MjMzOSddIg=="
+  url <- paste0(
+    "https://api.openalex.org/works?filter=type:erratum,",
+    "primary_location.source.id:S137773608,publication_year:2000-2015",
+    "&select=id&per_page=50"
+  )
+  req <- httr2::request(url) |>
+    httr2::req_url_query(cursor = cursor) |>
+    .oa_auth(api_key)
+  data <- httr2::resp_body_json(api_call(req))
+
+  expect_equal(length(data$results), 50L)
+  expect_false(is.null(data$meta$next_cursor))
 })

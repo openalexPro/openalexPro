@@ -1,0 +1,370 @@
+http_interactions:
+- request:
+    method: GET
+    uri: https://api.openalex.org/works?filter=publication_year%3A2020%2Cprimary_location.source.id%3AS137773608&search=%22climate+change%22~5&select=id&per_page=200&cursor=%2A
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:51 GMT
+      content-type: application/json
+      cf-ray: a4a53ae8dda47dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999821'
+      x-ratelimit-remaining-usd: '199.9821'
+      x-ratelimit-reset: '55689'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=V8bMxCozuEW4Oh3lGe1u1%2Fr9Tz5JM4ouH0wJMU3dQ6s%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1791966711"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=V8bMxCozuEW4Oh3lGe1u1%2Fr9Tz5JM4ouH0wJMU3dQ6s%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1791966711"
+      content-encoding: gzip
+    body:
+      string: '{"meta": {"count": 153, "db_response_time_ms": 38, "page": null, "per_page":
+        200, "next_cursor": null, "groups_count": null, "x_query": {"oql": "get works
+        where full text has (climate and change within 5 words of each other)\n  and
+        source is (S137773608)\n  and published in 2020", "x_new_oql": "get works
+        from 2020 with (climate and change within 5 words of each other) in the full
+        text in (S137773608)", "oqo": {"get_rows": "works", "filter_rows": [{"column_id":
+        "fulltext.search", "value": "\"climate change\"~5", "operator": "has"}, {"column_id":
+        "primary_location.source.id", "value": "S137773608"}, {"column_id": "publication_year",
+        "value": 2020}]}, "url": "/works?filter=fulltext.search:%22climate change%22~5,primary_location.source.id:S137773608,publication_year:2020&per_page=200&cursor=%2A"},
+        "cost_usd": 0.0001}, "results": [{"id": "https://openalex.org/W3015530812"},
+        {"id": "https://openalex.org/W3012365487"}, {"id": "https://openalex.org/W3016506748"},
+        {"id": "https://openalex.org/W3083872724"}, {"id": "https://openalex.org/W3012711965"},
+        {"id": "https://openalex.org/W3031650789"}, {"id": "https://openalex.org/W4236422196"},
+        {"id": "https://openalex.org/W3073075071"}, {"id": "https://openalex.org/W4252548348"},
+        {"id": "https://openalex.org/W3001484903"}, {"id": "https://openalex.org/W3001254840"},
+        {"id": "https://openalex.org/W3040970828"}, {"id": "https://openalex.org/W3009603732"},
+        {"id": "https://openalex.org/W2999367337"}, {"id": "https://openalex.org/W4244395403"},
+        {"id": "https://openalex.org/W4214680238"}, {"id": "https://openalex.org/W4236864537"},
+        {"id": "https://openalex.org/W3013869799"}, {"id": "https://openalex.org/W3089276880"},
+        {"id": "https://openalex.org/W4236250653"}, {"id": "https://openalex.org/W4231487197"},
+        {"id": "https://openalex.org/W3008963434"}, {"id": "https://openalex.org/W3006674145"},
+        {"id": "https://openalex.org/W3048558844"}, {"id": "https://openalex.org/W3014167299"},
+        {"id": "https://openalex.org/W3048696433"}, {"id": "https://openalex.org/W3033282251"},
+        {"id": "https://openalex.org/W3110330080"}, {"id": "https://openalex.org/W3091628985"},
+        {"id": "https://openalex.org/W3093570042"}, {"id": "https://openalex.org/W3113525086"},
+        {"id": "https://openalex.org/W4253589156"}, {"id": "https://openalex.org/W4235706622"},
+        {"id": "https://openalex.org/W4232786032"}, {"id": "https://openalex.org/W4232417100"},
+        {"id": "https://openalex.org/W4248572781"}, {"id": "https://openalex.org/W3009017089"},
+        {"id": "https://openalex.org/W3031762244"}, {"id": "https://openalex.org/W2999375885"},
+        {"id": "https://openalex.org/W3026358851"}, {"id": "https://openalex.org/W3008413584"},
+        {"id": "https://openalex.org/W4233980461"}, {"id": "https://openalex.org/W2999218008"},
+        {"id": "https://openalex.org/W4247733076"}, {"id": "https://openalex.org/W3010611230"},
+        {"id": "https://openalex.org/W3016889457"}, {"id": "https://openalex.org/W2999243913"},
+        {"id": "https://openalex.org/W3039679347"}, {"id": "https://openalex.org/W3014133840"},
+        {"id": "https://openalex.org/W4242528194"}, {"id": "https://openalex.org/W3110838555"},
+        {"id": "https://openalex.org/W3112031138"}, {"id": "https://openalex.org/W3007009862"},
+        {"id": "https://openalex.org/W3013511807"}, {"id": "https://openalex.org/W4232318091"},
+        {"id": "https://openalex.org/W4239244471"}, {"id": "https://openalex.org/W3016023090"},
+        {"id": "https://openalex.org/W4237904379"}, {"id": "https://openalex.org/W3012096281"},
+        {"id": "https://openalex.org/W3042042352"}, {"id": "https://openalex.org/W3126094180"},
+        {"id": "https://openalex.org/W4255606525"}, {"id": "https://openalex.org/W3012547664"},
+        {"id": "https://openalex.org/W3000238224"}, {"id": "https://openalex.org/W3015605853"},
+        {"id": "https://openalex.org/W3091919204"}, {"id": "https://openalex.org/W3072837421"},
+        {"id": "https://openalex.org/W3081090897"}, {"id": "https://openalex.org/W3015299597"},
+        {"id": "https://openalex.org/W3092811956"}, {"id": "https://openalex.org/W3088138537"},
+        {"id": "https://openalex.org/W3092621662"}, {"id": "https://openalex.org/W3036161870"},
+        {"id": "https://openalex.org/W3009508360"}, {"id": "https://openalex.org/W3084261954"},
+        {"id": "https://openalex.org/W3043868445"}, {"id": "https://openalex.org/W3017801175"},
+        {"id": "https://openalex.org/W3047360334"}, {"id": "https://openalex.org/W3001028648"},
+        {"id": "https://openalex.org/W3010768757"}, {"id": "https://openalex.org/W3106952108"},
+        {"id": "https://openalex.org/W3108924343"}, {"id": "https://openalex.org/W2996825230"},
+        {"id": "https://openalex.org/W3047125675"}, {"id": "https://openalex.org/W3048766528"},
+        {"id": "https://openalex.org/W3082203506"}, {"id": "https://openalex.org/W3101772787"},
+        {"id": "https://openalex.org/W3093215896"}, {"id": "https://openalex.org/W3004068387"},
+        {"id": "https://openalex.org/W3045947152"}, {"id": "https://openalex.org/W3010065993"},
+        {"id": "https://openalex.org/W3041773269"}, {"id": "https://openalex.org/W3009221443"},
+        {"id": "https://openalex.org/W3005123077"}, {"id": "https://openalex.org/W2998110292"},
+        {"id": "https://openalex.org/W3099573950"}, {"id": "https://openalex.org/W3014265798"},
+        {"id": "https://openalex.org/W3082857413"}, {"id": "https://openalex.org/W4249961708"},
+        {"id": "https://openalex.org/W3003082407"}, {"id": "https://openalex.org/W3014223170"},
+        {"id": "https://openalex.org/W4238192913"}, {"id": "https://openalex.org/W3004385604"},
+        {"id": "https://openalex.org/W3017369066"}, {"id": "https://openalex.org/W3024319951"},
+        {"id": "https://openalex.org/W3005841621"}, {"id": "https://openalex.org/W4231042008"},
+        {"id": "https://openalex.org/W3031941240"}, {"id": "https://openalex.org/W3000446153"},
+        {"id": "https://openalex.org/W3088198383"}, {"id": "https://openalex.org/W3000629496"},
+        {"id": "https://openalex.org/W3001442806"}, {"id": "https://openalex.org/W2999750625"},
+        {"id": "https://openalex.org/W3013236610"}, {"id": "https://openalex.org/W4252895553"},
+        {"id": "https://openalex.org/W4254526267"}, {"id": "https://openalex.org/W3004182867"},
+        {"id": "https://openalex.org/W4229828070"}, {"id": "https://openalex.org/W3010227975"},
+        {"id": "https://openalex.org/W3000441424"}, {"id": "https://openalex.org/W3094112275"},
+        {"id": "https://openalex.org/W2990132483"}, {"id": "https://openalex.org/W4231370411"},
+        {"id": "https://openalex.org/W3025654839"}, {"id": "https://openalex.org/W4249311676"},
+        {"id": "https://openalex.org/W3032333523"}, {"id": "https://openalex.org/W3024193273"},
+        {"id": "https://openalex.org/W3014644068"}, {"id": "https://openalex.org/W3012985405"},
+        {"id": "https://openalex.org/W3013331069"}, {"id": "https://openalex.org/W4206825596"},
+        {"id": "https://openalex.org/W3025265412"}, {"id": "https://openalex.org/W3008256015"},
+        {"id": "https://openalex.org/W3003857584"}, {"id": "https://openalex.org/W2999703472"},
+        {"id": "https://openalex.org/W3043260700"}, {"id": "https://openalex.org/W3114752073"},
+        {"id": "https://openalex.org/W4233476011"}, {"id": "https://openalex.org/W4230095787"},
+        {"id": "https://openalex.org/W4206306104"}, {"id": "https://openalex.org/W3010043519"},
+        {"id": "https://openalex.org/W4252306061"}, {"id": "https://openalex.org/W2998325425"},
+        {"id": "https://openalex.org/W3109066969"}, {"id": "https://openalex.org/W4238991701"},
+        {"id": "https://openalex.org/W3082772719"}, {"id": "https://openalex.org/W3014853822"},
+        {"id": "https://openalex.org/W3015118093"}, {"id": "https://openalex.org/W3047173106"},
+        {"id": "https://openalex.org/W3107547568"}, {"id": "https://openalex.org/W3099731865"},
+        {"id": "https://openalex.org/W2999927798"}, {"id": "https://openalex.org/W3019323238"}],
+        "group_by": []}'
+  recorded_at: 2026-10-14 08:31:51
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?filter=publication_year%3A2020%2Cprimary_location.source.id%3AS137773608&search=%22climate%20change%22~5"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:51 GMT
+      content-type: application/json
+      cf-ray: a4a53aeadd037dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999821'
+      x-ratelimit-remaining-usd: '199.9821'
+      x-ratelimit-reset: '55689'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=KURPtcA%2FChKGtvt12o8a%2FHCyJFu0rYAfvrq%2BMAef%2Bqg%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966711"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=KURPtcA%2FChKGtvt12o8a%2FHCyJFu0rYAfvrq%2BMAef%2Bqg%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966711"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%22climate change%22~5,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (climate and change within 5 words of each other) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"within 5 (climate, change)","meta":{"value":"\"climate change\"~5"}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"within 5 (climate, change)","value":"\"climate change\"~5","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:31:51
+- request:
+    method: POST
+    uri: https://api.openalex.org/
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate
+        change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"select":"id","per_page":200,"cursor":"*"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:31:51 GMT
+      content-type: application/json
+      cf-ray: a4a53aec2a0f7dd2-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0.0001'
+      x-ratelimit-credits-used: '1'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999820'
+      x-ratelimit-remaining-usd: '199.982'
+      x-ratelimit-reset: '55689'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=KURPtcA%2FChKGtvt12o8a%2FHCyJFu0rYAfvrq%2BMAef%2Bqg%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791966711"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=KURPtcA%2FChKGtvt12o8a%2FHCyJFu0rYAfvrq%2BMAef%2Bqg%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791966711"
+      content-encoding: gzip
+    body:
+      string: |
+        {"meta":{"count":153,"db_response_time_ms":36,"page":null,"per_page":200,"next_cursor":null,"groups_count":null,"x_query":{"oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is (S137773608)\n  and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in (S137773608)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"url":"/works?filter=fulltext.search:%22climate change%22~5,primary_location.source.id:S137773608,publication_year:2020&per_page=200&cursor=%2A"},"cost":{"credits":1,"usd":0.0001,"steps":[{"credits":1,"what":"a search (grandfathered key)"}]},"cost_usd":0.0001},"results":[{"id":"https://openalex.org/W3015530812"},{"id":"https://openalex.org/W3012365487"},{"id":"https://openalex.org/W3016506748"},{"id":"https://openalex.org/W3083872724"},{"id":"https://openalex.org/W3012711965"},{"id":"https://openalex.org/W3031650789"},{"id":"https://openalex.org/W4236422196"},{"id":"https://openalex.org/W3073075071"},{"id":"https://openalex.org/W4252548348"},{"id":"https://openalex.org/W3001484903"},{"id":"https://openalex.org/W3001254840"},{"id":"https://openalex.org/W3040970828"},{"id":"https://openalex.org/W3009603732"},{"id":"https://openalex.org/W2999367337"},{"id":"https://openalex.org/W4244395403"},{"id":"https://openalex.org/W4214680238"},{"id":"https://openalex.org/W4236864537"},{"id":"https://openalex.org/W3013869799"},{"id":"https://openalex.org/W3089276880"},{"id":"https://openalex.org/W4236250653"},{"id":"https://openalex.org/W4231487197"},{"id":"https://openalex.org/W3008963434"},{"id":"https://openalex.org/W3006674145"},{"id":"https://openalex.org/W3048558844"},{"id":"https://openalex.org/W3014167299"},{"id":"https://openalex.org/W3048696433"},{"id":"https://openalex.org/W3033282251"},{"id":"https://openalex.org/W3110330080"},{"id":"https://openalex.org/W3091628985"},{"id":"https://openalex.org/W3093570042"},{"id":"https://openalex.org/W3113525086"},{"id":"https://openalex.org/W4253589156"},{"id":"https://openalex.org/W4235706622"},{"id":"https://openalex.org/W4232786032"},{"id":"https://openalex.org/W4232417100"},{"id":"https://openalex.org/W4248572781"},{"id":"https://openalex.org/W3009017089"},{"id":"https://openalex.org/W3031762244"},{"id":"https://openalex.org/W2999375885"},{"id":"https://openalex.org/W3026358851"},{"id":"https://openalex.org/W3008413584"},{"id":"https://openalex.org/W4233980461"},{"id":"https://openalex.org/W2999218008"},{"id":"https://openalex.org/W4247733076"},{"id":"https://openalex.org/W3010611230"},{"id":"https://openalex.org/W3016889457"},{"id":"https://openalex.org/W2999243913"},{"id":"https://openalex.org/W3039679347"},{"id":"https://openalex.org/W3014133840"},{"id":"https://openalex.org/W4242528194"},{"id":"https://openalex.org/W3110838555"},{"id":"https://openalex.org/W3112031138"},{"id":"https://openalex.org/W3007009862"},{"id":"https://openalex.org/W3013511807"},{"id":"https://openalex.org/W4232318091"},{"id":"https://openalex.org/W4239244471"},{"id":"https://openalex.org/W3016023090"},{"id":"https://openalex.org/W4237904379"},{"id":"https://openalex.org/W3012096281"},{"id":"https://openalex.org/W3042042352"},{"id":"https://openalex.org/W3126094180"},{"id":"https://openalex.org/W4255606525"},{"id":"https://openalex.org/W3012547664"},{"id":"https://openalex.org/W3000238224"},{"id":"https://openalex.org/W3015605853"},{"id":"https://openalex.org/W3091919204"},{"id":"https://openalex.org/W3072837421"},{"id":"https://openalex.org/W3081090897"},{"id":"https://openalex.org/W3015299597"},{"id":"https://openalex.org/W3092811956"},{"id":"https://openalex.org/W3088138537"},{"id":"https://openalex.org/W3092621662"},{"id":"https://openalex.org/W3036161870"},{"id":"https://openalex.org/W3009508360"},{"id":"https://openalex.org/W3084261954"},{"id":"https://openalex.org/W3043868445"},{"id":"https://openalex.org/W3017801175"},{"id":"https://openalex.org/W3047360334"},{"id":"https://openalex.org/W3001028648"},{"id":"https://openalex.org/W3010768757"},{"id":"https://openalex.org/W3106952108"},{"id":"https://openalex.org/W3108924343"},{"id":"https://openalex.org/W2996825230"},{"id":"https://openalex.org/W3047125675"},{"id":"https://openalex.org/W3048766528"},{"id":"https://openalex.org/W3082203506"},{"id":"https://openalex.org/W3101772787"},{"id":"https://openalex.org/W3093215896"},{"id":"https://openalex.org/W3004068387"},{"id":"https://openalex.org/W3045947152"},{"id":"https://openalex.org/W3010065993"},{"id":"https://openalex.org/W3041773269"},{"id":"https://openalex.org/W3009221443"},{"id":"https://openalex.org/W3005123077"},{"id":"https://openalex.org/W2998110292"},{"id":"https://openalex.org/W3099573950"},{"id":"https://openalex.org/W3014265798"},{"id":"https://openalex.org/W3082857413"},{"id":"https://openalex.org/W4249961708"},{"id":"https://openalex.org/W3003082407"},{"id":"https://openalex.org/W3014223170"},{"id":"https://openalex.org/W4238192913"},{"id":"https://openalex.org/W3004385604"},{"id":"https://openalex.org/W3017369066"},{"id":"https://openalex.org/W3024319951"},{"id":"https://openalex.org/W3005841621"},{"id":"https://openalex.org/W4231042008"},{"id":"https://openalex.org/W3031941240"},{"id":"https://openalex.org/W3000446153"},{"id":"https://openalex.org/W3088198383"},{"id":"https://openalex.org/W3000629496"},{"id":"https://openalex.org/W3001442806"},{"id":"https://openalex.org/W2999750625"},{"id":"https://openalex.org/W3013236610"},{"id":"https://openalex.org/W4252895553"},{"id":"https://openalex.org/W4254526267"},{"id":"https://openalex.org/W3004182867"},{"id":"https://openalex.org/W4229828070"},{"id":"https://openalex.org/W3010227975"},{"id":"https://openalex.org/W3000441424"},{"id":"https://openalex.org/W3094112275"},{"id":"https://openalex.org/W2990132483"},{"id":"https://openalex.org/W4231370411"},{"id":"https://openalex.org/W3025654839"},{"id":"https://openalex.org/W4249311676"},{"id":"https://openalex.org/W3032333523"},{"id":"https://openalex.org/W3024193273"},{"id":"https://openalex.org/W3014644068"},{"id":"https://openalex.org/W3012985405"},{"id":"https://openalex.org/W3013331069"},{"id":"https://openalex.org/W4206825596"},{"id":"https://openalex.org/W3025265412"},{"id":"https://openalex.org/W3008256015"},{"id":"https://openalex.org/W3003857584"},{"id":"https://openalex.org/W2999703472"},{"id":"https://openalex.org/W3043260700"},{"id":"https://openalex.org/W3114752073"},{"id":"https://openalex.org/W4233476011"},{"id":"https://openalex.org/W4230095787"},{"id":"https://openalex.org/W4206306104"},{"id":"https://openalex.org/W3010043519"},{"id":"https://openalex.org/W4252306061"},{"id":"https://openalex.org/W2998325425"},{"id":"https://openalex.org/W3109066969"},{"id":"https://openalex.org/W4238991701"},{"id":"https://openalex.org/W3082772719"},{"id":"https://openalex.org/W3014853822"},{"id":"https://openalex.org/W3015118093"},{"id":"https://openalex.org/W3047173106"},{"id":"https://openalex.org/W3107547568"},{"id":"https://openalex.org/W3099731865"},{"id":"https://openalex.org/W2999927798"},{"id":"https://openalex.org/W3019323238"}],"group_by":[]}
+  recorded_at: 2026-10-14 08:31:51
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate
+        change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:27 GMT
+      content-type: application/json
+      cf-ray: a4a54be9fe44526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54993'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=l9jZPY9fzieLR4JaGqAWhC2BNdJ2vZUYEgODtn6dDEI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967407"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=l9jZPY9fzieLR4JaGqAWhC2BNdJ2vZUYEgODtn6dDEI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967407"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%22climate change%22~5,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (climate and change within 5 words of each other) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"within 5 (climate, change)","meta":{"value":"\"climate change\"~5"}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"within 5 (climate, change)","value":"\"climate change\"~5","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:27
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where full text has (climate and change within 5
+        words of each other) and source is [Nature](S137773608) and published in 2020"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:28 GMT
+      content-type: application/json
+      cf-ray: a4a54beb6f95526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54992'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967408"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967408"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%22climate%22~5~%22change%22,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (climate and change within 5 words of each other) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"within 5 (climate, change)","meta":{"value":"\"climate\"~5~\"change\""}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search","value":"\"climate\"~5~\"change\"","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"within 5 (climate, change)","value":"\"climate\"~5~\"change\"","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate\"~5~\"change\"","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:28
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate
+        change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]}}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:28 GMT
+      content-type: application/json
+      cf-ray: a4a54bed28da526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54992'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967408"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967408"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%22climate change%22~5,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (climate and change within 5 words of each other) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"within 5 (climate, change)","meta":{"value":"\"climate change\"~5"}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"within 5 (climate, change)","value":"\"climate change\"~5","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate change\"~5","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:28
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where full text has (climate and change within 5
+        words of each other) and source is [Nature](S137773608) and published in 2020"}'
+  response:
+    status: 200
+    headers:
+      date: Wed, 14 Oct 2026 08:43:28 GMT
+      content-type: application/json
+      cf-ray: a4a54bee69c8526a-MXP
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999773'
+      x-ratelimit-remaining-usd: '199.9773'
+      x-ratelimit-reset: '54992'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1791967408"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=mbD%2BBX%2BGiOgeSOoK7x0TYX6wH1fFUoaHfUUNA8lyEPY%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1791967408"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=fulltext.search:%22climate%22~5~%22change%22,primary_location.source.id:S137773608,publication_year:2020","oql":"get works where full text has (climate and change within 5 words of each other)\n  and source is [Nature](S137773608)\n  and published in 2020","oql_oneline":"get works where full text has (climate and change within 5 words of each other) and source is [Nature](S137773608) and published in 2020","x_new_oql":"get works from 2020 with (climate and change within 5 words of each other) in the full text in [Nature](S137773608)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"group","id":"n4","join":"and","negated":false,"paren":false,"children":[{"node":"clause","id":"n1","clause_kind":"text","column_id":"fulltext.search","column":"full text","operator":"has","segments":[{"kind":"column","text":"full text","meta":{"column_id":"fulltext.search"}},{"kind":"operator","text":" has "},{"kind":"text","text":"("},{"kind":"value","text":"within 5 (climate, change)","meta":{"value":"\"climate\"~5~\"change\""}},{"kind":"text","text":")"}],"leaf":{"column_id":"fulltext.search","value":"\"climate\"~5~\"change\"","operator":"has"},"addr":[1]},{"node":"clause","id":"n2","clause_kind":"entity","column_id":"primary_location.source.id","column":"source","operator":"is","segments":[{"kind":"column","text":"source","meta":{"column_id":"primary_location.source.id"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"S137773608","meta":{"column_id":"primary_location.source.id","value":"S137773608"}},{"kind":"text","text":" "},{"kind":"id","text":"[Nature]","meta":{"entity_display_name":"Nature","entity_display_id":"[Nature]"}},{"kind":"text","text":")"}],"leaf":{"column_id":"primary_location.source.id","value":"S137773608"},"addr":[2]},{"node":"clause","id":"n3","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[3]}],"implicit":true},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"full text","column_id":"fulltext.search","addr":"1"},{"t":"op","id":"n1","text":" has ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"within 5 (climate, change)","value":"\"climate\"~5~\"change\"","kind":"text","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n2","text":"source","column_id":"primary_location.source.id","addr":"2"},{"t":"op","id":"n2","text":" is ","addr":"2"},{"t":"text","id":"n2","text":"(","addr":"2"},{"t":"vbrick","id":"n2","text":"S137773608","column_id":"primary_location.source.id","value":"S137773608","kind":"entity","addr":"2.1"},{"t":"id","id":"n2","text":"[Nature]","addr":"2"},{"t":"text","id":"n2","text":")","addr":"2"}],"n":2},{"indent":2,"tokens":[{"t":"conn","id":"n4","text":" and ","label":"and"},{"t":"col","id":"n3","text":"year","column_id":"publication_year","addr":"3"},{"t":"op","id":"n3","text":" is ","addr":"3"},{"t":"text","id":"n3","text":"(","addr":"3"},{"t":"vbrick","id":"n3","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"3.1"},{"t":"text","id":"n3","text":")","addr":"3"}],"n":3}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"fulltext.search","value":"\"climate\"~5~\"change\"","operator":"has"},{"column_id":"primary_location.source.id","value":"S137773608"},{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-10-14 08:43:28
+recorded_with: VCR-vcr/2.1.0

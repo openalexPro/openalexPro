@@ -130,3 +130,51 @@ test_that("extract_doi() suffix and prefix handle SICI DOIs", {
   expect_identical(unname(extract_doi(sici, what = "suffix")),
                    "1520-0450(1963)002<0713:ooasds>2.0.co;2")
 })
+
+test_that("extract_doi() keeps SICI check character '#' but not URL fragments", {
+  expect_identical(
+    unname(extract_doi("10.1002/(SICI)1096-9837(199908)24:8<687::AID-ESP991>3.0.CO;2-#")),
+    "10.1002/(sici)1096-9837(199908)24:8<687::aid-esp991>3.0.co;2-#"
+  )
+  expect_identical(unname(extract_doi("https://doi.org/10.1234/abc#section")), "10.1234/abc")
+})
+
+test_that("extract_doi() decodes percent-encoding, also double encoding", {
+  expect_identical(
+    unname(extract_doi(c(
+      "10.1890/0012-9658(2006)87%255B1877:MBDICL%255D2.0.CO;2",
+      "10.1579/0044-7447%282007%2936%5B12%3AEOEMOT%5D2.0.CO%3B2",
+      "10.1016/j.respol.2017.02.008%0Ahttp://dx.doi.org/10.2800/534806"
+    ))),
+    c(
+      "10.1890/0012-9658(2006)87[1877:mbdicl]2.0.co;2",
+      "10.1579/0044-7447(2007)36[12:eoemot]2.0.co;2",
+      "10.1016/j.respol.2017.02.008"
+    )
+  )
+})
+
+test_that("extract_doi() rejects DOIs with unfilled placeholders instead of truncating", {
+  x <- c("10.18461/ijfsd.v2i4.%x", "10.37002/biobrasil.v%vi%i.798")
+  expect_identical(unname(extract_doi(x)), c("", ""))
+  expect_identical(unname(extract_doi(x, what = "suffix")), c("", ""))
+})
+
+test_that("extract_doi(lower = FALSE) keeps the case of the input", {
+  expect_identical(
+    unname(extract_doi(c("doi: 10.1000/XYZ456 ", "10.1890/0012-9658(2006)87%255B1877:MBDICL%255D2.0.CO;2"), lower = FALSE)),
+    c("10.1000/XYZ456", "10.1890/0012-9658(2006)87[1877:MBDICL]2.0.CO;2")
+  )
+})
+
+test_that("extract_doi() drops a full stop or semicolon at the end", {
+  x <- c("doi:10.1098/rstb.2016.0173.", "see 10.1098/RSTB.2016.0173; and more")
+  expect_identical(unname(extract_doi(x)), rep("10.1098/rstb.2016.0173", 2))
+  expect_identical(unname(extract_doi(x, lower = FALSE))[2], "10.1098/RSTB.2016.0173")
+  expect_identical(unname(extract_doi(x, what = "suffix")), rep("rstb.2016.0173", 2))
+  # SICI DOIs end in ";2" or ";2-#", which stay intact
+  expect_identical(
+    unname(extract_doi("10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2.")),
+    "10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2"
+  )
+})

@@ -6,7 +6,7 @@
 \usage{
 pro_query(
   entity = c("works", "authors", "venues", "institutions", "concepts", "publishers",
-    "funders"),
+    "funders", "sources", "topics", "locations"),
   id = NULL,
   doi = NULL,
   search = NULL,
@@ -17,12 +17,17 @@ pro_query(
   options = NULL,
   endpoint = "https://api.openalex.org",
   chunk_limit = 50L,
+  oql = NULL,
+  oqo = NULL,
   ...
 )
 }
 \arguments{
-\item{entity}{Character; one of \code{"works"}, \code{"authors"}, \code{"venues"},
-\code{"institutions"}, \code{"concepts"}, \code{"publishers"}, \code{"funders"}.}
+\item{entity}{Character; one of \code{"works"}, \code{"authors"},
+\code{"institutions"}, \code{"publishers"}, \code{"funders"},
+\code{"sources"}, \code{"topics"}, \code{"locations"}. \code{"venues"}
+(now \code{"sources"}) and \code{"concepts"} (now \code{"topics"}) are
+deprecated by OpenAlex and kept only for compatibility.}
 
 \item{id}{Optional ID or vector of IDs (e.g., \code{"W1775749144"}). If a single ID
 is provided, fetches one entity directly. If multiple IDs are provided, they are
@@ -34,15 +39,15 @@ separate requests when the number of DOIs exceeds \code{chunk_limit}.}
 
 \item{search}{Optional full-text search string. Applies stemming and
 stop-word removal. Supports boolean operators (\code{AND}, \code{OR},
-\code{NOT} in uppercase), quoted phrases (\code{"exact phrase"}),
-proximity (\code{"word1 word2"~N}), wildcards (\code{*}, \code{?}), and
-fuzzy matching (\code{term~N}). Replaces the deprecated
+\code{NOT} in uppercase), quoted phrases (\code{"exact phrase"}) and
+proximity (\code{"word1 word2"~N}). Wildcards are rejected by the API
+(HTTP 400): use \code{search.exact}. Replaces the deprecated
 \code{filter = field.search:keyword} syntax.}
 
 \item{search.exact}{Optional full-text search without stemming or stop-word
-removal. Supports the same boolean/phrase/wildcard syntax as \code{search}.
-Use when you need to match exact word forms (e.g. \code{"surgery"} should
-not match \code{"surgical"}).}
+removal. Supports the boolean/phrase/proximity syntax of \code{search},
+plus wildcards and fuzzy matching. Use when you need to match exact word
+forms (e.g. \code{"surgery"} should not match \code{"surgical"}).}
 
 \item{search.semantic}{Optional semantic (AI-powered) search string. Uses
 embeddings to match conceptual meaning rather than exact keywords. Limited
@@ -53,14 +58,28 @@ to 1 request per second and returns at most 50 results per query.}
 \item{select}{Optional character vector of fields to return.}
 
 \item{options}{Optional named list of additional query parameters (e.g.,
-\code{list(per_page = 200, sort = "cited_by_count:desc", cursor = "*", sample = 100)}).}
+\code{list(sort = "cited_by_count:desc", sample = 100, seed = 42)}).
+\code{pro_request()} does the paging, so \code{page} and
+\code{cursor} given here are replaced (with a warning); \code{per_page}
+is kept (1--200, default 200). A \code{sample} (up to 10,000) is paged by
+page number and needs a \code{seed} when it spans several pages;
+\code{pro_request()} picks and reports one if none is given.}
 
 \item{endpoint}{Base API URL. Defaults to \code{"https://api.openalex.org"}.}
 
 \item{chunk_limit}{Number of DOIS or ids per chunk if chunked. Default: 50}
 
+\item{oql}{Optional OQL (OpenAlex Query Language) query string, e.g.
+\code{"works where year is (2020) and type is (article)"}. See section
+\emph{OQL and OQO}.}
+
+\item{oqo}{Optional OQO (OpenAlex Query Object): a nested list, or a JSON
+string. See section \emph{OQL and OQO}.}
+
 \item{...}{Filters as named arguments. Values may be scalars or vectors (vectors
-are collapsed with \code{"|"} to express OR).}
+are collapsed with \code{"|"} to express OR). Arguments of the functions
+that send the query, such as \code{via} or \code{workers}, belong to
+[pro_fetch()], [pro_request()] or [pro_count()], not here.}
 }
 \value{
 An individual URL or a list of URLs.
@@ -70,9 +89,9 @@ Construct an \code{httr2} request for the OpenAlex API. All filters must be
 supplied as named \code{...} arguments (e.g., \code{from_publication_date = "2020-01-01"}).
 }
 \details{
-Filter names are validated via \code{.validate_filter()} using
-\code{opt_filter_names()}. \code{select} fields are validated via
-\code{.validate_select()} using \code{`opt_select_fields()`}.
+Filter names are validated against \code{opt_filter_names(entity = entity)}
+and \code{select} fields against \code{opt_select_fields(entity = entity)},
+i.e. against the names OpenAlex accepts for the queried entity.
 
 If multiple more then 50 `doi` or openalex `id`s are provided, the request
 is automatically split into chunks of 50 and a named list of URLs is returned.
@@ -84,14 +103,42 @@ All three search parameters (\code{search}, \code{search.exact},
 \code{search.exact}, the following syntax is supported:
 \itemize{
   \item Boolean: \code{biodiversity AND finance}, \code{climate OR weather},
-    \code{ocean NOT pollution} (operators must be uppercase).
+    \code{ocean NOT pollution} (operators must be uppercase); group with
+    parentheses. Words without an operator between them are combined with
+    \code{AND}.
   \item Exact phrase: \code{"biodiversity finance"} (double quotes).
-  \item Proximity: \code{"biodiversity finance"~5} (words within 5 positions).
-  \item Wildcard: \code{bio*} (zero or more characters), \code{organi?ation}.
-  \item Fuzzy: \code{biodiversty~1} (allows 1 character edit).
+  \item Proximity: \code{"biodiversity finance"~5} (words within 5
+    positions), or two phrases near each other:
+    \code{"machine learning"~5~"neural network"}.
 }
+Only with \code{search.exact} (the stemmed \code{search} rejects wildcards
+with HTTP 400, and stemming distorts fuzzy terms):
+\itemize{
+  \item Wildcard: \code{microbio*} (zero or more characters),
+    \code{organi?ation} (exactly one). At least 3 characters before the
+    wildcard; no leading wildcard.
+  \item Fuzzy: \code{biodiversty~1} (up to N character edits, N = 0--2;
+    at least 3 characters before the \code{~}).
+}
+See \url{https://help.openalex.org/api/searching/}.
 \code{search.semantic} does not use keyword syntax; pass a natural-language
 phrase or even a full abstract. It returns at most 50 results per call.
+}
+
+\section{OQL and OQO}{
+
+OpenAlex's query language (\code{oql}) and its JSON form (\code{oqo})
+express queries the classic filter syntax cannot, such as nested
+\code{and} / \code{or} conditions. The entity, all conditions, grouping
+(\code{group by}), \code{sample} and \code{corpus} belong inside the query,
+so \code{entity}, \code{id}, \code{doi}, the search arguments,
+\code{group_by} and filters in \code{...} cannot be combined with it --
+OpenAlex would silently ignore them. \code{select} and \code{options}
+(e.g. \code{sort}) are passed alongside. The URL targets the API root
+(\code{https://api.openalex.org/?oql=...}) and works with
+\code{pro_request()}, \code{pro_count()} and \code{pro_fetch()} as usual.
+An invalid query fails at request time with OpenAlex's parse error.
+See \url{https://help.openalex.org/api/oql/}.
 }
 
 \section{Deprecated search filters}{
@@ -100,13 +147,13 @@ Filter arguments with a \code{.search} suffix (e.g.
 \code{title_and_abstract.search = "biodiversity"}) are deprecated by the
 OpenAlex API. They still work but emit a warning. Use the \code{search},
 \code{search.exact}, or \code{search.semantic} parameters instead. See
-\url{https://developers.openalex.org/guides/searching} for details.
+\url{https://help.openalex.org/api/searching/} for details.
 }
 
 \examples{
 \dontrun{
 
-req <- oa_build_req(
+url <- pro_query(
   entity = "works",
   search = "biodiversity",
   from_publication_date = "2020-01-01",
@@ -114,8 +161,17 @@ req <- oa_build_req(
   select = c("id","title","publication_year"),
   options = list(per_page = 5)
 )
-# resp <- api_call(req)
-# httr2::resp_body_json(resp)
+
+# OQL: nested conditions the filter syntax cannot express
+url <- pro_query(
+  oql = "works where year >= (2020) and (title has (coral) or title has (reef))"
+)
+
+# OQO: the same kind of query as a nested list
+url <- pro_query(oqo = list(
+  get_rows = "works",
+  filter_rows = list(list(column_id = "publication_year", value = 2020))
+))
 }
 
 }

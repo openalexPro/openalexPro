@@ -1,25 +1,26 @@
 http_interactions:
 - request:
     method: GET
-    uri: https://api.openalex.org/rate-limit?api_key=%3Capi-key%3E
+    uri: https://api.openalex.org/rate-limit
   response:
     status: 401
     headers:
-      date: Fri, 22 May 2026 12:25:31 GMT
+      date: Wed, 14 Oct 2026 08:31:43 GMT
       content-type: application/json
       content-length: '68'
       access-control-allow-origin: '*'
       cache-control: no-store
       access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
-        Content-Type
-      access-control-allow-methods: GET, HEAD, POST, OPTIONS
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
       access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
         X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
         X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
-        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition
       server: cloudflare
-      cf-ray: 9ffbcdd20f2a0395-ZRH
+      cf-ray: a4a53ab9ed477dd2-ZRH
     body:
       string: '{"error":"Invalid or missing API key","message":"API key not found"}'
-  recorded_at: 2026-05-22 12:25:31
+  recorded_at: 2026-10-14 08:31:43
 recorded_with: VCR-vcr/2.1.0

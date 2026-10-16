@@ -1,68 +1,79 @@
 ---
-title: "OpenAlex API: HTTP Status Codes and Polite Pool Access"
+title: "OpenAlex API: HTTP Status Codes, Rate Limits and Budgets"
 format:
   pdf:
     toc: false
 vignette: >
-  %\VignetteIndexEntry{OpenAlex API: HTTP Status Codes and Polite Pool Access}
+  %\VignetteIndexEntry{OpenAlex API: HTTP Status Codes, Rate Limits and Budgets}
   %\VignetteEngine{quarto::pdf}
   %\VignetteEncoding{UTF-8}
-execute: 
+execute:
   cache: false
 ---
 
 ## Overview
 
-The OpenAlex API is a free, open, and modern RESTful API providing access to a vast catalog of scholarly works, authors, institutions, and more. Understanding the HTTP status codes it returns is crucial for effective error handling and optimizing your API usage.
+This note summarises the HTTP status codes the OpenAlex API returns and how
+`openalexPro` handles each of them. All requests go through the internal
+`api_call()`. Sources: [Error Handling](https://help.openalex.org/api/errors/)
+and [Authentication](https://help.openalex.org/api/authentication/).
 
-## Successful Responses
+Error responses are JSON with two fields, `error` (a short label) and `message`
+(an explanation). OQL queries report problems as
+`{"validation": {"errors": [{"type", "message", "position"}]}}` instead.
+`openalexPro` includes this explanation in the R error. Error responses cost no
+credits.
 
-### 200 OK
+## Status codes
 
-Indicates that the request was successful, and the response contains the requested data.
+| Status | Meaning | `openalexPro` |
+|--------|---------|---------------|
+| 200 | Success | Returns the response |
+| 301 | Entity was merged into another one | Follows the redirect |
+| 400 | Bad request: invalid filter, parameter or OQL syntax | Stops; the error shows OpenAlex's message |
+| 403 | No access to the resource | Stops; the error shows OpenAlex's message |
+| 404 | Entity does not exist (also: a collection you cannot read) | Stops; the error shows OpenAlex's message |
+| 429 | More than 100 requests per second | Retries with exponential backoff (up to 10 attempts) |
+| 429 | Daily budget used up, or `not_enough_credits` (an OQL query costs more than is left) | Stops at once; the error says when the budget resets |
+| 500, 502, 503, 504 | Temporary server problem | Retries with exponential backoff (up to 10 attempts) |
 
-## Client Errors
+Network failures (dropped connections, curl errors) are retried like the
+temporary server errors, and a transfer that stalls (less than 1 byte/s for
+120 seconds) is aborted and retried.
 
-### 400 Bad Request
+## Budgets and rate limits
 
-The server could not understand the request due to invalid syntax. This may occur if the request includes illegal characters or malformed parameters.
+OpenAlex charges each call against a daily budget, which resets at midnight
+UTC:
 
-### 403 Forbidden
+- without an API key: $0.10 per day
+- with a free API key: $1 per day
+- paid plans and prepaid usage raise this further
 
-The server understood the request but refuses to authorize it. This can happen when using illegal IDs, such as those containing commas or ampersands.
+Typical costs: a single-entity lookup (`/works/W123`) is free, a filter (list)
+query costs $0.0001, a search (`search`, `search.exact`, `search.semantic`)
+costs $0.001, and a PDF download costs $0.01 (see
+[Example costs](https://help.openalex.org/access/example-costs/)). Independent
+of the budget, more than 100 requests per second return 429.
 
-### 404 Not Found
+Every response carries these headers:
 
-The requested resource does not exist. For example, querying a non-existent work ID will result in this status.
+| Header | Content |
+|--------|---------|
+| `X-RateLimit-Limit` | Total daily budget |
+| `X-RateLimit-Remaining` | What is left for today |
+| `X-RateLimit-Credits-Used` | Cost of this request (0 for errors) |
+| `X-RateLimit-Reset` | Seconds until the reset (midnight UTC) |
 
-### 429 Too Many Requests
+`pro_rate_limit_status()` shows the current budget, usage and reset time.
 
-The user has sent too many requests in a given amount of time. OpenAlex imposes limits of 100,000 API calls per day and 10 requests per second. Exceeding these limits will trigger this status.
+## API key instead of the polite pool
 
-## Server Errors
-
-### 500 Internal Server Error
-
-The server encountered an unexpected condition that prevented it from fulfilling the request.
-
-### 503 Service Unavailable
-
-The server is currently unable to handle the request due to temporary overloading or maintenance.
-
-*Note: While 500 and 503 errors are standard HTTP status codes, they are not specifically documented for the OpenAlex API but may occur under certain conditions.*
-
-## Joining the Polite Pool
-
-OpenAlex categorizes API users into two pools:
-
-- **Polite Pool**: Users who identify themselves by providing a contact email. This pool offers more consistent and faster response times.
-- **Common Pool**: Users who do not provide identification.
-
-To join the polite pool, include your email address in one of the following ways:
-
-### 1. As a Query Parameter
-
-Append the `mailto` parameter to your API requests:
-
-```http
-https://api.openalex.org/works?mailto=you@example.com
+Before February 2026, adding a contact email (`mailto=`) placed requests in a
+faster "polite pool". OpenAlex now ignores `mailto`; use a free API key
+instead. `openalexPro` reads it with `pro_api_key()`, from the option
+`openalexPro$api_key` or the environment variable `openalexPro.api_key`, and
+sends it with every request as an `Authorization: Bearer` header (never in the
+URL). The cost of each download is summed from the
+`X-RateLimit-Credits-Used` / `X-RateLimit-Cost-USD` headers and recorded in
+`_query.json`.

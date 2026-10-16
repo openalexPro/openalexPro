@@ -22,8 +22,8 @@ pro_rate_limit_status <- function(
   ) {
     message(
       "No API key found. Set it with:\n",
-      "  Sys.setenv(openalexPro.apikey = 'your-key')\n",
-      "or add 'openalexPro.apikey=your-key' to your .Renviron file."
+      "  Sys.setenv(openalexPro.api_key = 'your-key')\n",
+      "or add 'openalexPro.api_key=your-key' to your .Renviron file."
     )
     return(invisible(FALSE))
   } else if (!is.character(api_key) || length(api_key) != 1) {
@@ -34,7 +34,7 @@ pro_rate_limit_status <- function(
   }
 
   req <- httr2::request("https://api.openalex.org/rate-limit") |>
-    httr2::req_url_query(api_key = api_key) |>
+    .oa_auth(api_key) |>
     httr2::req_user_agent(paste0(
       "openalexPro/",
       utils::packageVersion("openalexPro")
