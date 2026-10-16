@@ -1,4 +1,4 @@
-# openalexPro 0.12.1
+# openalexPro 0.13.0
 
 ## `extract_doi()`: fewer truncated and false DOIs, new `lower`
 
@@ -236,17 +236,6 @@ example.
 - Six Mermaid diagrams in the `pro_query` and `pro_request` vignettes showed
   "Syntax error" (unquoted labels containing `()` or `"`); they render again.
 
-## The startup banner pointed at the old r-universe
-
-`.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package
-has been distributed from `https://openalexpro.r-universe.dev` since the move
-to the openalexPro organisation -- and `DESCRIPTION`'s
-`Additional_repositories` already said so -- so the one URL every user saw on
-every `library(openalexPro)` was the one that was wrong.
-
-Also tidies two typos in the same banner (`functions definitions`, and a
-space before a comma).
-
 ## `delete_input` no longer deletes pages that failed to convert
 
 With `on_error = "warn"` or `"ignore"`, `pro_request_parquet(delete_input =
@@ -300,6 +289,19 @@ compatibility. The default is still `"works"`.
 `pro_request()` with a list of queries pre-split the leaves into one block per
 worker, so a worker that drew the large leaves ran on while the others sat
 idle. Each leaf is now dispatched to the next free worker.
+
+# openalexPro 0.12.1
+
+## The startup banner pointed at the old r-universe
+
+`.onAttach()` printed `https://rkrug.r-universe.dev/openalexPro`. The package
+has been distributed from `https://openalexpro.r-universe.dev` since the move
+to the openalexPro organisation -- and `DESCRIPTION`'s
+`Additional_repositories` already said so -- so the one URL every user saw on
+every `library(openalexPro)` was the one that was wrong.
+
+Also tidies two typos in the same banner (`functions definitions`, and a
+space before a comma).
 
 # openalexPro 0.12.0
 
