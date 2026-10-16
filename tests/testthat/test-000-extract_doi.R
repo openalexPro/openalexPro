@@ -166,3 +166,15 @@ test_that("extract_doi(lower = FALSE) keeps the case of the input", {
     c("10.1000/XYZ456", "10.1890/0012-9658(2006)87[1877:MBDICL]2.0.CO;2")
   )
 })
+
+test_that("extract_doi() drops a full stop or semicolon at the end", {
+  x <- c("doi:10.1098/rstb.2016.0173.", "see 10.1098/RSTB.2016.0173; and more")
+  expect_identical(unname(extract_doi(x)), rep("10.1098/rstb.2016.0173", 2))
+  expect_identical(unname(extract_doi(x, lower = FALSE))[2], "10.1098/RSTB.2016.0173")
+  expect_identical(unname(extract_doi(x, what = "suffix")), rep("rstb.2016.0173", 2))
+  # SICI DOIs end in ";2" or ";2-#", which stay intact
+  expect_identical(
+    unname(extract_doi("10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2.")),
+    "10.1175/1520-0450(1963)002<0713:ooasds>2.0.co;2"
+  )
+})

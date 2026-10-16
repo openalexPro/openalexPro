@@ -9,6 +9,7 @@
 #' not an encoding, such as the unfilled placeholders in `10.18461/ijfsd.v2i4.%x`
 #' or `10.37002/biobrasil.v%vi%i.798`, is not recognised at all rather than
 #' cut short to something that looks valid.
+#' A full stop or semicolon at the end is taken as punctuation and dropped.
 #'
 #' @param x A character vector potentially containing DOIs (e.g., raw DOIs,
 #'   DOI URLs, or strings with embedded DOIs).
@@ -101,6 +102,12 @@ extract_doi <- function(
     m <- regexpr(doi_pattern, x, ignore.case = TRUE, perl = TRUE)
     full_dois <- regmatches(x, m)
     matches <- sub("^10\\.[0-9]{4,9}/", "", full_dois, ignore.case = TRUE)
+  }
+
+  # A full stop or semicolon at the end is sentence punctuation
+  # (`doi:10.1098/rstb.2016.0173.`), not part of the DOI.
+  if (what %in% c("doi", "suffix")) {
+    matches <- sub("[.;]+$", "", matches)
   }
 
   matched_idx <- which(m != -1)

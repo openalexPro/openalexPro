@@ -11,6 +11,8 @@
 - A DOI followed by an unfilled placeholder (`10.18461/ijfsd.v2i4.%x`,
   `10.37002/biobrasil.v%vi%i.798`) is no longer recognised. Its part before
   the `%` used to be returned as a valid DOI.
+- A full stop or semicolon at the end is dropped as punctuation:
+  `doi:10.1098/rstb.2016.0173.` gives `10.1098/rstb.2016.0173`.
 - New argument `lower` (default `TRUE`): `lower = FALSE` keeps the upper and
   lower case of the input, e.g. to compare the cleaned DOI with the field it
   came from.
