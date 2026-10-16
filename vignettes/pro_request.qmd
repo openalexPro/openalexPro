@@ -347,7 +347,7 @@ in OpenAlex's readable query language (OQL), in two forms:
 
   ```
   # OpenAlex query (OQL)
-  # Records: 141 | Downloaded: 2026-10-14 (UTC) | openalexPro 0.12.1
+  # Records: 141 | Downloaded: 2026-10-14 (UTC) | openalexPro 0.13.0
   # Exact: this OQL translates back to exactly the query that ran.
 
   get works where full text has (microbio*)

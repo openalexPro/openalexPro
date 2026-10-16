@@ -27,7 +27,7 @@ opt_filter_names <- function(update = FALSE, entity = "works") {
 .oa_allowed_names <- function(kind, entity, update) {
   stopifnot(is.character(entity), length(entity) == 1L, nzchar(entity))
   cache <- getOption("openalexPro")[[kind]]
-  # Before 0.12.1 the cache held a single (works) vector, not a list.
+  # Before 0.13.0 the cache held a single (works) vector, not a list.
   if (!is.list(cache)) cache <- list()
   if (!update && !is.null(cache[[entity]])) {
     return(cache[[entity]])
