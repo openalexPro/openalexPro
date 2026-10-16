@@ -54,6 +54,7 @@ encoded line break (`%0A`) ends it. A DOI followed directly by a `%` that is
 not an encoding, such as the unfilled placeholders in `10.18461/ijfsd.v2i4.%x`
 or `10.37002/biobrasil.v%vi%i.798`, is not recognised at all rather than
 cut short to something that looks valid.
+A full stop or semicolon at the end is taken as punctuation and dropped.
 }
 \examples{
 x <- c(
