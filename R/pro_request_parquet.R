@@ -9,8 +9,8 @@
 #' `abstract_inverted_index`, `authorships`, and `publication_year` in the
 #' inferred schema and, when `enrich = TRUE` (the default), adds two computed
 #' columns:
-#' - **`abstract`** — plain text reconstructed from `abstract_inverted_index`.
-#' - **`citation`** — `"Author (year)"` / `"A & B (year)"` / `"A et al. (year)"`.
+#' - **`abstract`** - plain text reconstructed from `abstract_inverted_index`.
+#' - **`citation`** - `"Author (year)"` / `"A & B (year)"` / `"A et al. (year)"`.
 #'
 #' @section File format:
 #' [pro_request()] writes one JSON file per API page.  For paginated queries
@@ -20,7 +20,7 @@
 #'
 #' @section Output layout:
 #' The subdirectory structure of `input_json` is preserved, with hive-partition
-#' naming (`query=<name>/`, `query_l2=<name>/`, …) so that Arrow/DuckDB can
+#' naming (`query=<name>/`, `query_l2=<name>/`, ...) so that Arrow/DuckDB can
 #' read the result as a partitioned dataset.  A `page` column is added to each
 #' record with a value derived from the source filename (or subdirectory for
 #' multi-query inputs).
@@ -482,7 +482,7 @@ pro_request_parquet <- function(
     schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
   }
 
-  # Force abstract_inverted_index to MAP — DuckDB sometimes infers STRUCT
+  # Force abstract_inverted_index to MAP - DuckDB sometimes infers STRUCT
   # when the sample has no duplicate-cased keys, which breaks map_entries().
   aii_idx <- which(schema_df$column_name == "abstract_inverted_index")
   if (length(aii_idx) == 1L) {
@@ -540,7 +540,7 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_fix_json_types <- function(list_type) {
   # Patch known OpenAlex source-struct fields DuckDB may infer as JSON when
-  # all sampled values are null — required for union_by_name = true reads.
+  # all sampled values are null - required for union_by_name = true reads.
   list_type <- gsub("\\bissn_l JSON\\b", "issn_l VARCHAR", list_type)
   list_type <- gsub("(?<![_])\\bissn JSON\\b", "issn VARCHAR[]", list_type, perl = TRUE)
   gsub(

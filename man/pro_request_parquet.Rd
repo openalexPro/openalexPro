@@ -113,8 +113,8 @@ For works entities the function detects the presence of
 inferred schema and, when \code{enrich = TRUE} (the default), adds two computed
 columns:
 \itemize{
-\item \strong{\code{abstract}} — plain text reconstructed from \code{abstract_inverted_index}.
-\item \strong{\code{citation}} — \code{"Author (year)"} / \code{"A & B (year)"} / \code{"A et al. (year)"}.
+\item \strong{\code{abstract}} - plain text reconstructed from \code{abstract_inverted_index}.
+\item \strong{\code{citation}} - \code{"Author (year)"} / \code{"A & B (year)"} / \code{"A et al. (year)"}.
 }
 }
 \section{File format}{
@@ -128,7 +128,7 @@ the file is a bare JSON object.  All three formats are handled automatically.
 \section{Output layout}{
 
 The subdirectory structure of \code{input_json} is preserved, with hive-partition
-naming (\verb{query=<name>/}, \verb{query_l2=<name>/}, …) so that Arrow/DuckDB can
+naming (\verb{query=<name>/}, \verb{query_l2=<name>/}, ...) so that Arrow/DuckDB can
 read the result as a partitioned dataset.  A \code{page} column is added to each
 record with a value derived from the source filename (or subdirectory for
 multi-query inputs).

@@ -37,7 +37,7 @@ test_that("pro_fetch search `biodiversity AND fiance`", {
     compare = compare_json
   )
 
-  # No jsonl subdirectory — pro_fetch() now goes JSON → Parquet directly.
+  # No jsonl subdirectory — pro_fetch() now goes JSON -> Parquet directly.
   expect_false(dir.exists(file.path(output_dir, "jsonl")))
 
   # At least one parquet file produced

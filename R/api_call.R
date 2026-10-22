@@ -41,7 +41,7 @@ api_call <- function(
 ) {
   # Rate-limit debug check: print status before each call when option is set.
   # Temporarily disabled during the nested pro_rate_limit_status() call to
-  # prevent infinite recursion (pro_rate_limit_status → api_call → ...).
+  # prevent infinite recursion (pro_rate_limit_status -> api_call -> ...).
   if (isTRUE(getOption("openalexPro.ratelimit_check"))) {
     options(openalexPro.ratelimit_check = FALSE)
     on.exit(options(openalexPro.ratelimit_check = TRUE), add = TRUE)
