@@ -70,11 +70,15 @@ page number and needs a \code{seed} when it spans several pages;
 \item{chunk_limit}{Number of DOIS or ids per chunk if chunked. Default: 50}
 
 \item{oql}{Optional OQL (OpenAlex Query Language) query string, e.g.
-\code{"works where year is (2020) and type is (article)"}. See section
+\code{"works where year is (2020) and type is (article)"}. A character
+vector gives a named list of URLs (names from \code{names(oql)}, else
+\code{query_1}, \code{query_2}, ...), one per query. See section
 \emph{OQL and OQO}.}
 
 \item{oqo}{Optional OQO (OpenAlex Query Object): a nested list, or a JSON
-string. See section \emph{OQL and OQO}.}
+string. A list of OQOs (lists or JSON strings), or a character vector of
+JSON strings, gives a named list of URLs as for \code{oql}. See section
+\emph{OQL and OQO}.}
 
 \item{...}{Filters as named arguments. Values may be scalars or vectors (vectors
 are collapsed with \code{"|"} to express OR). Arguments of the functions

@@ -1,3 +1,10 @@
+# openalexPro (development version)
+
+- `pro_query(oql = , oqo = )` accept several queries: a character vector of
+  OQL strings, or a list of OQOs, returns a named list of URLs (names from the
+  input, else `query_1`, `query_2`, ...) that `pro_request()` / `pro_fetch()`
+  run in parallel, one subdirectory per query. A single query is unchanged.
+
 # openalexPro 0.13.0
 
 ## `extract_doi()`: fewer truncated and false DOIs, new `lower`
