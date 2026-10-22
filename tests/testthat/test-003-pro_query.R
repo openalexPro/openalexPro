@@ -393,3 +393,22 @@ testthat::test_that("arguments of the sending functions get a hint, not a filter
   testthat::expect_match(conditionMessage(err), "`compact_parquet` is an argument of pro_fetch(), pro_request_parquet().", fixed = TRUE)
   testthat::expect_match(conditionMessage(err), "pass them there", fixed = TRUE)
 })
+
+testthat::test_that("pro_query(oql / oqo) with several queries gives a named list of URLs", {
+  urls <- pro_query(oql = c(a = "works where year is (2020)", "works where year is (2021)"))
+  testthat::expect_named(urls, c("a", "query_2"))
+  testthat::expect_equal(
+    httr2::url_parse(urls$query_2)$query$oql, "works where year is (2021)"
+  )
+
+  oqo1 <- list(get_rows = "works")
+  urls <- pro_query(oqo = list(x = oqo1, y = oqo1))
+  testthat::expect_named(urls, c("x", "y"))
+  testthat::expect_match(urls$x, "oqo=")
+
+  # one OQO list stays a single URL
+  testthat::expect_type(pro_query(oqo = oqo1), "character")
+  testthat::expect_error(
+    pro_query(oql = c(a = "works", a = "authors")), "unique"
+  )
+})
