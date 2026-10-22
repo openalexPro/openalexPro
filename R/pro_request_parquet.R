@@ -69,7 +69,8 @@
 #'   level of a list of queries: `c("topic", "year")` writes
 #'   `topic=<name>/year=<name>/`. `NULL` (default) uses `query` for the first
 #'   level and `query_l2`, `query_l3`, ... below it; `NA` keeps the default of
-#'   that level. Keys must be unique and made of letters, digits and `_`. Use
+#'   that level. A query named `key=value` (e.g. `"year=2020"`) supplies its
+#'   own key, unless `hive_names` names one for that level. Keys must be unique and made of letters, digits and `_`. Use
 #'   the same value when resuming, or the files are converted again.
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
@@ -601,7 +602,18 @@ pro_request_parquet <- function(
     }
     if (length(rel_parts) == 0L) return(file.path(output, fname))
     hive_dirs <- mapply(
-      function(d, v) paste0(hive_key(d), "=", v),
+      function(d, v) {
+        # A query named `key=value` supplies its own partition key, unless
+        # `hive_names` names one for this level.
+        m <- regmatches(v, regexec("^([A-Za-z_][A-Za-z0-9_]*)=(.+)$", v))[[1L]]
+        if (length(m) == 0L) return(paste0(hive_key(d), "=", v))
+        key <- if (d <= length(hive_names) && !is.na(hive_names[[d]])) {
+          hive_names[[d]]
+        } else {
+          m[2L]
+        }
+        paste0(key, "=", m[3L])
+      },
       seq_along(rel_parts), rel_parts,
       SIMPLIFY = TRUE
     )

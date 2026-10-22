@@ -3,7 +3,9 @@
 - `pro_request_parquet()` and `pro_fetch()` gain `hive_names`: the Hive
   partition keys for a list of queries, one per nesting level, e.g.
   `hive_names = c("topic", "year")` writes `topic=<name>/year=<name>/`.
-  Default `NULL` keeps `query`, `query_l2`, ...
+  Default `NULL` keeps `query`, `query_l2`, ... A query named `key=value`
+  (e.g. `c("year=2020" = oql1)`) supplies its own key, so `year=2020/` is
+  written instead of `query=year=2020/`.
 - `pro_query(oql = , oqo = )` accept several queries: a character vector of
   OQL strings, or a list of OQOs, returns a named list of URLs (names from the
   input, else `query_1`, `query_2`, ...) that `pro_request()` / `pro_fetch()`
