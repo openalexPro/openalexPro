@@ -20,7 +20,8 @@ pro_request_parquet(
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
   retry_memory_limit = NULL,
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 )
 }
 \arguments{
@@ -97,6 +98,13 @@ where no workers compete.  \code{NULL} (default) uses the whole budget.}
 page.  A number, e.g. \code{250000}, combines each query's page files into
 files of up to that many records once every file has converted -- much
 faster to read.  See \code{\link[=pro_compact_parquet]{pro_compact_parquet()}}.}
+
+\item{hive_names}{Character vector of Hive partition keys, one per nesting
+level of a list of queries: \code{c("topic", "year")} writes
+\verb{topic=<name>/year=<name>/}. \code{NULL} (default) uses \code{query} for the first
+level and \code{query_l2}, \code{query_l3}, ... below it; \code{NA} keeps the default of
+that level. Keys must be unique and made of letters, digits and \verb{_}. Use
+the same value when resuming, or the files are converted again.}
 }
 \value{
 Output directory path (invisibly).

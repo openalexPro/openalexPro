@@ -65,6 +65,12 @@
 #'   page.  A number, e.g. `250000`, combines each query's page files into
 #'   files of up to that many records once every file has converted -- much
 #'   faster to read.  See [pro_compact_parquet()].
+#' @param hive_names Character vector of Hive partition keys, one per nesting
+#'   level of a list of queries: `c("topic", "year")` writes
+#'   `topic=<name>/year=<name>/`. `NULL` (default) uses `query` for the first
+#'   level and `query_l2`, `query_l3`, ... below it; `NA` keeps the default of
+#'   that level. Keys must be unique and made of letters, digits and `_`. Use
+#'   the same value when resuming, or the files are converted again.
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
@@ -127,11 +133,13 @@ pro_request_parquet <- function(
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
   retry_memory_limit = NULL,
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 ) {
   if (is.null(input_json)) stop("No `input_json` specified!")
   if (is.null(output))     stop("No `output` specified!")
   on_error <- match.arg(on_error)
+  .prr_check_hive_names(hive_names)
   if (!is.null(compact_parquet)) .pc_check_rows(compact_parquet, "compact_parquet")
 
   progress_file <- .prr_prepare_output(output, overwrite, resume)
@@ -152,7 +160,7 @@ pro_request_parquet <- function(
     oa_works_citation_sql()
   } else NULL
 
-  output_files <- .prr_output_paths(disc$jsons, input_json, output)
+  output_files <- .prr_output_paths(disc$jsons, input_json, output, hive_names)
 
   # Resume: pages a compacted file already holds are converted, not missing
   if (isTRUE(resume)) {
@@ -254,7 +262,7 @@ pro_request_parquet <- function(
   # Carry each query's record (`_query.json`, written by pro_request()) into
   # its Parquet partition, so it survives `delete_input`. arrow and DuckDB
   # ignore it: the leading underscore, and it is not a `.parquet` file.
-  .prr_copy_query_records(input_json, output)
+  .prr_copy_query_records(input_json, output, hive_names)
 
   # Only a complete conversion is compacted: a page converted later would fall
   # into a compacted file's page range and be taken as done. Before
@@ -280,7 +288,7 @@ pro_request_parquet <- function(
 #'
 #' @keywords internal
 #' @noRd
-.prr_copy_query_records <- function(input_json, output) {
+.prr_copy_query_records <- function(input_json, output, hive_names = NULL) {
   records <- list.files(
     input_json, pattern = "^_quer(y\\.json|y_oql\\.txt|y_oql\\.html|ies_oql\\.txt|ies_oql\\.html)$",
     full.names = TRUE, recursive = TRUE
@@ -290,7 +298,7 @@ pro_request_parquet <- function(
   }
   # Same leaf -> partition mapping as the page files
   targets <- file.path(
-    dirname(.prr_output_paths(records, input_json, output)),
+    dirname(.prr_output_paths(records, input_json, output, hive_names)),
     basename(records)
   )
   for (d in unique(dirname(targets))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
@@ -552,9 +560,36 @@ pro_request_parquet <- function(
 
 #' @keywords internal
 #' @noRd
-.prr_output_paths <- function(jsons, input_json, output) {
+.prr_check_hive_names <- function(hive_names) {
+  if (is.null(hive_names)) {
+    return(invisible(TRUE))
+  }
+  ok <- is.character(hive_names) &&
+    all(is.na(hive_names) | grepl("^[A-Za-z_][A-Za-z0-9_]*$", hive_names)) &&
+    !anyDuplicated(hive_names[!is.na(hive_names)])
+  if (!ok) {
+    stop(
+      "`hive_names` must be a character vector of unique names made of ",
+      "letters, digits and `_` (NA keeps the default for that level).",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+#' @keywords internal
+#' @noRd
+.prr_output_paths <- function(jsons, input_json, output, hive_names = NULL) {
   input_depth <- length(strsplit(gsub("\\\\", "/", input_json), "/")[[1L]])
-  hive_key <- function(depth) if (depth == 1L) "query" else paste0("query_l", depth)
+  hive_key <- function(depth) {
+    if (depth <= length(hive_names) && !is.na(hive_names[[depth]])) {
+      hive_names[[depth]]
+    } else if (depth == 1L) {
+      "query"
+    } else {
+      paste0("query_l", depth)
+    }
+  }
 
   vapply(jsons, function(f) {
     f_parts <- strsplit(gsub("\\\\", "/", f), "/")[[1L]]
