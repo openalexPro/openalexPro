@@ -22,3 +22,12 @@ test_that("hive_names is validated", {
   expect_error(check(1), "hive_names")
   expect_error(pro_request_parquet(input_json = "x", output = "y", hive_names = "a/b"), "hive_names")
 })
+
+test_that("a query named key=value supplies its own partition key", {
+  f <- c("/in/year=2020/results_page_1.json", "/in/plain/results_page_1.json")
+  rel <- function(hn) sub("^/out/", "", openalexPro:::.prr_output_paths(f, "/in", "/out", hn))
+  expect_equal(rel(NULL)[1], "year=2020/results_page_1.parquet")
+  expect_equal(rel(NULL)[2], "query=plain/results_page_1.parquet")
+  # hive_names wins for its level
+  expect_equal(rel("yr")[1], "yr=2020/results_page_1.parquet")
+})
