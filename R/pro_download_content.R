@@ -5,7 +5,7 @@
 #' per ID. Downloads can be parallelised via the \code{workers} argument.
 #'
 #' @section Costs:
-#' Content downloads cost \strong{$0.01 per file} — 10x the cost of a
+#' Content downloads cost \strong{$0.01 per file} - 10x the cost of a
 #' metadata search query. Use \code{has_content.pdf:true} or
 #' \code{has_content.grobid-xml:true} as filter arguments to \code{pro_query()}
 #' to discover which works have downloadable content before downloading.

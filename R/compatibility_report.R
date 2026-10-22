@@ -3,7 +3,7 @@
 #' Renders the Quarto report at `system.file("compatibility.qmd", package = "openalexPro")
 #' and opens the resulting HTML in your default browser.
 #'
-#' This report is designed to help you validate client–API compatibility in
+#' This report is designed to help you validate client-API compatibility in
 #' real time. During rendering, the report performs live requests against the
 #' OpenAlex API and compares the responses to the package's expected behavior.
 #' No cached data are used: every section issues fresh API calls so that the

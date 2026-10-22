@@ -180,7 +180,7 @@ test_that("oa_schema(update = TRUE) skips existing when overwrite = FALSE", {
 test_that("pro_request_parquet applies baseline types for JSON columns", {
   skip_if_not_installed("duckdb")
 
-  # Build a minimal synthetic API page that has null issn → DuckDB infers JSON
+  # Build a minimal synthetic API page that has null issn -> DuckDB infers JSON
   tmp_json <- tempfile(fileext = ".json")
   tmp_out  <- tempfile("pq_out")
   on.exit({ unlink(tmp_json); unlink(tmp_out, recursive = TRUE) }, add = TRUE)

@@ -56,7 +56,7 @@ enforce a consistent schema across all files.
 
 When `schema_cache_dir` is provided, two levels of caching apply:
 - **Unified schema** (`unified_schema.csv`): if present, loaded and returned
-  immediately — no DuckDB queries needed. Delete this file to force
+  immediately - no DuckDB queries needed. Delete this file to force
   re-inference.
 - **Per-file schemas** (`<update_date>_<part_name>.csv`): each file's schema
   is saved as it is inferred. On restart, already-cached files are skipped,
@@ -67,12 +67,12 @@ When `schema_cache_dir` is provided, two levels of caching apply:
 
 When a column has different types across files, the unified type is chosen
 by these rules (in order):
-1. All identical → keep as-is.
-2. Any `STRUCT`/`LIST`/`MAP` vs simpler type → complex type wins.
-3. Multiple `STRUCT` types → pick the one with the most fields.
-4. Numeric conflicts → widest type wins
+1. All identical -> keep as-is.
+2. Any `STRUCT`/`LIST`/`MAP` vs simpler type -> complex type wins.
+3. Multiple `STRUCT` types -> pick the one with the most fields.
+4. Numeric conflicts -> widest type wins
    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
-5. Fallback → `VARCHAR`.
+5. Fallback -> `VARCHAR`.
 }
 
 \examples{
