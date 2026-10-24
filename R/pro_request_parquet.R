@@ -276,6 +276,21 @@ pro_request_parquet <- function(
   # only copy of the failed pages, and `resume` needs it.
   if (delete_input && length(failed) == 0L) {
     unlink(input_json, recursive = TRUE, force = TRUE)
+    # unlink() fails silently (e.g. a file still held open); retry once, then
+    # warn rather than leave stray input behind unnoticed.
+    if (dir.exists(input_json)) {
+      Sys.sleep(1)
+      unlink(input_json, recursive = TRUE, force = TRUE)
+    }
+    if (dir.exists(input_json)) {
+      left <- list.files(input_json, recursive = TRUE, all.files = TRUE)
+      warning(
+        "Could not delete `input_json` (", input_json, "); ",
+        length(left), " file(s) left behind, e.g. ",
+        paste(utils::head(file.path(input_json, left), 3L), collapse = ", "),
+        call. = FALSE
+      )
+    }
   }
 
   # Only a wholly successful run clears the sentinel, so `00_in.progress`
