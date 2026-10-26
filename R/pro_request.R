@@ -583,7 +583,9 @@ fetch_query_pages <- function(
   tick <- function() {
     amount <- min(page_share, 1 - share_done)
     share_done <<- share_done + amount
-    progressor(amount = amount)
+    # An empty page after a full one adds nothing; progressr fails on
+    # amount = 0 once the bar is complete
+    if (amount > 0) progressor(amount = amount)
   }
 
   # Start cli progress bar if requested (scalar mode only)

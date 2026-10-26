@@ -1,5 +1,10 @@
 # openalexPro (development version)
 
+- A list download no longer fails with "length(milestones) > 0L is not TRUE"
+  when a query's last page is exactly full: OpenAlex then sends a cursor to an
+  empty page, which advanced the progress bar by 0 -- an error in progressr
+  once the bar is complete (e.g. `pro_query(..., chunk_limit = 200)` with
+  chunks of exactly 200 records).
 - `via` now defaults to `"oqo"` in `pro_request()`, `pro_fetch()` and
   `pro_count()`: queries are translated once (free) into an OpenAlex Query
   Object and sent via POST -- same results, validated before credits are
