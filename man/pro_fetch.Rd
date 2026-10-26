@@ -19,7 +19,7 @@ pro_fetch(
   count_only,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo"),
+  via = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
   compact_parquet = NULL,
   hive_names = NULL
@@ -76,10 +76,10 @@ queries that did not finish are downloaded again, and only missing
 Parquet files are converted. A finished run is returned unchanged.
 \code{overwrite} is ignored. Default \code{FALSE}.}
 
-\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
-the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+\item{via}{How each query is sent. \code{"oqo"} (default): translated once
 (free) into an OpenAlex Query Object and sent via POST, with the same
-results. It has no URL length limit, accepts more than 100 values per
+results as \code{"url"}, which sends it as a GET request with the query in
+the URL, as built by \code{\link[=pro_query]{pro_query()}}. It has no URL length limit, accepts more than 100 values per
 filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
 in about one page per chunk), checks the query before any credits are spent, and records the
 exact query in \verb{_query.json}. Single records (\code{works/W123}) are always

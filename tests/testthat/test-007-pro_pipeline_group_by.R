@@ -22,7 +22,7 @@ test_that("pro_request `biodiversity` and group by `type`", {
       group_by = "type"
     )
   ) |>
-    pro_request(
+    pro_request(via = "url", 
       pages = 1,
       output = output_json,
       verbose = FALSE,
@@ -112,7 +112,7 @@ test_that("grouping is detected from the response, e.g. inside an OQL query", {
     )
   })
   out <- file.path(withr::local_tempdir(), "json")
-  pro_request(
+  pro_request(via = "url", 
     pro_query(oql = "works where year is (2020) group by type"),
     output = out, progress = FALSE
   )

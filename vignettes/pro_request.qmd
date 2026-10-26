@@ -303,14 +303,16 @@ pro_request(query_url = urls, output = "data/json", resume = TRUE,
 
 ## Lossless Queries with `via = "oqo"`
 
-By default every query is sent as a GET request with the query in the URL.
-With `via = "oqo"` (also for `pro_fetch()` and `pro_count()`), each query is
-instead translated once into an OpenAlex Query Object (OQO) -- the form
+By default (`via = "oqo"`, also for `pro_fetch()` and `pro_count()`) each
+query is translated once into an OpenAlex Query Object (OQO) -- the form
 OpenAlex compiles every query to anyway -- and every page is sent as a POST
 request with the OQO in the body:
 
+`via = "url"` sends every query as a GET request with the query in the URL
+instead:
+
 ```{r}
-pro_fetch(urls, project_folder = "data", via = "oqo")
+pro_fetch(urls, project_folder = "data", via = "url")
 ```
 
 - **Same results.** The test suite downloads the same queries both ways and
@@ -394,7 +396,7 @@ it does not appear in logs, error messages or recorded test responses.
 | `count_only` | logical | FALSE | Return count without downloading |
 | `error_log` | character/NULL | NULL | Path for error log file |
 | `resume` | logical | FALSE | Keep `output`, refetch only unfinished queries |
-| `via` | character | "url" | `"url"` (GET) or `"oqo"` (translated once, sent via POST) |
+| `via` | character | "oqo" | `"oqo"` (translated once, sent via POST) or `"url"` (GET) |
 
 # pro_request() Architecture
 

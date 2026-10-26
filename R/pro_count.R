@@ -10,7 +10,7 @@
 #'   `pro_api_key()`. If `NULL` or `""`, the request is sent
 #'   without an API key (subject to OpenAlex's unauthenticated limits).
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
-#' @param via `"url"` (default) or `"oqo"`; see [pro_request()].
+#' @param via `"oqo"` (default) or `"url"`; see [pro_request()].
 #'
 #' @return A data.frame containing `count`, `db_response_time_ms`,
 #'   `page`, and `per_page` elements. If count is negative, the size of the
@@ -30,7 +30,7 @@ pro_count <- function(
   query_url,
   api_key = pro_api_key(),
   error_log = NULL,
-  via = c("url", "oqo")
+  via = c("oqo", "url")
 ) {
   via <- match.arg(via)
   if (

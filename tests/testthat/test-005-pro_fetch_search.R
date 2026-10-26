@@ -16,7 +16,7 @@ test_that("pro_fetch search `biodiversity AND fiance`", {
       to_publication_date = "2010-01-01"
     )
   ) |>
-    pro_fetch(
+    pro_fetch(via = "url", 
       pages        = 1,
       project_folder = output_dir,
       delete_input = FALSE,
@@ -61,7 +61,7 @@ test_that("pro_fetch(resume = TRUE) returns a finished run without any request",
   file.create(file.path(parquet, "results_page_1.parquet"))
   # An unroutable URL: reaching the network would error.
   expect_equal(
-    pro_fetch("http://invalid.invalid/works", project_folder = tmp,
+    pro_fetch(via = "url", "http://invalid.invalid/works", project_folder = tmp,
               resume = TRUE, progress = FALSE),
     normalizePath(parquet)
   )
@@ -83,17 +83,17 @@ test_that("pro_fetch passes download_workers to the download and workers to the 
   tmp <- withr::local_tempdir()
 
   # default: both steps use `workers`, as before
-  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+  pro_fetch(via = "url", "https://api.openalex.org/works", project_folder = tmp,
             workers = 3, progress = FALSE)
   expect_equal(c(seen$download, seen$convert), c(3, 3))
 
   # separate counts
-  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+  pro_fetch(via = "url", "https://api.openalex.org/works", project_folder = tmp,
             workers = 6, download_workers = 2, progress = FALSE)
   expect_equal(c(seen$download, seen$convert), c(2, 6))
 
   # unchanged default when neither is given
-  pro_fetch("https://api.openalex.org/works", project_folder = tmp,
+  pro_fetch(via = "url", "https://api.openalex.org/works", project_folder = tmp,
             progress = FALSE)
   expect_equal(c(seen$download, seen$convert), c(1, 1))
 })

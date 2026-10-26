@@ -79,7 +79,7 @@ pro_fetch <- function(
   count_only,
   error_log      = NULL,
   resume         = FALSE,
-  via            = c("url", "oqo"),
+  via            = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
   compact_parquet = NULL,
   hive_names = NULL

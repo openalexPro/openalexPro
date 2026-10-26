@@ -45,7 +45,7 @@ test_that("pro_request with url list  and parallel", {
   vcr::local_cassette("pro_request_parallel")
 
   # Define the API request
-  output_json <- pro_request(
+  output_json <- pro_request(via = "url", 
     query_url = req,
     output = output_json,
     verbose = FALSE,
@@ -153,7 +153,7 @@ test_that("a list of queries makes no extra count requests", {
     )
   })
   out <- file.path(withr::local_tempdir(), "json")
-  pro_request(
+  pro_request(via = "url", 
     list(a = "https://api.openalex.org/works?filter=doi:1",
          b = "https://api.openalex.org/works?filter=doi:2"),
     output = out, progress = TRUE
@@ -187,7 +187,7 @@ test_that("a failing query does not stop the others; resume refetches only it", 
     bad = "https://api.openalex.org/works?filter=doi:bad"
   )
   err <- expect_error(
-    pro_request(queries, output = out, progress = FALSE),
+    pro_request(via = "url", queries, output = out, progress = FALSE),
     "1 of 2 queries failed \\(1 completed\\)"
   )
   expect_match(conditionMessage(err), "bad: .*404")
@@ -199,7 +199,7 @@ test_that("a failing query does not stop the others; resume refetches only it", 
   # the problem is fixed: resume fetches only the failed query
   calls$urls <- NULL
   httr2::local_mocked_responses(mock_leaves(calls, fail = NULL))
-  pro_request(queries, output = out, progress = FALSE, resume = TRUE)
+  pro_request(via = "url", queries, output = out, progress = FALSE, resume = TRUE)
   expect_length(calls$urls, 1L)
   expect_match(utils::URLdecode(calls$urls), "doi:bad", fixed = TRUE)
   expect_true(file.exists(file.path(out, "bad", "results_page_1.json")))

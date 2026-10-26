@@ -137,9 +137,9 @@ test_that("the API key travels as a Bearer header, never in a URL", {
   key <- "secret-test-key"
   url <- "https://api.openalex.org/works?filter=type:article"
 
-  pro_request(url, output = file.path(withr::local_tempdir(), "json"),
+  pro_request(via = "url", url, output = file.path(withr::local_tempdir(), "json"),
               api_key = key, progress = FALSE)
-  pro_count(url, api_key = key)
+  pro_count(via = "url", url, api_key = key)
   pro_rate_limit_status(api_key = key, verbose = FALSE)
   withr::with_envvar(c(openalexPro.api_key = key), opt_filter_names(update = TRUE))
 

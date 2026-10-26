@@ -172,9 +172,9 @@ test_that("pro_fetch passes compact_parquet on, and does not compact by default"
   })
   url <- "https://api.openalex.org/works?filter=type:article"
   tmp <- withr::local_tempdir()
-  pro_fetch(url, project_folder = file.path(tmp, "default"), progress = FALSE)
+  pro_fetch(via = "url", url, project_folder = file.path(tmp, "default"), progress = FALSE)
   expect_true(file.exists(file.path(tmp, "default", "parquet", "results_page_1.parquet")))
-  pro_fetch(url, project_folder = file.path(tmp, "compact"), progress = FALSE, compact_parquet = 10)
+  pro_fetch(via = "url", url, project_folder = file.path(tmp, "compact"), progress = FALSE, compact_parquet = 10)
   expect_equal(list.files(file.path(tmp, "compact", "parquet"), "\\.parquet$"), "results_pages_1-1.parquet")
 })
 

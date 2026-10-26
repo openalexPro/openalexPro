@@ -21,7 +21,7 @@ test_that("pro_request search count `biodiversity AND fiance`", {
       to_publication_date = "2010-01-01"
     )
   ) |>
-    pro_request(
+    pro_request(via = "url", 
       output = output_json,
 
       verbose = FALSE,
@@ -45,7 +45,7 @@ test_that("pro_request search count", {
       to_publication_date = "2010-01-01"
     )
   ) |>
-    pro_request(
+    pro_request(via = "url", 
       output = output_json,
 
       verbose = FALSE,
@@ -82,7 +82,7 @@ test_that("pro_request count_only with list of queries returns data.frame", {
   )
 
   # Get counts for the list of queries
-  count <- pro_request(
+  count <- pro_request(via = "url", 
     query_url = queries,
     output = output_json,
     verbose = FALSE,
@@ -127,7 +127,7 @@ test_that("pro_request count_only with unnamed list of queries", {
   )
 
   # Get counts for the list of queries
-  count <- pro_request(
+  count <- pro_request(via = "url", 
     query_url = queries,
     output = output_json,
     verbose = FALSE,
