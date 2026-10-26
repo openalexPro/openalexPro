@@ -70,10 +70,10 @@
 #'   keep the first / last downloaded copy (removing the other from its page
 #'   file) and warn about missing records.
 #' @param error_log location of error log of API calls. (default: `NULL` (none)).
-#' @param via How each query is sent. `"url"` (default): as a GET request with
-#'   the query in the URL, as built by [pro_query()]. `"oqo"`: translated once
+#' @param via How each query is sent. `"oqo"` (default): translated once
 #'   (free) into an OpenAlex Query Object and sent via POST, with the same
-#'   results. It has no URL length limit, accepts more than 100 values per
+#'   results as `"url"`, which sends it as a GET request with the query in
+#'   the URL, as built by [pro_query()]. It has no URL length limit, accepts more than 100 values per
 #'   filter (so `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list
 #'   in about one page per chunk), checks the query before any credits are spent, and records the
 #'   exact query in `_query.json`. Single records (`works/W123`) are always
@@ -106,7 +106,7 @@ pro_request <- function(
   count_only = FALSE,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo"),
+  via = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 ) {
   via <- match.arg(via)

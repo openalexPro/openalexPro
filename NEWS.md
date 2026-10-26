@@ -1,5 +1,11 @@
 # openalexPro (development version)
 
+- `via` now defaults to `"oqo"` in `pro_request()`, `pro_fetch()` and
+  `pro_count()`: queries are translated once (free) into an OpenAlex Query
+  Object and sent via POST -- same results, validated before credits are
+  spent, and more than 100 values per filter, so `pro_query(...,
+  chunk_limit = 200)` works without further arguments. `via = "url"` gives the
+  previous behaviour.
 - `pro_request_parquet()` and `pro_fetch()` gain `hive_names`: the Hive
   partition keys for a list of queries, one per nesting level, e.g.
   `hive_names = c("topic", "year")` writes `topic=<name>/year=<name>/`.

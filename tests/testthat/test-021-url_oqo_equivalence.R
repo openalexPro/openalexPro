@@ -271,16 +271,16 @@ test_that("an invalid query stops before any credits are spent", {
   expect_equal(httr2::url_parse(log$requests[[1]]$url)$path, "/query")
 })
 
-test_that("more than 100 values per filter: stopped for url, sent for oqo", {
+test_that("more than 100 values per filter: stopped for url, sent for oqo (default)", {
   many <- paste0("https://api.openalex.org/works?filter=doi:",
                  paste0("10.1/x", 1:150, collapse = "|"))
   expect_error(
-    pro_request(many, output = file.path(withr::local_tempdir(), "json"),
+    pro_request(via = "url", many, output = file.path(withr::local_tempdir(), "json"),
                 progress = FALSE),
     "has 150 values.*chunk_limit"
   )
   log <- new.env()
   httr2::local_mocked_responses(mock_oqo_api(log))
   expect_no_error(pro_request(many, output = file.path(withr::local_tempdir(), "json"),
-                              progress = FALSE, via = "oqo"))
+                              progress = FALSE))
 })

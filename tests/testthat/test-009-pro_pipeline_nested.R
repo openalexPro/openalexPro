@@ -150,7 +150,7 @@ test_that("pro_request with nested list creates nested output dirs", {
   req <- build_nested_req(dois)
   vcr::local_cassette("pro_request_parallel")
 
-  out <- pro_request(
+  out <- pro_request(via = "url", 
     query_url = req,
     output    = output_json_nested,
     verbose   = FALSE,

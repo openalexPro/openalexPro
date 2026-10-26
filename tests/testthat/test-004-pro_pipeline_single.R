@@ -18,7 +18,7 @@ test_that("pro_request single identifier", {
     entity = "works",
     id = "W2162348455"
   ) |>
-    pro_request(
+    pro_request(via = "url", 
       pages = 1,
       output = output_json,
       verbose = FALSE,
@@ -92,7 +92,7 @@ test_that("resume skips a completed single query without any request", {
   writeLines("{}", file.path(out, "results_page_1.json"))
   # An unroutable URL: reaching the network would error.
   expect_equal(
-    pro_request("http://invalid.invalid/works", output = out, resume = TRUE,
+    pro_request(via = "url", "http://invalid.invalid/works", output = out, resume = TRUE,
                 progress = FALSE),
     normalizePath(out)
   )
@@ -113,7 +113,7 @@ test_that("per_page in the query is kept; page and cursor are replaced with a wa
   calls <- new.env()
   httr2::local_mocked_responses(capture_urls(calls))
   expect_warning(
-    pro_request(
+    pro_request(via = "url", 
       "https://api.openalex.org/works?filter=type:article&per_page=50&page=2&cursor=abc",
       output = file.path(withr::local_tempdir(), "json"), progress = FALSE
     ),
@@ -128,7 +128,7 @@ test_that("per_page in the query is kept; page and cursor are replaced with a wa
 test_that("default paging is unchanged: per_page 200 with a cursor, no warning", {
   calls <- new.env()
   httr2::local_mocked_responses(capture_urls(calls))
-  expect_no_warning(pro_request(
+  expect_no_warning(pro_request(via = "url", 
     "https://api.openalex.org/works?filter=type:article",
     output = file.path(withr::local_tempdir(), "json"), progress = FALSE
   ))
@@ -140,7 +140,7 @@ test_that("default paging is unchanged: per_page 200 with a cursor, no warning",
 test_that("semantic search is fetched without cursor paging", {
   calls <- new.env()
   httr2::local_mocked_responses(capture_urls(calls))
-  pro_request(
+  pro_request(via = "url", 
     pro_query(entity = "works", search.semantic = "coral reef bleaching"),
     output = file.path(withr::local_tempdir(), "json"), progress = FALSE
   )
@@ -175,7 +175,7 @@ test_that("a sample larger than one page is paged by page number with a seed", {
   httr2::local_mocked_responses(mock_sample(calls, 450L))
   out <- file.path(withr::local_tempdir(), "json")
   expect_message(
-    pro_request(
+    pro_request(via = "url", 
       "https://api.openalex.org/works?filter=type:article&sample=450",
       output = out, progress = FALSE
     ),
@@ -195,7 +195,7 @@ test_that("a sample larger than one page is paged by page number with a seed", {
 test_that("a given seed is kept, and a one-page sample needs none", {
   calls <- new.env()
   httr2::local_mocked_responses(mock_sample(calls, 450L))
-  expect_no_message(pro_request(
+  expect_no_message(pro_request(via = "url", 
     "https://api.openalex.org/works?filter=type:article&sample=450&seed=7",
     output = file.path(withr::local_tempdir(), "json"), progress = FALSE
   ))
@@ -203,7 +203,7 @@ test_that("a given seed is kept, and a one-page sample needs none", {
 
   calls$urls <- NULL
   httr2::local_mocked_responses(mock_sample(calls, 100L))
-  expect_no_message(pro_request(
+  expect_no_message(pro_request(via = "url", 
     "https://api.openalex.org/works?filter=type:article&sample=100",
     output = file.path(withr::local_tempdir(), "json"), progress = FALSE
   ))
@@ -241,7 +241,7 @@ test_that("each query gets a _query.json with the echoed query and its cost", {
   httr2::local_mocked_responses(mock_two_pages())
   out <- file.path(withr::local_tempdir(), "json")
   expect_message(
-    res <- pro_request(
+    res <- pro_request(via = "url", 
       "https://api.openalex.org/works?filter=type:article",
       output = out, progress = TRUE
     ),
@@ -264,7 +264,7 @@ test_that("each query gets a _query.json with the echoed query and its cost", {
 test_that("_query.json is not converted, but carried into the parquet partition", {
   httr2::local_mocked_responses(mock_two_pages())
   tmp <- withr::local_tempdir()
-  pro_fetch(
+  pro_fetch(via = "url", 
     list(articles = "https://api.openalex.org/works?filter=type:article"),
     project_folder = tmp, progress = FALSE, enrich = FALSE
   )
