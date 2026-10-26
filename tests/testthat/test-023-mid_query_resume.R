@@ -352,3 +352,25 @@ test_that("_paging.json is never converted or copied into parquet", {
   expect_false(file.exists(file.path(pq, "_paging.json")))
   expect_equal(sort(dplyr::collect(arrow::open_dataset(pq))$id), paste0("W", 1:4))
 })
+
+test_that("an empty page after a full one does not advance the progress by 0", {
+  # OpenAlex sends a next_cursor after an exactly full last page; the empty
+  # page after it must not call the progressor with amount = 0 (progressr
+  # fails on that once the bar is complete)
+  httr2::local_mocked_responses(function(req) {
+    last <- grepl("cursor=c2", req$url, fixed = TRUE)
+    page <- list(
+      meta = list(count = 2L, per_page = 2L, next_cursor = if (!last) "c2"),
+      results = if (last) list() else list(list(id = "W1"), list(id = "W2"))
+    )
+    httr2::response(200, headers = list("content-type" = "application/json"),
+      body = charToRaw(as.character(jsonlite::toJSON(page, auto_unbox = TRUE, null = "null"))))
+  })
+  amounts <- numeric(0)
+  fetch_query_pages(
+    q_url, pages = NULL, output = file.path(withr::local_tempdir(), "q"),
+    overwrite = TRUE, api_key = NULL, verbose = FALSE, error_log = NULL,
+    progressor = function(amount) amounts <<- c(amounts, amount)
+  )
+  expect_equal(amounts, 1)
+})
