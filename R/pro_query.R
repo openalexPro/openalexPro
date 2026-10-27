@@ -224,25 +224,47 @@
       call. = FALSE
     )
   }
-  if (!is.null(oql) && !(is.character(oql) && length(oql) == 1L && nzchar(oql))) {
-    stop("`oql` must be a single non-empty string.", call. = FALSE)
+  # Several queries -> a named list of URLs, like a chunked ID list.
+  multi <- length(oql) > 1L ||
+    (is.list(oqo) && !"get_rows" %in% names(oqo)) ||
+    (is.character(oqo) && length(oqo) > 1L)
+  one <- function(oql, oqo) {
+    if (!is.null(oql) && !(is.character(oql) && length(oql) == 1L && nzchar(oql))) {
+      stop("`oql` must be a non-empty string.", call. = FALSE)
+    }
+    if (is.list(oqo)) {
+      oqo <- as.character(jsonlite::toJSON(oqo, auto_unbox = TRUE))
+    } else if (!is.null(oqo) && !(is.character(oqo) && length(oqo) == 1L)) {
+      stop("`oqo` must be a list or a single JSON string.", call. = FALSE)
+    }
+    q <- c(
+      list(
+        oql = oql,
+        oqo = oqo,
+        select = if (!.is_empty(select)) paste(select, collapse = ",")
+      ),
+      options
+    )
+    q <- Filter(Negate(is.null), q)
+    httr2::req_url_query(httr2::request(endpoint), !!!q)$url
   }
-  if (is.list(oqo)) {
-    oqo <- as.character(jsonlite::toJSON(oqo, auto_unbox = TRUE))
-  } else if (!is.null(oqo) && !(is.character(oqo) && length(oqo) == 1L)) {
-    stop("`oqo` must be a list or a single JSON string.", call. = FALSE)
+  if (!multi) {
+    return(one(oql, oqo))
   }
 
-  q <- c(
-    list(
-      oql = oql,
-      oqo = oqo,
-      select = if (!.is_empty(select)) paste(select, collapse = ",")
-    ),
-    options
-  )
-  q <- Filter(Negate(is.null), q)
-  httr2::req_url_query(httr2::request(endpoint), !!!q)$url
+  x <- as.list(if (!is.null(oql)) oql else oqo)
+  if (length(x) == 0L) {
+    stop("`oql` / `oqo` must not be empty.", call. = FALSE)
+  }
+  nms <- names(x)
+  if (is.null(nms)) nms <- rep("", length(x))
+  nms[!nzchar(nms)] <- paste0("query_", seq_along(x))[!nzchar(nms)]
+  if (anyDuplicated(nms) || any(grepl("[/\\\\]", nms))) {
+    stop("Query names must be unique and contain no path separators.", call. = FALSE)
+  }
+  urls <- lapply(x, function(q) if (!is.null(oql)) one(q, NULL) else one(NULL, q))
+  names(urls) <- nms
+  urls
 }
 
 # main builder ------------------------------------------------------------
@@ -295,10 +317,14 @@
 #' @param endpoint Base API URL. Defaults to \code{"https://api.openalex.org"}.
 #' @param   chunk_limit Number of DOIS or ids per chunk if chunked. Default: 50
 #' @param oql Optional OQL (OpenAlex Query Language) query string, e.g.
-#'   \code{"works where year is (2020) and type is (article)"}. See section
+#'   \code{"works where year is (2020) and type is (article)"}. A character
+#'   vector gives a named list of URLs (names from \code{names(oql)}, else
+#'   \code{query_1}, \code{query_2}, ...), one per query. See section
 #'   \emph{OQL and OQO}.
 #' @param oqo Optional OQO (OpenAlex Query Object): a nested list, or a JSON
-#'   string. See section \emph{OQL and OQO}.
+#'   string. A list of OQOs (lists or JSON strings), or a character vector of
+#'   JSON strings, gives a named list of URLs as for \code{oql}. See section
+#'   \emph{OQL and OQO}.
 #' @param ... Filters as named arguments. Values may be scalars or vectors (vectors
 #'   are collapsed with \code{"|"} to express OR). Arguments of the functions
 #'   that send the query, such as \code{via} or \code{workers}, belong to

@@ -102,7 +102,7 @@ test_that("resume continues at the saved cursor and says how old it is", {
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
   expect_message(
-    pro_request(q_url, output = out, progress = FALSE, resume = TRUE),
+    pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE),
     "Resuming .*page 3.*cursor from .*ago"
   )
   expect_equal(page_cursors(log), "c4") # only the missing page
@@ -123,11 +123,11 @@ test_that("in a list, only the interrupted query continues", {
   log1 <- new.env()
   local({
     httr2::local_mocked_responses(mock_cursor(log1, fail_at = 4L, fail_if = "type:book"))
-    expect_error(pro_request(qs, output = out, progress = FALSE), "1 of 2 queries failed")
+    expect_error(pro_request(via = "url", qs, output = out, progress = FALSE), "1 of 2 queries failed")
   })
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  suppressMessages(pro_request(qs, output = out, progress = FALSE, resume = TRUE))
+  suppressMessages(pro_request(via = "url", qs, output = out, progress = FALSE, resume = TRUE))
   expect_equal(page_cursors(log), "c4")
   expect_true(grepl("type:book", utils::URLdecode(page_requests(log)[[1]]$url), fixed = TRUE))
   expect_equal(ids_in(file.path(out, "b")), paste0("W", 1:5))
@@ -154,7 +154,7 @@ test_that("grouped results continue at the saved group key", {
   interrupted(out, grouped = TRUE)
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log, grouped = TRUE))
-  suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE))
+  suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE))
   expect_equal(page_cursors(log), c("c4", "c6")) # c6: empty last page, not saved
   expect_equal(ids_in(out, "group_by_page_"), paste0("g", 1:5))
   expect_false(file.exists(file.path(out, "group_by_page_4.json")))
@@ -167,7 +167,7 @@ test_that("a page saved after the last state write is fetched again; higher ones
   writeLines("{}", file.path(out, "results_page_9.json"))
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE))
+  suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE))
   expect_equal(page_cursors(log), "c4")
   expect_equal(ids_in(out), paste0("W", 1:5))
   expect_false(file.exists(file.path(out, "results_page_9.json")))
@@ -179,11 +179,11 @@ test_that("a crash after the last page costs one request on resume", {
     log1 <- new.env()
     httr2::local_mocked_responses(mock_cursor(log1))
     local_mocked_bindings(.pr_write_query_record = function(...) stop("crash"))
-    expect_error(pro_request(q_url, output = out, progress = FALSE), "crash")
+    expect_error(pro_request(via = "url", q_url, output = out, progress = FALSE), "crash")
   })
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE))
+  suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE))
   expect_equal(page_cursors(log), "c4")
   expect_equal(ids_in(out), paste0("W", 1:5))
 })
@@ -205,7 +205,7 @@ test_that("an unusable state restarts the query with a reason", {
     log <- new.env()
     httr2::local_mocked_responses(mock_cursor(log))
     expect_message(
-      pro_request(q_url, output = out, progress = FALSE, resume = TRUE),
+      pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE),
       "Cannot resume", info = b
     )
     expect_equal(page_cursors(log)[1], "*", info = b)
@@ -218,7 +218,7 @@ test_that("the pages limit holds across sessions", {
   interrupted(out, n = 9L)
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log, n = 9L))
-  suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE, pages = 3))
+  suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE, pages = 3))
   expect_equal(page_cursors(log), "c4")
   expect_equal(ids_in(out), paste0("W", 1:6))
 })
@@ -234,7 +234,7 @@ test_that("a duplicate after resume stops by default; a rerun needs no download"
     log <- new.env()
     httr2::local_mocked_responses(mock_cursor(log, extra = list(offset = 4L, id = "W1")))
     err <- expect_error(
-      suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE))
+      suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE))
     )
     msg <- conditionMessage(err)
     expect_match(msg, "1 record appears twice", fixed = TRUE)
@@ -246,7 +246,7 @@ test_that("a duplicate after resume stops by default; a rerun needs no download"
 
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  suppressMessages(pro_request(q_url, output = out, progress = FALSE, resume = TRUE,
+  suppressMessages(pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE,
                                inconsistency_on_resume = "newest"))
   expect_length(page_requests(log), 0L) # nothing downloaded
   expect_equal(ids_in(out), c("W2", "W3", "W4", "W5", "W1")) # newest copy kept (page 3)
@@ -263,7 +263,7 @@ test_that("oldest keeps the first copy; warning and ignore keep both", {
     interrupted(out)
     log <- new.env()
     httr2::local_mocked_responses(mock_cursor(log, extra = list(offset = 4L, id = "W1")))
-    run <- function() pro_request(q_url, output = out, progress = FALSE, resume = TRUE,
+    run <- function() pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE,
                                   inconsistency_on_resume = policy)
     if (policy == "warning") {
       expect_warning(suppressMessages(run()), "1 record appears twice")
@@ -281,7 +281,7 @@ test_that("missing records (net) stop by default, or warn", {
     interrupted(out)
     log <- new.env()
     httr2::local_mocked_responses(mock_cursor(log, count = 7L)) # OpenAlex now reports 7
-    run <- function() pro_request(q_url, output = out, progress = FALSE, resume = TRUE,
+    run <- function() pro_request(via = "url", q_url, output = out, progress = FALSE, resume = TRUE,
                                   inconsistency_on_resume = policy)
     if (policy == "error") {
       expect_error(suppressMessages(run()), "2 fewer records than OpenAlex now reports \\(net")
@@ -298,20 +298,20 @@ test_that("in a list, an inconsistent query is reported with the way out", {
   local({
     log1 <- new.env()
     httr2::local_mocked_responses(mock_cursor(log1, fail_at = 4L, fail_if = "type:book"))
-    expect_error(pro_request(qs, output = out, progress = FALSE), "1 of 2 queries failed")
+    expect_error(pro_request(via = "url", qs, output = out, progress = FALSE), "1 of 2 queries failed")
   })
   local({
     log <- new.env()
     httr2::local_mocked_responses(mock_cursor(log, extra = list(offset = 4L, id = "W1")))
     err <- expect_error(suppressMessages(
-      pro_request(qs, output = out, progress = FALSE, resume = TRUE)
+      pro_request(via = "url", qs, output = out, progress = FALSE, resume = TRUE)
     ))
     expect_match(conditionMessage(err), "b: Resumed query `b`: 1 record appears twice", fixed = TRUE)
     expect_match(conditionMessage(err), "nothing is downloaded again", fixed = TRUE)
   })
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  suppressMessages(pro_request(qs, output = out, progress = FALSE, resume = TRUE,
+  suppressMessages(pro_request(via = "url", qs, output = out, progress = FALSE, resume = TRUE,
                                inconsistency_on_resume = "oldest"))
   expect_length(page_requests(log), 0L)
   expect_equal(ids_in(file.path(out, "b")), paste0("W", 1:5))
@@ -325,12 +325,12 @@ test_that("an interrupted sample writes no state and restarts from page 1", {
   local({
     log1 <- new.env()
     httr2::local_mocked_responses(mock_cursor(log1, n = 6L, fail_at = 4L))
-    expect_error(pro_request(url, output = out, progress = FALSE), "404")
+    expect_error(pro_request(via = "url", url, output = out, progress = FALSE), "404")
   })
   expect_false(file.exists(file.path(out, "_paging.json")))
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log, n = 6L))
-  pro_request(url, output = out, progress = FALSE, resume = TRUE)
+  pro_request(via = "url", url, output = out, progress = FALSE, resume = TRUE)
   expect_equal(vapply(page_requests(log), function(r) as.character(r$page), ""), c("1", "2", "3"))
 })
 
@@ -338,7 +338,7 @@ test_that("a run without interruption leaves no trace of the resume machinery", 
   out <- file.path(withr::local_tempdir(), "json")
   log <- new.env()
   httr2::local_mocked_responses(mock_cursor(log))
-  pro_request(q_url, output = out, progress = FALSE)
+  pro_request(via = "url", q_url, output = out, progress = FALSE)
   expect_false(any(file.exists(file.path(out, c("_paging.json", "_paging.json.part")))))
   rec <- jsonlite::read_json(file.path(out, "_query.json"))
   expect_false(any(c("resumed", "duplicates", "missing_net") %in% names(rec)))
@@ -351,4 +351,26 @@ test_that("_paging.json is never converted or copied into parquet", {
   pro_request_parquet(out, pq, progress = FALSE, verbose = FALSE, enrich = FALSE)
   expect_false(file.exists(file.path(pq, "_paging.json")))
   expect_equal(sort(dplyr::collect(arrow::open_dataset(pq))$id), paste0("W", 1:4))
+})
+
+test_that("an empty page after a full one does not advance the progress by 0", {
+  # OpenAlex sends a next_cursor after an exactly full last page; the empty
+  # page after it must not call the progressor with amount = 0 (progressr
+  # fails on that once the bar is complete)
+  httr2::local_mocked_responses(function(req) {
+    last <- grepl("cursor=c2", req$url, fixed = TRUE)
+    page <- list(
+      meta = list(count = 2L, per_page = 2L, next_cursor = if (!last) "c2"),
+      results = if (last) list() else list(list(id = "W1"), list(id = "W2"))
+    )
+    httr2::response(200, headers = list("content-type" = "application/json"),
+      body = charToRaw(as.character(jsonlite::toJSON(page, auto_unbox = TRUE, null = "null"))))
+  })
+  amounts <- numeric(0)
+  fetch_query_pages(
+    q_url, pages = NULL, output = file.path(withr::local_tempdir(), "q"),
+    overwrite = TRUE, api_key = NULL, verbose = FALSE, error_log = NULL,
+    progressor = function(amount) amounts <<- c(amounts, amount)
+  )
+  expect_equal(amounts, 1)
 })

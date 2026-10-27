@@ -43,7 +43,7 @@ oql_nature <- "get works where type is [article](article)\n  and source is [Natu
 
 download <- function() {
   out <- file.path(withr::local_tempdir(.local_envir = parent.frame()), "json")
-  pro_request("https://api.openalex.org/works?filter=type:article,primary_location.source.id:S137773608",
+  pro_request(via = "url", "https://api.openalex.org/works?filter=type:article,primary_location.source.id:S137773608",
               output = out, progress = FALSE)
   out
 }
@@ -110,7 +110,7 @@ test_that("OQL text is escaped in the HTML", {
 test_that("the readable files are carried into the parquet partition", {
   httr2::local_mocked_responses(mock_api(oql_nature))
   tmp <- withr::local_tempdir()
-  pro_fetch(list(nature = "https://api.openalex.org/works?filter=type:article,primary_location.source.id:S137773608"),
+  pro_fetch(via = "url", list(nature = "https://api.openalex.org/works?filter=type:article,primary_location.source.id:S137773608"),
             project_folder = tmp, progress = FALSE, enrich = FALSE)
   part <- file.path(tmp, "parquet", "query=nature")
   expect_true(all(file.exists(file.path(part, c("_query.json", "_query_oql.txt", "_query_oql.html")))))
@@ -124,7 +124,7 @@ test_that("a single record gets no OQL files (nothing to describe)", {
                     body = charToRaw('{"id":"https://openalex.org/W1","title":"x"}'))
   })
   out <- file.path(withr::local_tempdir(), "json")
-  pro_request("https://api.openalex.org/works/W1", output = out, progress = FALSE)
+  pro_request(via = "url", "https://api.openalex.org/works/W1", output = out, progress = FALSE)
   expect_false(file.exists(file.path(out, "_query_oql.txt")))
 })
 
@@ -149,7 +149,7 @@ test_that("a list download writes one summary of all queries, in list order", {
   httr2::local_mocked_responses(mock_api_with_failure(oql_nature))
   out <- file.path(withr::local_tempdir(), "json")
   expect_error(
-    pro_request(list(zeta = q_ok, alpha = q_ok, broken = q_bad),
+    pro_request(via = "url", list(zeta = q_ok, alpha = q_ok, broken = q_bad),
                 output = out, progress = FALSE),
     "1 of 3 queries failed"
   )
@@ -176,10 +176,10 @@ test_that("a list download writes one summary of all queries, in list order", {
 test_that("the summary includes queries skipped by resume", {
   httr2::local_mocked_responses(mock_api(oql_nature))
   out <- file.path(withr::local_tempdir(), "json")
-  pro_request(list(a = q_ok, b = q_ok), output = out, progress = FALSE)
+  pro_request(via = "url", list(a = q_ok, b = q_ok), output = out, progress = FALSE)
   unlink(file.path(out, "_queries_oql.txt"))
   unlink(file.path(out, "b"), recursive = TRUE) # b must be fetched again, a is skipped
-  pro_request(list(a = q_ok, b = q_ok), output = out, progress = FALSE, resume = TRUE)
+  pro_request(via = "url", list(a = q_ok, b = q_ok), output = out, progress = FALSE, resume = TRUE)
   expect_equal(
     grep("^## ", readLines(file.path(out, "_queries_oql.txt")), value = TRUE),
     c("## a | 2 records | Exact", "## b | 2 records | Exact")
@@ -189,7 +189,7 @@ test_that("the summary includes queries skipped by resume", {
 test_that("the summary is carried to the top of the parquet folder", {
   httr2::local_mocked_responses(mock_api(oql_nature))
   tmp <- withr::local_tempdir()
-  pro_fetch(list(a = q_ok, b = q_ok), project_folder = tmp, progress = FALSE, enrich = FALSE)
+  pro_fetch(via = "url", list(a = q_ok, b = q_ok), project_folder = tmp, progress = FALSE, enrich = FALSE)
   expect_true(all(file.exists(file.path(tmp, "parquet", c("_queries_oql.txt", "_queries_oql.html")))))
   expect_equal(nrow(dplyr::collect(arrow::open_dataset(file.path(tmp, "parquet")))), 4L)
 })
@@ -197,7 +197,7 @@ test_that("the summary is carried to the top of the parquet folder", {
 test_that("a single URL gets no summary (its own files are at the top)", {
   httr2::local_mocked_responses(mock_api(oql_nature))
   out <- file.path(withr::local_tempdir(), "json")
-  pro_request(q_ok, output = out, progress = FALSE)
+  pro_request(via = "url", q_ok, output = out, progress = FALSE)
   expect_false(file.exists(file.path(out, "_queries_oql.txt")))
   expect_true(file.exists(file.path(out, "_query_oql.txt")))
 })

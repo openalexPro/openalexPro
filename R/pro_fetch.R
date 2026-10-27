@@ -79,9 +79,10 @@ pro_fetch <- function(
   count_only,
   error_log      = NULL,
   resume         = FALSE,
-  via            = c("url", "oqo"),
+  via            = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 ) {
   via <- match.arg(via)
   inconsistency_on_resume <- match.arg(inconsistency_on_resume)
@@ -156,6 +157,7 @@ pro_fetch <- function(
       workers      = workers,
       enrich       = enrich,
       resume       = resume,
-      compact_parquet = compact_parquet
+      compact_parquet = compact_parquet,
+      hive_names = hive_names
     )
 }

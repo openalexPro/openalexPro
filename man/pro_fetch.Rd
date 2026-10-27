@@ -19,9 +19,10 @@ pro_fetch(
   count_only,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo"),
+  via = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 )
 }
 \arguments{
@@ -75,10 +76,10 @@ queries that did not finish are downloaded again, and only missing
 Parquet files are converted. A finished run is returned unchanged.
 \code{overwrite} is ignored. Default \code{FALSE}.}
 
-\item{via}{How each query is sent. \code{"url"} (default): as a GET request with
-the query in the URL, as built by \code{\link[=pro_query]{pro_query()}}. \code{"oqo"}: translated once
+\item{via}{How each query is sent. \code{"oqo"} (default): translated once
 (free) into an OpenAlex Query Object and sent via POST, with the same
-results. It has no URL length limit, accepts more than 100 values per
+results as \code{"url"}, which sends it as a GET request with the query in
+the URL, as built by \code{\link[=pro_query]{pro_query()}}. It has no URL length limit, accepts more than 100 values per
 filter (so \code{pro_query(..., chunk_limit = 200)} fetches a DOI or ID list
 in about one page per chunk), checks the query before any credits are spent, and records the
 exact query in \verb{_query.json}. Single records (\code{works/W123}) are always
@@ -99,6 +100,14 @@ file) and warn about missing records.}
 page.  A number, e.g. \code{250000}, combines each query's page files into
 files of up to that many records once every file has converted -- much
 faster to read.  See \code{\link[=pro_compact_parquet]{pro_compact_parquet()}}.}
+
+\item{hive_names}{Character vector of Hive partition keys, one per nesting
+level of a list of queries: \code{c("topic", "year")} writes
+\verb{topic=<name>/year=<name>/}. \code{NULL} (default) uses \code{query} for the first
+level and \code{query_l2}, \code{query_l3}, ... below it; \code{NA} keeps the default of
+that level. A query named \code{key=value} (e.g. \code{"year=2020"}) supplies its
+own key, unless \code{hive_names} names one for that level. Keys must be unique and made of letters, digits and \verb{_}. Use
+the same value when resuming, or the files are converted again.}
 }
 \value{
 Invisibly, the normalised path of the \code{parquet} subfolder

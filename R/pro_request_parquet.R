@@ -9,8 +9,8 @@
 #' `abstract_inverted_index`, `authorships`, and `publication_year` in the
 #' inferred schema and, when `enrich = TRUE` (the default), adds two computed
 #' columns:
-#' - **`abstract`** — plain text reconstructed from `abstract_inverted_index`.
-#' - **`citation`** — `"Author (year)"` / `"A & B (year)"` / `"A et al. (year)"`.
+#' - **`abstract`** - plain text reconstructed from `abstract_inverted_index`.
+#' - **`citation`** - `"Author (year)"` / `"A & B (year)"` / `"A et al. (year)"`.
 #'
 #' @section File format:
 #' [pro_request()] writes one JSON file per API page.  For paginated queries
@@ -20,7 +20,7 @@
 #'
 #' @section Output layout:
 #' The subdirectory structure of `input_json` is preserved, with hive-partition
-#' naming (`query=<name>/`, `query_l2=<name>/`, …) so that Arrow/DuckDB can
+#' naming (`query=<name>/`, `query_l2=<name>/`, ...) so that Arrow/DuckDB can
 #' read the result as a partitioned dataset.  A `page` column is added to each
 #' record with a value derived from the source filename (or subdirectory for
 #' multi-query inputs).
@@ -65,6 +65,13 @@
 #'   page.  A number, e.g. `250000`, combines each query's page files into
 #'   files of up to that many records once every file has converted -- much
 #'   faster to read.  See [pro_compact_parquet()].
+#' @param hive_names Character vector of Hive partition keys, one per nesting
+#'   level of a list of queries: `c("topic", "year")` writes
+#'   `topic=<name>/year=<name>/`. `NULL` (default) uses `query` for the first
+#'   level and `query_l2`, `query_l3`, ... below it; `NA` keeps the default of
+#'   that level. A query named `key=value` (e.g. `"year=2020"`) supplies its
+#'   own key, unless `hive_names` names one for that level. Keys must be unique and made of letters, digits and `_`. Use
+#'   the same value when resuming, or the files are converted again.
 #' @param workers Integer.  Number of parallel workers.
 #'   `NULL` or `1` runs sequentially.  Default `NULL`.
 #' @param enrich Logical.  When `TRUE` (the default) and the inferred schema
@@ -127,11 +134,13 @@ pro_request_parquet <- function(
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
   retry_memory_limit = NULL,
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 ) {
   if (is.null(input_json)) stop("No `input_json` specified!")
   if (is.null(output))     stop("No `output` specified!")
   on_error <- match.arg(on_error)
+  .prr_check_hive_names(hive_names)
   if (!is.null(compact_parquet)) .pc_check_rows(compact_parquet, "compact_parquet")
 
   progress_file <- .prr_prepare_output(output, overwrite, resume)
@@ -152,7 +161,7 @@ pro_request_parquet <- function(
     oa_works_citation_sql()
   } else NULL
 
-  output_files <- .prr_output_paths(disc$jsons, input_json, output)
+  output_files <- .prr_output_paths(disc$jsons, input_json, output, hive_names)
 
   # Resume: pages a compacted file already holds are converted, not missing
   if (isTRUE(resume)) {
@@ -254,7 +263,7 @@ pro_request_parquet <- function(
   # Carry each query's record (`_query.json`, written by pro_request()) into
   # its Parquet partition, so it survives `delete_input`. arrow and DuckDB
   # ignore it: the leading underscore, and it is not a `.parquet` file.
-  .prr_copy_query_records(input_json, output)
+  .prr_copy_query_records(input_json, output, hive_names)
 
   # Only a complete conversion is compacted: a page converted later would fall
   # into a compacted file's page range and be taken as done. Before
@@ -267,6 +276,21 @@ pro_request_parquet <- function(
   # only copy of the failed pages, and `resume` needs it.
   if (delete_input && length(failed) == 0L) {
     unlink(input_json, recursive = TRUE, force = TRUE)
+    # unlink() fails silently (e.g. a file still held open); retry once, then
+    # warn rather than leave stray input behind unnoticed.
+    if (dir.exists(input_json)) {
+      Sys.sleep(1)
+      unlink(input_json, recursive = TRUE, force = TRUE)
+    }
+    if (dir.exists(input_json)) {
+      left <- list.files(input_json, recursive = TRUE, all.files = TRUE)
+      warning(
+        "Could not delete `input_json` (", input_json, "); ",
+        length(left), " file(s) left behind, e.g. ",
+        paste(utils::head(file.path(input_json, left), 3L), collapse = ", "),
+        call. = FALSE
+      )
+    }
   }
 
   # Only a wholly successful run clears the sentinel, so `00_in.progress`
@@ -280,7 +304,7 @@ pro_request_parquet <- function(
 #'
 #' @keywords internal
 #' @noRd
-.prr_copy_query_records <- function(input_json, output) {
+.prr_copy_query_records <- function(input_json, output, hive_names = NULL) {
   records <- list.files(
     input_json, pattern = "^_quer(y\\.json|y_oql\\.txt|y_oql\\.html|ies_oql\\.txt|ies_oql\\.html)$",
     full.names = TRUE, recursive = TRUE
@@ -290,7 +314,7 @@ pro_request_parquet <- function(
   }
   # Same leaf -> partition mapping as the page files
   targets <- file.path(
-    dirname(.prr_output_paths(records, input_json, output)),
+    dirname(.prr_output_paths(records, input_json, output, hive_names)),
     basename(records)
   )
   for (d in unique(dirname(targets))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
@@ -482,7 +506,7 @@ pro_request_parquet <- function(
     schema_df <- .prr_apply_baseline(schema_df, schema, verbose)
   }
 
-  # Force abstract_inverted_index to MAP — DuckDB sometimes infers STRUCT
+  # Force abstract_inverted_index to MAP - DuckDB sometimes infers STRUCT
   # when the sample has no duplicate-cased keys, which breaks map_entries().
   aii_idx <- which(schema_df$column_name == "abstract_inverted_index")
   if (length(aii_idx) == 1L) {
@@ -540,7 +564,7 @@ pro_request_parquet <- function(
 #' @noRd
 .prr_fix_json_types <- function(list_type) {
   # Patch known OpenAlex source-struct fields DuckDB may infer as JSON when
-  # all sampled values are null — required for union_by_name = true reads.
+  # all sampled values are null - required for union_by_name = true reads.
   list_type <- gsub("\\bissn_l JSON\\b", "issn_l VARCHAR", list_type)
   list_type <- gsub("(?<![_])\\bissn JSON\\b", "issn VARCHAR[]", list_type, perl = TRUE)
   gsub(
@@ -552,9 +576,36 @@ pro_request_parquet <- function(
 
 #' @keywords internal
 #' @noRd
-.prr_output_paths <- function(jsons, input_json, output) {
+.prr_check_hive_names <- function(hive_names) {
+  if (is.null(hive_names)) {
+    return(invisible(TRUE))
+  }
+  ok <- is.character(hive_names) &&
+    all(is.na(hive_names) | grepl("^[A-Za-z_][A-Za-z0-9_]*$", hive_names)) &&
+    !anyDuplicated(hive_names[!is.na(hive_names)])
+  if (!ok) {
+    stop(
+      "`hive_names` must be a character vector of unique names made of ",
+      "letters, digits and `_` (NA keeps the default for that level).",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+#' @keywords internal
+#' @noRd
+.prr_output_paths <- function(jsons, input_json, output, hive_names = NULL) {
   input_depth <- length(strsplit(gsub("\\\\", "/", input_json), "/")[[1L]])
-  hive_key <- function(depth) if (depth == 1L) "query" else paste0("query_l", depth)
+  hive_key <- function(depth) {
+    if (depth <= length(hive_names) && !is.na(hive_names[[depth]])) {
+      hive_names[[depth]]
+    } else if (depth == 1L) {
+      "query"
+    } else {
+      paste0("query_l", depth)
+    }
+  }
 
   vapply(jsons, function(f) {
     f_parts <- strsplit(gsub("\\\\", "/", f), "/")[[1L]]
@@ -566,7 +617,18 @@ pro_request_parquet <- function(
     }
     if (length(rel_parts) == 0L) return(file.path(output, fname))
     hive_dirs <- mapply(
-      function(d, v) paste0(hive_key(d), "=", v),
+      function(d, v) {
+        # A query named `key=value` supplies its own partition key, unless
+        # `hive_names` names one for this level.
+        m <- regmatches(v, regexec("^([A-Za-z_][A-Za-z0-9_]*)=(.+)$", v))[[1L]]
+        if (length(m) == 0L) return(paste0(hive_key(d), "=", v))
+        key <- if (d <= length(hive_names) && !is.na(hive_names[[d]])) {
+          hive_names[[d]]
+        } else {
+          m[2L]
+        }
+        paste0(key, "=", m[3L])
+      },
       seq_along(rel_parts), rel_parts,
       SIMPLIFY = TRUE
     )

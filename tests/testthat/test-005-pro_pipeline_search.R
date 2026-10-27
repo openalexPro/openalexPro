@@ -21,7 +21,7 @@ test_that("pro_request search `biodiversity AND fiance`", {
       to_publication_date = "2010-01-01"
     )
   ) |>
-    pro_request(
+    pro_request(via = "url", 
       pages = 1,
       output = output_json,
       verbose = FALSE,

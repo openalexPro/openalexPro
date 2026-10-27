@@ -13,7 +13,7 @@
 #' @section Caching:
 #' When `schema_cache_dir` is provided, two levels of caching apply:
 #' - **Unified schema** (`unified_schema.csv`): if present, loaded and returned
-#'   immediately — no DuckDB queries needed. Delete this file to force
+#'   immediately - no DuckDB queries needed. Delete this file to force
 #'   re-inference.
 #' - **Per-file schemas** (`<update_date>_<part_name>.csv`): each file's schema
 #'   is saved as it is inferred. On restart, already-cached files are skipped,
@@ -22,12 +22,12 @@
 #' @section Type-widening rules:
 #' When a column has different types across files, the unified type is chosen
 #' by these rules (in order):
-#' 1. All identical → keep as-is.
-#' 2. Any `STRUCT`/`LIST`/`MAP` vs simpler type → complex type wins.
-#' 3. Multiple `STRUCT` types → pick the one with the most fields.
-#' 4. Numeric conflicts → widest type wins
+#' 1. All identical -> keep as-is.
+#' 2. Any `STRUCT`/`LIST`/`MAP` vs simpler type -> complex type wins.
+#' 3. Multiple `STRUCT` types -> pick the one with the most fields.
+#' 4. Numeric conflicts -> widest type wins
 #'    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
-#' 5. Fallback → `VARCHAR`.
+#' 5. Fallback -> `VARCHAR`.
 #'
 #' @param con An active DuckDB connection (`DBI::dbConnect(duckdb::duckdb())`)
 #'   with the JSON extension loaded (`LOAD json`).
@@ -195,12 +195,12 @@ infer_json_schema <- function(
 #'   unified schema.
 #'
 #' @details Type-widening precedence for conflicting types on the same column:
-#' 1. Identical types → keep as-is.
-#' 2. Any STRUCT/LIST/MAP vs simpler type → use the complex type.
-#' 3. Multiple STRUCT types → use the one with the most fields.
-#' 4. Pure numeric conflicts → use the widest numeric type
+#' 1. Identical types -> keep as-is.
+#' 2. Any STRUCT/LIST/MAP vs simpler type -> use the complex type.
+#' 3. Multiple STRUCT types -> use the one with the most fields.
+#' 4. Pure numeric conflicts -> use the widest numeric type
 #'    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
-#' 5. Fallback → `VARCHAR`.
+#' 5. Fallback -> `VARCHAR`.
 #'
 #' @noRd
 merge_schemas <- function(schemas) {
