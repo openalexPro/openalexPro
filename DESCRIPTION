@@ -15,7 +15,7 @@ Description: Retrieves large result sets from the 'OpenAlex' API
     downloaded, and the daily API budget can be inspected.
 URL: https://github.com/openalexPro/openalexPro, https://openalexpro.github.io/openalexPro/, https://doi.org/10.5281/zenodo.17453180
 BugReports: https://github.com/openalexPro/openalexPro/issues
-License: GPL (>= 2)
+License: MIT + file LICENSE
 Depends:
     R (>= 4.2)
 Imports:
