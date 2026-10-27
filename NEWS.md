@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.14.0
 
 - `oa_works_abstract_sql()`, and with it the abstract column that
   `pro_request_parquet()` / `pro_fetch()` add with `enrich = TRUE`, failed with
