@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.14.1
 
 - License changed from GPL (>= 2) to MIT.
 - `infer_json_schema()` (and with it the deprecated
