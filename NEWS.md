@@ -1,5 +1,9 @@
 # openalexPro (development version)
 
+- `oa_works_abstract_sql()`, and with it the abstract column that
+  `pro_request_parquet()` / `pro_fetch()` add with `enrich = TRUE`, failed with
+  current DuckDB ("Deprecated lambda arrow (->) detected"); every conversion
+  of works with abstracts stopped. The SQL now uses the `lambda x: ...` syntax.
 - A list download no longer fails with "length(milestones) > 0L is not TRUE"
   when a query's last page is exactly full: OpenAlex then sends a cursor to an
   empty page, which advanced the progress bar by 0 -- an error in progressr

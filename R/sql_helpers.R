@@ -27,11 +27,11 @@ oa_works_abstract_sql <- function() {
     "flatten( ",
     "apply( ",
     "map_entries(abstract_inverted_index::JSON::MAP(VARCHAR, BIGINT[])), ",
-    "x -> apply(x.value, p -> {pos: p, word: x.key}) ",
+    "lambda x: apply(x.value, lambda p: {pos: p, word: x.key}) ",
     ") ",
     ") ",
     "), ",
-    "e -> e.word ",
+    "lambda e: e.word ",
     "), ",
     "' ' ",
     ") END"
