@@ -24,9 +24,10 @@ pro_fetch(
   count_only,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo"),
+  via = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest"),
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 )
 ```
 
@@ -114,15 +115,15 @@ pro_fetch(
 
 - via:
 
-  How each query is sent. `"url"` (default): as a GET request with the
-  query in the URL, as built by
+  How each query is sent. `"oqo"` (default): translated once (free) into
+  an OpenAlex Query Object and sent via POST, with the same results as
+  `"url"`, which sends it as a GET request with the query in the URL, as
+  built by
   [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
-  `"oqo"`: translated once (free) into an OpenAlex Query Object and sent
-  via POST, with the same results. It has no URL length limit, accepts
-  more than 100 values per filter (so
-  `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list in about
-  one page per chunk), checks the query before any credits are spent,
-  and records the exact query in `_query.json`. Single records
+  It has no URL length limit, accepts more than 100 values per filter
+  (so `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list in
+  about one page per chunk), checks the query before any credits are
+  spent, and records the exact query in `_query.json`. Single records
   (`works/W123`) are always fetched via GET.
 
 - inconsistency_on_resume:
@@ -144,6 +145,17 @@ pro_fetch(
   `250000`, combines each query's page files into files of up to that
   many records once every file has converted – much faster to read. See
   [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md).
+
+- hive_names:
+
+  Character vector of Hive partition keys, one per nesting level of a
+  list of queries: `c("topic", "year")` writes
+  `topic=<name>/year=<name>/`. `NULL` (default) uses `query` for the
+  first level and `query_l2`, `query_l3`, ... below it; `NA` keeps the
+  default of that level. A query named `key=value` (e.g. `"year=2020"`)
+  supplies its own key, unless `hive_names` names one for that level.
+  Keys must be unique and made of letters, digits and `_`. Use the same
+  value when resuming, or the files are converted again.
 
 ## Value
 

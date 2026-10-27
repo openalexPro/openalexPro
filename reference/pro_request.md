@@ -19,7 +19,7 @@ pro_request(
   count_only = FALSE,
   error_log = NULL,
   resume = FALSE,
-  via = c("url", "oqo"),
+  via = c("oqo", "url"),
   inconsistency_on_resume = c("error", "warning", "ignore", "oldest", "newest")
 )
 ```
@@ -91,15 +91,15 @@ pro_request(
 
 - via:
 
-  How each query is sent. `"url"` (default): as a GET request with the
-  query in the URL, as built by
+  How each query is sent. `"oqo"` (default): translated once (free) into
+  an OpenAlex Query Object and sent via POST, with the same results as
+  `"url"`, which sends it as a GET request with the query in the URL, as
+  built by
   [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md).
-  `"oqo"`: translated once (free) into an OpenAlex Query Object and sent
-  via POST, with the same results. It has no URL length limit, accepts
-  more than 100 values per filter (so
-  `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list in about
-  one page per chunk), checks the query before any credits are spent,
-  and records the exact query in `_query.json`. Single records
+  It has no URL length limit, accepts more than 100 values per filter
+  (so `pro_query(..., chunk_limit = 200)` fetches a DOI or ID list in
+  about one page per chunk), checks the query before any credits are
+  spent, and records the exact query in `_query.json`. Single records
   (`works/W123`) are always fetched via GET.
 
 - inconsistency_on_resume:

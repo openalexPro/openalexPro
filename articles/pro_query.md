@@ -285,14 +285,17 @@ position.
 OpenAlex’s free `/query` endpoint translates between classic URLs, OQL
 and OQO; see the [OQL API
 documentation](https://help.openalex.org/api/oql/). The query is sent in
-the URL; for very long queries (over about 8 KB) use
-`pro_request(..., via = "oqo")`, which sends the OQO via POST.
+the URL;
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+sends it as an OQO via POST by default (`via = "oqo"`), so very long
+queries (over about 8 KB) need nothing extra.
 
 Any query from
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
-– classic or OQL / OQO – can also be sent as an OQO with
-`pro_request(..., via = "oqo")`; the results are the same (see the
-`pro_request` vignette).
+– classic or OQL / OQO – is sent as an OQO by
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+by default, or as a GET URL with `via = "url"`; the results are the same
+(see the `pro_request` vignette).
 
 ### Field Selection
 
@@ -756,11 +759,13 @@ and each chunk is a separate query, so `pro_request(..., workers = )`
 downloads the chunks in parallel.
 
 This applies to all chunked filters (`doi`, `openalex`, `ids.openalex`,
-`cites`, `cited_by`). With `pro_request(..., via = "oqo")` the queries
-are sent via POST, where these limits do not apply; `chunk_limit = 200`
-then gives about one request (one page of 200 records) per chunk while
-keeping the parallel download. (For `cites` / `cited_by`, a chunk can
-match many more works and simply takes more pages.)
+`cites`, `cited_by`).
+[`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+sends the queries via POST by default (`via = "oqo"`), where these
+limits do not apply; `chunk_limit = 200` then gives about one request
+(one page of 200 records) per chunk while keeping the parallel download.
+(For `cites` / `cited_by`, a chunk can match many more works and simply
+takes more pages.)
 
 ### Chunking Overview
 

@@ -1,5 +1,54 @@
 # Changelog
 
+## openalexPro 0.14.0
+
+- [`oa_works_abstract_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_abstract_sql.md),
+  and with it the abstract column that
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  /
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  add with `enrich = TRUE`, failed with current DuckDB (“Deprecated
+  lambda arrow (-\>) detected”); every conversion of works with
+  abstracts stopped. The SQL now uses the `lambda x: ...` syntax.
+- A list download no longer fails with “length(milestones) \> 0L is not
+  TRUE” when a query’s last page is exactly full: OpenAlex then sends a
+  cursor to an empty page, which advanced the progress bar by 0 – an
+  error in progressr once the bar is complete
+  (e.g. `pro_query(..., chunk_limit = 200)` with chunks of exactly 200
+  records).
+- With `delete_input = TRUE`,
+  [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  no longer leaves the input JSON behind unnoticed when
+  [`unlink()`](https://rdrr.io/r/base/unlink.html) fails silently
+  (e.g. a file still held open): it retries once and then warns, naming
+  files left behind.
+- `via` now defaults to `"oqo"` in
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md),
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  and
+  [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md):
+  queries are translated once (free) into an OpenAlex Query Object and
+  sent via POST – same results, validated before credits are spent, and
+  more than 100 values per filter, so
+  `pro_query(..., chunk_limit = 200)` works without further arguments.
+  `via = "url"` gives the previous behaviour.
+- [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
+  and
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  gain `hive_names`: the Hive partition keys for a list of queries, one
+  per nesting level, e.g. `hive_names = c("topic", "year")` writes
+  `topic=<name>/year=<name>/`. Default `NULL` keeps `query`, `query_l2`,
+  … A query named `key=value` (e.g. `c("year=2020" = oql1)`) supplies
+  its own key, so `year=2020/` is written instead of `query=year=2020/`.
+- `pro_query(oql = , oqo = )` accept several queries: a character vector
+  of OQL strings, or a list of OQOs, returns a named list of URLs (names
+  from the input, else `query_1`, `query_2`, …) that
+  [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md)
+  /
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  run in parallel, one subdirectory per query. A single query is
+  unchanged.
+
 ## openalexPro 0.13.0
 
 ### `extract_doi()`: fewer truncated and false DOIs, new `lower`

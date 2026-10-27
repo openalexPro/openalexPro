@@ -75,7 +75,7 @@ A data frame with one row per ID and columns:
 
 ## Costs
 
-Content downloads cost **\$0.01 per file** — 10x the cost of a metadata
+Content downloads cost **\$0.01 per file** - 10x the cost of a metadata
 search query. Use `has_content.pdf:true` or
 `has_content.grobid-xml:true` as filter arguments to
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)

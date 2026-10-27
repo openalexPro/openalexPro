@@ -27,7 +27,8 @@ pro_request_parquet(
   on_error = c("error", "warn", "ignore"),
   memory_limit = NULL,
   retry_memory_limit = NULL,
-  compact_parquet = NULL
+  compact_parquet = NULL,
+  hive_names = NULL
 )
 ```
 
@@ -151,6 +152,17 @@ pro_request_parquet(
   many records once every file has converted – much faster to read. See
   [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md).
 
+- hive_names:
+
+  Character vector of Hive partition keys, one per nesting level of a
+  list of queries: `c("topic", "year")` writes
+  `topic=<name>/year=<name>/`. `NULL` (default) uses `query` for the
+  first level and `query_l2`, `query_l3`, ... below it; `NA` keeps the
+  default of that level. A query named `key=value` (e.g. `"year=2020"`)
+  supplies its own key, unless `hive_names` names one for that level.
+  Keys must be unique and made of letters, digits and `_`. Use the same
+  value when resuming, or the files are converted again.
+
 ## Value
 
 Output directory path (invisibly).
@@ -162,10 +174,10 @@ For works entities the function detects the presence of
 inferred schema and, when `enrich = TRUE` (the default), adds two
 computed columns:
 
-- **`abstract`** — plain text reconstructed from
+- **`abstract`** - plain text reconstructed from
   `abstract_inverted_index`.
 
-- **`citation`** — `"Author (year)"` / `"A & B (year)"` /
+- **`citation`** - `"Author (year)"` / `"A & B (year)"` /
   `"A et al. (year)"`.
 
 ## File format
@@ -179,7 +191,7 @@ bare JSON object. All three formats are handled automatically.
 ## Output layout
 
 The subdirectory structure of `input_json` is preserved, with
-hive-partition naming (`query=<name>/`, `query_l2=<name>/`, …) so that
+hive-partition naming (`query=<name>/`, `query_l2=<name>/`, ...) so that
 Arrow/DuckDB can read the result as a partitioned dataset. A `page`
 column is added to each record with a value derived from the source
 filename (or subdirectory for multi-query inputs).

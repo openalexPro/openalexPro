@@ -123,11 +123,11 @@ Functions that query the live OpenAlex REST API:
 - [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   — checks API key validity
 
-`via = "oqo"` (opt-in; default `"url"` leaves every request as before):
-`.oa_to_oqo()` (`R/oqo.R`) translates each query once with the free
-`POST /query` (validating it before any credits are spent; paging params
-and `sample`/`seed` are taken out first because the translator stores
-numbers as text, then put back into the OQO), and
+`via = "oqo"` (the default since 0.14.0; `via = "url"` sends GET URLs as
+before): `.oa_to_oqo()` (`R/oqo.R`) translates each query once with the
+free `POST /query` (validating it before any credits are spent; paging
+params and `sample`/`seed` are taken out first because the translator
+stores numbers as text, then put back into the OQO), and
 `fetch_query_pages()`’s `make_req()` sends every page as `POST /` with
 the OQO in the body. Single records stay GET.
 `tests/testthat/test-021-url_oqo_equivalence.R` asserts identical

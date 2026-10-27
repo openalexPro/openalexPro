@@ -99,13 +99,16 @@ pro_query(
 - oql:
 
   Optional OQL (OpenAlex Query Language) query string, e.g.
-  `"works where year is (2020) and type is (article)"`. See section *OQL
-  and OQO*.
+  `"works where year is (2020) and type is (article)"`. A character
+  vector gives a named list of URLs (names from `names(oql)`, else
+  `query_1`, `query_2`, ...), one per query. See section *OQL and OQO*.
 
 - oqo:
 
   Optional OQO (OpenAlex Query Object): a nested list, or a JSON string.
-  See section *OQL and OQO*.
+  A list of OQOs (lists or JSON strings), or a character vector of JSON
+  strings, gives a named list of URLs as for `oql`. See section *OQL and
+  OQO*.
 
 - ...:
 

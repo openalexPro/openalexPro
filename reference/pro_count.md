@@ -11,7 +11,7 @@ pro_count(
   query_url,
   api_key = pro_api_key(),
   error_log = NULL,
-  via = c("url", "oqo")
+  via = c("oqo", "url")
 )
 ```
 
@@ -34,7 +34,7 @@ pro_count(
 
 - via:
 
-  \`"url"\` (default) or \`"oqo"\`; see \[pro_request()\].
+  \`"oqo"\` (default) or \`"url"\`; see \[pro_request()\].
 
 ## Value
 
