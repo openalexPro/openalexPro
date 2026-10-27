@@ -25,8 +25,10 @@
 #' 1. All identical -> keep as-is.
 #' 2. Any `STRUCT`/`LIST`/`MAP` vs simpler type -> complex type wins.
 #' 3. Multiple `STRUCT` types -> pick the one with the most fields.
-#' 4. Numeric conflicts -> widest type wins
+#' 4. All types numeric -> widest type wins
 #'    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
+#'    `JSON`, which DuckDB infers for a column that is null throughout a file,
+#'    is ignored here.
 #' 5. Fallback -> `VARCHAR`.
 #'
 #' @param con An active DuckDB connection (`DBI::dbConnect(duckdb::duckdb())`)
@@ -139,13 +141,14 @@ infer_json_schema <- function(
       f,
       extra_options
     )
-    schemas[[i]] <- tryCatch(
+    # `[i] <- list()` keeps a NULL entry; `[[i]] <- NULL` would drop it. ----
+    schemas[i] <- list(tryCatch(
       DBI::dbGetQuery(con, schema_sql),
       error = function(e) {
         if (verbose) message("Schema inference failed for ", basename(f), ": ", e$message)
         NULL
       }
-    )
+    ))
 
     # Save per-file cache ----
     if (!is.null(schema_cache_dir) && !is.null(schemas[[i]])) {
@@ -199,7 +202,8 @@ infer_json_schema <- function(
 #' 2. Any STRUCT/LIST/MAP vs simpler type -> use the complex type.
 #' 3. Multiple STRUCT types -> use the one with the most fields.
 #' 4. Pure numeric conflicts -> use the widest numeric type
-#'    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
+#'    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`);
+#'    `JSON` (an all-null column in a file) is ignored.
 #' 5. Fallback -> `VARCHAR`.
 #'
 #' @noRd
@@ -241,9 +245,10 @@ merge_schemas <- function(schemas) {
       return(complex[[which.max(field_counts)]])
     }
 
-    # Numeric widening ----
-    ranks <- match(toupper(u), numeric_order)
-    if (!all(is.na(ranks))) {
+    # Numeric widening: only if every type is numeric. `JSON` is what DuckDB
+    # infers for a column that is all null in a file, so it does not block. ----
+    ranks <- match(toupper(setdiff(u, "JSON")), numeric_order)
+    if (length(ranks) > 0L && !anyNA(ranks)) {
       return(numeric_order[max(ranks, na.rm = TRUE)])
     }
 
