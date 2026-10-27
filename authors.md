@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/openalexPro/openalexPro/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/openalexPro/openalexPro/blob/v0.14.0/DESCRIPTION)
 
 Krug RM (2026). *openalexPro: Providing a more advanced access to
 OpenAlex for the power user*. R package version 0.14.0,
