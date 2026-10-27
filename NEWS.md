@@ -9,6 +9,9 @@
   empty page, which advanced the progress bar by 0 -- an error in progressr
   once the bar is complete (e.g. `pro_query(..., chunk_limit = 200)` with
   chunks of exactly 200 records).
+- With `delete_input = TRUE`, `pro_request_parquet()` no longer leaves the
+  input JSON behind unnoticed when `unlink()` fails silently (e.g. a file
+  still held open): it retries once and then warns, naming files left behind.
 - `via` now defaults to `"oqo"` in `pro_request()`, `pro_fetch()` and
   `pro_count()`: queries are translated once (free) into an OpenAlex Query
   Object and sent via POST -- same results, validated before credits are
