@@ -1,3 +1,5 @@
+# openalexPro (development version)
+
 # openalexPro 0.14.0
 
 - `oa_works_abstract_sql()`, and with it the abstract column that
