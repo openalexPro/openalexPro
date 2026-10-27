@@ -70,8 +70,10 @@ by these rules (in order):
 1. All identical -> keep as-is.
 2. Any `STRUCT`/`LIST`/`MAP` vs simpler type -> complex type wins.
 3. Multiple `STRUCT` types -> pick the one with the most fields.
-4. Numeric conflicts -> widest type wins
+4. All types numeric -> widest type wins
    (`TINYINT < SMALLINT < INTEGER < BIGINT < HUGEINT < FLOAT < DOUBLE`).
+   `JSON`, which DuckDB infers for a column that is null throughout a file,
+   is ignored here.
 5. Fallback -> `VARCHAR`.
 }
 

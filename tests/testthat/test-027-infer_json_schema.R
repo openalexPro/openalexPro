@@ -47,12 +47,17 @@ test_that("merge_schemas accepts DESCRIBE output with name/type columns", {
 })
 
 test_that("merge_schemas falls back to VARCHAR for text vs numeric", {
-  skip("Known bug: merge_schemas() widens VARCHAR vs BIGINT to BIGINT instead of VARCHAR (R/infer_json_schema.R:245)")
   res <- merge_schemas(list(
     data.frame(column_name = "x", column_type = "VARCHAR"),
     data.frame(column_name = "x", column_type = "BIGINT")
   ))
   expect_equal(res$col_type, "VARCHAR")
+  res <- merge_schemas(list(
+    data.frame(column_name = c("b", "j"), column_type = c("BIGINT", "JSON")),
+    data.frame(column_name = c("b", "j"), column_type = c("BOOLEAN", "INTEGER"))
+  ))
+  # BOOLEAN is not numeric; JSON (all-null in a file) does not block widening
+  expect_equal(res$col_type, c("VARCHAR", "INTEGER"))
 })
 
 # --- infer_json_schema --------------------------------------------------------
@@ -124,7 +129,6 @@ test_that("infer_json_schema samples files and skips the ones that fail", {
 })
 
 test_that("infer_json_schema with a cache survives a failing last file", {
-  skip("Known bug: a failed file assigns NULL to schemas[[i]], dropping the element; with schema_cache_dir the next schemas[[i]] errors 'subscript out of bounds' (R/infer_json_schema.R:142,151)")
   con <- json_con()
   d <- withr::local_tempdir()
   good <- write_ndjson(d, "p1.json", '{"id": "W1"}')
