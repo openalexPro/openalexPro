@@ -1,5 +1,7 @@
 # openalexPro (development version)
 
+- License changed from GPL (>= 2) to MIT.
+
 # openalexPro 0.14.0
 
 - `oa_works_abstract_sql()`, and with it the abstract column that
