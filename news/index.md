@@ -1,5 +1,23 @@
 # Changelog
 
+## openalexPro 0.14.1
+
+- License changed from GPL (\>= 2) to MIT.
+- [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
+  (and with it the deprecated
+  [`pro_request_jsonl_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_jsonl_parquet.md))
+  unified a column that was text in one file and a number in another to
+  the number type (e.g. `VARCHAR` + `BIGINT` -\> `BIGINT`, `BOOLEAN` +
+  `BIGINT` -\> `BIGINT`), so the text values could not be read with that
+  schema. As documented, numeric widening now applies only when every
+  type is numeric, otherwise the column becomes `VARCHAR`. A column that
+  is null throughout one file (`JSON` in DuckDB) still takes the numeric
+  type.
+- [`infer_json_schema()`](https://openalexpro.github.io/openalexPro/reference/infer_json_schema.md)
+  with `schema_cache_dir` stopped with “subscript out of bounds” when
+  the last file failed, instead of reporting the failure and using the
+  other files.
+
 ## openalexPro 0.14.0
 
 - [`oa_works_abstract_sql()`](https://openalexpro.github.io/openalexPro/reference/oa_works_abstract_sql.md),

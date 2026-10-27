@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,9 +38,17 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.14.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.14.1" id="openalexpro-0141">openalexPro 0.14.1<a class="anchor" aria-label="anchor" href="#openalexpro-0141"></a></h2>
+<ul><li>License changed from GPL (&gt;= 2) to MIT.</li>
+<li>
+<code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> (and with it the deprecated <code><a href="../reference/pro_request_jsonl_parquet.html">pro_request_jsonl_parquet()</a></code>) unified a column that was text in one file and a number in another to the number type (e.g. <code>VARCHAR</code> + <code>BIGINT</code> -&gt; <code>BIGINT</code>, <code>BOOLEAN</code> + <code>BIGINT</code> -&gt; <code>BIGINT</code>), so the text values could not be read with that schema. As documented, numeric widening now applies only when every type is numeric, otherwise the column becomes <code>VARCHAR</code>. A column that is null throughout one file (<code>JSON</code> in DuckDB) still takes the numeric type.</li>
+<li>
+<code><a href="../reference/infer_json_schema.html">infer_json_schema()</a></code> with <code>schema_cache_dir</code> stopped with “subscript out of bounds” when the last file failed, instead of reporting the failure and using the other files.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.14.0" id="openalexpro-0140">openalexPro 0.14.0<a class="anchor" aria-label="anchor" href="#openalexpro-0140"></a></h2>
 <ul><li>
