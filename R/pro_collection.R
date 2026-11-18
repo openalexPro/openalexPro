@@ -73,6 +73,15 @@
 #' filter, so its records cannot be downloaded with `select`; its member IDs
 #' can. Queries with `group_by` or `sample` cannot be imported.
 #'
+#' **Core and expansion works:** a collection holds all its members, and the
+#' member IDs in `members/` include expansion works (DataCite, repositories).
+#' A *filter* by a works collection returns only its core works unless
+#' `corpus = "all"` is set, so the records in `records/` are fetched with
+#' `corpus = "all"`, and later queries should set it too:
+#' `pro_query(collection = id, options = list(corpus = "all"))`. Whether
+#' expansion works get into the collection depends on the query that fills
+#' it (`options = list(corpus = "all")` in [pro_query()]).
+#'
 #' **API key:** collections need a *personal* OpenAlex API key; organisation
 #' keys and some older keys are refused (HTTP 401) even when they work for
 #' queries.
@@ -91,6 +100,11 @@
 #'   fields (see [opt_select_fields()]) for records with those fields. The
 #'   member IDs are downloaded whenever `select` is not `NULL`.
 #' @param refresh If `TRUE`, import an unchanged query again and re-download.
+#' @param access Who can see the collection: `"private"` (only you, the
+#'   default for new collections), `"shared_by_link"` (anyone with its link or
+#'   ID can view it and filter by it; it is not listed) or `"public"` (only
+#'   OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
+#'   `NULL` (default) leaves it as it is.
 #' @param api_key A personal OpenAlex API key.
 #' @param verbose Print the collection ID(s).
 #' @param progress Show the steps and import progress.
@@ -107,8 +121,14 @@
 #' f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
 #' id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 #'
-#' # Later: records of the collection that are open access
-#' pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
+#' # Later: records of the collection that are open access. corpus = "all":
+#' # without it, the filter returns only the core works
+#' pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
+#'           project_folder = "oa")
+#'
+#' # Let anyone with the link or ID use it
+#' pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+#'                access = "shared_by_link")
 #'
 #' # Add titles to the download (re-downloads the records)
 #' pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
@@ -129,6 +149,7 @@ pro_collection <- function(
   project_folder,
   select = "id",
   refresh = FALSE,
+  access = NULL,
   api_key = pro_api_key(),
   verbose = FALSE,
   progress = TRUE,
@@ -137,6 +158,9 @@ pro_collection <- function(
   if (missing(project_folder) || !is.character(project_folder) ||
       length(project_folder) != 1L) {
     stop("`project_folder` is required.", call. = FALSE)
+  }
+  if (!is.null(access)) {
+    access <- match.arg(access, c("private", "shared_by_link", "public"))
   }
   if (is.character(query_url)) {
     if (length(query_url) != 1L) {
@@ -160,7 +184,7 @@ pro_collection <- function(
   if (!is.character(query_url) && !is.null(name)) {
     # all queries into one collection: fetched, their IDs added as members
     return(invisible(.col_members(unlist(.col_leaves(query_url)), name, project_folder,
-                                  select, refresh, api_key, verbose, progress, ...)))
+                                  select, refresh, access, api_key, verbose, progress, ...)))
   }
 
   out <- vapply(seq_along(queries), function(i) {
@@ -168,7 +192,7 @@ pro_collection <- function(
       cli::cli_alert_info(sprintf("Collection %d of %d", i, length(queries)))
     }
     .col_one(queries[[i]], names(queries)[[i]], project_folder, select,
-             refresh, api_key, verbose, progress, ...)
+             refresh, access, api_key, verbose, progress, ...)
   }, character(1))
   names(out) <- names(queries)
   invisible(if (is.character(query_url)) unname(out) else out)
@@ -197,7 +221,7 @@ pro_collection <- function(
 #' One query -> one collection folder, filled by an import
 #' @keywords internal
 #' @noRd
-.col_one <- function(url, name, project_folder, select, refresh, api_key,
+.col_one <- function(url, name, project_folder, select, refresh, access, api_key,
                      verbose, progress, ...) {
   started <- Sys.time()
   folder <- .col_folder(project_folder, name)
@@ -246,6 +270,7 @@ pro_collection <- function(
   }
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
+  col <- .col_set_access(root, id, col, access, api_key, step)
 
   # A previous import may still run, or never have started (interruption)
   state <- .col_import_state(root, id, api_key)
@@ -271,7 +296,9 @@ pro_collection <- function(
 
   # 3. Downloads, in line with `select`
   fetch_records <- function(sel, dir) {
-    pro_fetch(pro_query(entity, collection = id, select = sel),
+    # a collection filter returns only core works unless corpus = "all"
+    pro_fetch(pro_query(entity, collection = id, select = sel,
+                        options = if (entity == "works") list(corpus = "all")),
               project_folder = dir, overwrite = TRUE, api_key = api_key,
               verbose = verbose, progress = progress, ...)
   }
@@ -312,7 +339,7 @@ pro_collection <- function(
 #' and without the import's 20,000-character limit.
 #' @keywords internal
 #' @noRd
-.col_members <- function(urls, name, project_folder, select, refresh, api_key,
+.col_members <- function(urls, name, project_folder, select, refresh, access, api_key,
                          verbose, progress, ...) {
   started <- Sys.time()
   folder <- .col_folder(project_folder, name)
@@ -378,6 +405,7 @@ pro_collection <- function(
   }
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
+  col <- .col_set_access(root, id, col, access, api_key, step)
 
   # 3. Fetch the IDs (and the records, if selected) and add them as members.
   #    Also after an interruption: adding is idempotent, and pro_fetch()
@@ -533,6 +561,18 @@ pro_collection <- function(
   step(paste("query changed: deleting collection", old_id, "and re-creating it"))
   .col_req(root, "DELETE", c("collections", old_id), api_key, ok = c(204L, 404L))
   .col_clear(folder)
+}
+
+#' Change who can see the collection (`NULL`: leave it as it is)
+#' @keywords internal
+#' @noRd
+.col_set_access <- function(root, id, col, access, api_key, step) {
+  if (is.null(access) || identical(col$access, access)) {
+    return(col)
+  }
+  step(paste("setting access to", access))
+  .col_json(.col_req(root, "PATCH", c("collections", id), api_key,
+                     body = list(access = access)))
 }
 
 #' @keywords internal

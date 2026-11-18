@@ -1,5 +1,16 @@
 # openalexPro (development version)
 
+- `pro_collection()` gets `access`: `"shared_by_link"` lets anyone with the
+  link or ID view the collection and filter by it, `"private"` unshares it.
+  `"public"` is passed on, but only OpenAlex can set it for now (HTTP 403,
+  and OpenAlex's message points to `shared_by_link`). `NULL` (default) leaves the access as it is.
+- `pro_collection()`: the records of a single-query collection (`select`
+  beyond `"id"`) are fetched with `corpus = "all"`. A collection filter
+  alone returns only the core works, so expansion works (DataCite, Zenodo,
+  repositories) were missing from `records/`. The member IDs were always
+  complete. The examples and vignettes now set `corpus = "all"` when
+  filtering by a collection (OQL: `works (all corpora) where ...`).
+
 - `pro_collection()` with a list of queries **and** a `name` creates one
   collection for the whole list. The queries are fetched with `pro_fetch()`
   (`select = "id"`, in parallel with `workers`) and the IDs added as
