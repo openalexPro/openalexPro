@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.17.0
 
 - `pro_collection()` gets `access`: `"shared_by_link"` lets anyone with the
   link or ID view the collection and filter by it, `"private"` unshares it.
@@ -10,7 +10,6 @@
   repositories) were missing from `records/`. The member IDs were always
   complete. The examples and vignettes now set `corpus = "all"` when
   filtering by a collection (OQL: `works (all corpora) where ...`).
-
 - `pro_collection()` with a list of queries **and** a `name` creates one
   collection for the whole list. The queries are fetched with `pro_fetch()`
   (`select = "id"`, in parallel with `workers`) and the IDs added as
@@ -25,6 +24,8 @@
   is created, and says how to split it. Earlier versions failed only at the
   import.
 - The documentation no longer says that imports have no length limit.
+- Removed a commented-out template line with an emoji from `.onAttach()`;
+  in a C/US-ASCII locale R warned that it could not be translated to UTF-8.
 
 # openalexPro 0.16.0
 
