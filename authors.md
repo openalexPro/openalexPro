@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/openalexPro/openalexPro/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/openalexPro/openalexPro/blob/v0.16.0/inst/CITATION)
 
 Krug, R. M. (2026). openalexPro: Providing a more advanced access to
 OpenAlex for the power user. R package version 0.16.0.
