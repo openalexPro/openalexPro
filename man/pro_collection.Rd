@@ -118,5 +118,5 @@ pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
 
 }
 \seealso{
-\code{\link[=pro_fetch]{pro_fetch()}}, \code{\link[=pro_query]{pro_query()}}.
+\code{\link[=pro_fetch]{pro_fetch()}}, \code{\link[=pro_query]{pro_query()}}, \code{vignette("collections")}.
 }

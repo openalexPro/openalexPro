@@ -145,6 +145,35 @@ pro_fetch(
 
 All intermediate folders and data are deleted, and only the final parquet dataset remains in `Biodiversity_from_sandwich_islands/parquet/`.
 
+## Collections (`pro_collection()`)
+
+An OpenAlex [collection](https://help.openalex.org/api/collections) is a set of IDs saved on OpenAlex's servers. A collection can be reused as a filter in later queries and combined with other collections. `pro_collection()` turns a query into a collection. OpenAlex runs the query (an *import*), and the member IDs are then downloaded as parquet:
+
+```r
+q <- pro_query(search = "coral bleaching", publication_year = 2024)
+f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
+id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
+
+# Later: only the open-access members, as records
+pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
+```
+
+Everything about the collection is in `proj/coral bleaching 2024.collection/`:
+
+- `_collection.json`: the query, the collection ID, member count, imports and credits.
+- The query as readable OQL.
+- `members/parquet/`: the member IDs.
+- `records/`: the records, when `select` asks for more than `id`.
+
+Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection, and `refresh = TRUE` imports the query again. A named list of queries gives one collection per element.
+
+Costs:
+
+- Downloading the member IDs is free.
+- An import costs the same credits as paging through the results yourself, and runs at about 200 results per second.
+
+Collections need a **personal** OpenAlex API key; other keys are refused even when they work for queries. See `vignette("collections")`.
+
 ## Advanced Workflow (Individual Functions)
 
 For more control over the pipeline, use the individual functions:
