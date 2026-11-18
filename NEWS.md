@@ -1,13 +1,18 @@
 # openalexPro (development version)
 
 - `pro_collection()` with a list of queries **and** a `name` creates one
-  collection and imports the queries into it one after another. This is
-  needed because OpenAlex refuses an import of more than 20,000 characters
-  of OQL (about 800 DOIs): split long ID or DOI lists with
-  `pro_query(..., chunk_limit = 500)`. A query that is too long now stops
-  before anything is created, and says how to split it. Earlier versions
-  failed only at the import. An interrupted run imports only the missing
-  parts. Without `name`, a list still gives one collection per element.
+  collection for the whole list. The queries are fetched with `pro_fetch()`
+  (`select = "id"`, in parallel with `workers`) and the IDs added as
+  members (`member_ids`, 10,000 per request, free). This is for long ID or
+  DOI lists: OpenAlex refuses an import of more than 20,000 characters of
+  OQL (about 600 to 800 DOIs), and with 3,000 DOIs this route was about five
+  times faster than one import per chunk, at the same credits. The queries
+  are kept in `_parts.parquet`; `_collection.json` stays small. An
+  interrupted run resumes the fetch. Without `name`, a list still gives one
+  collection per element.
+- A single query that is too long for an import now stops before anything
+  is created, and says how to split it. Earlier versions failed only at the
+  import.
 - The documentation no longer says that imports have no length limit.
 
 # openalexPro 0.16.0

@@ -182,45 +182,58 @@ pro_collection(
 # collections and folders: bleaching, reef_fish, reef_algae
 ```
 
-## Long queries: several imports into one collection
+## Long ID and DOI lists: several queries in one collection
 
 OpenAlex imports a query of at most 20,000 characters of OQL, which is
-about 800 DOIs. `pro_collection()` checks this before it creates anything,
-and stops for a query that is too long.
+about 600 to 800 DOIs. `pro_collection()` checks this before it creates
+anything, and stops for a single query that is too long.
 
 To put a longer list into one collection, split it into chunks with
 `pro_query()` and pass the list of chunks **with `name`**. With a name, a
-list is not one collection per element. It is one collection, and its
-queries are imported one after another:
+list is not one collection per element but one collection. Its queries are
+not imported. Instead, `pro_collection()` fetches them with `pro_fetch()`
+(only the `id` field, in parallel with `workers`) and adds the IDs to the
+collection, 10,000 per request (free):
 
 ```{r}
-q <- pro_query(doi = dois, chunk_limit = 500) # chunk_1, chunk_2, ...
+q <- pro_query(doi = dois, chunk_limit = 200) # chunk_1, chunk_2, ...
 
-pro_collection(q, name = "my dois", project_folder = "proj", api_key = key)
+pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
+               workers = 8)
 ```
 
 ```
-✔ [my dois] validating 6 queries
+✔ [my dois] checking 15 queries
 ✔ [my dois] creating collection
-✔ [my dois] importing part 1 of 6 (chunk_1)
-...
-✔ [my dois] importing part 6 of 6 (chunk_6)
+✔ [my dois] fetching IDs
+✔ [my dois] adding members
 ✔ [my dois] downloading member IDs
+✔ [my dois] converting IDs to parquet
 ```
 
-- **Cost.** It costs the same as one import of the whole list, because
-  credits are charged per 200 results.
-- **Duplicates.** An import only adds members. A work found by two chunks is
-  counted once, as `already_present` in the second import.
-- **Interruptions.** Each import is recorded as soon as it starts. Running
-  `pro_collection()` again waits for a running import and imports only the
-  chunks that are still missing.
+- **Speed and cost.** Measured in November 2026 with 3,000 DOIs, the same
+  credits (18) either way:
+
+  | Route | Time |
+  |---|---|
+  | one import per 600 DOIs | 45 to 55 s |
+  | `pro_fetch()` with `workers = 1`, then adding the IDs | 44 s |
+  | `pro_fetch()` with `workers = 8`, then adding the IDs | 8.5 s |
+
+  Imports run one at a time per collection, and each holds only a few
+  hundred DOIs, so their fixed cost dominates. `pro_fetch()` runs the
+  queries in parallel; adding 3,000 IDs took under a second.
+- **Records.** Fields in `select` beyond `"id"` are fetched in the same
+  pass, from the queries themselves, into `records/`. They therefore also
+  work for collections above the 300,000-member filter limit.
+- **Interruptions.** Running `pro_collection()` again resumes the fetch
+  (`pro_fetch(resume = TRUE)`) and adds the IDs again. Adding is idempotent:
+  IDs already in the collection count as `already_present`.
 - **Changes.** A changed chunk counts as a changed query, so the collection
-  is re-created. `refresh = TRUE` imports every chunk again.
-- **Records on disk.** `_collection.json` keeps the URL, OQL and OQO of each
-  chunk, in the order given in `parts`. Each chunk's readable OQL is in
-  `parts/<chunk>/`, and a summary is in `_queries_oql.txt` and
-  `_queries_oql.html`.
+  is re-created. `refresh = TRUE` fetches and adds everything again.
+- **On disk.** The queries are in `_parts.parquet` (name and URL of each
+  chunk), not in `_collection.json`, which stays small however long the list
+  is. Re-runs compare the queries locally, without requests.
 
 # Using a collection in queries
 
@@ -274,9 +287,9 @@ union of the member IDs.
 - **Records:** downloaded like any other query (`pro_fetch()`).
 - **Limits:**
   - 1,000,000 members per collection, and 500 collections per account.
-  - At most 20,000 characters of OQL per import. Longer queries go into one
-    collection in chunks (see
-    [Long queries](#long-queries-several-imports-into-one-collection)).
+  - At most 20,000 characters of OQL per import. Longer ID or DOI lists go
+    into one collection in chunks (see
+    [Long ID and DOI lists](#long-id-and-doi-lists-several-queries-in-one-collection)).
   - A collection with more than 300,000 members (100,000 for authors) cannot
     be used as a filter. Its member IDs can still be downloaded, but its
     records cannot (`select` beyond `"id"`).
