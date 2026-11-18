@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.15.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.16.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,13 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.15.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.16.0" id="openalexpro-0160">openalexPro 0.16.0<a class="anchor" aria-label="anchor" href="#openalexpro-0160"></a></h2>
+<ul><li>Citation: <code>citation("openalexPro")</code> now cites the package with its Zenodo DOI and, separately, the openalexPro ecosystem. Added <code>CITATION.cff</code> (GitHub “Cite this repository”) and <code>.zenodo.json</code> (Zenodo metadata, linking the related ecosystem packages). The author’s ORCID is in <code>DESCRIPTION</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.15.0" id="openalexpro-0150">openalexPro 0.15.0<a class="anchor" aria-label="anchor" href="#openalexpro-0150"></a></h2>
 <ul><li>New <code><a href="../reference/pro_collection.html">pro_collection()</a></code>: turns queries from <code><a href="../reference/pro_query.html">pro_query()</a></code> into OpenAlex collections (server-side ID sets that can be reused as filters, <code>pro_query(collection = "col_...")</code>). OpenAlex runs the query (an import); <code><a href="../reference/pro_collection.html">pro_collection()</a></code> waits for it and records everything in <code>&lt;project_folder&gt;/&lt;name&gt;.collection/</code>: <code>_collection.json</code> (query, collection ID, member count, imports, credits), the OQL text, the member IDs as parquet (<code>select = "id"</code>, the default; the download is free) and, with more fields in <code>select</code>, the records. Running it again keeps the collection for the same query (<code>refresh = TRUE</code> imports again), re-creates it for a changed query, and brings the downloads in line with <code>select</code> (removed fields are dropped locally). A list of queries gives one collection per element. Collections need a personal OpenAlex API key.</li>
