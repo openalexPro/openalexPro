@@ -295,9 +295,10 @@ A saved OpenAlex collection (see
 and
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md))
 is a filter like any other:
-`pro_query(collection = "col_...", is_oa = TRUE)`. A URL takes only one
-collection; combine several with OQL
-(`works where work is in the collection (col_a) and work is in the collection (col_b)`).
+`pro_query(collection = "col_...", is_oa = TRUE, options = list(corpus = "all"))`.
+Without `corpus = "all"`, a works collection returns only its core
+works. A URL takes only one collection; combine several with OQL
+(`works (all corpora) where work is in the collection (col_a) and work is in the collection (col_b)`).
 
 Any query from
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)

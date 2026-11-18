@@ -1,5 +1,40 @@
 # Changelog
 
+## openalexPro 0.17.0
+
+- [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  gets `access`: `"shared_by_link"` lets anyone with the link or ID view
+  the collection and filter by it, `"private"` unshares it. `"public"`
+  is passed on, but only OpenAlex can set it for now (HTTP 403, and
+  OpenAlex’s message points to `shared_by_link`). `NULL` (default)
+  leaves the access as it is.
+- [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md):
+  the records of a single-query collection (`select` beyond `"id"`) are
+  fetched with `corpus = "all"`. A collection filter alone returns only
+  the core works, so expansion works (DataCite, Zenodo, repositories)
+  were missing from `records/`. The member IDs were always complete. The
+  examples and vignettes now set `corpus = "all"` when filtering by a
+  collection (OQL: `works (all corpora) where ...`).
+- [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  with a list of queries **and** a `name` creates one collection for the
+  whole list. The queries are fetched with
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  (`select = "id"`, in parallel with `workers`) and the IDs added as
+  members (`member_ids`, 10,000 per request, free). This is for long ID
+  or DOI lists: OpenAlex refuses an import of more than 20,000
+  characters of OQL (about 600 to 800 DOIs), and with 3,000 DOIs this
+  route was about five times faster than one import per chunk, at the
+  same credits. The queries are kept in `_parts.parquet`;
+  `_collection.json` stays small. An interrupted run resumes the fetch.
+  Without `name`, a list still gives one collection per element.
+- A single query that is too long for an import now stops before
+  anything is created, and says how to split it. Earlier versions failed
+  only at the import.
+- The documentation no longer says that imports have no length limit.
+- Removed a commented-out template line with an emoji from
+  `.onAttach()`; in a C/US-ASCII locale R warned that it could not be
+  translated to UTF-8.
+
 ## openalexPro 0.16.0
 
 - Citation: `citation("openalexPro")` now cites the package with its

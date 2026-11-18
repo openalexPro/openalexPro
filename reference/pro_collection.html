@@ -17,7 +17,7 @@ it and then downloads what select asks for."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.16.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.17.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ it and then downloads what select asks for."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create OpenAlex collections from queries</h1>
-      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.16.0/R/pro_collection.R" class="external-link"><code>R/pro_collection.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/R/pro_collection.R" class="external-link"><code>R/pro_collection.R</code></a></small>
       <div class="d-none name"><code>pro_collection.Rd</code></div>
     </div>
 
@@ -70,6 +70,7 @@ it and then downloads what <code>select</code> asks for.</p>
 <span>  <span class="va">project_folder</span>,</span>
 <span>  select <span class="op">=</span> <span class="st">"id"</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  access <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  api_key <span class="op">=</span> <span class="fu"><a href="pro_api_key.html">pro_api_key</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -83,16 +84,16 @@ it and then downloads what <code>select</code> asks for.</p>
 
 <dl><dt id="arg-query-url">query_url<a class="anchor" aria-label="anchor" href="#arg-query-url"></a></dt>
 <dd><p>A query from <code><a href="pro_query.html">pro_query()</a></code>, or a named (nested) list of
-queries: each element becomes its own collection, named after its list
-names (nested names joined with <code>_</code>). A list of chunks from
-<code><a href="pro_query.html">pro_query()</a></code> would give one collection per chunk; use
-<code>pro_query(..., chunk_limit = 1e6)</code> to keep one query in one URL (the
-import has no URL length limit).</p></dd>
+queries. Without <code>name</code>, each element of the list becomes its own
+collection, named after its list names (nested names joined with <code>_</code>).
+With <code>name</code>, all queries in the list go into one collection (see
+<strong>Several queries in one collection</strong>).</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>Name of the collection (and of its folder) for a single query.
-For a list, the list names are used and <code>name</code> must be <code>NULL</code>.</p></dd>
+<dd><p>Name of the collection (and of its folder). Required for a
+single query. For a list: <code>NULL</code> gives one collection per element, a
+name gives one collection for the whole list.</p></dd>
 
 
 <dt id="arg-project-folder">project_folder<a class="anchor" aria-label="anchor" href="#arg-project-folder"></a></dt>
@@ -110,6 +111,14 @@ member IDs are downloaded whenever <code>select</code> is not <code>NULL</code>.
 <dd><p>If <code>TRUE</code>, import an unchanged query again and re-download.</p></dd>
 
 
+<dt id="arg-access">access<a class="anchor" aria-label="anchor" href="#arg-access"></a></dt>
+<dd><p>Who can see the collection: <code>"private"</code> (only you, the
+default for new collections), <code>"shared_by_link"</code> (anyone with its link or
+ID can view it and filter by it; it is not listed) or <code>"public"</code> (only
+OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
+<code>NULL</code> (default) leaves it as it is.</p></dd>
+
+
 <dt id="arg-api-key">api_key<a class="anchor" aria-label="anchor" href="#arg-api-key"></a></dt>
 <dd><p>A personal OpenAlex API key.</p></dd>
 
@@ -123,14 +132,15 @@ member IDs are downloaded whenever <code>select</code> is not <code>NULL</code>.
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="pro_fetch.html">pro_fetch()</a></code> when records are downloaded (e.g.
-<code>workers</code>, <code>compact_parquet</code>).</p></dd>
+<dd><p>Passed to <code><a href="pro_fetch.html">pro_fetch()</a></code> when records are downloaded, and when
+the queries of a list with <code>name</code> are fetched (e.g. <code>workers</code>,
+<code>compact_parquet</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Invisibly, the path of the <code>.collection</code> folder, or a named
-character vector of paths for a list of queries.</p>
+character vector of paths for a list of queries without <code>name</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -141,6 +151,12 @@ each import, the credits used and the <code>select</code> that was downloaded.</
 
 <dt><code>_query_oql.txt</code>, <code>_query_oql.html</code></dt>
 <dd><p>the query in readable OQL.</p></dd>
+
+<dt><code>_parts.parquet</code></dt>
+<dd><p>for a list of queries in one collection (see
+<strong>Several queries in one collection</strong>): the name and URL of each query.
+<code>_collection.json</code> then holds no queries, so it stays small however
+long the list is.</p></dd>
 
 <dt><code>members/parquet/</code></dt>
 <dd><p>the member IDs (<code>id</code>, <code>added_at</code>).</p></dd>
@@ -168,11 +184,33 @@ results yourself (one list request per 200 results). Imports run at about
 200 results per second (measured November 2026), so a collection of the
 maximum 1,000,000 members takes over an hour. Interrupting <code>pro_collection()</code>
 does not stop the import on the server; running it again waits for it.</p>
+<p><strong>Several queries in one collection:</strong> OpenAlex imports a query of at
+most 20,000 characters of OQL (about 600 to 800 DOIs); a longer single
+query stops before anything is created. For long ID or DOI lists, split
+them into chunks, e.g. <code>pro_query(doi = dois, chunk_limit = 200)</code>, and pass
+the list with <code>name</code>. The queries are then not imported: they are fetched
+with <code><a href="pro_fetch.html">pro_fetch()</a></code> (<code>select = "id"</code>, in parallel with <code>workers</code>) and the
+IDs are added to the collection (<code>member_ids</code>, 10,000 per request, free).
+This costs the same credits as imports and was about five times faster
+with <code>workers = 8</code> (3,000 DOIs: 8.5 s instead of 45 to 55 s, November
+2026). Fields in <code>select</code> beyond <code>id</code> are fetched in the same pass, from
+the queries themselves, so the records do not depend on the collection
+filter limit. An interrupted run resumes the fetch and adds the members
+again (adding is idempotent). A changed query re-creates the collection,
+and <code>refresh = TRUE</code> fetches and adds everything again.</p>
 <p><strong>Limits:</strong> 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection
 with more than 300,000 members (100,000 for authors) cannot be used as a
 filter, so its records cannot be downloaded with <code>select</code>; its member IDs
 can. Queries with <code>group_by</code> or <code>sample</code> cannot be imported.</p>
+<p><strong>Core and expansion works:</strong> a collection holds all its members, and the
+member IDs in <code>members/</code> include expansion works (DataCite, repositories).
+A <em>filter</em> by a works collection returns only its core works unless
+<code>corpus = "all"</code> is set, so the records in <code>records/</code> are fetched with
+<code>corpus = "all"</code>, and later queries should set it too:
+<code>pro_query(collection = id, options = list(corpus = "all"))</code>. Whether
+expansion works get into the collection depends on the query that fills
+it (<code>options = list(corpus = "all")</code> in <code><a href="pro_query.html">pro_query()</a></code>).</p>
 <p><strong>API key:</strong> collections need a <em>personal</em> OpenAlex API key; organisation
 keys and some older keys are refused (HTTP 401) even when they work for
 queries.</p>
@@ -189,12 +227,23 @@ queries.</p>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fu">jsonlite</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/read_json.html" class="external-link">read_json</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"_collection.json"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">collection_id</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Later: records of the collection that are open access</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>collection <span class="op">=</span> <span class="va">id</span>, is_oa <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, project_folder <span class="op">=</span> <span class="st">"oa"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Later: records of the collection that are open access. corpus = "all":</span></span></span>
+<span class="r-in"><span><span class="co"># without it, the filter returns only the core works</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>collection <span class="op">=</span> <span class="va">id</span>, is_oa <span class="op">=</span> <span class="cn">TRUE</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>corpus <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>          project_folder <span class="op">=</span> <span class="st">"oa"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Let anyone with the link or ID use it</span></span></span>
+<span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
+<span class="r-in"><span>               access <span class="op">=</span> <span class="st">"shared_by_link"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add titles to the download (re-downloads the records)</span></span></span>
 <span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
 <span class="r-in"><span>               select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"title"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A long DOI list in one collection: the chunks are fetched in parallel</span></span></span>
+<span class="r-in"><span><span class="co"># and their IDs added as members</span></span></span>
+<span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>doi <span class="op">=</span> <span class="va">dois</span>, chunk_limit <span class="op">=</span> <span class="fl">200</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"my dois"</span>,</span></span>
+<span class="r-in"><span>               project_folder <span class="op">=</span> <span class="st">"proj"</span>, workers <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

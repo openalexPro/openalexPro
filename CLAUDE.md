@@ -122,14 +122,31 @@ Functions that query the live OpenAlex REST API:
   `members/parquet/members.parquet`, and records via
   `pro_fetch(pro_query(collection = id, select = …))` into `records/`
   when `select` has more than `id`. Everything in
-  `<project_folder>/<name>.collection/_collection.json`. Re-issue: same
-  OQO (`.oqo_equivalent()`) keeps the collection (waits for a running
+  `<project_folder>/<name>.collection/_collection.json`. A list **with**
+  `name` takes the members route (`.col_members()`): no imports
+  (OpenAlex caps an import at 20,000 chars of OQL, a `query` URL at
+  8,000, and takes no `oqo`; one import per ~600 DOIs measured ~5x
+  slower than this route), but `pro_fetch(parts, select = id[+fields])`
+  into `_ids/` (deleted) or `records/`, then
+  `POST …/members {member_ids}` in batches of 10,000 (free, idempotent);
+  `members_added` in the record marks completion, so a rerun resumes the
+  fetch (`resume = TRUE`) and re-adds. The parts (name, URL) are in
+  `_parts.parquet`, compared locally on re-run (no `/query` calls);
+  `_collection.json` holds no queries. A single over-long query stops in
+  `.col_check()` before anything is created. Re-issue: same OQO
+  (`.oqo_equivalent()`) keeps the collection (waits for a running
   import; `refresh` imports again), a changed one deletes and re-creates
   it; `select` changes drop columns locally or re-download. All calls go
   through `.col_req()` (`api_call()` with explicit status check). Needs
   a *personal* key: other keys get 401 on `/collections` even when they
   work for queries. Collections combine only via OQO (AND rows,
-  `join: "or"`, `is_negated`); a URL allows one `collection:` filter
+  `join: "or"`, `is_negated`); a URL allows one `collection:` filter. A
+  collection *filter* on works returns only core works unless
+  `corpus = "all"` (OQL `works (all corpora) where …`); the members CSV
+  / `member_count` always include expansion works, so the import route
+  fetches records with `options = list(corpus = "all")`. `access` (NULL
+  = leave) is PATCHed via `.col_set_access()`; `public` gets 403
+  `public_needs_review` (users can only set `shared_by_link`)
 - [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   — counts matching records (`via` as for
   [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md))

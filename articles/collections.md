@@ -6,12 +6,16 @@ An OpenAlex [collection](https://help.openalex.org/api/collections) is a
 set of IDs (works, authors, sources, …) saved on OpenAlex’s servers
 under your account. Once it exists, you can:
 
-- filter by it in any later query: `pro_query(collection = "col_...")`.
+- filter by it in any later query:
+  `pro_query(collection = "col_...", options = list(corpus = "all"))`.
   Other filters still apply, so you can ask for the open-access members,
-  or for those published after a date.
+  or for those published after a date. Without `corpus = "all"` only the
+  *core* works of a works collection are returned (see [Core and
+  expansion works](#core-and-expansion-works)).
 - combine it with other collections through OQL, using AND, OR and NOT
   (see [Combining collections](#combining-collections) below).
-- share it by link, and reuse it later without running the original
+- share it by link (`access = "shared_by_link"`, see
+  [Sharing](#sharing)), and reuse it later without running the original
   query again.
 
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
@@ -115,8 +119,11 @@ ids <- arrow::read_parquet(file.path(f, "members/parquet/members.parquet"))
 | `"all"` | member IDs, and full records in `records/` |
 
 Records are fetched with
-`pro_fetch(pro_query(collection = id, select = ...))`. Arguments in
-`...` (e.g. `workers`, `compact_parquet`) are passed on to it.
+`pro_fetch(pro_query(collection = id, select = ..., options = list(corpus = "all")))`,
+so expansion works are included (for a list of queries with `name`, they
+come from the queries themselves). Arguments in `...` (e.g. `workers`,
+`compact_parquet`) are passed on to
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md).
 
 ## Running it again
 
@@ -160,8 +167,8 @@ stops instead.
 
 ## Several queries
 
-A named list of queries gives one collection per element, named after
-it. Nested names are joined with `_`:
+Without `name`, a named list of queries gives one collection per
+element, named after it. Nested names are joined with `_`:
 
 ``` r
 
@@ -179,12 +186,71 @@ pro_collection(
 # collections and folders: bleaching, reef_fish, reef_algae
 ```
 
-This applies to a list of chunks from
+### Long ID and DOI lists: several queries in one collection
+
+OpenAlex imports a query of at most 20,000 characters of OQL, which is
+about 600 to 800 DOIs.
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+checks this before it creates anything, and stops for a single query
+that is too long.
+
+To put a longer list into one collection, split it into chunks with
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
-too: each chunk becomes its own collection. To keep a long ID or DOI
-list in one collection, build a single URL with
-`pro_query(..., chunk_limit = 1e6)`. The import sends the query as OQL,
-which has no URL length limit.
+and pass the list of chunks **with `name`**. With a name, a list is not
+one collection per element but one collection. Its queries are not
+imported. Instead,
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+fetches them with
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+(only the `id` field, in parallel with `workers`) and adds the IDs to
+the collection, 10,000 per request (free):
+
+``` r
+
+q <- pro_query(doi = dois, chunk_limit = 200) # chunk_1, chunk_2, ...
+
+pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
+               workers = 8)
+```
+
+    ✔ [my dois] checking 15 queries
+    ✔ [my dois] creating collection
+    ✔ [my dois] fetching IDs
+    ✔ [my dois] adding members
+    ✔ [my dois] downloading member IDs
+    ✔ [my dois] converting IDs to parquet
+
+- **Speed and cost.** Measured in November 2026 with 3,000 DOIs, the
+  same credits (18) either way:
+
+  | Route | Time |
+  |----|----|
+  | one import per 600 DOIs | 45 to 55 s |
+  | [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) with `workers = 1`, then adding the IDs | 44 s |
+  | [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md) with `workers = 8`, then adding the IDs | 8.5 s |
+
+  Imports run one at a time per collection, and each holds only a few
+  hundred DOIs, so their fixed cost dominates.
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  runs the queries in parallel; adding 3,000 IDs took under a second.
+
+- **Records.** Fields in `select` beyond `"id"` are fetched in the same
+  pass, from the queries themselves, into `records/`. They therefore
+  also work for collections above the 300,000-member filter limit.
+
+- **Interruptions.** Running
+  [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  again resumes the fetch (`pro_fetch(resume = TRUE)`) and adds the IDs
+  again. Adding is idempotent: IDs already in the collection count as
+  `already_present`.
+
+- **Changes.** A changed chunk counts as a changed query, so the
+  collection is re-created. `refresh = TRUE` fetches and adds everything
+  again.
+
+- **On disk.** The queries are in `_parts.parquet` (name and URL of each
+  chunk), not in `_collection.json`, which stays small however long the
+  list is. Re-runs compare the queries locally, without requests.
 
 ## Using a collection in queries
 
@@ -192,10 +258,28 @@ which has no URL length limit.
 
 id <- rec$collection_id
 
-pro_count(pro_query(collection = id, is_oa = TRUE), api_key = key)
-pro_fetch(pro_query(collection = id, from_publication_date = "2024-06-01"),
+pro_count(pro_query(collection = id, is_oa = TRUE,
+                    options = list(corpus = "all")), api_key = key)
+pro_fetch(pro_query(collection = id, from_publication_date = "2024-06-01",
+                    options = list(corpus = "all")),
           project_folder = "recent", api_key = key)
 ```
+
+### Core and expansion works
+
+A collection holds all its members: the members CSV, `member_count` and
+`members/parquet/members.parquet` include *expansion* works (DataCite,
+Zenodo and repository records) as well as *core* works. A **filter** by
+a works collection, however, follows the usual default of `/works` and
+returns only the core works. Add `options = list(corpus = "all")` (OQL:
+`works (all corpora) where ...`) to get every member.
+
+Measured on a collection of 565 Zenodo records (November 2026): the
+members CSV and `corpus = "all"` gave 565, the filter alone 132.
+
+Whether expansion works get into a collection depends on the query that
+fills it: `pro_query(doi = dois, options = list(corpus = "all"))` finds
+them, the same query without `corpus` only the core works.
 
 A collection of one entity type can also filter a related field: a
 source collection works with `primary_location.source.id`, an author
@@ -205,7 +289,7 @@ collection with `authorships.author.id`. See the OpenAlex documentation.
 
 A classic query URL accepts only **one** `collection` filter. To combine
 collections, use OQL, where `and`, `or` and `not` work between
-collections:
+collections. `(all corpora)` includes the expansion works:
 
 ``` r
 
@@ -213,20 +297,41 @@ a <- "col_..."; b <- "col_..."
 
 # in both
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) and work is in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) and work is in the collection (%s)", a, b))
 
 # in either
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) or work is in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) or work is in the collection (%s)", a, b))
 
 # in a but not in b
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) and work is not in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) and work is not in the collection (%s)", a, b))
 ```
 
 One request can use up to 5 collections, with up to 300,000 members
 combined. The AND and OR results were checked against the intersection
 and union of the member IDs.
+
+## Sharing
+
+A new collection is private: only you can see it and filter by it. Set
+`access` to change that; `NULL` (the default) leaves it as it is.
+
+``` r
+
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               api_key = key, access = "shared_by_link")
+```
+
+| `access` | Who can view it and filter by it |
+|----|----|
+| `"private"` | only you |
+| `"shared_by_link"` | anyone with its link or ID, logged in or not; it is not listed or searchable |
+| `"public"` | anyone, and listed. Only OpenAlex can set this for now: it is refused (HTTP 403) |
+
+`"private"` unshares it at once, for every link and saved search that
+uses it. A collection that is re-created (changed query) gets a new ID,
+so links to the old one stop working.
 
 ## Costs, time and limits
 
@@ -244,6 +349,9 @@ and union of the member IDs.
   ([`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)).
 - **Limits:**
   - 1,000,000 members per collection, and 500 collections per account.
+  - At most 20,000 characters of OQL per import. Longer ID or DOI lists
+    go into one collection in chunks (see [Long ID and DOI
+    lists](#long-id-and-doi-lists-several-queries-in-one-collection)).
   - A collection with more than 300,000 members (100,000 for authors)
     cannot be used as a filter. Its member IDs can still be downloaded,
     but its records cannot (`select` beyond `"id"`).

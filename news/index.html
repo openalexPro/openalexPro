@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.16.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.17.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,21 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.16.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.17.0" id="openalexpro-0170">openalexPro 0.17.0<a class="anchor" aria-label="anchor" href="#openalexpro-0170"></a></h2>
+<ul><li>
+<code><a href="../reference/pro_collection.html">pro_collection()</a></code> gets <code>access</code>: <code>"shared_by_link"</code> lets anyone with the link or ID view the collection and filter by it, <code>"private"</code> unshares it. <code>"public"</code> is passed on, but only OpenAlex can set it for now (HTTP 403, and OpenAlex’s message points to <code>shared_by_link</code>). <code>NULL</code> (default) leaves the access as it is.</li>
+<li>
+<code><a href="../reference/pro_collection.html">pro_collection()</a></code>: the records of a single-query collection (<code>select</code> beyond <code>"id"</code>) are fetched with <code>corpus = "all"</code>. A collection filter alone returns only the core works, so expansion works (DataCite, Zenodo, repositories) were missing from <code>records/</code>. The member IDs were always complete. The examples and vignettes now set <code>corpus = "all"</code> when filtering by a collection (OQL: <code>works (all corpora) where ...</code>).</li>
+<li>
+<code><a href="../reference/pro_collection.html">pro_collection()</a></code> with a list of queries <strong>and</strong> a <code>name</code> creates one collection for the whole list. The queries are fetched with <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> (<code>select = "id"</code>, in parallel with <code>workers</code>) and the IDs added as members (<code>member_ids</code>, 10,000 per request, free). This is for long ID or DOI lists: OpenAlex refuses an import of more than 20,000 characters of OQL (about 600 to 800 DOIs), and with 3,000 DOIs this route was about five times faster than one import per chunk, at the same credits. The queries are kept in <code>_parts.parquet</code>; <code>_collection.json</code> stays small. An interrupted run resumes the fetch. Without <code>name</code>, a list still gives one collection per element.</li>
+<li>A single query that is too long for an import now stops before anything is created, and says how to split it. Earlier versions failed only at the import.</li>
+<li>The documentation no longer says that imports have no length limit.</li>
+<li>Removed a commented-out template line with an emoji from <code>.onAttach()</code>; in a C/US-ASCII locale R warned that it could not be translated to UTF-8.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.16.0" id="openalexpro-0160">openalexPro 0.16.0<a class="anchor" aria-label="anchor" href="#openalexpro-0160"></a></h2>
 <ul><li>Citation: <code>citation("openalexPro")</code> now cites the package with its Zenodo DOI and, separately, the openalexPro ecosystem. Added <code>CITATION.cff</code> (GitHub “Cite this repository”) and <code>.zenodo.json</code> (Zenodo metadata, linking the related ecosystem packages). The author’s ORCID is in <code>DESCRIPTION</code>.</li>
