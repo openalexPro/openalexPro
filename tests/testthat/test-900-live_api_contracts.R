@@ -5,6 +5,7 @@ library(testthat)
 # Run these tests manually with:
 #   Sys.setenv(OPENALEXPRO_LIVE_TESTS = "true")
 #   Sys.setenv(openalexPro.api_key = "your-real-key")
+#   Sys.setenv(openalexPro.personal_api_key = "personal-key") # collections
 #   devtools::test(filter = "900-live")
 
 
@@ -106,4 +107,32 @@ test_that("live: an old cursor is still accepted (cursors are durable)", {
 
   expect_equal(length(data$results), 50L)
   expect_false(is.null(data$meta$next_cursor))
+})
+
+
+test_that("live pro_collection(): create, import, member IDs, then delete", {
+  skip_if_not_live_openalex()
+  # Collections need a personal key; other keys get 401.
+  key <- Sys.getenv("openalexPro.personal_api_key")
+  if (!nzchar(key)) {
+    skip("Set openalexPro.personal_api_key to a personal OpenAlex key.")
+  }
+  pf <- withr::local_tempdir()
+  q <- pro_query("works", search = "coral bleaching", publication_year = 2024,
+                 type = "review")
+  f <- pro_collection(q, name = paste("openalexPro live test", Sys.time()),
+                      project_folder = pf, api_key = key, progress = FALSE)
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  withr::defer(.col_req("https://api.openalex.org", "DELETE",
+                        c("collections", rec$collection_id), key, ok = c(204L, 404L)))
+
+  expect_match(rec$collection_id, "^col_")
+  expect_gt(rec$member_count, 0)
+  expect_equal(rec$imports[[1]]$status, "done")
+  ids <- arrow::read_parquet(file.path(f, "members/parquet/members.parquet"))
+  expect_equal(nrow(ids), rec$member_count)
+  expect_match(ids$id[[1]], "^W")
+  # the collection works as a filter
+  n <- pro_count(pro_query("works", collection = rec$collection_id), api_key = key)$count
+  expect_equal(n, rec$member_count)
 })
