@@ -52,6 +52,11 @@ mock_collections <- function(state, n_members = 3L) {
         state$cols[[id]] <- NULL
         return(httr2::response(204L))
       }
+      if (method == "PATCH") {
+        if (identical(body$access, "public")) return(err(403L, "public_needs_review"))
+        state$cols[[id]]$access <- body$access
+        return(json(pub(state$cols[[id]])))
+      }
       return(json(pub(col)))
     }
     if (p[[3]] == "members" && method == "POST") {
@@ -285,6 +290,7 @@ test_that("select syncs the records: add re-downloads, remove drops locally", {
   qu <- httr2::url_parse(calls$url)$query
   expect_equal(qu$filter, "collection:col_1")
   expect_equal(qu$select, "id,title")
+  expect_equal(qu$corpus, "all") # the filter alone returns only core works
   expect_equal(pq_cols(file.path(f, "records/parquet")), c("id", "title"))
 
   pro_collection(q1, name = "c", project_folder = pf, select = c("id", "title", "doi"),
@@ -452,4 +458,32 @@ test_that("a query over 20,000 characters of OQL stops before anything is create
   expect_error(pro_collection(long, name = "c", project_folder = pf, api_key = "k",
                               progress = FALSE), "at most 20,000.*chunk_limit")
   expect_equal(posts(state, "/collections"), 0)
+})
+
+test_that("access is set when asked, and only when it differs", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  patches <- function() sum(vapply(state$log, function(x) x$method == "PATCH", TRUE))
+  f <- pro_collection(q1, name = "c", project_folder = pf, access = "shared_by_link",
+                      api_key = "k", progress = FALSE)
+  expect_equal(patches(), 1)
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$access, "shared_by_link")
+  pro_collection(q1, name = "c", project_folder = pf, access = "shared_by_link",
+                 api_key = "k", progress = FALSE)
+  pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(patches(), 1) # same access, or NULL: no change
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$access, "shared_by_link")
+
+  f2 <- pro_collection(chunks, name = "d", project_folder = pf, access = "shared_by_link",
+                       api_key = "k", progress = FALSE)
+  expect_equal(patches(), 2)
+  expect_equal(jsonlite::read_json(file.path(f2, "_collection.json"))$access, "shared_by_link")
+
+  expect_error(pro_collection(q1, name = "c", project_folder = pf, access = "public",
+                              api_key = "k", progress = FALSE),
+               "public_needs_review")
+  expect_error(pro_collection(q1, name = "c", project_folder = pf, access = "everyone",
+                              api_key = "k", progress = FALSE), "should be one of")
 })

@@ -10,6 +10,7 @@ pro_collection(
   project_folder,
   select = "id",
   refresh = FALSE,
+  access = NULL,
   api_key = pro_api_key(),
   verbose = FALSE,
   progress = TRUE,
@@ -35,6 +36,12 @@ fields (see \code{\link[=opt_select_fields]{opt_select_fields()}}) for records w
 member IDs are downloaded whenever \code{select} is not \code{NULL}.}
 
 \item{refresh}{If \code{TRUE}, import an unchanged query again and re-download.}
+
+\item{access}{Who can see the collection: \code{"private"} (only you, the
+default for new collections), \code{"shared_by_link"} (anyone with its link or
+ID can view it and filter by it; it is not listed) or \code{"public"} (only
+OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
+\code{NULL} (default) leaves it as it is.}
 
 \item{api_key}{A personal OpenAlex API key.}
 
@@ -118,6 +125,15 @@ with more than 300,000 members (100,000 for authors) cannot be used as a
 filter, so its records cannot be downloaded with \code{select}; its member IDs
 can. Queries with \code{group_by} or \code{sample} cannot be imported.
 
+\strong{Core and expansion works:} a collection holds all its members, and the
+member IDs in \verb{members/} include expansion works (DataCite, repositories).
+A \emph{filter} by a works collection returns only its core works unless
+\code{corpus = "all"} is set, so the records in \verb{records/} are fetched with
+\code{corpus = "all"}, and later queries should set it too:
+\code{pro_query(collection = id, options = list(corpus = "all"))}. Whether
+expansion works get into the collection depends on the query that fills
+it (\code{options = list(corpus = "all")} in \code{\link[=pro_query]{pro_query()}}).
+
 \strong{API key:} collections need a \emph{personal} OpenAlex API key; organisation
 keys and some older keys are refused (HTTP 401) even when they work for
 queries.
@@ -128,8 +144,14 @@ q <- pro_query(search = "coral bleaching", publication_year = 2024)
 f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
 id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 
-# Later: records of the collection that are open access
-pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
+# Later: records of the collection that are open access. corpus = "all":
+# without it, the filter returns only the core works
+pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
+          project_folder = "oa")
+
+# Let anyone with the link or ID use it
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               access = "shared_by_link")
 
 # Add titles to the download (re-downloads the records)
 pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",

@@ -28,11 +28,15 @@ of IDs (works, authors, sources, ...) saved on OpenAlex's servers under your
 account. Once it exists, you can:
 
 - filter by it in any later query:
-  `pro_query(collection = "col_...")`. Other filters still apply, so you can
-  ask for the open-access members, or for those published after a date.
+  `pro_query(collection = "col_...", options = list(corpus = "all"))`. Other
+  filters still apply, so you can ask for the open-access members, or for
+  those published after a date. Without `corpus = "all"` only the *core*
+  works of a works collection are returned (see
+  [Core and expansion works](#core-and-expansion-works)).
 - combine it with other collections through OQL, using AND, OR and NOT (see
   [Combining collections](#combining-collections) below).
-- share it by link, and reuse it later without running the original query again.
+- share it by link (`access = "shared_by_link"`, see [Sharing](#sharing)),
+  and reuse it later without running the original query again.
 
 `pro_collection()` turns a query from `pro_query()` into a collection.
 OpenAlex runs the query on its own servers (an *import*), and
@@ -126,8 +130,11 @@ ids <- arrow::read_parquet(file.path(f, "members/parquet/members.parquet"))
 | `c("id", "title", "doi")` | member IDs, and records with these fields in `records/` |
 | `"all"` | member IDs, and full records in `records/` |
 
-Records are fetched with `pro_fetch(pro_query(collection = id, select = ...))`.
-Arguments in `...` (e.g. `workers`, `compact_parquet`) are passed on to it.
+Records are fetched with
+`pro_fetch(pro_query(collection = id, select = ..., options = list(corpus = "all")))`,
+so expansion works are included (for a list of queries with `name`, they
+come from the queries themselves). Arguments in `...` (e.g. `workers`,
+`compact_parquet`) are passed on to `pro_fetch()`.
 
 # Running it again
 
@@ -240,10 +247,28 @@ pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
 ```{r}
 id <- rec$collection_id
 
-pro_count(pro_query(collection = id, is_oa = TRUE), api_key = key)
-pro_fetch(pro_query(collection = id, from_publication_date = "2024-06-01"),
+pro_count(pro_query(collection = id, is_oa = TRUE,
+                    options = list(corpus = "all")), api_key = key)
+pro_fetch(pro_query(collection = id, from_publication_date = "2024-06-01",
+                    options = list(corpus = "all")),
           project_folder = "recent", api_key = key)
 ```
+
+## Core and expansion works
+
+A collection holds all its members: the members CSV, `member_count` and
+`members/parquet/members.parquet` include *expansion* works (DataCite,
+Zenodo and repository records) as well as *core* works. A **filter** by a
+works collection, however, follows the usual default of `/works` and returns
+only the core works. Add `options = list(corpus = "all")` (OQL:
+`works (all corpora) where ...`) to get every member.
+
+Measured on a collection of 565 Zenodo records (November 2026): the members
+CSV and `corpus = "all"` gave 565, the filter alone 132.
+
+Whether expansion works get into a collection depends on the query that
+fills it: `pro_query(doi = dois, options = list(corpus = "all"))` finds
+them, the same query without `corpus` only the core works.
 
 A collection of one entity type can also filter a related field: a source
 collection works with `primary_location.source.id`, an author collection
@@ -252,27 +277,48 @@ with `authorships.author.id`. See the OpenAlex documentation.
 ## Combining collections
 
 A classic query URL accepts only **one** `collection` filter. To combine
-collections, use OQL, where `and`, `or` and `not` work between collections:
+collections, use OQL, where `and`, `or` and `not` work between collections.
+`(all corpora)` includes the expansion works:
 
 ```{r}
 a <- "col_..."; b <- "col_..."
 
 # in both
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) and work is in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) and work is in the collection (%s)", a, b))
 
 # in either
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) or work is in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) or work is in the collection (%s)", a, b))
 
 # in a but not in b
 pro_query(oql = sprintf(
-  "works where work is in the collection (%s) and work is not in the collection (%s)", a, b))
+  "works (all corpora) where work is in the collection (%s) and work is not in the collection (%s)", a, b))
 ```
 
 One request can use up to 5 collections, with up to 300,000 members
 combined. The AND and OR results were checked against the intersection and
 union of the member IDs.
+
+# Sharing
+
+A new collection is private: only you can see it and filter by it. Set
+`access` to change that; `NULL` (the default) leaves it as it is.
+
+```{r}
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               api_key = key, access = "shared_by_link")
+```
+
+| `access` | Who can view it and filter by it |
+|---|---|
+| `"private"` | only you |
+| `"shared_by_link"` | anyone with its link or ID, logged in or not; it is not listed or searchable |
+| `"public"` | anyone, and listed. Only OpenAlex can set this for now: it is refused (HTTP 403) |
+
+`"private"` unshares it at once, for every link and saved search that uses
+it. A collection that is re-created (changed query) gets a new ID, so links
+to the old one stop working.
 
 # Costs, time and limits
 
