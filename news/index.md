@@ -1,5 +1,31 @@
 # Changelog
 
+## openalexPro 0.15.0
+
+- New
+  [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md):
+  turns queries from
+  [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+  into OpenAlex collections (server-side ID sets that can be reused as
+  filters, `pro_query(collection = "col_...")`). OpenAlex runs the query
+  (an import);
+  [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  waits for it and records everything in
+  `<project_folder>/<name>.collection/`: `_collection.json` (query,
+  collection ID, member count, imports, credits), the OQL text, the
+  member IDs as parquet (`select = "id"`, the default; the download is
+  free) and, with more fields in `select`, the records. Running it again
+  keeps the collection for the same query (`refresh = TRUE` imports
+  again), re-creates it for a changed query, and brings the downloads in
+  line with `select` (removed fields are dropped locally). A list of
+  queries gives one collection per element. Collections need a personal
+  OpenAlex API key.
+- `via = "oqo"`: `sample` and `seed` are now translated by OpenAlex’s
+  `/query` with the rest of the query. The workaround that took them out
+  and put them back into the OQO is removed, since OpenAlex fixed the
+  translator
+  ([\#79](https://github.com/openalexPro/openalexPro/issues/79)).
+
 ## openalexPro 0.14.1
 
 - License changed from GPL (\>= 2) to MIT.
@@ -980,7 +1006,7 @@ continue an interrupted download.
   causing a collision between the valid JSON keys `"as"` and `"As"` in
   this field. Storing as `VARCHAR` avoids struct parsing entirely and
   preserves the data. Parse individual values with
-  [`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html)
+  [`jsonlite::fromJSON()`](https://rdrr.io/pkg/jsonlite/man/fromJSON.html)
   when needed.
 - Fixed DuckDB temp file IO errors during `snapshot_to_parquet()` by
   exposing a `TEMP_DIR` variable in `Makefile.snapshot` (default

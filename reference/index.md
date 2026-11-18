@@ -49,6 +49,9 @@
 - [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
   : Retrieve the OpenAlex Pro API key
 
+- [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  : Create OpenAlex collections from queries
+
 - [`pro_compact_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_compact_parquet.md)
   : Compact a Parquet dataset into fewer, larger files
 

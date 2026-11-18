@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@
     <li><a class="dropdown-item" href="articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
+    <li><a class="dropdown-item" href="articles/collections.html">Collections with `pro_collection()`</a></li>
     <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
     <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul></li>
@@ -38,7 +39,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Development Notes — openalexPro</h1>
-      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.14.1/DEVELOPMENT.md" class="external-link"><code>DEVELOPMENT.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/DEVELOPMENT.md" class="external-link"><code>DEVELOPMENT.md</code></a></small>
     </div>
 
 <div id="development-notes--openalexpro" class="section level1">
@@ -182,7 +183,7 @@
 <p><strong>Problem:</strong> OpenAlex <code>works</code> files contain <code>abstract_inverted_index</code> with JSON keys <code>"as"</code> and <code>"As"</code> (case-different, which is valid JSON). DuckDB folds struct field names to lowercase, causing a collision (<code>duplicate key "as"</code>) that crashes the conversion. <code>ignore_errors=true</code> silently drops entire records rather than just the problematic field, which is too destructive. Dropping the column entirely loses data.</p>
 <p><strong>Root cause:</strong> DuckDB auto-infers JSON objects as <code>STRUCT</code> types and case-folds field names. Arrow R has no JSON reading capability, so it cannot be used as an alternative.</p>
 <p><strong>Fix:</strong> After schema inference, override the type of <code>abstract_inverted_index</code> to <code>VARCHAR</code> in the <code>columns_clause</code> for the <code>works</code> dataset. When DuckDB reads the field with type <code>VARCHAR</code>, it captures the raw JSON text without parsing the object’s keys into struct fields — so no case-folding, no collision. All records are preserved.</p>
-<p>The stored VARCHAR value is a JSON string (e.g. <code>'{"The":[0],"as":[1],"As":[2]}'</code>), parseable with <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> when needed. Case-sensitive keys are preserved because they’re stored as data, not struct field names.</p>
+<p>The stored VARCHAR value is a JSON string (e.g. <code>'{"The":[0],"as":[1],"As":[2]}'</code>), parseable with <code><a href="https://rdrr.io/pkg/jsonlite/man/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> when needed. Case-sensitive keys are preserved because they’re stored as data, not struct field names.</p>
 <p><strong>Changes:</strong> - <code>R/snapshot_to_parquet.R</code>: replaces the column-drop gsub with a type-override gsub (<code>'abstract_inverted_index': 'VARCHAR'</code>); <code>ignore_errors=true</code> removed from <code>ndjson_options</code> (no longer needed). - <code>tests/testthat/test-013-snapshot_to_parquet.R</code>: added test verifying the column is present as character and that <code>"as"</code>/<code>"As"</code> round-trip correctly via jsonlite.</p>
 <p><strong>Key file:</strong> <code>R/snapshot_to_parquet.R</code></p>
 <hr></div>

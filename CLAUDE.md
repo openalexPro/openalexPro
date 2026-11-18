@@ -113,6 +113,23 @@ Functions that query the live OpenAlex REST API:
   the pages. Stops if an openalexSnapshot index (`<dir>_id_idx`,
   `<dir>_doi_idx.parquet`) exists, since it points to files and row
   numbers
+- [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  (`R/pro_collection.R`) — one OpenAlex collection per query (a named
+  list gives one per element, named after it): validate with
+  `.oa_to_oqo()` (free), `POST /collections`,
+  `POST …/imports {"oql": …}` and poll (OpenAlex runs the query, ~200
+  results/s, same credits as paging), then the free members CSV →
+  `members/parquet/members.parquet`, and records via
+  `pro_fetch(pro_query(collection = id, select = …))` into `records/`
+  when `select` has more than `id`. Everything in
+  `<project_folder>/<name>.collection/_collection.json`. Re-issue: same
+  OQO (`.oqo_equivalent()`) keeps the collection (waits for a running
+  import; `refresh` imports again), a changed one deletes and re-creates
+  it; `select` changes drop columns locally or re-download. All calls go
+  through `.col_req()` (`api_call()` with explicit status check). Needs
+  a *personal* key: other keys get 401 on `/collections` even when they
+  work for queries. Collections combine only via OQO (AND rows,
+  `join: "or"`, `is_negated`); a URL allows one `collection:` filter
 - [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   — counts matching records (`via` as for
   [`pro_request()`](https://openalexpro.github.io/openalexPro/reference/pro_request.md))
@@ -126,10 +143,9 @@ Functions that query the live OpenAlex REST API:
 `via = "oqo"` (the default since 0.14.0; `via = "url"` sends GET URLs as
 before): `.oa_to_oqo()` (`R/oqo.R`) translates each query once with the
 free `POST /query` (validating it before any credits are spent; paging
-params and `sample`/`seed` are taken out first because the translator
-stores numbers as text, then put back into the OQO), and
-`fetch_query_pages()`’s `make_req()` sends every page as `POST /` with
-the OQO in the body. Single records stay GET.
+params are taken out first; `sample`/`seed` are translated with the
+rest), and `fetch_query_pages()`’s `make_req()` sends every page as
+`POST /` with the OQO in the body. Single records stay GET.
 `tests/testthat/test-021-url_oqo_equivalence.R` asserts identical
 complete result sets for url vs oqo (semantic search only
 near-identical: OpenAlex varies at rank 50 between identical requests).

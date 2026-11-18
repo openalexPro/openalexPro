@@ -10,6 +10,8 @@
   Documentation](https://openalexpro.github.io/openalexPro/articles/pro_query.md):
 - [\`pro_request()\` - Background and Technical
   Documentation](https://openalexpro.github.io/openalexPro/articles/pro_request.md):
+- [Collections with
+  \`pro_collection()\`](https://openalexpro.github.io/openalexPro/articles/collections.md):
 - [Snapshot Conversion — Moved to
   openalexSnapshot](https://openalexpro.github.io/openalexPro/articles/snapshot_conversion.md):
 - [Working with OpenAlex Snapshots — Moved to

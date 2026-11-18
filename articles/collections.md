@@ -1,0 +1,249 @@
+# Collections with `pro_collection()`
+
+## What a collection is
+
+An OpenAlex [collection](https://help.openalex.org/api/collections) is a
+set of IDs (works, authors, sources, …) saved on OpenAlex’s servers
+under your account. Once it exists, you can:
+
+- filter by it in any later query: `pro_query(collection = "col_...")`.
+  Other filters still apply, so you can ask for the open-access members,
+  or for those published after a date.
+- combine it with other collections through OQL, using AND, OR and NOT
+  (see [Combining collections](#combining-collections) below).
+- share it by link, and reuse it later without running the original
+  query again.
+
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+turns a query from
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+into a collection. OpenAlex runs the query on its own servers (an
+*import*), and
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+waits for the import and then downloads what `select` asks for. With the
+default, that is only the member IDs.
+
+## API key
+
+Collections need a **personal** OpenAlex API key. Organisation keys and
+some older keys are refused with HTTP 401 on every collection call, even
+when they work for queries.
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+then stops with a message saying so. Pass the personal key as `api_key`:
+
+``` r
+
+key <- keyring::key_get("my_personal_openalex_key") # or Sys.getenv(...)
+```
+
+## Creating a collection
+
+``` r
+
+library(openalexPro)
+
+q <- pro_query(search = "coral bleaching", publication_year = 2024)
+
+f <- pro_collection(
+  q,
+  name = "coral bleaching 2024",
+  project_folder = "proj",
+  api_key = key
+)
+```
+
+The progress shows each step:
+
+    ✔ [coral bleaching 2024] validating query
+    ✔ [coral bleaching 2024] creating collection
+    ✔ [coral bleaching 2024] importing query
+    ✔ [coral bleaching 2024] downloading member IDs
+    ✔ [coral bleaching 2024] converting IDs to parquet
+
+What happens, step by step:
+
+1.  The query is checked first with OpenAlex’s free `/query`
+    translation, so an invalid query stops before anything is created.
+    Queries with `group_by` or `sample` cannot be imported and stop here
+    too.
+2.  The collection is created under `name`. A name can be up to 100
+    characters and must be unique in your account.
+3.  OpenAlex imports the query, and the progress bar follows it.
+4.  The member IDs are downloaded as CSV and converted to parquet.
+
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+returns the path of the collection folder.
+
+## The collection folder
+
+Each query gets its own folder, `<project_folder>/<name>.collection/`:
+
+    proj/coral bleaching 2024.collection/
+    ├── _collection.json        query, collection ID, members, imports, credits, select
+    ├── _query_oql.txt          the query in readable OQL
+    ├── _query_oql.html
+    ├── members/parquet/members.parquet   id, added_at
+    └── records/                only when select asks for more than "id" (pro_fetch layout)
+
+`_collection.json` records the same query information as
+[`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+does (URL, OQL, OQO, record count, times and package version). It adds
+the collection itself:
+
+``` r
+
+rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+rec$collection_id   # "col_..."
+rec$member_count
+rec$credits_import  # credits used by the import(s)
+```
+
+Read the member IDs as you would any parquet dataset:
+
+``` r
+
+ids <- arrow::read_parquet(file.path(f, "members/parquet/members.parquet"))
+```
+
+## What to download: `select`
+
+| `select` | Downloaded |
+|----|----|
+| `"id"` (default) | the member IDs only (free) |
+| `NULL` | nothing: only the collection and `_collection.json` |
+| `c("id", "title", "doi")` | member IDs, and records with these fields in `records/` |
+| `"all"` | member IDs, and full records in `records/` |
+
+Records are fetched with
+`pro_fetch(pro_query(collection = id, select = ...))`. Arguments in
+`...` (e.g. `workers`, `compact_parquet`) are passed on to it.
+
+## Running it again
+
+Run
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+again with the same `project_folder` and `name`, and it compares the
+query with the one in `_collection.json`:
+
+- **Same query.** The collection is kept, with the same ID. If an import
+  is still running (e.g. after an interruption),
+  [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  waits for it. The local downloads are then made to match `select`:
+  - removed fields are dropped from the local records, with no requests;
+  - added fields re-download the records. Credits are charged per
+    request, not per field, so fetching only the new fields would cost
+    the same;
+  - `select = NULL` deletes the local downloads and keeps the
+    collection.
+- **`refresh = TRUE`.** The query is imported again into the same
+  collection, which adds works that match it now, and everything is
+  downloaded again. An import only adds members: works that no longer
+  match stay in the collection.
+- **Changed query.** The old collection is deleted, and a new one is
+  created under the same name. It gets a new ID.
+
+``` r
+
+# add titles and DOIs (re-downloads the records)
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               api_key = key, select = c("id", "title", "doi"))
+
+# drop the DOIs again (local only, no requests)
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               api_key = key, select = c("id", "title"))
+```
+
+A collection with the same name that already exists in your account but
+is not recorded in `project_folder` is never deleted.
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+stops instead.
+
+## Several queries
+
+A named list of queries gives one collection per element, named after
+it. Nested names are joined with `_`:
+
+``` r
+
+pro_collection(
+  list(
+    bleaching = pro_query(search = "coral bleaching"),
+    reef = list(
+      fish = pro_query(search = "reef fish"),
+      algae = pro_query(search = "reef algae")
+    )
+  ),
+  project_folder = "proj",
+  api_key = key
+)
+# collections and folders: bleaching, reef_fish, reef_algae
+```
+
+This applies to a list of chunks from
+[`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
+too: each chunk becomes its own collection. To keep a long ID or DOI
+list in one collection, build a single URL with
+`pro_query(..., chunk_limit = 1e6)`. The import sends the query as OQL,
+which has no URL length limit.
+
+## Using a collection in queries
+
+``` r
+
+id <- rec$collection_id
+
+pro_count(pro_query(collection = id, is_oa = TRUE), api_key = key)
+pro_fetch(pro_query(collection = id, from_publication_date = "2024-06-01"),
+          project_folder = "recent", api_key = key)
+```
+
+A collection of one entity type can also filter a related field: a
+source collection works with `primary_location.source.id`, an author
+collection with `authorships.author.id`. See the OpenAlex documentation.
+
+### Combining collections
+
+A classic query URL accepts only **one** `collection` filter. To combine
+collections, use OQL, where `and`, `or` and `not` work between
+collections:
+
+``` r
+
+a <- "col_..."; b <- "col_..."
+
+# in both
+pro_query(oql = sprintf(
+  "works where work is in the collection (%s) and work is in the collection (%s)", a, b))
+
+# in either
+pro_query(oql = sprintf(
+  "works where work is in the collection (%s) or work is in the collection (%s)", a, b))
+
+# in a but not in b
+pro_query(oql = sprintf(
+  "works where work is in the collection (%s) and work is not in the collection (%s)", a, b))
+```
+
+One request can use up to 5 collections, with up to 300,000 members
+combined. The AND and OR results were checked against the intersection
+and union of the member IDs.
+
+## Costs, time and limits
+
+- **Free:** creating, reading and deleting collections, and downloading
+  the member IDs.
+- **Import:** costs the same credits as paging through the results
+  yourself, i.e. one list request per 200 results. It runs at about 200
+  results per second (measured November 2026): about 75 seconds for
+  15,000 works, and over an hour for the maximum of 1,000,000 members.
+  Interrupting
+  [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
+  does not stop the import on OpenAlex; running it again waits for the
+  import to finish.
+- **Records:** downloaded like any other query
+  ([`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)).
+- **Limits:**
+  - 1,000,000 members per collection, and 500 collections per account.
+  - A collection with more than 300,000 members (100,000 for authors)
+    cannot be used as a filter. Its member IDs can still be downloaded,
+    but its records cannot (`select` beyond `"id"`).

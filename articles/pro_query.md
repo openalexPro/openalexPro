@@ -290,6 +290,15 @@ the URL;
 sends it as an OQO via POST by default (`via = "oqo"`), so very long
 queries (over about 8 KB) need nothing extra.
 
+A saved OpenAlex collection (see
+[`vignette("collections")`](https://openalexpro.github.io/openalexPro/articles/collections.md)
+and
+[`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md))
+is a filter like any other:
+`pro_query(collection = "col_...", is_oa = TRUE)`. A URL takes only one
+collection; combine several with OQL
+(`works where work is in the collection (col_a) and work is in the collection (col_b)`).
+
 Any query from
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)
 – classic or OQL / OQO – is sent as an OQO by

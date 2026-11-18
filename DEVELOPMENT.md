@@ -374,7 +374,7 @@ fields — so no case-folding, no collision. All records are preserved.
 
 The stored VARCHAR value is a JSON string
 (e.g. `'{"The":[0],"as":[1],"As":[2]}'`), parseable with
-[`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html)
+[`jsonlite::fromJSON()`](https://rdrr.io/pkg/jsonlite/man/fromJSON.html)
 when needed. Case-sensitive keys are preserved because they’re stored as
 data, not struct field names.
 

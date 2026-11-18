@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,7 @@
     <li><a class="dropdown-item" href="articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
+    <li><a class="dropdown-item" href="articles/collections.html">Collections with `pro_collection()`</a></li>
     <li><a class="dropdown-item" href="articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
     <li><a class="dropdown-item" href="articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul>
@@ -163,15 +164,44 @@ To run online contract checks against the live OpenAlex API:</p>
 <p>All intermediate folders and data are deleted, and only the final parquet dataset remains in <code>Biodiversity_from_sandwich_islands/parquet/</code>.</p>
 </div>
 <div class="section level2">
+<h2 id="collections-pro_collection">Collections (<code>pro_collection()</code>)<a class="anchor" aria-label="anchor" href="#collections-pro_collection"></a>
+</h2>
+<p>An OpenAlex <a href="https://help.openalex.org/api/collections" class="external-link">collection</a> is a set of IDs saved on OpenAlex’s servers. A collection can be reused as a filter in later queries and combined with other collections. <code><a href="reference/pro_collection.html">pro_collection()</a></code> turns a query into a collection. OpenAlex runs the query (an <em>import</em>), and the member IDs are then downloaded as parquet:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>search <span class="op">=</span> <span class="st">"coral bleaching"</span>, publication_year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span>
+<span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_collection.html">pro_collection</a></span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span><span class="op">)</span></span>
+<span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fu">jsonlite</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/read_json.html" class="external-link">read_json</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"_collection.json"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">collection_id</span></span>
+<span></span>
+<span><span class="co"># Later: only the open-access members, as records</span></span>
+<span><span class="fu"><a href="reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>collection <span class="op">=</span> <span class="va">id</span>, is_oa <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, project_folder <span class="op">=</span> <span class="st">"oa"</span><span class="op">)</span></span></code></pre></div>
+<p>Everything about the collection is in <code>proj/coral bleaching 2024.collection/</code>:</p>
+<ul>
+<li>
+<code>_collection.json</code>: the query, the collection ID, member count, imports and credits.</li>
+<li>The query as readable OQL.</li>
+<li>
+<code>members/parquet/</code>: the member IDs.</li>
+<li>
+<code>records/</code>: the records, when <code>select</code> asks for more than <code>id</code>.</li>
+</ul>
+<p>Running <code><a href="reference/pro_collection.html">pro_collection()</a></code> again keeps the collection for the same query. A changed query re-creates the collection, and <code>refresh = TRUE</code> imports the query again. A named list of queries gives one collection per element.</p>
+<p>Costs:</p>
+<ul>
+<li>Downloading the member IDs is free.</li>
+<li>An import costs the same credits as paging through the results yourself, and runs at about 200 results per second.</li>
+</ul>
+<p>Collections need a <strong>personal</strong> OpenAlex API key; other keys are refused even when they work for queries. See <code><a href="articles/collections.html">vignette("collections")</a></code>.</p>
+</div>
+<div class="section level2">
 <h2 id="advanced-workflow-individual-functions">Advanced Workflow (Individual Functions)<a class="anchor" aria-label="anchor" href="#advanced-workflow-individual-functions"></a>
 </h2>
 <p>For more control over the pipeline, use the individual functions:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/openalexPro/openalexPro" class="external-link">openalexPro</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="id_1-retrieving-records-openalexpropro_request">1. Retrieving records (<code>openalexPro::pro_request()</code>)<a class="anchor" aria-label="anchor" href="#id_1-retrieving-records-openalexpropro_request"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">json_files</span> <span class="op">&lt;-</span> <span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request.html">pro_request</a></span><span class="op">(</span></span>
 <span>  query_url <span class="op">=</span> <span class="va">query</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"json"</span>,</span>
@@ -179,7 +209,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Will retrieve the records and save them into the folder specified in output. One important difference is now between the query being a single URL or a list: if it is a list, the <code>future</code> and <code>future.apply</code> packages are used to process the URLs in the list in parallel.</p>
 <p><code><a href="reference/pro_request.html">pro_request()</a></code> also accepts <strong>nested lists</strong>, which creates a mirrored nested directory structure. The subsequent <code><a href="reference/pro_request_parquet.html">pro_request_parquet()</a></code> step converts the directory depth into hive-style partition keys (<code>query=&lt;name&gt;</code>, <code>query_l2=&lt;name&gt;</code>, …), so the final parquet dataset can be filtered by group directly:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">queries</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  year_2022 <span class="op">=</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"works"</span>, publication_year <span class="op">=</span> <span class="fl">2022</span><span class="op">)</span>,</span>
 <span>  year_2023 <span class="op">=</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>entity <span class="op">=</span> <span class="st">"works"</span>, publication_year <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span>
@@ -194,7 +224,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <h3 id="id_2-convert-to-parquet-database-openalexpropro_request_parquet">2. Convert to <code>parquet</code> database (<code>openalexPro::pro_request_parquet()</code>)<a class="anchor" aria-label="anchor" href="#id_2-convert-to-parquet-database-openalexpropro_request_parquet"></a>
 </h3>
 <p>Here the json files are converted into a page partitioned dataset saved as individual <code>parquet</code> files in the folder provided by the <code>output</code> argument. For works, the abstract text is re-constructed and a citation string is generated:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">parquet</span> <span class="op">&lt;-</span> <span class="st">"./parquet"</span></span>
 <span><span class="fu">openalexPro</span><span class="fu">::</span><span class="fu"><a href="reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span></span>
 <span>  input_json <span class="op">=</span> <span class="va">json_files</span>,</span>
@@ -202,7 +232,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>These functions are pipeline ready and can be chained in a pipeline:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/pro_request.html">pro_request</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/pro_request_parquet.html">pro_request_parquet</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -213,7 +243,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <h3 id="convenience-function-to-read-the-retrieved-data-openalexproread_corpus">Convenience Function to Read the Retrieved Data (<code>openalexPro::read_corpus()</code>)<a class="anchor" aria-label="anchor" href="#convenience-function-to-read-the-retrieved-data-openalexproread_corpus"></a>
 </h3>
 <p>The <code><a href="reference/read_corpus.html">read_corpus()</a></code> function reads the corpus either as a arrow <code>Dataset</code> object if <code>return_data = FALSE</code>, which is essentially metadata to the dataset, or a <code>data.frame</code>, if <code>return_data = TRUE</code>, in which case the whole dataset is loaded into memory. Especially the <code>return_data = FALSE</code> opens possiblilities on on-disc process =ing of mlarge datasets using the <code>dplyr</code> pipeline with <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">dplyr::collect()</a></code> at the end to retrieve the actual data:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/read_corpus.html">read_corpus</a></span><span class="op">(</span><span class="st">"Biodiversity_from_sandwich_islands"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">cited_by_count</span> <span class="op">&gt;</span> <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span></span>

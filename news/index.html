@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@
     <li><a class="dropdown-item" href="../articles/Workflow.html">Workflow Guide</a></li>
     <li><a class="dropdown-item" href="../articles/pro_query.html">`pro_query()` - Background and Technical Documentation</a></li>
     <li><a class="dropdown-item" href="../articles/pro_request.html">`pro_request()` - Background and Technical Documentation</a></li>
+    <li><a class="dropdown-item" href="../articles/collections.html">Collections with `pro_collection()`</a></li>
     <li><a class="dropdown-item" href="../articles/snapshot_conversion.html">Snapshot Conversion — Moved to openalexSnapshot</a></li>
     <li><a class="dropdown-item" href="../articles/snapshot.html">Working with OpenAlex Snapshots — Moved to openalexSnapshot</a></li>
   </ul></li>
@@ -38,9 +39,15 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.14.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.15.0" id="openalexpro-0150">openalexPro 0.15.0<a class="anchor" aria-label="anchor" href="#openalexpro-0150"></a></h2>
+<ul><li>New <code><a href="../reference/pro_collection.html">pro_collection()</a></code>: turns queries from <code><a href="../reference/pro_query.html">pro_query()</a></code> into OpenAlex collections (server-side ID sets that can be reused as filters, <code>pro_query(collection = "col_...")</code>). OpenAlex runs the query (an import); <code><a href="../reference/pro_collection.html">pro_collection()</a></code> waits for it and records everything in <code>&lt;project_folder&gt;/&lt;name&gt;.collection/</code>: <code>_collection.json</code> (query, collection ID, member count, imports, credits), the OQL text, the member IDs as parquet (<code>select = "id"</code>, the default; the download is free) and, with more fields in <code>select</code>, the records. Running it again keeps the collection for the same query (<code>refresh = TRUE</code> imports again), re-creates it for a changed query, and brings the downloads in line with <code>select</code> (removed fields are dropped locally). A list of queries gives one collection per element. Collections need a personal OpenAlex API key.</li>
+<li>
+<code>via = "oqo"</code>: <code>sample</code> and <code>seed</code> are now translated by OpenAlex’s <code>/query</code> with the rest of the query. The workaround that took them out and put them back into the OQO is removed, since OpenAlex fixed the translator (<a href="https://github.com/openalexPro/openalexPro/issues/79" class="external-link">#79</a>).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.14.1" id="openalexpro-0141">openalexPro 0.14.1<a class="anchor" aria-label="anchor" href="#openalexpro-0141"></a></h2>
 <ul><li>License changed from GPL (&gt;= 2) to MIT.</li>
@@ -432,7 +439,7 @@ Note: this was later relaxed again in development; current development allows <c
 <h3 id="bug-fixes-0-5-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-5-0"></a></h3>
 <ul><li>Fixed vignette parse errors in <code>pro_query.qmd</code> (malformed code block closings).</li>
 <li>Fixed out-of-memory crash in <code>snapshot_to_parquet()</code> when <code>sample_size</code> exceeded the number of available files (e.g. <code>sample_size = 10000</code> with 1981 works files). Schema inference now processes one file at a time instead of a single bulk DuckDB query.</li>
-<li>Fixed <code>duplicate key "as"</code> crash when converting the <code>works</code> dataset. <code>abstract_inverted_index</code> is now stored as <code>VARCHAR</code> (raw JSON string) rather than a <code>STRUCT</code>. DuckDB folds struct field names to lowercase, causing a collision between the valid JSON keys <code>"as"</code> and <code>"As"</code> in this field. Storing as <code>VARCHAR</code> avoids struct parsing entirely and preserves the data. Parse individual values with <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> when needed.</li>
+<li>Fixed <code>duplicate key "as"</code> crash when converting the <code>works</code> dataset. <code>abstract_inverted_index</code> is now stored as <code>VARCHAR</code> (raw JSON string) rather than a <code>STRUCT</code>. DuckDB folds struct field names to lowercase, causing a collision between the valid JSON keys <code>"as"</code> and <code>"As"</code> in this field. Storing as <code>VARCHAR</code> avoids struct parsing entirely and preserves the data. Parse individual values with <code><a href="https://rdrr.io/pkg/jsonlite/man/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code> when needed.</li>
 <li>Fixed DuckDB temp file IO errors during <code>snapshot_to_parquet()</code> by exposing a <code>TEMP_DIR</code> variable in <code>Makefile.snapshot</code> (default <code>/tmp</code>).</li>
 </ul></div>
 <div class="section level3">
