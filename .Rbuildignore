@@ -34,3 +34,5 @@
 ^CLAUDE\.md$
 ^vignettes$
 ^.lintr
+^CITATION\.cff$
+^\.zenodo\.json$
