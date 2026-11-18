@@ -1,6 +1,6 @@
 # openalexPro 0.16.0
 
-\-\ Citation\:\ \`citation\(\"openalexPro\"\)\`\ now\ cites\ the\ package\ with\ its\ Zenodo\ DOI\ and\,\ separately\,\ the\ openalexPro\ ecosystem\.\ Added\ \`CITATION\.cff\`\ \(GitHub\ \"Cite\ this\ repository\"\)\ and\ \`\.zenodo\.json\`\ \(Zenodo\ metadata\,\ linking\ the\ related\ ecosystem\ packages\)\.\ The\ author\'s\ ORCID\ is\ in\ \`DESCRIPTION\`\.
+- Citation: `citation("openalexPro")` now cites the package with its Zenodo DOI and, separately, the openalexPro ecosystem. Added `CITATION.cff` (GitHub "Cite this repository") and `.zenodo.json` (Zenodo metadata, linking the related ecosystem packages). The author's ORCID is in `DESCRIPTION`.
 
 # openalexPro 0.15.0
 
