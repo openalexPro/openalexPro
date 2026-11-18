@@ -1,5 +1,15 @@
 # openalexPro (development version)
 
+- `pro_collection()` with a list of queries **and** a `name` creates one
+  collection and imports the queries into it one after another. This is
+  needed because OpenAlex refuses an import of more than 20,000 characters
+  of OQL (about 800 DOIs): split long ID or DOI lists with
+  `pro_query(..., chunk_limit = 500)`. A query that is too long now stops
+  before anything is created, and says how to split it. Earlier versions
+  failed only at the import. An interrupted run imports only the missing
+  parts. Without `name`, a list still gives one collection per element.
+- The documentation no longer says that imports have no length limit.
+
 # openalexPro 0.16.0
 
 - Citation: `citation("openalexPro")` now cites the package with its Zenodo DOI and, separately, the openalexPro ecosystem. Added `CITATION.cff` (GitHub "Cite this repository") and `.zenodo.json` (Zenodo metadata, linking the related ecosystem packages). The author's ORCID is in `DESCRIPTION`.

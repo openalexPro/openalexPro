@@ -163,7 +163,8 @@ recorded in `project_folder` is never deleted. `pro_collection()` stops instead.
 
 # Several queries
 
-A named list of queries gives one collection per element, named after it.
+Without `name`, a named list of queries gives one collection per element,
+named after it.
 Nested names are joined with `_`:
 
 ```{r}
@@ -181,10 +182,45 @@ pro_collection(
 # collections and folders: bleaching, reef_fish, reef_algae
 ```
 
-This applies to a list of chunks from `pro_query()` too: each chunk becomes
-its own collection. To keep a long ID or DOI list in one collection, build a
-single URL with `pro_query(..., chunk_limit = 1e6)`. The import sends the
-query as OQL, which has no URL length limit.
+## Long queries: several imports into one collection
+
+OpenAlex imports a query of at most 20,000 characters of OQL, which is
+about 800 DOIs. `pro_collection()` checks this before it creates anything,
+and stops for a query that is too long.
+
+To put a longer list into one collection, split it into chunks with
+`pro_query()` and pass the list of chunks **with `name`**. With a name, a
+list is not one collection per element. It is one collection, and its
+queries are imported one after another:
+
+```{r}
+q <- pro_query(doi = dois, chunk_limit = 500) # chunk_1, chunk_2, ...
+
+pro_collection(q, name = "my dois", project_folder = "proj", api_key = key)
+```
+
+```
+✔ [my dois] validating 6 queries
+✔ [my dois] creating collection
+✔ [my dois] importing part 1 of 6 (chunk_1)
+...
+✔ [my dois] importing part 6 of 6 (chunk_6)
+✔ [my dois] downloading member IDs
+```
+
+- **Cost.** It costs the same as one import of the whole list, because
+  credits are charged per 200 results.
+- **Duplicates.** An import only adds members. A work found by two chunks is
+  counted once, as `already_present` in the second import.
+- **Interruptions.** Each import is recorded as soon as it starts. Running
+  `pro_collection()` again waits for a running import and imports only the
+  chunks that are still missing.
+- **Changes.** A changed chunk counts as a changed query, so the collection
+  is re-created. `refresh = TRUE` imports every chunk again.
+- **Records on disk.** `_collection.json` keeps the URL, OQL and OQO of each
+  chunk, in the order given in `parts`. Each chunk's readable OQL is in
+  `parts/<chunk>/`, and a summary is in `_queries_oql.txt` and
+  `_queries_oql.html`.
 
 # Using a collection in queries
 
@@ -238,6 +274,9 @@ union of the member IDs.
 - **Records:** downloaded like any other query (`pro_fetch()`).
 - **Limits:**
   - 1,000,000 members per collection, and 500 collections per account.
+  - At most 20,000 characters of OQL per import. Longer queries go into one
+    collection in chunks (see
+    [Long queries](#long-queries-several-imports-into-one-collection)).
   - A collection with more than 300,000 members (100,000 for authors) cannot
     be used as a filter. Its member IDs can still be downloaded, but its
     records cannot (`select` beyond `"id"`).

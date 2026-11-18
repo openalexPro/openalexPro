@@ -19,7 +19,10 @@
 #'   \item{`_collection.json`}{the query (URL, OQL, OQO), the collection
 #'     (`collection_id`, `display_name`, `entity_type`, `member_count`, ...),
 #'     each import, the credits used and the `select` that was downloaded.}
-#'   \item{`_query_oql.txt`, `_query_oql.html`}{the query in readable OQL.}
+#'   \item{`_query_oql.txt`, `_query_oql.html`}{the query in readable OQL.
+#'     For a collection built from several queries, each query's text is in
+#'     `parts/<query name>/`, with a summary in `_queries_oql.txt` and
+#'     `_queries_oql.html`.}
 #'   \item{`members/parquet/`}{the member IDs (`id`, `added_at`).}
 #'   \item{`records/`}{the records when `select` asks for more than `id`
 #'     (the [pro_fetch()] layout).}
@@ -48,6 +51,14 @@
 #' maximum 1,000,000 members takes over an hour. Interrupting `pro_collection()`
 #' does not stop the import on the server; running it again waits for it.
 #'
+#' **Long queries:** OpenAlex imports a query of at most 20,000 characters
+#' of OQL (about 800 DOIs). Longer queries stop before anything is created.
+#' Split them into chunks, e.g. `pro_query(doi = dois, chunk_limit = 500)`,
+#' and pass the list with `name`. The chunks are then imported one after
+#' another into one collection, at the same cost as one import. An interrupted
+#' run continues with the chunks that are not imported yet. A changed chunk
+#' re-creates the collection, and `refresh = TRUE` imports every chunk again.
+#'
 #' **Limits:** 1,000,000 members per collection, 500 collections per
 #' account, names up to 100 characters and unique per account. A collection
 #' with more than 300,000 members (100,000 for authors) cannot be used as a
@@ -59,13 +70,13 @@
 #' queries.
 #'
 #' @param query_url A query from [pro_query()], or a named (nested) list of
-#'   queries: each element becomes its own collection, named after its list
-#'   names (nested names joined with `_`). A list of chunks from
-#'   `pro_query()` would give one collection per chunk; use
-#'   `pro_query(..., chunk_limit = 1e6)` to keep one query in one URL (the
-#'   import has no URL length limit).
-#' @param name Name of the collection (and of its folder) for a single query.
-#'   For a list, the list names are used and `name` must be `NULL`.
+#'   queries. Without `name`, each element of the list becomes its own
+#'   collection, named after its list names (nested names joined with `_`).
+#'   With `name`, all queries in the list go into one collection, one import
+#'   each (see **Long queries**).
+#' @param name Name of the collection (and of its folder). Required for a
+#'   single query. For a list: `NULL` gives one collection per element, a
+#'   name gives one collection for the whole list.
 #' @param project_folder Directory for the `<name>.collection` folders.
 #' @param select What to download: `"id"` (default) the member IDs only;
 #'   `NULL` nothing; `"all"` the full records; or a character vector of
@@ -79,7 +90,7 @@
 #'   `workers`, `compact_parquet`).
 #'
 #' @return Invisibly, the path of the `.collection` folder, or a named
-#'   character vector of paths for a list of queries.
+#'   character vector of paths for a list of queries without `name`.
 #'
 #' @examples
 #' \dontrun{
@@ -93,6 +104,10 @@
 #' # Add titles to the download (re-downloads the records)
 #' pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
 #'                select = c("id", "title"))
+#'
+#' # A long DOI list: chunks imported one after another into one collection
+#' pro_collection(pro_query(doi = dois, chunk_limit = 500), name = "my dois",
+#'                project_folder = "proj")
 #' }
 #'
 #' @seealso [pro_fetch()], [pro_query()], `vignette("collections")`.
@@ -121,11 +136,13 @@ pro_collection <- function(
       stop("`name` is required for a single query.", call. = FALSE)
     }
     queries <- stats::setNames(list(query_url), name)
-  } else {
-    if (!is.null(name)) {
-      stop("For a list of queries the list names are used; leave `name` NULL.",
-           call. = FALSE)
+  } else if (!is.null(name)) {
+    if (!is.character(name) || length(name) != 1L) {
+      stop("`name` must be a single name.", call. = FALSE)
     }
+    # all queries into one collection, one import each
+    queries <- stats::setNames(list(unlist(.col_leaves(query_url))), name)
+  } else {
     queries <- .col_leaves(query_url)
   }
   bad <- names(queries)[nchar(names(queries)) > 100L]
@@ -142,7 +159,7 @@ pro_collection <- function(
              refresh, api_key, verbose, progress, ...)
   }, character(1))
   names(out) <- names(queries)
-  invisible(if (is.character(query_url)) unname(out) else out)
+  invisible(if (is.character(query_url) || !is.null(name)) unname(out) else out)
 }
 
 #' Flatten a (nested) named list of queries; names joined with `_`
@@ -165,15 +182,16 @@ pro_collection <- function(
   }))
 }
 
-#' One query -> one collection folder
+#' One query (or several parts of one) -> one collection folder
 #' @keywords internal
 #' @noRd
-.col_one <- function(url, name, project_folder, select, refresh, api_key,
+.col_one <- function(urls, name, project_folder, select, refresh, api_key,
                      verbose, progress, ...) {
   started <- Sys.time()
   folder <- file.path(project_folder, paste0(gsub("[/\\\\]", "_", name), ".collection"))
   rec_file <- file.path(folder, "_collection.json")
-  root <- sub("(^https?://[^/?#]+).*", "\\1", url)
+  root <- sub("(^https?://[^/?#]+).*", "\\1", urls[[1]])
+  n <- length(urls)
   env <- environment()
   step <- function(msg) {
     if (progress) {
@@ -181,22 +199,19 @@ pro_collection <- function(
                              .envir = env)
     }
   }
+  # Downloads and query texts; cleared when the collection is re-created
+  local_files <- file.path(folder, c("members", "records", "parts", "_query_oql.txt",
+                                     "_query_oql.html", "_queries_oql.txt",
+                                     "_queries_oql.html"))
 
-  # 1. Validate the query (free) before anything is created
-  step("validating query")
-  if (grepl("[?&](group_by|sample)=", url)) {
-    stop("Queries with `group_by` or `sample` cannot be imported into a collection.",
-         call. = FALSE)
+  # 1. Validate every part (free) before anything is created
+  step(if (n > 1L) sprintf("validating %d queries", n) else "validating query")
+  oqs <- lapply(seq_len(n), function(p) .col_check(urls[[p]], api_key, if (n > 1L) names(urls)[[p]]))
+  entity <- unique(vapply(oqs, function(o) o$oqo$get_rows %||% "works", ""))
+  if (length(entity) > 1L) {
+    stop("All queries of one collection must list the same entity, not ",
+         paste(entity, collapse = " and "), ".", call. = FALSE)
   }
-  oq <- .oa_to_oqo(url, api_key)
-  if (is.null(oq)) {
-    stop("A single record cannot be made into a collection.", call. = FALSE)
-  }
-  if (!is.null(oq$oqo$group_by) || !is.null(oq$oqo$sample)) {
-    stop("Queries with `group_by` or `sample` cannot be imported into a collection.",
-         call. = FALSE)
-  }
-  entity <- oq$oqo$get_rows %||% "works"
 
   # 2. Keep, re-create or create the collection
   rec <- if (file.exists(rec_file)) jsonlite::read_json(rec_file, simplifyVector = FALSE)
@@ -204,13 +219,15 @@ pro_collection <- function(
   imports <- list()
   prev_credits <- 0
   if (!is.null(rec)) {
-    if (.oqo_equivalent(rec$oqo, oq$oqo)) {
+    old <- rec$oqo
+    if (!is.null(names(old))) old <- list(old) # a single query's OQO
+    if (length(old) == n && all(mapply(.oqo_equivalent, old, lapply(oqs, `[[`, "oqo")))) {
       col <- .col_get(root, rec$collection_id, api_key)
       imports <- rec$imports %||% list()
       prev_credits <- as.numeric(rec$credits_import %||% 0)
       if (is.null(col)) {
         step("collection is gone on OpenAlex; re-creating it")
-        unlink(file.path(folder, c("members", "records")), recursive = TRUE)
+        unlink(local_files, recursive = TRUE)
         imports <- list()
         prev_credits <- 0
       }
@@ -218,7 +235,7 @@ pro_collection <- function(
       step(paste("query changed: deleting collection", rec$collection_id, "and re-creating it"))
       .col_req(root, "DELETE", c("collections", rec$collection_id), api_key,
                ok = c(204L, 404L))
-      unlink(file.path(folder, c("members", "records")), recursive = TRUE)
+      unlink(local_files, recursive = TRUE)
     }
   }
 
@@ -230,7 +247,7 @@ pro_collection <- function(
       body = list(display_name = name, entity_type = entity), ok = 201L))
     dir.create(folder, recursive = TRUE, showWarnings = FALSE)
     # Written now so an interrupted run knows the collection
-    .col_write_record(rec_file, url, oq, col, imports, select = NULL,
+    .col_write_record(rec_file, urls, oqs, col, imports, select = NULL,
                       credits = NA, started = started)
   } else {
     step("collection exists")
@@ -238,37 +255,97 @@ pro_collection <- function(
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
 
-  # A previous import may still run, or never have started (interruption)
+  # A previous import may still run (interruption). Its part is known from the
+  # record; an unknown one (part 0) counts for no part.
   state <- .col_import_state(root, id, api_key)
   waited <- !is.null(state$running)
   if (waited) {
     step("waiting for the running import")
-    imports <- .col_add_import(imports, .col_wait(root, id, state$running, api_key, progress))
+    imports <- .col_add_import(imports, .col_wait(root, id, state$running, api_key, progress),
+                               part = if (n == 1L) 1L else 0L)
   }
-  imported <- created || isTRUE(refresh) || (!waited && !state$done)
-  if (imported) {
-    step("importing query")
+  done <- vapply(imports, function(x) {
+    if (identical(x$status, "done")) as.integer(x$part %||% 1L) else 0L
+  }, 0L)
+  if (n == 1L && state$done) done <- 1L
+  todo <- if (created || isTRUE(refresh)) seq_len(n) else setdiff(seq_len(n), done)
+  for (p in todo) {
+    step(if (n > 1L) sprintf("importing part %d of %d (%s)", p, n, names(urls)[[p]]) else "importing query")
     imp <- .col_json(.col_req(root, "POST", c("collections", id, "imports"), api_key,
-      body = list(oql = oq$oql), ok = 202L))
-    imports <- .col_add_import(imports, .col_wait(root, id, imp$id, api_key, progress))
+      body = list(oql = oqs[[p]]$oql), ok = 202L))
+    imports <- .col_add_import(imports, imp, part = p)
+    .col_write_record(rec_file, urls, oqs, col, imports, select = NULL,
+                      credits = NA, started = started)
+    imports <- .col_add_import(imports, .col_wait(root, id, imp$id, api_key, progress), part = p)
   }
-  fresh <- imported || waited
+  fresh <- length(todo) > 0L || waited
   col <- .col_get(root, id, api_key) %||% col
   credits <- sum(prev_credits, .col_credits(root, api_key) - credits0, na.rm = TRUE)
-  if (fresh) {
-    .pr_write_query_text(folder, oq$oqo, oq$oql, root, api_key,
-                         records = col$member_count, query_url = .pr_strip_key(url))
-  }
+  if (fresh) .col_write_query_text(folder, urls, oqs, imports, col, root, api_key)
 
   # 3. Downloads, in line with `select`
   old_select <- if (!fresh && !is.null(rec)) unlist(rec$select)
   .col_sync_downloads(folder, root, id, entity, select, old_select, fresh,
                       api_key, verbose, progress, step, ...)
 
-  .col_write_record(rec_file, url, oq, col, imports, select,
+  .col_write_record(rec_file, urls, oqs, col, imports, select,
                     credits = credits,
                     started = started)
   normalizePath(folder)
+}
+
+#' Translate one query (free) and check that it can be imported
+#' @keywords internal
+#' @noRd
+.col_check <- function(url, api_key, part = NULL) {
+  what <- if (is.null(part)) "The query" else paste0("Query `", part, "`")
+  no_import <- paste(what, "uses `group_by` or `sample`, which cannot be imported into a collection.")
+  if (grepl("[?&](group_by|sample)=", url)) stop(no_import, call. = FALSE)
+  oq <- .oa_to_oqo(url, api_key)
+  if (is.null(oq)) {
+    stop("A single record cannot be made into a collection.", call. = FALSE)
+  }
+  if (!is.null(oq$oqo$group_by) || !is.null(oq$oqo$sample)) stop(no_import, call. = FALSE)
+  if (nchar(oq$oql) > 20000L) {
+    stop(what, " is ", format(nchar(oq$oql), big.mark = ","), " characters as OQL; ",
+         "OpenAlex imports at most 20,000. ",
+         if (is.null(part)) {
+           paste("Split it, e.g. `pro_query(..., chunk_limit = 500)`, and pass the list",
+                 "of chunks with `name`: they are imported one after another into one collection.")
+         } else {
+           "Use smaller chunks (a lower `chunk_limit` in `pro_query()`)."
+         },
+         call. = FALSE)
+  }
+  oq
+}
+
+#' `_query_oql.*` for one query; per part in `parts/<part>/` plus a summary
+#' @keywords internal
+#' @noRd
+.col_write_query_text <- function(folder, urls, oqs, imports, col, root, api_key) {
+  if (length(urls) == 1L) {
+    return(.pr_write_query_text(folder, oqs[[1]]$oqo, oqs[[1]]$oql, root, api_key,
+                                records = col$member_count,
+                                query_url = .pr_strip_key(urls[[1]])))
+  }
+  parts <- gsub("[/\\\\]", "_", names(urls))
+  for (p in seq_along(urls)) {
+    dir <- file.path(folder, "parts", parts[[p]])
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    imp <- Filter(function(x) identical(as.integer(x$part), p), imports)
+    n_res <- if (length(imp)) imp[[length(imp)]]$result_count
+    # the part's query record, read by the summary
+    jsonlite::write_json(
+      list(query_url = .pr_strip_key(urls[[p]]), via = "collection",
+           oql = oqs[[p]]$oql, oqo = oqs[[p]]$oqo, records = n_res),
+      file.path(dir, "_query.json"), auto_unbox = TRUE, pretty = TRUE,
+      null = "null", digits = NA
+    )
+    .pr_write_query_text(dir, oqs[[p]]$oqo, oqs[[p]]$oql, root, api_key,
+                         records = n_res, query_url = .pr_strip_key(urls[[p]]))
+  }
+  .pr_write_queries_summary(folder, lapply(parts, function(x) c("parts", x)))
 }
 
 #' Bring `members/` and `records/` in line with `select`
@@ -397,13 +474,16 @@ pro_collection <- function(
   list(running = if (length(running)) running[[1]]$id, done = any(status == "done"))
 }
 
-#' Keep the useful fields of an import status
+#' Add an import (or update it, by id), keeping its useful fields and its part
 #' @keywords internal
 #' @noRd
-.col_add_import <- function(imports, s) {
-  c(imports, list(s[intersect(names(s), c("id", "status", "result_count", "added",
-                                          "already_present", "stopped_at_limit",
-                                          "updated_date"))]))
+.col_add_import <- function(imports, s, part) {
+  s <- s[intersect(names(s), c("id", "status", "result_count", "added",
+                               "already_present", "stopped_at_limit", "updated_date"))]
+  i <- match(s$id %||% NA_character_, vapply(imports, function(x) x$id %||% "", ""))
+  if (is.na(i)) return(c(imports, list(c(list(part = part), s))))
+  imports[[i]] <- utils::modifyList(imports[[i]], s)
+  imports
 }
 
 #' GET a collection; NULL if it does not exist (any more)
@@ -475,12 +555,15 @@ pro_collection <- function(
 #' Write `_collection.json`
 #' @keywords internal
 #' @noRd
-.col_write_record <- function(file, url, oq, col, imports, select, credits, started) {
+.col_write_record <- function(file, urls, oqs, col, imports, select, credits, started) {
+  # one query: as in `_query.json`; several: arrays, in the order of `parts`
+  one <- function(x) if (length(x) == 1L) x[[1]] else unname(x)
   record <- list(
-    query_url = .pr_strip_key(url),
+    query_url = one(lapply(urls, .pr_strip_key)),
+    parts = if (length(urls) > 1L) as.list(names(urls)),
     via = "collection",
-    oql = oq$oql,
-    oqo = oq$oqo,
+    oql = one(lapply(oqs, `[[`, "oql")),
+    oqo = one(lapply(oqs, `[[`, "oqo")),
     records = col$member_count,
     credits_import = credits,
     started = format(started, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),

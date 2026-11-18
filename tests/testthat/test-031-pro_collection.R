@@ -319,3 +319,88 @@ test_that("a failed import and a 401 stop with OpenAlex's reason", {
   expect_error(.col_req("https://api.openalex.org", "GET", "collections", "k"),
                "personal OpenAlex API key")
 })
+
+q3 <- "https://api.openalex.org/works?filter=publication_year%3A2022&search=coral"
+chunks <- list(chunk_1 = q1, chunk_2 = q2, chunk_3 = q3)
+
+imports_sent <- function(state) {
+  vapply(Filter(function(x) x$method == "POST" && grepl("imports$", x$path), state$log),
+         function(x) x$body$oql, "")
+}
+
+test_that("a list with `name` is one collection, filled by one import per query", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  f <- pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  expect_equal(basename(f), "dois.collection")
+  expect_null(names(f))
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_equal(imports_sent(state), paste("get works", sub(".*\\.org", "", c(q1, q2, q3))))
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_equal(unlist(rec$parts), names(chunks))
+  expect_equal(unlist(rec$query_url), unname(unlist(chunks)))
+  expect_length(rec$oqo, 3)
+  expect_equal(vapply(rec$imports, function(x) x$part, 1L), 1:3)
+  expect_true(all(vapply(rec$imports, function(x) x$status == "done", TRUE)))
+  expect_true(file.exists(file.path(f, "parts", "chunk_2", "_query_oql.txt")))
+  expect_equal(jsonlite::read_json(file.path(f, "parts", "chunk_2", "_query.json"))$records, 3)
+  expect_true(file.exists(file.path(f, "_queries_oql.txt")))
+  expect_true(file.exists(file.path(f, "members/parquet/members.parquet")))
+
+  # same parts again: nothing imported; refresh: every part again
+  pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(posts(state, "imports$"), 3)
+  pro_collection(chunks, name = "dois", project_folder = pf, refresh = TRUE,
+                 api_key = "k", progress = FALSE)
+  expect_equal(posts(state, "imports$"), 6)
+  expect_equal(posts(state, "/collections$"), 1)
+
+  # one part changed: the collection is re-created
+  chunks2 <- chunks
+  chunks2$chunk_3 <- paste0(q3, "x")
+  pro_collection(chunks2, name = "dois", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(posts(state, "/collections$"), 2)
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$collection_id, "col_2")
+})
+
+test_that("an interrupted multi-part import resumes with the missing parts", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  real_wait <- .col_wait
+  k <- new.env(); k$n <- 0L
+  local({
+    local_mocked_bindings(.col_wait = function(...) {
+      k$n <- k$n + 1L
+      if (k$n == 2L) stop("interrupted") # while part 2 runs
+      real_wait(...)
+    })
+    expect_error(pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                                progress = FALSE), "interrupted")
+  })
+  expect_equal(posts(state, "imports$"), 2)
+  f <- pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  # part 2 is waited for, not started again; only part 3 is new
+  expect_equal(imports_sent(state)[3], paste("get works", sub(".*\\.org", "", q3)))
+  expect_equal(posts(state, "imports$"), 3)
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_equal(vapply(rec$imports, function(x) x$part, 1L), 1:3)
+})
+
+test_that("a query over 20,000 characters of OQL stops before anything is created", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  pf <- withr::local_tempdir()
+  long <- paste0("https://api.openalex.org/works?search=", strrep("a", 20000))
+  expect_error(pro_collection(long, name = "c", project_folder = pf, api_key = "k",
+                              progress = FALSE), "at most 20,000.*chunk_limit")
+  expect_error(pro_collection(list(chunk_1 = q1, chunk_2 = long), name = "c",
+                              project_folder = pf, api_key = "k", progress = FALSE),
+               "Query `chunk_2`.*smaller chunks")
+  expect_equal(posts(state, "/collections"), 0)
+})

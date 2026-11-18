@@ -18,14 +18,14 @@ pro_collection(
 }
 \arguments{
 \item{query_url}{A query from \code{\link[=pro_query]{pro_query()}}, or a named (nested) list of
-queries: each element becomes its own collection, named after its list
-names (nested names joined with \verb{_}). A list of chunks from
-\code{pro_query()} would give one collection per chunk; use
-\code{pro_query(..., chunk_limit = 1e6)} to keep one query in one URL (the
-import has no URL length limit).}
+queries. Without \code{name}, each element of the list becomes its own
+collection, named after its list names (nested names joined with \verb{_}).
+With \code{name}, all queries in the list go into one collection, one import
+each (see \strong{Long queries}).}
 
-\item{name}{Name of the collection (and of its folder) for a single query.
-For a list, the list names are used and \code{name} must be \code{NULL}.}
+\item{name}{Name of the collection (and of its folder). Required for a
+single query. For a list: \code{NULL} gives one collection per element, a
+name gives one collection for the whole list.}
 
 \item{project_folder}{Directory for the \verb{<name>.collection} folders.}
 
@@ -47,7 +47,7 @@ member IDs are downloaded whenever \code{select} is not \code{NULL}.}
 }
 \value{
 Invisibly, the path of the \code{.collection} folder, or a named
-character vector of paths for a list of queries.
+character vector of paths for a list of queries without \code{name}.
 }
 \description{
 Turns each query into an OpenAlex
@@ -63,7 +63,10 @@ Each query gets a folder \verb{<project_folder>/<name>.collection/} with
 \item{\verb{_collection.json}}{the query (URL, OQL, OQO), the collection
 (\code{collection_id}, \code{display_name}, \code{entity_type}, \code{member_count}, ...),
 each import, the credits used and the \code{select} that was downloaded.}
-\item{\verb{_query_oql.txt}, \verb{_query_oql.html}}{the query in readable OQL.}
+\item{\verb{_query_oql.txt}, \verb{_query_oql.html}}{the query in readable OQL.
+For a collection built from several queries, each query's text is in
+\verb{parts/<query name>/}, with a summary in \verb{_queries_oql.txt} and
+\verb{_queries_oql.html}.}
 \item{\verb{members/parquet/}}{the member IDs (\code{id}, \code{added_at}).}
 \item{\verb{records/}}{the records when \code{select} asks for more than \code{id}
 (the \code{\link[=pro_fetch]{pro_fetch()}} layout).}
@@ -92,6 +95,14 @@ results yourself (one list request per 200 results). Imports run at about
 maximum 1,000,000 members takes over an hour. Interrupting \code{pro_collection()}
 does not stop the import on the server; running it again waits for it.
 
+\strong{Long queries:} OpenAlex imports a query of at most 20,000 characters
+of OQL (about 800 DOIs). Longer queries stop before anything is created.
+Split them into chunks, e.g. \code{pro_query(doi = dois, chunk_limit = 500)},
+and pass the list with \code{name}. The chunks are then imported one after
+another into one collection, at the same cost as one import. An interrupted
+run continues with the chunks that are not imported yet. A changed chunk
+re-creates the collection, and \code{refresh = TRUE} imports every chunk again.
+
 \strong{Limits:} 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection
 with more than 300,000 members (100,000 for authors) cannot be used as a
@@ -114,6 +125,10 @@ pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
 # Add titles to the download (re-downloads the records)
 pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
                select = c("id", "title"))
+
+# A long DOI list: chunks imported one after another into one collection
+pro_collection(pro_query(doi = dois, chunk_limit = 500), name = "my dois",
+               project_folder = "proj")
 }
 
 }
