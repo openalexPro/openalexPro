@@ -95,7 +95,7 @@
 #'                select = c("id", "title"))
 #' }
 #'
-#' @seealso [pro_fetch()], [pro_query()].
+#' @seealso [pro_fetch()], [pro_query()], `vignette("collections")`.
 #' @md
 #' @export
 pro_collection <- function(
