@@ -10,6 +10,7 @@ pro_collection(
   project_folder,
   select = "id",
   refresh = FALSE,
+  access = NULL,
   api_key = pro_api_key(),
   verbose = FALSE,
   progress = TRUE,
@@ -18,14 +19,14 @@ pro_collection(
 }
 \arguments{
 \item{query_url}{A query from \code{\link[=pro_query]{pro_query()}}, or a named (nested) list of
-queries: each element becomes its own collection, named after its list
-names (nested names joined with \verb{_}). A list of chunks from
-\code{pro_query()} would give one collection per chunk; use
-\code{pro_query(..., chunk_limit = 1e6)} to keep one query in one URL (the
-import has no URL length limit).}
+queries. Without \code{name}, each element of the list becomes its own
+collection, named after its list names (nested names joined with \verb{_}).
+With \code{name}, all queries in the list go into one collection (see
+\strong{Several queries in one collection}).}
 
-\item{name}{Name of the collection (and of its folder) for a single query.
-For a list, the list names are used and \code{name} must be \code{NULL}.}
+\item{name}{Name of the collection (and of its folder). Required for a
+single query. For a list: \code{NULL} gives one collection per element, a
+name gives one collection for the whole list.}
 
 \item{project_folder}{Directory for the \verb{<name>.collection} folders.}
 
@@ -36,18 +37,25 @@ member IDs are downloaded whenever \code{select} is not \code{NULL}.}
 
 \item{refresh}{If \code{TRUE}, import an unchanged query again and re-download.}
 
+\item{access}{Who can see the collection: \code{"private"} (only you, the
+default for new collections), \code{"shared_by_link"} (anyone with its link or
+ID can view it and filter by it; it is not listed) or \code{"public"} (only
+OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
+\code{NULL} (default) leaves it as it is.}
+
 \item{api_key}{A personal OpenAlex API key.}
 
 \item{verbose}{Print the collection ID(s).}
 
 \item{progress}{Show the steps and import progress.}
 
-\item{...}{Passed to \code{\link[=pro_fetch]{pro_fetch()}} when records are downloaded (e.g.
-\code{workers}, \code{compact_parquet}).}
+\item{...}{Passed to \code{\link[=pro_fetch]{pro_fetch()}} when records are downloaded, and when
+the queries of a list with \code{name} are fetched (e.g. \code{workers},
+\code{compact_parquet}).}
 }
 \value{
 Invisibly, the path of the \code{.collection} folder, or a named
-character vector of paths for a list of queries.
+character vector of paths for a list of queries without \code{name}.
 }
 \description{
 Turns each query into an OpenAlex
@@ -64,6 +72,10 @@ Each query gets a folder \verb{<project_folder>/<name>.collection/} with
 (\code{collection_id}, \code{display_name}, \code{entity_type}, \code{member_count}, ...),
 each import, the credits used and the \code{select} that was downloaded.}
 \item{\verb{_query_oql.txt}, \verb{_query_oql.html}}{the query in readable OQL.}
+\item{\verb{_parts.parquet}}{for a list of queries in one collection (see
+\strong{Several queries in one collection}): the name and URL of each query.
+\verb{_collection.json} then holds no queries, so it stays small however
+long the list is.}
 \item{\verb{members/parquet/}}{the member IDs (\code{id}, \code{added_at}).}
 \item{\verb{records/}}{the records when \code{select} asks for more than \code{id}
 (the \code{\link[=pro_fetch]{pro_fetch()}} layout).}
@@ -92,11 +104,35 @@ results yourself (one list request per 200 results). Imports run at about
 maximum 1,000,000 members takes over an hour. Interrupting \code{pro_collection()}
 does not stop the import on the server; running it again waits for it.
 
+\strong{Several queries in one collection:} OpenAlex imports a query of at
+most 20,000 characters of OQL (about 600 to 800 DOIs); a longer single
+query stops before anything is created. For long ID or DOI lists, split
+them into chunks, e.g. \code{pro_query(doi = dois, chunk_limit = 200)}, and pass
+the list with \code{name}. The queries are then not imported: they are fetched
+with \code{\link[=pro_fetch]{pro_fetch()}} (\code{select = "id"}, in parallel with \code{workers}) and the
+IDs are added to the collection (\code{member_ids}, 10,000 per request, free).
+This costs the same credits as imports and was about five times faster
+with \code{workers = 8} (3,000 DOIs: 8.5 s instead of 45 to 55 s, November
+2026). Fields in \code{select} beyond \code{id} are fetched in the same pass, from
+the queries themselves, so the records do not depend on the collection
+filter limit. An interrupted run resumes the fetch and adds the members
+again (adding is idempotent). A changed query re-creates the collection,
+and \code{refresh = TRUE} fetches and adds everything again.
+
 \strong{Limits:} 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection
 with more than 300,000 members (100,000 for authors) cannot be used as a
 filter, so its records cannot be downloaded with \code{select}; its member IDs
 can. Queries with \code{group_by} or \code{sample} cannot be imported.
+
+\strong{Core and expansion works:} a collection holds all its members, and the
+member IDs in \verb{members/} include expansion works (DataCite, repositories).
+A \emph{filter} by a works collection returns only its core works unless
+\code{corpus = "all"} is set, so the records in \verb{records/} are fetched with
+\code{corpus = "all"}, and later queries should set it too:
+\code{pro_query(collection = id, options = list(corpus = "all"))}. Whether
+expansion works get into the collection depends on the query that fills
+it (\code{options = list(corpus = "all")} in \code{\link[=pro_query]{pro_query()}}).
 
 \strong{API key:} collections need a \emph{personal} OpenAlex API key; organisation
 keys and some older keys are refused (HTTP 401) even when they work for
@@ -108,12 +144,23 @@ q <- pro_query(search = "coral bleaching", publication_year = 2024)
 f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
 id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 
-# Later: records of the collection that are open access
-pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
+# Later: records of the collection that are open access. corpus = "all":
+# without it, the filter returns only the core works
+pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
+          project_folder = "oa")
+
+# Let anyone with the link or ID use it
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               access = "shared_by_link")
 
 # Add titles to the download (re-downloads the records)
 pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
                select = c("id", "title"))
+
+# A long DOI list in one collection: the chunks are fetched in parallel
+# and their IDs added as members
+pro_collection(pro_query(doi = dois, chunk_limit = 200), name = "my dois",
+               project_folder = "proj", workers = 8)
 }
 
 }

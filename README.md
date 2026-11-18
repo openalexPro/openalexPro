@@ -154,8 +154,10 @@ q <- pro_query(search = "coral bleaching", publication_year = 2024)
 f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
 id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 
-# Later: only the open-access members, as records
-pro_fetch(pro_query(collection = id, is_oa = TRUE), project_folder = "oa")
+# Later: only the open-access members, as records. corpus = "all": without
+# it, a collection filter returns only the core works, not the expansion ones
+pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
+          project_folder = "oa")
 ```
 
 Everything about the collection is in `proj/coral bleaching 2024.collection/`:
@@ -165,7 +167,7 @@ Everything about the collection is in `proj/coral bleaching 2024.collection/`:
 - `members/parquet/`: the member IDs.
 - `records/`: the records, when `select` asks for more than `id`.
 
-Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection, and `refresh = TRUE` imports the query again. A named list of queries gives one collection per element.
+Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection, and `refresh = TRUE` imports the query again. A named list of queries gives one collection per element. With `name`, the whole list goes into one collection: its queries are fetched with `pro_fetch()` (in parallel with `workers`) and the IDs added as members. Use this for long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).
 
 Costs:
 

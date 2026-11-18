@@ -21,6 +21,7 @@ mock_collections <- function(state, n_members = 3L) {
         body = charToRaw(as.character(jsonlite::toJSON(x, auto_unbox = TRUE, null = "null"))))
     }
     err <- function(status, code) json(list(code = code, message = code), status)
+    pub <- function(col) col[setdiff(names(col), c("imports", "members"))]
     if (identical(p, "query")) {
       oqo <- body$oqo %||% list(get_rows = "works", filter_rows = list(
         list(column_id = "q", value = body$oxurl %||% body$oql)))
@@ -40,8 +41,8 @@ mock_collections <- function(state, n_members = 3L) {
       id <- paste0("col_", state$next_id)
       state$cols[[id]] <- list(id = paste0("https://openalex.org/collections/", id),
         display_name = body$display_name, entity_type = body$entity_type,
-        member_count = 0L, access = "private", imports = list())
-      return(json(state$cols[[id]][-6], 201L))
+        member_count = 0L, access = "private", imports = list(), members = character(0))
+      return(json(pub(state$cols[[id]]), 201L))
     }
     id <- p[[2]]
     col <- state$cols[[id]]
@@ -51,7 +52,20 @@ mock_collections <- function(state, n_members = 3L) {
         state$cols[[id]] <- NULL
         return(httr2::response(204L))
       }
-      return(json(col[-6]))
+      if (method == "PATCH") {
+        if (identical(body$access, "public")) return(err(403L, "public_needs_review"))
+        state$cols[[id]]$access <- body$access
+        return(json(pub(state$cols[[id]])))
+      }
+      return(json(pub(col)))
+    }
+    if (p[[3]] == "members" && method == "POST") {
+      ids <- unlist(body$member_ids)
+      new <- setdiff(ids, col$members)
+      state$cols[[id]]$members <- c(col$members, new)
+      state$cols[[id]]$member_count <- length(state$cols[[id]]$members)
+      return(json(list(added = length(new), already_present = length(ids) - length(new),
+                       member_count = state$cols[[id]]$member_count)))
     }
     if (p[[3]] == "members") {
       csv <- paste0("id,added_at\n", paste0("W", seq_len(col$member_count),
@@ -92,10 +106,11 @@ local_collections <- function(state, ..., env = parent.frame()) {
 # pro_fetch() replaced by a writer of one parquet file with the selected columns
 local_fake_fetch <- function(calls, env = parent.frame()) {
   calls$n <- 0L
-  local_mocked_bindings(pro_fetch = function(query_url, project_folder, ...) {
+  local_mocked_bindings(pro_fetch = function(query_url, project_folder, resume = FALSE, ...) {
     calls$n <- calls$n + 1L
     calls$url <- query_url
-    sel <- httr2::url_parse(query_url)$query$select
+    calls$resume <- resume
+    sel <- httr2::url_parse(if (is.list(query_url)) query_url[[1]] else query_url)$query$select
     cols <- strsplit(sel %||% "id,title,doi", ",")[[1]]
     dir.create(file.path(project_folder, "parquet"), recursive = TRUE, showWarnings = FALSE)
     df <- as.data.frame(stats::setNames(lapply(cols, function(x) paste0(x, 1:3)), cols))
@@ -275,6 +290,7 @@ test_that("select syncs the records: add re-downloads, remove drops locally", {
   qu <- httr2::url_parse(calls$url)$query
   expect_equal(qu$filter, "collection:col_1")
   expect_equal(qu$select, "id,title")
+  expect_equal(qu$corpus, "all") # the filter alone returns only core works
   expect_equal(pq_cols(file.path(f, "records/parquet")), c("id", "title"))
 
   pro_collection(q1, name = "c", project_folder = pf, select = c("id", "title", "doi"),
@@ -318,4 +334,156 @@ test_that("a failed import and a 401 stop with OpenAlex's reason", {
   })
   expect_error(.col_req("https://api.openalex.org", "GET", "collections", "k"),
                "personal OpenAlex API key")
+})
+
+q3 <- "https://api.openalex.org/works?filter=publication_year%3A2022&search=coral"
+chunks <- list(chunk_1 = q1, chunk_2 = q2, chunk_3 = q3)
+
+sel_of <- function(url) httr2::url_parse(url)$query$select
+
+test_that("a list with `name` is one collection: fetched, IDs added as members", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  f <- pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  expect_equal(basename(f), "dois.collection")
+  expect_null(names(f))
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_equal(posts(state, "imports$"), 0)
+  expect_equal(posts(state, "members$"), 1)
+  expect_equal(calls$n, 1L)
+  expect_equal(names(calls$url), names(chunks))
+  expect_equal(sel_of(calls$url[[2]]), "id")
+  expect_equal(httr2::url_parse(calls$url[[2]])$query$filter, "publication_year:2023")
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_equal(rec$via, "members")
+  expect_true(rec$members_added)
+  expect_equal(rec$added, 3)
+  expect_equal(rec$member_count, 3)
+  expect_null(rec$query_url) # the queries are in _parts.parquet, not here
+  expect_null(rec$oqo)
+  parts <- arrow::read_parquet(file.path(f, "_parts.parquet"))
+  expect_equal(parts$part, names(chunks))
+  expect_equal(parts$query_url, unname(unlist(chunks)))
+  expect_false(dir.exists(file.path(f, "_ids")))
+  expect_false(dir.exists(file.path(f, "records")))
+  expect_equal(nrow(arrow::read_parquet(file.path(f, "members/parquet/members.parquet"))), 3)
+
+  # the same list again: nothing fetched or added; refresh: both again
+  pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(calls$n, 1L)
+  expect_equal(posts(state, "members$"), 1)
+  pro_collection(chunks, name = "dois", project_folder = pf, refresh = TRUE,
+                 api_key = "k", progress = FALSE)
+  expect_equal(calls$n, 2L)
+  expect_false(calls$resume)
+  expect_equal(posts(state, "members$"), 2)
+  expect_equal(posts(state, "/collections$"), 1)
+
+  # one query changed: the collection is re-created
+  chunks2 <- chunks
+  chunks2$chunk_3 <- paste0(q3, "x")
+  pro_collection(chunks2, name = "dois", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_true(any(vapply(state$log, function(x) {
+    x$method == "DELETE" && x$path == "/collections/col_1"
+  }, TRUE)))
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$collection_id, "col_2")
+})
+
+test_that("an interrupted members run resumes the fetch and adds the members", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  local({
+    local_mocked_bindings(.col_add_members = function(...) stop("interrupted"))
+    expect_error(pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                                progress = FALSE), "interrupted")
+  })
+  rec_file <- file.path(pf, "dois.collection", "_collection.json")
+  expect_false(jsonlite::read_json(rec_file)$members_added)
+  f <- pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  expect_equal(calls$n, 2L)
+  expect_true(calls$resume)
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_equal(posts(state, "members$"), 1)
+  expect_true(jsonlite::read_json(rec_file)$members_added)
+})
+
+test_that("records of a members collection come from its queries", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  f <- pro_collection(chunks, name = "d", project_folder = pf, select = c("id", "title"),
+                      api_key = "k", progress = FALSE)
+  expect_equal(calls$n, 1L) # IDs and records in one pass
+  expect_equal(sel_of(calls$url[[1]]), "id,title")
+  expect_equal(pq_cols(file.path(f, "records/parquet")), c("id", "title"))
+
+  pro_collection(chunks, name = "d", project_folder = pf, select = c("id", "title", "doi"),
+                 api_key = "k", progress = FALSE)
+  expect_equal(calls$n, 2L)
+  expect_equal(names(calls$url), names(chunks)) # not a `collection:` filter
+  expect_equal(sel_of(calls$url[[1]]), "id,title,doi")
+  expect_equal(posts(state, "members$"), 1)
+
+  pro_collection(chunks, name = "d", project_folder = pf, select = c("id", "doi"),
+                 api_key = "k", progress = FALSE)
+  expect_equal(calls$n, 2L)
+  expect_equal(pq_cols(file.path(f, "records/parquet")), c("id", "doi"))
+})
+
+test_that(".col_add_members() sends at most `batch` IDs per request", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  f <- pro_collection(chunks, name = "d", project_folder = withr::local_tempdir(),
+                      select = NULL, api_key = "k", progress = FALSE)
+  expect_false(dir.exists(file.path(f, "members")))
+  r <- .col_add_members("https://api.openalex.org", "col_1", c("id1", paste0("W", 1:4)),
+                        "k", progress = FALSE, batch = 2L)
+  expect_equal(posts(state, "members$"), 1 + 3)
+  expect_equal(r, list(added = 4, already_present = 1))
+})
+
+test_that("a query over 20,000 characters of OQL stops before anything is created", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  pf <- withr::local_tempdir()
+  long <- paste0("https://api.openalex.org/works?search=", strrep("a", 20000))
+  expect_error(pro_collection(long, name = "c", project_folder = pf, api_key = "k",
+                              progress = FALSE), "at most 20,000.*chunk_limit")
+  expect_equal(posts(state, "/collections"), 0)
+})
+
+test_that("access is set when asked, and only when it differs", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  patches <- function() sum(vapply(state$log, function(x) x$method == "PATCH", TRUE))
+  f <- pro_collection(q1, name = "c", project_folder = pf, access = "shared_by_link",
+                      api_key = "k", progress = FALSE)
+  expect_equal(patches(), 1)
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$access, "shared_by_link")
+  pro_collection(q1, name = "c", project_folder = pf, access = "shared_by_link",
+                 api_key = "k", progress = FALSE)
+  pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(patches(), 1) # same access, or NULL: no change
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$access, "shared_by_link")
+
+  f2 <- pro_collection(chunks, name = "d", project_folder = pf, access = "shared_by_link",
+                       api_key = "k", progress = FALSE)
+  expect_equal(patches(), 2)
+  expect_equal(jsonlite::read_json(file.path(f2, "_collection.json"))$access, "shared_by_link")
+
+  expect_error(pro_collection(q1, name = "c", project_folder = pf, access = "public",
+                              api_key = "k", progress = FALSE),
+               "public_needs_review")
+  expect_error(pro_collection(q1, name = "c", project_folder = pf, access = "everyone",
+                              api_key = "k", progress = FALSE), "should be one of")
 })
