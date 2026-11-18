@@ -195,8 +195,15 @@ mock_oqo_api <- function(log) {
         return(httr2::response(400, headers = list("content-type" = "application/json"),
           body = charToRaw('{"oqo":null,"validation":{"valid":false,"errors":[{"type":"bad_request","message":"INVALID is not a valid field"}]}}')))
       }
+      # like OpenAlex: `sample` as a number, `seed` as text
+      ox <- httr2::url_parse(paste0("https://x", body$oxurl %||% ""))$query
+      extra <- paste0(
+        "",
+        if (!is.null(ox$sample)) sprintf(',"sample":%s', ox$sample),
+        if (!is.null(ox$seed)) sprintf(',"seed":"%s"', ox$seed)
+      )
       return(httr2::response(200, headers = list("content-type" = "application/json"),
-        body = charToRaw('{"oql_oneline":"get works where type is (article)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"article"}]},"validation":{"valid":true,"errors":[]}}')))
+        body = charToRaw(sprintf('{"oql_oneline":"get works where type is (article)","oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"article"}]%s},"validation":{"valid":true,"errors":[]}}', extra))))
     }
     first <- identical(body$cursor, "*") || identical(body$page, 1L)
     httr2::response(200, headers = list("content-type" = "application/json"),
@@ -250,7 +257,7 @@ test_that("via = 'oqo' puts sample (number) and seed (text) into the OQO and pag
     output = file.path(withr::local_tempdir(), "json"), progress = FALSE, via = "oqo"
   )
   r <- log$requests
-  expect_false(grepl("sample|seed", r[[1]]$body$oxurl))
+  expect_true(grepl("sample=3&seed=7", r[[1]]$body$oxurl, fixed = TRUE))
   expect_identical(r[[2]]$body$oqo$sample, 3L)
   expect_identical(r[[2]]$body$oqo$seed, "7")
   expect_equal(c(r[[2]]$body$page, r[[3]]$body$page), c(1L, 2L))
