@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.15.0
 
 - New `pro_collection()`: turns queries from `pro_query()` into OpenAlex
   collections (server-side ID sets that can be reused as filters,
