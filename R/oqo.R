@@ -6,11 +6,8 @@
 # OpenAlex compiles every query to an OQO before running it. Translating once
 # (free, POST /query) and sending the OQO directly (POST /) has no URL length
 # limit, accepts more than 100 values per filter, and records exactly what ran.
-#
-# Translator quirk (2026-10): numeric view parameters in a translated URL
-# (`sample`, `per_page`, `page`) come back as text and fail validation. So the
-# paging parameters are removed before translating, and `sample` / `seed` are
-# put back into the OQO as a number / string afterwards.
+# Paging parameters are removed before translating: each page request sets
+# its own.
 
 #' Translate a query URL into an OQO
 #'
@@ -46,7 +43,7 @@
       stop("`query_url` has neither an entity path nor `oql` / `oqo`.", call. = FALSE)
     }
   } else {
-    drop <- c("select", "sort", "per_page", "page", "cursor", "api_key", "sample", "seed")
+    drop <- c("select", "sort", "per_page", "page", "cursor", "api_key")
     rest <- q[setdiff(names(q), drop)]
     oxurl <- paste0("/", path)
     if (length(rest) > 0L) {
@@ -62,11 +59,8 @@
   }
 
   translated <- .oa_translate(root, body, api_key)
-  oqo <- translated$oqo
-  if (!is.null(q$sample)) oqo$sample <- as.integer(q$sample)
-  if (!is.null(q$seed)) oqo$seed <- as.character(q$seed)
 
-  list(oqo = oqo, oql = translated$oql_oneline, view = view, root = root)
+  list(oqo = translated$oqo, oql = translated$oql_oneline, view = view, root = root)
 }
 
 #' Translate and validate a query with OpenAlex's free `/query` endpoint

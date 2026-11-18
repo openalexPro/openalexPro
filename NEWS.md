@@ -1,5 +1,10 @@
 # openalexPro (development version)
 
+- `via = "oqo"`: `sample` and `seed` are now translated by OpenAlex's
+  `/query` with the rest of the query. The workaround that took them out and
+  put them back into the OQO is removed, since OpenAlex fixed the translator
+  (#79).
+
 # openalexPro 0.14.1
 
 - License changed from GPL (>= 2) to MIT.

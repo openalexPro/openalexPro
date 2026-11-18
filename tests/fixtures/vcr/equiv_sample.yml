@@ -239,7 +239,7 @@ http_interactions:
     method: POST
     uri: https://api.openalex.org/query
     body:
-      string: '{"oxurl":"/works?filter=publication_year%3A2020"}'
+      string: '{"oxurl":"/works?filter=publication_year%3A2020&sample=300&seed=42"}'
   response:
     status: 200
     headers:
@@ -273,7 +273,7 @@ http_interactions:
       content-encoding: gzip
     body:
       string: |
-        {"oxurl":"/works?filter=publication_year:2020","oql":"get works where published in 2020","oql_oneline":"get works where published in 2020","x_new_oql":"get works from 2020","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"year","column_id":"publication_year","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+        {"oxurl":"/works?filter=publication_year:2020&sample=300&seed=42","oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oql_oneline":"get works where published in 2020; then, sample 300 of those works with seed 42","x_new_oql":"get works where published in 2020; then, sample 300 of those works with seed 42","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"publication_year","column":"year","operator":"is","segments":[{"kind":"column","text":"year","meta":{"column_id":"publication_year"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"2020","meta":{"column_id":"publication_year","value":2020}},{"kind":"text","text":")"}],"leaf":{"column_id":"publication_year","value":2020},"addr":[1]},"directives":[{"type":"sample","text":"sample 300 seed 42","meta":{"n":300}}],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"year","column_id":"publication_year","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"2020","column_id":"publication_year","value":2020,"kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"},{"t":"kw","text":" sample 300 seed 42","label":"sample 300 seed 42"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"publication_year","value":2020}],"sample":300,"seed":"42"},"validation":{"valid":true,"errors":[],"warnings":[]}}
   recorded_at: 2026-10-14 08:31:52
 - request:
     method: POST
