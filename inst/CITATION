@@ -1,0 +1,33 @@
+citHeader("To cite openalexPro in publications use:")
+
+# Version and year come from the installed package, so nothing to bump at release.
+year <- substr(c(meta$`Date/Publication`, meta$Date, meta$Packaged, format(Sys.Date()))[1], 1, 4)
+
+bibentry(
+  bibtype = "Manual",
+  key     = "openalexPro",
+  title   = "{openalexPro}: Providing a more advanced access to OpenAlex for the power user",
+  author  = person("Rainer M", "Krug", comment = c(ORCID = "0000-0002-7490-0066")),
+  year    = year,
+  note    = paste("R package version", meta$Version),
+  doi     = "10.5281/zenodo.17453180",
+  url     = "https://github.com/openalexPro/openalexPro",
+  textVersion = paste0(
+    "Krug, R. M. (", year, "). openalexPro: Providing a more advanced access to OpenAlex for the power user. ",
+    "R package version ", meta$Version, ". https://doi.org/10.5281/zenodo.17453180"
+  )
+)
+
+bibentry(
+  header  = "openalexPro is part of the openalexPro ecosystem; to cite the ecosystem as a whole use:",
+  bibtype = "Misc",
+  key     = "openalexProEcosystem",
+  title   = "The {openalexPro} ecosystem: R packages for large-scale work with OpenAlex",
+  author  = person("Rainer M", "Krug", comment = c(ORCID = "0000-0002-7490-0066")),
+  year    = year,
+  url     = "https://openalexpro.github.io/",
+  textVersion = paste0(
+    "Krug, R. M. (", year, "). The openalexPro ecosystem: R packages for ",
+    "large-scale work with OpenAlex. https://openalexpro.github.io/"
+  )
+)

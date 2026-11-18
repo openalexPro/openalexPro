@@ -2,8 +2,9 @@ Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
 Version: 0.15.0.9000
-Author: Rainer M Krug
-Maintainer: Rainer M Krug <Rainer@krugs.de>
+Authors@R:
+    person("Rainer M", "Krug", , "Rainer@krugs.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-7490-0066"))
 Description: Retrieves large result sets from the 'OpenAlex' API
     (<https://openalex.org>) without holding them in memory. Queries are
     built and validated with classic filters and search, or written in
