@@ -148,14 +148,18 @@ it compares the query with the one in `_collection.json`:
   - added fields re-download the records. Credits are charged per request,
     not per field, so fetching only the new fields would cost the same;
   - `select = NULL` deletes the local downloads and keeps the collection.
-- **`refresh = TRUE`.** The collection keeps its ID, and its members are
-  made to match the query now. The query's IDs are fetched with
+- **`refresh = TRUE`, same or changed query.** The collection keeps its
+  ID, and its members are made to match the query now. The query's IDs are fetched with
   `pro_fetch()` (`select = "id"`, the same credits as an import), new IDs
   are added and members that no longer match are removed. Adding (10,000
   per request) and removing (100 per request) are free. Everything is then
   downloaded again. An import could only add, so it is not used here.
-- **Changed query.** The old collection is deleted, and a new one is created
-  under the same name. It gets a new ID.
+- **Changed query without `refresh`.** The old collection is deleted, and a
+  new one is created under the same name. It gets a new ID.
+
+So with `refresh = TRUE` the ID always stays, and links and saved searches
+keep working. A new collection is created only when the old one is gone on
+OpenAlex or holds another entity.
 
 ```{r}
 # add titles and DOIs (re-downloads the records)
@@ -253,9 +257,10 @@ pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
 - **Interruptions.** Running `pro_collection()` again resumes the fetch
   (`pro_fetch(resume = TRUE)`) and syncs the members again: IDs already in
   the collection are left alone.
-- **Changes.** A changed chunk counts as a changed query, so the collection
-  is re-created. `refresh = TRUE` fetches everything again and syncs the
-  members (adds new IDs, removes those no longer found; the ID stays).
+- **Changes.** A changed chunk counts as a changed query. Without
+  `refresh`, the collection is re-created (new ID). With `refresh = TRUE`,
+  it is kept: everything is fetched again and the members are synced (new
+  IDs added, those no longer found removed; the ID stays).
 - **On disk.** The queries are in `_parts.parquet` (name and URL of each
   chunk), not in `_collection.json`, which stays small however long the list
   is. Re-runs compare the queries locally, without requests.
@@ -335,8 +340,9 @@ pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
 | `"public"` | anyone, and listed. Only OpenAlex can set this for now: it is refused (HTTP 403) |
 
 `"private"` unshares it at once, for every link and saved search that uses
-it. A collection that is re-created (changed query) gets a new ID, so links
-to the old one stop working.
+it. A collection that is re-created (changed query without `refresh`) gets a
+new ID, so links to the old one stop working. Use `refresh = TRUE` to keep
+the ID when the query changes.
 
 # Costs, time and limits
 

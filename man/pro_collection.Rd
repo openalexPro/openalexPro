@@ -92,14 +92,19 @@ are brought in line with \code{select}: removed fields are dropped locally
 (no requests), added fields re-download the records. Credits are
 charged per request, not per field, so fetching only the new fields
 would cost the same.
-\item \code{refresh = TRUE}: the collection keeps its ID, and its members
-are made to match the query now: the query's IDs are fetched with
+\item \code{refresh = TRUE}, with the same or a changed query: the
+collection keeps its ID, and its members are made to match the query
+now: the query's IDs are fetched with
 \code{\link[=pro_fetch]{pro_fetch()}} (\code{select = "id"}, same credits as an import), new ones
 are added and members no longer found are removed (free, 10,000 added
 or 100 removed per request). Everything is then downloaded again.
-\item Changed query: the old collection is deleted and a new one is
-created under the same name (it gets a new ID).
+\item Changed query without \code{refresh}: the old collection is deleted
+and a new one is created under the same name (it gets a new ID).
 }
+
+So \code{refresh = TRUE} always keeps the ID (links and saved searches keep
+working). Only when the collection is gone on OpenAlex, or holds another
+entity, is a new one created.
 
 \strong{Local folder gone:} a collection with the same name that exists in
 your account but is not recorded in \code{project_folder} is never deleted.
@@ -127,8 +132,9 @@ with \code{workers = 8} (3,000 DOIs: 8.5 s instead of 45 to 55 s, November
 2026). Fields in \code{select} beyond \code{id} are fetched in the same pass, from
 the queries themselves, so the records do not depend on the collection
 filter limit. An interrupted run resumes the fetch and syncs the members
-again (syncing is idempotent). A changed query re-creates the collection,
-and \code{refresh = TRUE} fetches everything again and syncs the members.
+again (syncing is idempotent). A changed query re-creates the collection
+unless \code{refresh = TRUE}, which keeps it, fetches everything again and
+syncs the members.
 
 \strong{Limits:} 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection

@@ -11,6 +11,10 @@
   local folder was deleted or on another machine: same ID, members synced,
   folder written again. Without `refresh` it still stops, and the message
   now mentions `refresh = TRUE`.
+- `pro_collection(refresh = TRUE)` with a **changed** query keeps the
+  collection and its ID and syncs the members to the new query. Before, a
+  changed query always deleted the collection and created a new one with a
+  new ID. Without `refresh`, a changed query still re-creates it.
 - The list route (a list with `name`) also syncs the members instead of
   only adding: `_collection.json` records `added` and `removed`.
 
