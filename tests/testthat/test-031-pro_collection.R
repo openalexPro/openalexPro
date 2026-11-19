@@ -577,3 +577,49 @@ test_that("without a local record, refresh takes over the collection of that nam
                               refresh = TRUE, api_key = "k", progress = FALSE),
                "holds authors")
 })
+
+test_that("a changed query with refresh keeps the collection and syncs its members", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  deletes <- function() {
+    sum(vapply(state$log, function(x) {
+      x$method == "DELETE" && grepl("^/collections/col_[0-9]+$", x$path)
+    }, TRUE))
+  }
+
+  # single query: q1 -> q2
+  pf <- withr::local_tempdir()
+  pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  calls$ids <- paste0("W", 3:6)
+  f <- pro_collection(q2, name = "c", project_folder = pf, refresh = TRUE,
+                      api_key = "k", progress = FALSE)
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_equal(deletes(), 0)
+  expect_equal(rec$collection_id, "col_1")
+  expect_equal(rec$query_url, q2)
+  expect_equal(rec$synced, list(added = 3, removed = 2))
+  expect_setequal(state$cols$col_1$members, paste0("W", 3:6))
+
+  # list of queries: one chunk changed
+  calls$ids <- NULL
+  f <- pro_collection(chunks, name = "d", project_folder = pf, api_key = "k", progress = FALSE)
+  id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
+  chunks2 <- chunks
+  chunks2$chunk_3 <- paste0(q3, "x")
+  calls$ids <- paste0("W", 2:4)
+  pro_collection(chunks2, name = "d", project_folder = pf, refresh = TRUE,
+                 api_key = "k", progress = FALSE)
+  rec <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_equal(deletes(), 0)
+  expect_equal(rec$collection_id, id)
+  expect_equal(arrow::read_parquet(file.path(f, "_parts.parquet"))$query_url[[3]],
+               paste0(q3, "x"))
+  expect_equal(rec[c("added", "removed")], list(added = 1, removed = 1))
+  expect_setequal(state$cols[[id]]$members, paste0("W", 2:4))
+
+  # without refresh, a changed query still re-creates the collection
+  pro_collection(chunks, name = "d", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(deletes(), 1)
+  expect_false(identical(jsonlite::read_json(file.path(f, "_collection.json"))$collection_id, id))
+})

@@ -167,7 +167,7 @@ Everything about the collection is in `proj/coral bleaching 2024.collection/`:
 - `members/parquet/`: the member IDs.
 - `records/`: the records, when `select` asks for more than `id`.
 
-Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection. `refresh = TRUE` makes the members match the query again (adding and removing; the ID stays), and also takes over a collection of that name when the local folder is gone. A named list of queries gives one collection per element. With `name`, the whole list goes into one collection: its queries are fetched with `pro_fetch()` (in parallel with `workers`) and the IDs added as members. Use this for long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).
+Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless `refresh = TRUE`: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With `name`, the whole list goes into one collection: its queries are fetched with `pro_fetch()` (in parallel with `workers`) and the IDs added as members. Use this for long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).
 
 Costs:
 
