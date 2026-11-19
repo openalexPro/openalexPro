@@ -12,7 +12,9 @@ Description: Retrieves large result sets from the 'OpenAlex' API
     downloaded page by page to JSON files, with cursor paging, parallel
     downloads, retries and resume, and converted per page with 'DuckDB' to a
     partitioned 'Apache Parquet' dataset that includes reconstructed
-    abstracts and citation strings. Full-text PDFs and TEI XML can be
+    abstracts and citation strings. Query results can be saved as
+    'OpenAlex' collections, shareable and reusable sets of IDs that are kept
+    in sync with their queries. Full-text PDFs and TEI XML can be
     downloaded, and the daily API budget can be inspected.
 URL: https://github.com/openalexPro/openalexPro, https://openalexpro.github.io/openalexPro/, https://doi.org/10.5281/zenodo.17453180
 BugReports: https://github.com/openalexPro/openalexPro/issues
