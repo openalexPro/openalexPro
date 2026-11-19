@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.18.0
 
 - `pro_collection(refresh = TRUE)` now makes the members match the query:
   the query's IDs are fetched with `pro_fetch()` (`select = "id"`, the same
