@@ -1,5 +1,19 @@
 # openalexPro (development version)
 
+- `pro_collection(refresh = TRUE)` now makes the members match the query:
+  the query's IDs are fetched with `pro_fetch()` (`select = "id"`, the same
+  credits as an import), new ones are added and members that no longer
+  match are removed (free; 10,000 added or 100 removed per request). The
+  collection keeps its ID. Before, `refresh` imported again, which only
+  adds, so works that no longer matched stayed in the collection.
+- `pro_collection(refresh = TRUE)` takes over a collection of the same name
+  (ignoring case) that is not recorded in `project_folder`, e.g. after the
+  local folder was deleted or on another machine: same ID, members synced,
+  folder written again. Without `refresh` it still stops, and the message
+  now mentions `refresh = TRUE`.
+- The list route (a list with `name`) also syncs the members instead of
+  only adding: `_collection.json` records `added` and `removed`.
+
 # openalexPro 0.17.0
 
 - `pro_collection()` gets `access`: `"shared_by_link"` lets anyone with the
