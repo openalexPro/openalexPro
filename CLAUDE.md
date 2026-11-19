@@ -130,22 +130,31 @@ Functions that query the live OpenAlex REST API:
   into `_ids/` (deleted) or `records/`, then
   `POST …/members {member_ids}` in batches of 10,000 (free, idempotent);
   `members_added` in the record marks completion, so a rerun resumes the
-  fetch (`resume = TRUE`) and re-adds. The parts (name, URL) are in
+  fetch (`resume = TRUE`) and syncs again. The parts (name, URL) are in
   `_parts.parquet`, compared locally on re-run (no `/query` calls);
   `_collection.json` holds no queries. A single over-long query stops in
   `.col_check()` before anything is created. Re-issue: same OQO
   (`.oqo_equivalent()`) keeps the collection (waits for a running
-  import; `refresh` imports again), a changed one deletes and re-creates
-  it; `select` changes drop columns locally or re-download. All calls go
-  through `.col_req()` (`api_call()` with explicit status check). Needs
-  a *personal* key: other keys get 401 on `/collections` even when they
+  import; `refresh` syncs the members), a changed one deletes and
+  re-creates it, unless `refresh = TRUE`: then `.col_keep()` keeps the
+  collection (same ID, same entity) and its members are synced; `select`
+  changes drop columns locally or re-download. All calls go through
+  `.col_req()` (`api_call()` with explicit status check). Needs a
+  *personal* key: other keys get 401 on `/collections` even when they
   work for queries. Collections combine only via OQO (AND rows,
   `join: "or"`, `is_negated`); a URL allows one `collection:` filter. A
   collection *filter* on works returns only core works unless
   `corpus = "all"` (OQL `works (all corpora) where …`); the members CSV
   / `member_count` always include expansion works, so the import route
-  fetches records with `options = list(corpus = "all")`. `access` (NULL
-  = leave) is PATCHed via `.col_set_access()`; `public` gets 403
+  fetches records with `options = list(corpus = "all")`. Members are
+  synced, not only added (`.col_sync_members()`: members CSV vs fetched
+  IDs; add 10,000/request, `DELETE …/members?member_ids=` 100/request,
+  both free): the list route always, the single-query route on `refresh`
+  (`.col_fetch_and_sync()` instead of an import, which only adds). With
+  `refresh = TRUE` and no local record, `.col_take_over()` finds an own
+  collection by name (`GET /collections?filter=can_edit:true&search=`,
+  exact match ignoring case, same entity) and keeps its ID. `access`
+  (NULL = leave) is PATCHed via `.col_set_access()`; `public` gets 403
   `public_needs_review` (users can only set `shared_by_link`)
 - [`pro_count()`](https://openalexpro.github.io/openalexPro/reference/pro_count.md)
   — counts matching records (`via` as for

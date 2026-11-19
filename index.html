@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.17.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -186,7 +186,7 @@ To run online contract checks against the live OpenAlex API:</p>
 <li>
 <code>records/</code>: the records, when <code>select</code> asks for more than <code>id</code>.</li>
 </ul>
-<p>Running <code><a href="reference/pro_collection.html">pro_collection()</a></code> again keeps the collection for the same query. A changed query re-creates the collection, and <code>refresh = TRUE</code> imports the query again. A named list of queries gives one collection per element. With <code>name</code>, the whole list goes into one collection: its queries are fetched with <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> (in parallel with <code>workers</code>) and the IDs added as members. Use this for long ID or DOI lists (<code>pro_query(..., chunk_limit = 200)</code>): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).</p>
+<p>Running <code><a href="reference/pro_collection.html">pro_collection()</a></code> again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless <code>refresh = TRUE</code>: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With <code>name</code>, the whole list goes into one collection: its queries are fetched with <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> (in parallel with <code>workers</code>) and the IDs added as members. Use this for long ID or DOI lists (<code>pro_query(..., chunk_limit = 200)</code>): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).</p>
 <p>Costs:</p>
 <ul>
 <li>Downloading the member IDs is free.</li>

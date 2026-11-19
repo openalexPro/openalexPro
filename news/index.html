@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.17.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,19 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.17.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.18.0" id="openalexpro-0180">openalexPro 0.18.0<a class="anchor" aria-label="anchor" href="#openalexpro-0180"></a></h2>
+<ul><li>
+<code>pro_collection(refresh = TRUE)</code> now makes the members match the query: the query’s IDs are fetched with <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> (<code>select = "id"</code>, the same credits as an import), new ones are added and members that no longer match are removed (free; 10,000 added or 100 removed per request). The collection keeps its ID. Before, <code>refresh</code> imported again, which only adds, so works that no longer matched stayed in the collection.</li>
+<li>
+<code>pro_collection(refresh = TRUE)</code> takes over a collection of the same name (ignoring case) that is not recorded in <code>project_folder</code>, e.g. after the local folder was deleted or on another machine: same ID, members synced, folder written again. Without <code>refresh</code> it still stops, and the message now mentions <code>refresh = TRUE</code>.</li>
+<li>
+<code>pro_collection(refresh = TRUE)</code> with a <strong>changed</strong> query keeps the collection and its ID and syncs the members to the new query. Before, a changed query always deleted the collection and created a new one with a new ID. Without <code>refresh</code>, a changed query still re-creates it.</li>
+<li>The list route (a list with <code>name</code>) also syncs the members instead of only adding: <code>_collection.json</code> records <code>added</code> and <code>removed</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.0" id="openalexpro-0170">openalexPro 0.17.0<a class="anchor" aria-label="anchor" href="#openalexpro-0170"></a></h2>
 <ul><li>

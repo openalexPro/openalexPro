@@ -237,9 +237,11 @@ Everything about the collection is in
 Running
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
 again keeps the collection for the same query. A changed query
-re-creates the collection, and `refresh = TRUE` imports the query again.
-A named list of queries gives one collection per element. With `name`,
-the whole list goes into one collection: its queries are fetched with
+re-creates the collection (new ID), unless `refresh = TRUE`: that always
+keeps the ID and makes the members match the query (adding and
+removing), also when the query changed or the local folder is gone. A
+named list of queries gives one collection per element. With `name`, the
+whole list goes into one collection: its queries are fetched with
 [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
 (in parallel with `workers`) and the IDs added as members. Use this for
 long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex

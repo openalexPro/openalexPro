@@ -57,7 +57,10 @@ pro_collection(
 
 - refresh:
 
-  If `TRUE`, import an unchanged query again and re-download.
+  If `TRUE`, make the members of the collection match the query now
+  (adding and removing members; the ID stays) and download again. Also
+  takes over a collection of the same name that is not recorded in
+  `project_folder`.
 
 - access:
 
@@ -130,13 +133,27 @@ Each query gets a folder `<project_folder>/<name>.collection/` with
   per request, not per field, so fetching only the new fields would cost
   the same.
 
-- `refresh = TRUE`: the query is imported again into the same
-  collection, adding works that match it now, and everything is
-  downloaded again. An import only adds: members that no longer match
-  stay.
+- `refresh = TRUE`, with the same or a changed query: the collection
+  keeps its ID, and its members are made to match the query now: the
+  query's IDs are fetched with
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  (`select = "id"`, same credits as an import), new ones are added and
+  members no longer found are removed (free, 10,000 added or 100 removed
+  per request). Everything is then downloaded again.
 
-- Changed query: the old collection is deleted and a new one is created
-  under the same name (it gets a new ID).
+- Changed query without `refresh`: the old collection is deleted and a
+  new one is created under the same name (it gets a new ID).
+
+So `refresh = TRUE` always keeps the ID (links and saved searches keep
+working). Only when the collection is gone on OpenAlex, or holds another
+entity, is a new one created.
+
+**Local folder gone:** a collection with the same name that exists in
+your account but is not recorded in `project_folder` is never deleted.
+Without `refresh`, `pro_collection()` stops. With `refresh = TRUE` it
+takes that collection over: the ID stays, its members are synced to the
+query as above, and the folder is written again. Names match ignoring
+case, and the collection must hold the same entity.
 
 **Costs:** creating and managing collections and downloading the member
 IDs are free. An import costs the same credits as paging through the
@@ -159,9 +176,10 @@ same credits as imports and was about five times faster with
 `workers = 8` (3,000 DOIs: 8.5 s instead of 45 to 55 s, November 2026).
 Fields in `select` beyond `id` are fetched in the same pass, from the
 queries themselves, so the records do not depend on the collection
-filter limit. An interrupted run resumes the fetch and adds the members
-again (adding is idempotent). A changed query re-creates the collection,
-and `refresh = TRUE` fetches and adds everything again.
+filter limit. An interrupted run resumes the fetch and syncs the members
+again (syncing is idempotent). A changed query re-creates the collection
+unless `refresh = TRUE`, which keeps it, fetches everything again and
+syncs the members.
 
 **Limits:** 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection

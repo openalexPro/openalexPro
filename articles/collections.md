@@ -142,12 +142,20 @@ query with the one in `_collection.json`:
     the same;
   - `select = NULL` deletes the local downloads and keeps the
     collection.
-- **`refresh = TRUE`.** The query is imported again into the same
-  collection, which adds works that match it now, and everything is
-  downloaded again. An import only adds members: works that no longer
-  match stay in the collection.
-- **Changed query.** The old collection is deleted, and a new one is
-  created under the same name. It gets a new ID.
+- **`refresh = TRUE`, same or changed query.** The collection keeps its
+  ID, and its members are made to match the query now. The query’s IDs
+  are fetched with
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  (`select = "id"`, the same credits as an import), new IDs are added
+  and members that no longer match are removed. Adding (10,000 per
+  request) and removing (100 per request) are free. Everything is then
+  downloaded again. An import could only add, so it is not used here.
+- **Changed query without `refresh`.** The old collection is deleted,
+  and a new one is created under the same name. It gets a new ID.
+
+So with `refresh = TRUE` the ID always stays, and links and saved
+searches keep working. A new collection is created only when the old one
+is gone on OpenAlex or holds another entity.
 
 ``` r
 
@@ -160,10 +168,24 @@ pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
                api_key = key, select = c("id", "title"))
 ```
 
+### When the local folder is gone
+
 A collection with the same name that already exists in your account but
-is not recorded in `project_folder` is never deleted.
+is not recorded in `project_folder` is never deleted. Without `refresh`,
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
-stops instead.
+stops. With `refresh = TRUE`, it takes that collection over: the ID
+stays (so links and saved searches keep working), its members are synced
+to the query as described above, and the folder is written again.
+
+``` r
+
+# a new machine, or the project folder was deleted
+pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+               api_key = key, refresh = TRUE)
+```
+
+The name is matched ignoring case, as OpenAlex does, and the collection
+must hold the same entity (works, authors, …).
 
 ## Several queries
 
@@ -240,13 +262,14 @@ pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
 
 - **Interruptions.** Running
   [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
-  again resumes the fetch (`pro_fetch(resume = TRUE)`) and adds the IDs
-  again. Adding is idempotent: IDs already in the collection count as
-  `already_present`.
+  again resumes the fetch (`pro_fetch(resume = TRUE)`) and syncs the
+  members again: IDs already in the collection are left alone.
 
-- **Changes.** A changed chunk counts as a changed query, so the
-  collection is re-created. `refresh = TRUE` fetches and adds everything
-  again.
+- **Changes.** A changed chunk counts as a changed query. Without
+  `refresh`, the collection is re-created (new ID). With
+  `refresh = TRUE`, it is kept: everything is fetched again and the
+  members are synced (new IDs added, those no longer found removed; the
+  ID stays).
 
 - **On disk.** The queries are in `_parts.parquet` (name and URL of each
   chunk), not in `_collection.json`, which stays small however long the
@@ -330,8 +353,9 @@ pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
 | `"public"` | anyone, and listed. Only OpenAlex can set this for now: it is refused (HTTP 403) |
 
 `"private"` unshares it at once, for every link and saved search that
-uses it. A collection that is re-created (changed query) gets a new ID,
-so links to the old one stop working.
+uses it. A collection that is re-created (changed query without
+`refresh`) gets a new ID, so links to the old one stop working. Use
+`refresh = TRUE` to keep the ID when the query changes.
 
 ## Costs, time and limits
 
