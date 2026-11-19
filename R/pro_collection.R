@@ -37,13 +37,26 @@
 #'     (no requests), added fields re-download the records. Credits are
 #'     charged per request, not per field, so fetching only the new fields
 #'     would cost the same.
-#'   \item `refresh = TRUE`: the query is imported again into the same
-#'     collection, adding works that match it now, and everything is
-#'     downloaded again. An import only adds: members that no longer match
-#'     stay.
-#'   \item Changed query: the old collection is deleted and a new one is
-#'     created under the same name (it gets a new ID).
+#'   \item `refresh = TRUE`, with the same or a changed query: the
+#'     collection keeps its ID, and its members are made to match the query
+#'     now: the query's IDs are fetched with
+#'     [pro_fetch()] (`select = "id"`, same credits as an import), new ones
+#'     are added and members no longer found are removed (free, 10,000 added
+#'     or 100 removed per request). Everything is then downloaded again.
+#'   \item Changed query without `refresh`: the old collection is deleted
+#'     and a new one is created under the same name (it gets a new ID).
 #' }
+#'
+#' So `refresh = TRUE` always keeps the ID (links and saved searches keep
+#' working). Only when the collection is gone on OpenAlex, or holds another
+#' entity, is a new one created.
+#'
+#' **Local folder gone:** a collection with the same name that exists in
+#' your account but is not recorded in `project_folder` is never deleted.
+#' Without `refresh`, `pro_collection()` stops. With `refresh = TRUE` it takes
+#' that collection over: the ID stays, its members are synced to the query
+#' as above, and the folder is written again. Names match ignoring case, and
+#' the collection must hold the same entity.
 #'
 #' **Costs:** creating and managing collections and downloading the member
 #' IDs are free. An import costs the same credits as paging through the
@@ -63,9 +76,10 @@
 #' with `workers = 8` (3,000 DOIs: 8.5 s instead of 45 to 55 s, November
 #' 2026). Fields in `select` beyond `id` are fetched in the same pass, from
 #' the queries themselves, so the records do not depend on the collection
-#' filter limit. An interrupted run resumes the fetch and adds the members
-#' again (adding is idempotent). A changed query re-creates the collection,
-#' and `refresh = TRUE` fetches and adds everything again.
+#' filter limit. An interrupted run resumes the fetch and syncs the members
+#' again (syncing is idempotent). A changed query re-creates the collection
+#' unless `refresh = TRUE`, which keeps it, fetches everything again and
+#' syncs the members.
 #'
 #' **Limits:** 1,000,000 members per collection, 500 collections per
 #' account, names up to 100 characters and unique per account. A collection
@@ -99,7 +113,10 @@
 #'   `NULL` nothing; `"all"` the full records; or a character vector of
 #'   fields (see [opt_select_fields()]) for records with those fields. The
 #'   member IDs are downloaded whenever `select` is not `NULL`.
-#' @param refresh If `TRUE`, import an unchanged query again and re-download.
+#' @param refresh If `TRUE`, make the members of the collection match the
+#'   query now (adding and removing members; the ID stays) and download again.
+#'   Also takes over a collection of the same name that is not recorded in
+#'   `project_folder`.
 #' @param access Who can see the collection: `"private"` (only you, the
 #'   default for new collections), `"shared_by_link"` (anyone with its link or
 #'   ID can view it and filter by it; it is not listed) or `"public"` (only
@@ -239,6 +256,7 @@ pro_collection <- function(
   col <- NULL
   imports <- list()
   prev_credits <- 0
+  changed <- FALSE
   if (!is.null(rec)) {
     if (.oqo_equivalent(rec$oqo, oq$oqo)) {
       col <- .col_get(root, rec$collection_id, api_key)
@@ -250,6 +268,9 @@ pro_collection <- function(
         imports <- list()
         prev_credits <- 0
       }
+    } else if (isTRUE(refresh) &&
+               !is.null(col <- .col_keep(root, rec$collection_id, entity, folder, api_key, step))) {
+      changed <- TRUE
     } else {
       .col_replace(root, rec$collection_id, folder, api_key, step)
     }
@@ -260,13 +281,22 @@ pro_collection <- function(
   query <- function() {
     list(query_url = .pr_strip_key(url), via = "collection", oql = oq$oql, oqo = oq$oqo)
   }
+  if (created && is.null(rec) && isTRUE(refresh)) {
+    # No local record: take over a collection of that name (same ID)
+    col <- .col_take_over(root, name, entity, folder, api_key, step)
+    created <- is.null(col)
+  }
   if (created) {
     col <- .col_create(root, name, entity, folder, api_key, step)
+  } else if (is.null(rec)) {
+    dir.create(folder, recursive = TRUE, showWarnings = FALSE)
+  } else {
+    step("collection exists")
+  }
+  if (created || changed || is.null(rec)) {
     # Written now so an interrupted run knows the collection
     .col_write_record(rec_file, c(query(), list(credits_import = NA)), col,
                       list(imports = imports), select = NULL, started = started)
-  } else {
-    step("collection exists")
   }
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
@@ -279,14 +309,20 @@ pro_collection <- function(
     step("waiting for the running import")
     imports <- .col_add_import(imports, .col_wait(root, id, state$running, api_key, progress))
   }
-  imported <- created || isTRUE(refresh) || (!waited && !state$done)
+  # refresh: the members are made to match the query (an import only adds)
+  synced <- NULL
+  if (isTRUE(refresh) && !created) {
+    synced <- .col_fetch_and_sync(root, id, url, folder, api_key, verbose,
+                                  progress, step, ...)
+  }
+  imported <- is.null(synced) && (created || (!waited && !state$done))
   if (imported) {
     step("importing query")
     imp <- .col_json(.col_req(root, "POST", c("collections", id, "imports"), api_key,
       body = list(oql = oq$oql), ok = 202L))
     imports <- .col_add_import(imports, .col_wait(root, id, imp$id, api_key, progress))
   }
-  fresh <- imported || waited
+  fresh <- imported || waited || !is.null(synced)
   col <- .col_get(root, id, api_key) %||% col
   credits <- sum(prev_credits, .col_credits(root, api_key) - credits0, na.rm = TRUE)
   if (fresh) {
@@ -308,7 +344,8 @@ pro_collection <- function(
                       fetch_records = fetch_records, api_key = api_key, step = step)
 
   .col_write_record(rec_file, c(query(), list(credits_import = credits)), col,
-                    list(imports = imports), select = select, started = started)
+                    c(list(imports = imports), if (!is.null(synced)) list(synced = synced)),
+                    select = select, started = started)
   normalizePath(folder)
 }
 
@@ -382,6 +419,9 @@ pro_collection <- function(
         rec <- NULL
         prev_credits <- 0
       }
+    } else if (isTRUE(refresh) &&
+               !is.null(col <- .col_keep(root, rec$collection_id, entity, folder, api_key, step))) {
+      rec <- NULL # the new queries and record are written below
     } else {
       .col_replace(root, rec$collection_id, folder, api_key, step)
       rec <- NULL
@@ -394,22 +434,31 @@ pro_collection <- function(
     c(list(via = "members", parts = n, parts_file = basename(parts_file),
            credits = credits), done)
   }
+  if (created && is.null(rec) && isTRUE(refresh)) {
+    # No local record: take over a collection of that name (same ID)
+    col <- .col_take_over(root, name, entity, folder, api_key, step)
+    created <- is.null(col)
+  }
   if (created) {
     col <- .col_create(root, name, entity, folder, api_key, step)
+  } else if (!is.null(rec)) {
+    step("collection exists")
+  }
+  if (is.null(rec)) {
+    dir.create(folder, recursive = TRUE, showWarnings = FALSE)
     .col_write_parts(parts_file, urls)
     # Written now so an interrupted run knows the collection
     .col_write_record(rec_file, query(NA, list(members_added = FALSE)), col,
                       select = NULL, started = started)
-  } else {
-    step("collection exists")
   }
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
   col <- .col_set_access(root, id, col, access, api_key, step)
 
-  # 3. Fetch the IDs (and the records, if selected) and add them as members.
-  #    Also after an interruption: adding is idempotent, and pro_fetch()
-  #    resumes a fetch that did not finish.
+  # 3. Fetch the IDs (and the records, if selected) and make them the members:
+  #    new IDs are added, IDs no longer found are removed. Also after an
+  #    interruption: syncing is idempotent, and pro_fetch() resumes a fetch
+  #    that did not finish.
   fields <- setdiff(select, "id")
   sel <- if ("all" %in% fields) NULL else c("id", fields)
   fetch_records <- function(sel, dir, resume = FALSE) {
@@ -417,15 +466,14 @@ pro_collection <- function(
               overwrite = TRUE, resume = resume, api_key = api_key,
               verbose = verbose, progress = progress, ...)
   }
-  done <- rec[intersect(c("members_added", "added", "already_present"), names(rec))]
+  done <- rec[intersect(c("members_added", "added", "removed"), names(rec))]
   fetched <- created || isTRUE(refresh) || !isTRUE(rec$members_added)
   if (fetched) {
     dir <- file.path(folder, if (length(fields)) "records" else "_ids")
     step(if (length(fields)) "fetching records" else "fetching IDs")
     fetch_records(sel, dir, resume = !created && !isTRUE(refresh) && dir.exists(dir))
-    step("adding members")
     done <- c(list(members_added = TRUE),
-              .col_add_members(root, id, .col_fetched_ids(dir), api_key, progress))
+              .col_sync_members(root, id, .col_fetched_ids(dir), api_key, progress, step))
     unlink(file.path(folder, "_ids"), recursive = TRUE)
   }
   col <- .col_get(root, id, api_key) %||% col
@@ -462,6 +510,80 @@ pro_collection <- function(
   }
   if (!is.null(pb)) cli::cli_progress_done(id = pb)
   list(added = added, already_present = present)
+}
+
+#' Remove member IDs, `batch` per request (OpenAlex takes at most 100)
+#' @keywords internal
+#' @noRd
+.col_remove_members <- function(root, id, ids, api_key, progress, batch = 100L) {
+  groups <- split(ids, ceiling(seq_along(ids) / batch))
+  pb <- if (progress && length(groups) > 1L) {
+    cli::cli_progress_bar(format = "removing members {cli::pb_bar} {cli::pb_current}/{cli::pb_total}",
+                          total = length(ids))
+  }
+  removed <- 0
+  for (g in groups) {
+    r <- .col_json(.col_req(root, "DELETE", c("collections", id, "members"), api_key,
+      query = list(member_ids = paste(g, collapse = ","))))
+    removed <- removed + (r$removed %||% 0)
+    if (!is.null(pb)) cli::cli_progress_update(id = pb, inc = length(g))
+  }
+  if (!is.null(pb)) cli::cli_progress_done(id = pb)
+  removed
+}
+
+#' The member IDs on OpenAlex now (members CSV, free)
+#' @keywords internal
+#' @noRd
+.col_member_ids <- function(root, id, api_key) {
+  txt <- httr2::resp_body_string(.col_req(root, "GET", c("collections", id, "members"),
+                                          api_key, query = list(format = "csv")))
+  utils::read.csv(text = txt, colClasses = "character")$id
+}
+
+#' Make the members exactly `ids`: add the new ones, remove the others
+#' @keywords internal
+#' @noRd
+.col_sync_members <- function(root, id, ids, api_key, progress, step) {
+  current <- .col_member_ids(root, id, api_key)
+  add <- setdiff(ids, current)
+  drop <- setdiff(current, ids)
+  step(sprintf("syncing members: %d to add, %d to remove", length(add), length(drop)))
+  list(added = .col_add_members(root, id, add, api_key, progress)$added,
+       removed = .col_remove_members(root, id, drop, api_key, progress))
+}
+
+#' Fetch the IDs of `urls` (into a temporary `_ids/`) and sync the members
+#' @keywords internal
+#' @noRd
+.col_fetch_and_sync <- function(root, id, urls, folder, api_key, verbose, progress,
+                                step, ...) {
+  dir <- file.path(folder, "_ids")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  step("fetching IDs")
+  q <- if (is.list(urls)) lapply(urls, .col_with_select, "id") else .col_with_select(urls, "id")
+  pro_fetch(q, project_folder = dir, overwrite = TRUE,
+            api_key = api_key, verbose = verbose, progress = progress, ...)
+  .col_sync_members(root, id, .col_fetched_ids(dir), api_key, progress, step)
+}
+
+#' An existing collection of this name in the account, to take over; NULL if none
+#' @keywords internal
+#' @noRd
+.col_take_over <- function(root, name, entity, folder, api_key, step) {
+  res <- .col_json(.col_req(root, "GET", "collections", api_key,
+    query = list(filter = "can_edit:true", search = name, per_page = 100)))$results
+  hit <- Filter(function(x) identical(tolower(x$display_name), tolower(name)), res)
+  if (!length(hit)) {
+    return(NULL)
+  }
+  col <- hit[[1]]
+  if (!identical(col$entity_type, entity)) {
+    stop("The collection `", name, "` (", .col_id(col$id), ") holds ", col$entity_type,
+         ", not ", entity, ". Choose another `name`.", call. = FALSE)
+  }
+  step(paste("taking over existing collection", .col_id(col$id)))
+  col
 }
 
 #' Distinct short IDs in a pro_fetch() folder
@@ -552,6 +674,21 @@ pro_collection <- function(
   unlink(file.path(folder, c("members", "records", "_ids", "_parts.parquet",
                              "_query_oql.txt", "_query_oql.html")),
          recursive = TRUE)
+}
+
+#' The query changed and `refresh = TRUE`: keep the collection (same ID; its
+#' members are synced to the new query) and clear the local files. NULL if it
+#' is gone or holds another entity; it is then re-created.
+#' @keywords internal
+#' @noRd
+.col_keep <- function(root, id, entity, folder, api_key, step) {
+  col <- .col_get(root, id, api_key)
+  if (is.null(col) || !identical(col$entity_type, entity)) {
+    return(NULL)
+  }
+  step(paste("query changed: keeping collection", id, "and syncing its members"))
+  .col_clear(folder)
+  col
 }
 
 #' The query changed: delete the old collection and the local files
@@ -778,7 +915,8 @@ pro_collection <- function(
   if (identical(b$code, "display_name_duplicate")) {
     msg <- c(msg, i = paste0(
       "A collection with this name exists but is not recorded in `project_folder`. ",
-      "Choose another `name`, or delete that collection on OpenAlex."
+      "Use `refresh = TRUE` to take it over (same ID; its members are replaced by ",
+      "the query's results), choose another `name`, or delete it on OpenAlex."
     ))
   }
   cli::cli_abort(gsub("([{}])", "\\1\\1", msg), call = NULL)
