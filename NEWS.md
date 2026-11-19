@@ -1,3 +1,5 @@
+# openalexPro (development version)
+
 # openalexPro 0.18.0
 
 - `pro_collection(refresh = TRUE)` now makes the members match the query:
