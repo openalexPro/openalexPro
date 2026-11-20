@@ -156,7 +156,7 @@ pro_request_jsonl_parquet <- function(
   }
 
   # Infer unified schema from all JSONL files ------------------------------
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   DBI::dbExecute(conn = con, "INSTALL json; LOAD json;")
 
   sample_opt <- if (sample_size > 0) {

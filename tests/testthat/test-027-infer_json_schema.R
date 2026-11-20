@@ -4,7 +4,7 @@ library(testthat)
 # baseline-schema helpers of oa_schema.R, on tiny NDJSON / Parquet fixtures.
 
 json_con <- function(env = parent.frame()) {
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   withr::defer(DBI::dbDisconnect(con, shutdown = TRUE), envir = env)
   DBI::dbExecute(con, "INSTALL json; LOAD json;")
   con

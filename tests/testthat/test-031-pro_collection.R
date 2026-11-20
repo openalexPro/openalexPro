@@ -133,7 +133,7 @@ local_fake_fetch <- function(calls, env = parent.frame()) {
     df <- as.data.frame(stats::setNames(lapply(cols, function(x) {
       if (x == "id") paste0("https://openalex.org/", ids) else paste0(x, seq_along(ids))
     }), cols))
-    con <- DBI::dbConnect(duckdb::duckdb())
+    con <- DBI::dbConnect(.pro_duckdb())
     on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
     duckdb::duckdb_register(con, "df", df)
     DBI::dbExecute(con, sprintf("COPY df TO '%s' (FORMAT parquet)",
@@ -143,7 +143,7 @@ local_fake_fetch <- function(calls, env = parent.frame()) {
 }
 
 pq_cols <- function(dir) {
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE))
   names(DBI::dbGetQuery(con, sprintf("SELECT * FROM read_parquet('%s/**/*.parquet') LIMIT 1", dir)))
 }

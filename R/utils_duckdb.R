@@ -33,6 +33,28 @@
   paste0("'", gsub("'", "''", as.character(x)), "'")
 }
 
+#' DuckDB driver without the storage-location message
+#'
+#' duckdb >= 2.0.0 announces where it keeps extensions and secrets every
+#' time `duckdb()` has to pick that location itself (up to 60 times per
+#' non-interactive session, and it may prompt to create `~/.duckdb` in an
+#' interactive one). Making the choice explicit silences it. We pick exactly
+#' what duckdb would have picked -- the shared `~/.duckdb` if it exists, a
+#' per-session temporary directory otherwise -- and leave a user's own
+#' choice (`duckdb.home` option, `DUCKDB_R_HOME`) alone.
+#'
+#' @return A duckdb driver object.
+#' @keywords internal
+#' @noRd
+.pro_duckdb <- function() {
+  user_chose <- !is.null(getOption("duckdb.home")) ||
+    nzchar(Sys.getenv("DUCKDB_R_HOME"))
+  if (user_chose || !"shared_home" %in% names(formals(duckdb::duckdb))) {
+    return(duckdb::duckdb())
+  }
+  duckdb::duckdb(shared_home = dir.exists("~/.duckdb"))
+}
+
 #' Open a configured DuckDB connection
 #'
 #' @param memory_limit Passed to `SET memory_limit`; `NULL` leaves DuckDB's
@@ -56,7 +78,7 @@
   preserve_order = FALSE,
   json = FALSE
 ) {
-  con <- DBI::dbConnect(duckdb::duckdb(), read_only = FALSE)
+  con <- DBI::dbConnect(.pro_duckdb(), read_only = FALSE)
   DBI::dbExecute(con, paste0(
     "SET preserve_insertion_order = ",
     if (isTRUE(preserve_order)) "true" else "false"
@@ -96,7 +118,7 @@
     }
     out <- tryCatch(
       {
-        con <- DBI::dbConnect(duckdb::duckdb())
+        con <- DBI::dbConnect(.pro_duckdb())
         on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
         lim <- DBI::dbGetQuery(
           con, "SELECT current_setting('memory_limit') AS v"
