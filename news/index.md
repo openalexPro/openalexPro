@@ -1,5 +1,15 @@
 # Changelog
 
+## openalexPro 0.18.1
+
+- DuckDB connections no longer print duckdb 2.0’s “storing downloaded
+  extensions and secrets under ~/.duckdb” message (up to 60 times per
+  run), and no longer ask to create `~/.duckdb` in interactive sessions.
+  openalexPro uses the location duckdb would choose itself (`~/.duckdb`
+  if it exists, a temporary directory otherwise); a `duckdb.home` option
+  or `DUCKDB_R_HOME` you set is still respected
+  ([\#88](https://github.com/openalexPro/openalexPro/issues/88)).
+
 ## openalexPro 0.18.0
 
 - `pro_collection(refresh = TRUE)` now makes the members match the
