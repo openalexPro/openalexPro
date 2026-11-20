@@ -56,7 +56,7 @@ test_that("sample_parquet_n reuses a supplied DBI connection", {
   on.exit(unlink(pq), add = TRUE)
   arrow::write_parquet(data.frame(id = 1:20), pq)
 
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
   res <- sample_parquet_n(path = pq, n = 5L, con = con)

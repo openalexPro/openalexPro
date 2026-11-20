@@ -295,3 +295,12 @@ test_that("mixing grouped and list results names the queries of each kind", {
   expect_match(conditionMessage(err), "grouped results \\(group_by\\): by_type")
   expect_true(dir.exists(json))
 })
+
+test_that(".pro_duckdb() opens a connection without the storage message", {
+  withr::local_options(duckdb.home = NULL)
+  withr::local_envvar(DUCKDB_R_HOME = "")
+  expect_silent(drv <- .pro_duckdb())
+  con <- DBI::dbConnect(drv)
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  expect_equal(DBI::dbGetQuery(con, "SELECT 1 AS x")$x, 1)
+})
