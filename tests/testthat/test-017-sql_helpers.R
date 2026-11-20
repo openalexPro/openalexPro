@@ -17,7 +17,7 @@ test_that("oa_works_abstract_sql() expression contains the double JSON cast", {
 
 test_that("oa_works_abstract_sql() expression evaluates to NULL for NULL input", {
   skip_if_not_installed("duckdb")
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   abstract_sql <- oa_works_abstract_sql()
   result <- DBI::dbGetQuery(
@@ -29,7 +29,7 @@ test_that("oa_works_abstract_sql() expression evaluates to NULL for NULL input",
 
 test_that("oa_works_abstract_sql() reconstructs abstract from MAP input", {
   skip_if_not_installed("duckdb")
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   abstract_sql <- oa_works_abstract_sql()
   # MAP(VARCHAR, BIGINT[]) input: {"Hello": [0], "world": [1]}
@@ -46,7 +46,7 @@ test_that("oa_works_abstract_sql() reconstructs abstract from MAP input", {
 
 test_that("oa_works_abstract_sql() reconstructs abstract from STRUCT input", {
   skip_if_not_installed("duckdb")
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   abstract_sql <- oa_works_abstract_sql()
   # STRUCT input — what DuckDB infers when no duplicate keys are present
@@ -63,7 +63,7 @@ test_that("oa_works_abstract_sql() reconstructs abstract from STRUCT input", {
 
 test_that("oa_works_abstract_sql() reconstructs abstract from VARCHAR (raw JSON) input", {
   skip_if_not_installed("duckdb")
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   abstract_sql <- oa_works_abstract_sql()
   result <- DBI::dbGetQuery(
@@ -79,7 +79,7 @@ test_that("oa_works_abstract_sql() reconstructs abstract from VARCHAR (raw JSON)
 
 test_that("oa_works_abstract_sql() sorts positions correctly across multiple words", {
   skip_if_not_installed("duckdb")
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   abstract_sql <- oa_works_abstract_sql()
   # "quick" appears at positions 1 and 3; "brown" at 0 and 2

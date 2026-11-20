@@ -207,7 +207,7 @@ oa_schema <- function(
     entities
   }
 
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
   for (e in entities_to_update) {

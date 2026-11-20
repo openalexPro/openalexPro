@@ -213,7 +213,7 @@ test_that("pro_request_parquet applies baseline types for JSON columns", {
   expect_gte(length(pq_files), 1L)
 
   # Inspect the schema of the written parquet
-  con <- DBI::dbConnect(duckdb::duckdb())
+  con <- DBI::dbConnect(.pro_duckdb())
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
   sch <- DBI::dbGetQuery(
     con,
