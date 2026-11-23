@@ -1,5 +1,19 @@
 # openalexPro (development version)
 
+- **Breaking:** `pro_collection(api_key)` is required (a personal key; the
+  `pro_api_key()` default is gone, since other keys get 401 on collections).
+  The new `api_key_fetch` (default `api_key`) runs the queries that fill the
+  collection, e.g. with a key that has a larger daily budget. Records
+  downloaded through the collection filter use `api_key`, because a private
+  collection is visible only to its owner's key (another key gets 404).
+- `pro_collection(fetch_first = TRUE)` fills a single query's collection by
+  fetching its IDs with `pro_fetch()` and adding them as members, instead of
+  an import (the route a list with `name` always takes).
+- The fetch now runs *before* the collection is created: a failing query
+  leaves no empty collection, a fetch interrupted before the creation is
+  resumed, and a name already used by a collection not recorded in
+  `project_folder` stops the run before anything is fetched.
+
 # openalexPro 0.18.1
 
 - DuckDB connections no longer print duckdb 2.0's "storing downloaded

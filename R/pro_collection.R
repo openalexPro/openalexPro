@@ -81,6 +81,13 @@
 #' unless `refresh = TRUE`, which keeps it, fetches everything again and
 #' syncs the members.
 #'
+#' **Fetch first:** the queries are fetched *before* the collection is
+#' created, so a query that fails leaves no empty collection behind. This is
+#' always the route for a list with `name`; `fetch_first = TRUE` takes it for
+#' single queries too (and for each element of a list without `name`)
+#' instead of an import. OpenAlex does not check that the IDs it is given
+#' exist, but these come from the queries, so they do.
+#'
 #' **Limits:** 1,000,000 members per collection, 500 collections per
 #' account, names up to 100 characters and unique per account. A collection
 #' with more than 300,000 members (100,000 for authors) cannot be used as a
@@ -96,9 +103,14 @@
 #' expansion works get into the collection depends on the query that fills
 #' it (`options = list(corpus = "all")` in [pro_query()]).
 #'
-#' **API key:** collections need a *personal* OpenAlex API key; organisation
-#' keys and some older keys are refused (HTTP 401) even when they work for
-#' queries.
+#' **API keys:** collections need a *personal* OpenAlex API key
+#' (`api_key`); organisation keys and some older keys are refused
+#' (HTTP 401) even when they work for queries. The queries that fill the
+#' collection can run with another key (`api_key_fetch`, e.g. one with a
+#' larger daily budget); they cost credits, the collection calls do not.
+#' Records downloaded through the collection filter (the import route) use
+#' `api_key`: a private collection is visible only to its owner's
+#' key (another key gets HTTP 404).
 #'
 #' @param query_url A query from [pro_query()], or a named (nested) list of
 #'   queries. Without `name`, each element of the list becomes its own
@@ -122,7 +134,14 @@
 #'   ID can view it and filter by it; it is not listed) or `"public"` (only
 #'   OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
 #'   `NULL` (default) leaves it as it is.
-#' @param api_key A personal OpenAlex API key.
+#' @param fetch_first If `TRUE`, fill a single query's collection by fetching
+#'   its IDs with [pro_fetch()] and adding them as members, instead of an
+#'   import (see **Fetch first**). A list with `name` is always filled this
+#'   way.
+#' @param api_key A personal OpenAlex API key for the collection
+#'   calls. Required.
+#' @param api_key_fetch The OpenAlex API key for the queries that fill the
+#'   collection. Defaults to `api_key`.
 #' @param verbose Print the collection ID(s).
 #' @param progress Show the steps and import progress.
 #' @param ... Passed to [pro_fetch()] when records are downloaded, and when
@@ -134,27 +153,35 @@
 #'
 #' @examples
 #' \dontrun{
+#' key <- keyring::key_get("API_openalex_personal") # a personal key
 #' q <- pro_query(search = "coral bleaching", publication_year = 2024)
-#' f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
+#' f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+#'                     api_key = key)
 #' id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 #'
 #' # Later: records of the collection that are open access. corpus = "all":
-#' # without it, the filter returns only the core works
+#' # without it, the filter returns only the core works. A private collection
+#' # is visible only with its owner's key
 #' pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
-#'           project_folder = "oa")
+#'           project_folder = "oa", api_key = key)
 #'
 #' # Let anyone with the link or ID use it
 #' pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
-#'                access = "shared_by_link")
+#'                api_key = key, access = "shared_by_link")
 #'
 #' # Add titles to the download (re-downloads the records)
 #' pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
-#'                select = c("id", "title"))
+#'                api_key = key, select = c("id", "title"))
 #'
 #' # A long DOI list in one collection: the chunks are fetched in parallel
 #' # and their IDs added as members
 #' pro_collection(pro_query(doi = dois, chunk_limit = 200), name = "my dois",
-#'                project_folder = "proj", workers = 8)
+#'                project_folder = "proj", api_key = key,
+#'                api_key_fetch = pro_api_key(), workers = 8)
+#'
+#' # A single query, fetched first instead of imported
+#' pro_collection(q, name = "coral 2024 fetched", project_folder = "proj",
+#'                api_key = key, fetch_first = TRUE)
 #' }
 #'
 #' @seealso [pro_fetch()], [pro_query()], `vignette("collections")`.
@@ -167,7 +194,9 @@ pro_collection <- function(
   select = "id",
   refresh = FALSE,
   access = NULL,
-  api_key = pro_api_key(),
+  fetch_first = FALSE,
+  api_key,
+  api_key_fetch = api_key,
   verbose = FALSE,
   progress = TRUE,
   ...
@@ -176,6 +205,11 @@ pro_collection <- function(
       length(project_folder) != 1L) {
     stop("`project_folder` is required.", call. = FALSE)
   }
+  if (missing(api_key) || !is.character(api_key) ||
+      length(api_key) != 1L || !nzchar(api_key)) {
+    stop("`api_key` is required: a personal OpenAlex API key.", call. = FALSE)
+  }
+  keys <- list(collection = api_key, fetch = api_key_fetch)
   if (!is.null(access)) {
     access <- match.arg(access, c("private", "shared_by_link", "public"))
   }
@@ -201,15 +235,20 @@ pro_collection <- function(
   if (!is.character(query_url) && !is.null(name)) {
     # all queries into one collection: fetched, their IDs added as members
     return(invisible(.col_members(unlist(.col_leaves(query_url)), name, project_folder,
-                                  select, refresh, access, api_key, verbose, progress, ...)))
+                                  select, refresh, access, keys, verbose, progress, ...)))
   }
 
   out <- vapply(seq_along(queries), function(i) {
     if (progress && length(queries) > 1L) {
       cli::cli_alert_info(sprintf("Collection %d of %d", i, length(queries)))
     }
-    .col_one(queries[[i]], names(queries)[[i]], project_folder, select,
-             refresh, access, api_key, verbose, progress, ...)
+    if (isTRUE(fetch_first)) {
+      .col_members(unlist(queries[i]), names(queries)[[i]], project_folder, select,
+                   refresh, access, keys, verbose, progress, ...)
+    } else {
+      .col_one(queries[[i]], names(queries)[[i]], project_folder, select,
+               refresh, access, keys, verbose, progress, ...)
+    }
   }, character(1))
   names(out) <- names(queries)
   invisible(if (is.character(query_url)) unname(out) else out)
@@ -238,8 +277,9 @@ pro_collection <- function(
 #' One query -> one collection folder, filled by an import
 #' @keywords internal
 #' @noRd
-.col_one <- function(url, name, project_folder, select, refresh, access, api_key,
+.col_one <- function(url, name, project_folder, select, refresh, access, keys,
                      verbose, progress, ...) {
+  api_key <- keys$collection
   started <- Sys.time()
   folder <- .col_folder(project_folder, name)
   rec_file <- file.path(folder, "_collection.json")
@@ -248,7 +288,7 @@ pro_collection <- function(
 
   # 1. Validate the query (free) before anything is created
   step("validating query")
-  oq <- .col_check(url, api_key)
+  oq <- .col_check(url, keys$fetch)
   entity <- oq$oqo$get_rows %||% "works"
 
   # 2. Keep, re-create or create the collection
@@ -277,7 +317,7 @@ pro_collection <- function(
   }
 
   created <- is.null(col)
-  credits0 <- .col_credits(root, api_key)
+  credits0 <- .col_credits_keys(root, keys)
   query <- function() {
     list(query_url = .pr_strip_key(url), via = "collection", oql = oq$oql, oqo = oq$oqo)
   }
@@ -312,7 +352,7 @@ pro_collection <- function(
   # refresh: the members are made to match the query (an import only adds)
   synced <- NULL
   if (isTRUE(refresh) && !created) {
-    synced <- .col_fetch_and_sync(root, id, url, folder, api_key, verbose,
+    synced <- .col_fetch_and_sync(root, id, url, folder, keys, verbose,
                                   progress, step, ...)
   }
   imported <- is.null(synced) && (created || (!waited && !state$done))
@@ -324,9 +364,9 @@ pro_collection <- function(
   }
   fresh <- imported || waited || !is.null(synced)
   col <- .col_get(root, id, api_key) %||% col
-  credits <- sum(prev_credits, .col_credits(root, api_key) - credits0, na.rm = TRUE)
+  credits <- sum(prev_credits, .col_credits_keys(root, keys) - credits0, na.rm = TRUE)
   if (fresh) {
-    .pr_write_query_text(folder, oq$oqo, oq$oql, root, api_key,
+    .pr_write_query_text(folder, oq$oqo, oq$oql, root, keys$fetch,
                          records = col$member_count, query_url = .pr_strip_key(url))
   }
 
@@ -370,14 +410,16 @@ pro_collection <- function(
   oq
 }
 
-#' A list of queries -> one collection folder: the queries are fetched with
-#' pro_fetch() (in parallel with `workers`) and the IDs added as members
-#' (`member_ids`, 10,000 per request, free). Faster than one import per query,
-#' and without the import's 20,000-character limit.
+#' Queries -> one collection folder, fetched first: the queries are fetched
+#' with pro_fetch() (in parallel with `workers`, with `keys$fetch`), then the
+#' collection is created and the IDs added as members (`member_ids`, 10,000
+#' per request, free). Faster than one import per query, and without the
+#' import's 20,000-character limit.
 #' @keywords internal
 #' @noRd
-.col_members <- function(urls, name, project_folder, select, refresh, access, api_key,
+.col_members <- function(urls, name, project_folder, select, refresh, access, keys,
                          verbose, progress, ...) {
+  api_key <- keys$collection
   started <- Sys.time()
   folder <- .col_folder(project_folder, name)
   rec_file <- file.path(folder, "_collection.json")
@@ -388,7 +430,7 @@ pro_collection <- function(
 
   # 1. Checks without requests: pro_fetch() validates each query (free)
   #    before it spends credits
-  step(sprintf("checking %d queries", n))
+  step(sprintf("checking %d %s", n, if (n == 1L) "query" else "queries"))
   bad <- names(urls)[grepl("[?&](group_by|sample)=", urls)]
   if (length(bad)) {
     stop("Query `", bad[[1]], "` uses `group_by` or `sample`, which cannot be made ",
@@ -400,17 +442,17 @@ pro_collection <- function(
          paste(entity, collapse = " and "), ".", call. = FALSE)
   }
   if (!nzchar(entity) || grepl("/", entity)) { # e.g. an `oql` query on the root
-    entity <- .col_check(urls[[1]], api_key)$oqo$get_rows %||% "works"
+    entity <- .col_check(urls[[1]], keys$fetch)$oqo$get_rows %||% "works"
   }
 
-  # 2. Keep, re-create or create the collection
+  # 2. Keep or drop the recorded collection; nothing is created yet
+  old <- .col_read_parts(parts_file)
+  same_parts <- identical(old$part, names(urls)) && identical(old$query_url, unname(urls))
   rec <- .col_read_record(rec_file)
   col <- NULL
   prev_credits <- 0
   if (!is.null(rec)) {
-    old <- .col_read_parts(parts_file)
-    if (identical(rec$via, "members") && identical(old$part, names(urls)) &&
-        identical(old$query_url, unname(urls))) {
+    if (identical(rec$via, "members") && same_parts) {
       col <- .col_get(root, rec$collection_id, api_key)
       prev_credits <- as.numeric(rec$credits %||% 0)
       if (is.null(col)) {
@@ -427,26 +469,47 @@ pro_collection <- function(
       rec <- NULL
     }
   }
-
+  if (is.null(col) && is.null(rec)) {
+    # No local record: a collection of that name is taken over with refresh
+    # (same ID); without it, stop before the fetch spends credits
+    col <- .col_take_over(root, name, entity, folder, api_key, step, take = isTRUE(refresh))
+  }
   created <- is.null(col)
-  credits0 <- .col_credits(root, api_key)
+  if (!is.null(rec)) step("collection exists")
+  credits0 <- .col_credits_keys(root, keys)
   query <- function(credits, done = list()) {
     c(list(via = "members", parts = n, parts_file = basename(parts_file),
            credits = credits), done)
   }
-  if (created && is.null(rec) && isTRUE(refresh)) {
-    # No local record: take over a collection of that name (same ID)
-    col <- .col_take_over(root, name, entity, folder, api_key, step)
-    created <- is.null(col)
-  }
-  if (created) {
-    col <- .col_create(root, name, entity, folder, api_key, step)
-  } else if (!is.null(rec)) {
-    step("collection exists")
+
+  # 3. Fetch the IDs (and the records, if selected) before a collection is
+  #    created. The queries are written first, so an interrupted fetch is
+  #    resumed (pro_fetch(resume = TRUE)) when they are the same.
+  fields <- setdiff(select, "id")
+  sel <- if ("all" %in% fields) NULL else c("id", fields)
+  fetch_records <- function(sel, dir, resume = FALSE) {
+    pro_fetch(lapply(urls, .col_with_select, sel), project_folder = dir,
+              overwrite = TRUE, resume = resume, api_key = keys$fetch,
+              verbose = verbose, progress = progress, ...)
   }
   if (is.null(rec)) {
     dir.create(folder, recursive = TRUE, showWarnings = FALSE)
     .col_write_parts(parts_file, urls)
+  }
+  done <- rec[intersect(c("members_added", "added", "removed"), names(rec))]
+  fetched <- created || isTRUE(refresh) || !isTRUE(rec$members_added)
+  if (fetched) {
+    dir <- file.path(folder, if (length(fields)) "records" else "_ids")
+    step(if (length(fields)) "fetching records" else "fetching IDs")
+    fetch_records(sel, dir, resume = !isTRUE(refresh) && same_parts && dir.exists(dir))
+    ids <- .col_fetched_ids(dir)
+  }
+
+  # 4. Create the collection and make the IDs its members: a new collection
+  #    gets them added; an existing one is synced (new IDs added, IDs no
+  #    longer found removed; idempotent, also after an interruption)
+  if (created) col <- .col_create(root, name, entity, folder, api_key, step)
+  if (is.null(rec)) {
     # Written now so an interrupted run knows the collection
     .col_write_record(rec_file, query(NA, list(members_added = FALSE)), col,
                       select = NULL, started = started)
@@ -454,32 +517,20 @@ pro_collection <- function(
   id <- .col_id(col$id)
   if (verbose) cli::cli_alert_info(paste0("[", name, "] collection ", id))
   col <- .col_set_access(root, id, col, access, api_key, step)
-
-  # 3. Fetch the IDs (and the records, if selected) and make them the members:
-  #    new IDs are added, IDs no longer found are removed. Also after an
-  #    interruption: syncing is idempotent, and pro_fetch() resumes a fetch
-  #    that did not finish.
-  fields <- setdiff(select, "id")
-  sel <- if ("all" %in% fields) NULL else c("id", fields)
-  fetch_records <- function(sel, dir, resume = FALSE) {
-    pro_fetch(lapply(urls, .col_with_select, sel), project_folder = dir,
-              overwrite = TRUE, resume = resume, api_key = api_key,
-              verbose = verbose, progress = progress, ...)
-  }
-  done <- rec[intersect(c("members_added", "added", "removed"), names(rec))]
-  fetched <- created || isTRUE(refresh) || !isTRUE(rec$members_added)
   if (fetched) {
-    dir <- file.path(folder, if (length(fields)) "records" else "_ids")
-    step(if (length(fields)) "fetching records" else "fetching IDs")
-    fetch_records(sel, dir, resume = !created && !isTRUE(refresh) && dir.exists(dir))
-    done <- c(list(members_added = TRUE),
-              .col_sync_members(root, id, .col_fetched_ids(dir), api_key, progress, step))
+    synced <- if (created) {
+      step(sprintf("adding %d members", length(ids)))
+      list(added = .col_add_members(root, id, ids, api_key, progress)$added, removed = 0)
+    } else {
+      .col_sync_members(root, id, ids, api_key, progress, step)
+    }
+    done <- c(list(members_added = TRUE), synced)
     unlink(file.path(folder, "_ids"), recursive = TRUE)
   }
   col <- .col_get(root, id, api_key) %||% col
-  credits <- sum(prev_credits, .col_credits(root, api_key) - credits0, na.rm = TRUE)
+  credits <- sum(prev_credits, .col_credits_keys(root, keys) - credits0, na.rm = TRUE)
 
-  # 4. Downloads, in line with `select`; records fetched just now stay
+  # 5. Downloads, in line with `select`; records fetched just now stay
   .col_sync_downloads(folder, root, id, select,
                       old_select = if (fetched) select else if (!is.null(rec)) unlist(rec$select),
                       fresh_members = fetched, fresh_records = FALSE,
@@ -556,21 +607,23 @@ pro_collection <- function(
 #' Fetch the IDs of `urls` (into a temporary `_ids/`) and sync the members
 #' @keywords internal
 #' @noRd
-.col_fetch_and_sync <- function(root, id, urls, folder, api_key, verbose, progress,
+.col_fetch_and_sync <- function(root, id, urls, folder, keys, verbose, progress,
                                 step, ...) {
   dir <- file.path(folder, "_ids")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   step("fetching IDs")
   q <- if (is.list(urls)) lapply(urls, .col_with_select, "id") else .col_with_select(urls, "id")
   pro_fetch(q, project_folder = dir, overwrite = TRUE,
-            api_key = api_key, verbose = verbose, progress = progress, ...)
-  .col_sync_members(root, id, .col_fetched_ids(dir), api_key, progress, step)
+            api_key = keys$fetch, verbose = verbose, progress = progress, ...)
+  .col_sync_members(root, id, .col_fetched_ids(dir), keys$collection, progress, step)
 }
 
-#' An existing collection of this name in the account, to take over; NULL if none
+#' An existing collection of this name in the account, to take over; NULL if
+#' none. `take = FALSE` stops if there is one (checked before a fetch spends
+#' credits on a collection that cannot be created).
 #' @keywords internal
 #' @noRd
-.col_take_over <- function(root, name, entity, folder, api_key, step) {
+.col_take_over <- function(root, name, entity, folder, api_key, step, take = TRUE) {
   res <- .col_json(.col_req(root, "GET", "collections", api_key,
     query = list(filter = "can_edit:true", search = name, per_page = 100)))$results
   hit <- Filter(function(x) identical(tolower(x$display_name), tolower(name)), res)
@@ -578,6 +631,12 @@ pro_collection <- function(
     return(NULL)
   }
   col <- hit[[1]]
+  if (!take) {
+    stop("A collection named `", name, "` (", .col_id(col$id), ") exists but is not ",
+         "recorded in `project_folder`. Use `refresh = TRUE` to take it over (same ID; ",
+         "its members are replaced by the query's results), choose another `name`, ",
+         "or delete it on OpenAlex.", call. = FALSE)
+  }
   if (!identical(col$entity_type, entity)) {
     stop("The collection `", name, "` (", .col_id(col$id), ") holds ", col$entity_type,
          ", not ", entity, ". Choose another `name`.", call. = FALSE)
@@ -881,6 +940,14 @@ pro_collection <- function(
     error = function(e) NULL
   )
   if (is.null(x)) NA_real_ else as.numeric(x)
+}
+
+#' Credits used today so far by the collection and the fetch key together
+#' @keywords internal
+#' @noRd
+.col_credits_keys <- function(root, keys) {
+  sum(vapply(unique(c(keys$collection, keys$fetch)),
+             function(k) .col_credits(root, k), numeric(1)))
 }
 
 #' A collections API request; stops with OpenAlex's message on other statuses
