@@ -150,14 +150,17 @@ All intermediate folders and data are deleted, and only the final parquet datase
 An OpenAlex [collection](https://help.openalex.org/api/collections) is a set of IDs saved on OpenAlex's servers. A collection can be reused as a filter in later queries and combined with other collections. `pro_collection()` turns a query into a collection. OpenAlex runs the query (an *import*), and the member IDs are then downloaded as parquet:
 
 ```r
+key <- keyring::key_get("API_openalex_personal") # a personal key
 q <- pro_query(search = "coral bleaching", publication_year = 2024)
-f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
+f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+                    api_key = key)
 id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 
 # Later: only the open-access members, as records. corpus = "all": without
-# it, a collection filter returns only the core works, not the expansion ones
+# it, a collection filter returns only the core works, not the expansion ones.
+# A private collection is visible only with its owner's key.
 pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
-          project_folder = "oa")
+          project_folder = "oa", api_key = key)
 ```
 
 Everything about the collection is in `proj/coral bleaching 2024.collection/`:
@@ -167,14 +170,14 @@ Everything about the collection is in `proj/coral bleaching 2024.collection/`:
 - `members/parquet/`: the member IDs.
 - `records/`: the records, when `select` asks for more than `id`.
 
-Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless `refresh = TRUE`: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With `name`, the whole list goes into one collection: its queries are fetched with `pro_fetch()` (in parallel with `workers`) and the IDs added as members. Use this for long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).
+Running `pro_collection()` again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless `refresh = TRUE`: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With `name`, the whole list goes into one collection: its queries are fetched with `pro_fetch()` (in parallel with `workers`) and only then is the collection created and the IDs added as members. Use this for long ID or DOI lists (`pro_query(..., chunk_limit = 200)`): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs). `fetch_first = TRUE` fills single queries the same way instead of with an import.
 
 Costs:
 
 - Downloading the member IDs is free.
 - An import costs the same credits as paging through the results yourself, and runs at about 200 results per second.
 
-Collections need a **personal** OpenAlex API key; other keys are refused even when they work for queries. See `vignette("collections")`.
+Collections need a **personal** OpenAlex API key (`api_key`, required); other keys are refused even when they work for queries. The queries that fill a collection can run with another key (`api_key_fetch`, default `api_key`). See `vignette("collections")`.
 
 ## Advanced Workflow (Individual Functions)
 
