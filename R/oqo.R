@@ -98,6 +98,55 @@
   out
 }
 
+#' Translate a query with OpenAlex's `/query` endpoint
+#'
+#' Sends a query to OpenAlex's free `POST /query` endpoint, which validates
+#' it and translates it into all of its forms: the OQO (OpenAlex Query
+#' Object), OQL and the classic URL. No records are fetched and no credits are
+#' spent.
+#'
+#' @param body A list with exactly one of `oql` (an OQL string), `oxurl` (a
+#'   classic query path such as `"/works?filter=publication_year:2020"`) or
+#'   `oqo` (an OQO as a list).
+#' @param root The API root, default `"https://api.openalex.org"`.
+#' @param api_key API key or `NULL`. Default [pro_api_key()].
+#' @return The parsed response: a list with `oqo`, `oql`, `oql_oneline`,
+#'   `oxurl` and `validation`. Stops with OpenAlex's validation messages if
+#'   the query is invalid.
+#' @export
+#' @examples
+#' \dontrun{
+#' tr <- pro_translate(list(oql = "get works where published in 2020"))
+#' tr$oqo
+#' pro_translate(list(oxurl = "/works?filter=type:erratum"))$oql_oneline
+#' }
+pro_translate <- function(
+  body,
+  root = "https://api.openalex.org",
+  api_key = pro_api_key()
+) {
+  keys <- c("oql", "oxurl", "oqo")
+  if (!is.list(body) || length(body) != 1L || !isTRUE(names(body) %in% keys)) {
+    stop(
+      "`body` must be a list with exactly one of `oql`, `oxurl`, `oqo`.",
+      call. = FALSE
+    )
+  }
+  v <- body[[1]]
+  if (identical(names(body), "oqo")) {
+    if (!is.list(v)) {
+      stop(
+        "`body$oqo` must be a list (a parsed OQO, e.g. ",
+        "`jsonlite::fromJSON(x, simplifyVector = FALSE)`), not a JSON string.",
+        call. = FALSE
+      )
+    }
+  } else if (!is.character(v) || length(v) != 1L || is.na(v) || !nzchar(v)) {
+    stop("`body$", names(body), "` must be a single non-empty string.", call. = FALSE)
+  }
+  .oa_translate(root, body, api_key)
+}
+
 #' Does an OQO contain a semantic search? (no cursor paging, max 50)
 #'
 #' @keywords internal
