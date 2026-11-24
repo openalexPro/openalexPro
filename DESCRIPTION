@@ -1,7 +1,7 @@
 Type: Package
 Package: openalexPro
 Title: Providing a more advanced access to OpenAlex for the power user
-Version: 0.18.1.9000
+Version: 0.19.0
 Authors@R:
     person("Rainer M", "Krug", , "Rainer@krugs.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7490-0066"))
