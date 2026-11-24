@@ -18,6 +18,14 @@
   leaves no empty collection, a fetch interrupted before the creation is
   resumed, and a name already used by a collection not recorded in
   `project_folder` stops the run before anything is fetched.
+- With changed queries, the members route now deletes the old collection
+  only after the new queries are fetched: a failing fetch keeps it. The
+  pending replacement is recorded (`replaces` in `_collection.json`) and
+  resumed by a rerun.
+- Switching `fetch_first` on or off for an unchanged query keeps the
+  collection (same ID) instead of deleting and re-creating it.
+- A same-name collection of another entity is reported as such, instead of
+  suggesting `refresh = TRUE`.
 
 # openalexPro 0.18.1
 
