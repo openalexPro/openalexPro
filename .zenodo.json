@@ -8,15 +8,7 @@
     }
   ],
   "license": "MIT",
-  "keywords": [
-    "OpenAlex",
-    "bibliometrics",
-    "R",
-    "API",
-    "Parquet",
-    "DuckDB",
-    "openalexPro ecosystem"
-  ],
+  "keywords": ["OpenAlex", "bibliometrics", "R", "API", "Parquet", "DuckDB", "openalexPro ecosystem"],
   "related_identifiers": [
     {
       "identifier": "https://openalexpro.github.io/",
