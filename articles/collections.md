@@ -27,13 +27,22 @@ into a collection. OpenAlex runs the query on its own servers (an
 waits for the import and then downloads what `select` asks for. With the
 default, that is only the member IDs.
 
-## API key
+## API keys
 
 Collections need a **personal** OpenAlex API key. Organisation keys and
 some older keys are refused with HTTP 401 on every collection call, even
 when they work for queries.
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
-then stops with a message saying so. Pass the personal key as `api_key`:
+then stops with a message saying so. Pass the personal key as `api_key`
+(required).
+
+The queries that fill a collection can run with another key,
+`api_key_fetch`, for example one with a larger daily budget. It defaults
+to `api_key`. Only the queries cost credits; the collection calls are
+free. A private collection is visible only to its owner’s key: a query
+that *filters* by it with another key gets HTTP 404. So records
+downloaded through the collection filter use `api_key`, and so must your
+own later queries of a private collection.
 
 ``` r
 
@@ -224,21 +233,21 @@ imported. Instead,
 [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
 fetches them with
 [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
-(only the `id` field, in parallel with `workers`) and adds the IDs to
-the collection, 10,000 per request (free):
+(only the `id` field, in parallel with `workers`) and only then creates
+the collection and adds the IDs to it, 10,000 per request (free):
 
 ``` r
 
 q <- pro_query(doi = dois, chunk_limit = 200) # chunk_1, chunk_2, ...
 
-pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
-               workers = 8)
+pro_collection(q, name = "my dois", project_folder = "proj",
+               api_key = key, workers = 8)
 ```
 
     ✔ [my dois] checking 15 queries
-    ✔ [my dois] creating collection
     ✔ [my dois] fetching IDs
-    ✔ [my dois] adding members
+    ✔ [my dois] creating collection
+    ✔ [my dois] adding 3000 members
     ✔ [my dois] downloading member IDs
     ✔ [my dois] converting IDs to parquet
 
@@ -256,14 +265,25 @@ pro_collection(q, name = "my dois", project_folder = "proj", api_key = key,
   [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
   runs the queries in parallel; adding 3,000 IDs took under a second.
 
+- **Fetched first.** A query that fails leaves no empty collection
+  behind, and a name already used by a collection that is not recorded
+  in `project_folder` stops the run before anything is fetched. The
+  queries can use another key than the collection (`api_key_fetch`, see
+  [API keys](#api-keys)).
+
+- **Single queries.** `fetch_first = TRUE` fills a single query’s
+  collection (or each collection of a list without `name`) the same way
+  instead of with an import.
+
 - **Records.** Fields in `select` beyond `"id"` are fetched in the same
   pass, from the queries themselves, into `records/`. They therefore
   also work for collections above the 300,000-member filter limit.
 
 - **Interruptions.** Running
   [`pro_collection()`](https://openalexpro.github.io/openalexPro/reference/pro_collection.md)
-  again resumes the fetch (`pro_fetch(resume = TRUE)`) and syncs the
-  members again: IDs already in the collection are left alone.
+  again resumes the fetch (`pro_fetch(resume = TRUE)`), also when it was
+  interrupted before the collection was created, and syncs the members
+  again: IDs already in the collection are left alone.
 
 - **Changes.** A changed chunk counts as a changed query. Without
   `refresh`, the collection is re-created (new ID). With

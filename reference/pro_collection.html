@@ -17,7 +17,7 @@ it and then downloads what select asks for."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.19.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ it and then downloads what select asks for."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create OpenAlex collections from queries</h1>
-      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.18.1/R/pro_collection.R" class="external-link"><code>R/pro_collection.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/R/pro_collection.R" class="external-link"><code>R/pro_collection.R</code></a></small>
       <div class="d-none name"><code>pro_collection.Rd</code></div>
     </div>
 
@@ -71,7 +71,9 @@ it and then downloads what <code>select</code> asks for.</p>
 <span>  select <span class="op">=</span> <span class="st">"id"</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  access <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  api_key <span class="op">=</span> <span class="fu"><a href="pro_api_key.html">pro_api_key</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  fetch_first <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">api_key</span>,</span>
+<span>  api_key_fetch <span class="op">=</span> <span class="va">api_key</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -122,8 +124,21 @@ OpenAlex can set this for now; OpenAlex refuses it with HTTP 403).
 <code>NULL</code> (default) leaves it as it is.</p></dd>
 
 
+<dt id="arg-fetch-first">fetch_first<a class="anchor" aria-label="anchor" href="#arg-fetch-first"></a></dt>
+<dd><p>If <code>TRUE</code>, fill a single query's collection by fetching
+its IDs with <code><a href="pro_fetch.html">pro_fetch()</a></code> and adding them as members, instead of an
+import (see <strong>Fetch first</strong>). A list with <code>name</code> is always filled this
+way.</p></dd>
+
+
 <dt id="arg-api-key">api_key<a class="anchor" aria-label="anchor" href="#arg-api-key"></a></dt>
-<dd><p>A personal OpenAlex API key.</p></dd>
+<dd><p>A personal OpenAlex API key for the collection
+calls. Required.</p></dd>
+
+
+<dt id="arg-api-key-fetch">api_key_fetch<a class="anchor" aria-label="anchor" href="#arg-api-key-fetch"></a></dt>
+<dd><p>The OpenAlex API key for the queries that fill the
+collection. Defaults to <code>api_key</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -213,6 +228,12 @@ filter limit. An interrupted run resumes the fetch and syncs the members
 again (syncing is idempotent). A changed query re-creates the collection
 unless <code>refresh = TRUE</code>, which keeps it, fetches everything again and
 syncs the members.</p>
+<p><strong>Fetch first:</strong> the queries are fetched <em>before</em> the collection is
+created, so a query that fails leaves no empty collection behind. This is
+always the route for a list with <code>name</code>; <code>fetch_first = TRUE</code> takes it for
+single queries too (and for each element of a list without <code>name</code>)
+instead of an import. OpenAlex does not check that the IDs it is given
+exist, but these come from the queries, so they do.</p>
 <p><strong>Limits:</strong> 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection
 with more than 300,000 members (100,000 for authors) cannot be used as a
@@ -226,9 +247,14 @@ A <em>filter</em> by a works collection returns only its core works unless
 <code>pro_query(collection = id, options = list(corpus = "all"))</code>. Whether
 expansion works get into the collection depends on the query that fills
 it (<code>options = list(corpus = "all")</code> in <code><a href="pro_query.html">pro_query()</a></code>).</p>
-<p><strong>API key:</strong> collections need a <em>personal</em> OpenAlex API key; organisation
-keys and some older keys are refused (HTTP 401) even when they work for
-queries.</p>
+<p><strong>API keys:</strong> collections need a <em>personal</em> OpenAlex API key
+(<code>api_key</code>); organisation keys and some older keys are refused
+(HTTP 401) even when they work for queries. The queries that fill the
+collection can run with another key (<code>api_key_fetch</code>, e.g. one with a
+larger daily budget); they cost credits, the collection calls do not.
+Records downloaded through the collection filter (the import route) use
+<code>api_key</code>: a private collection is visible only to its owner's
+key (another key gets HTTP 404).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -238,27 +264,35 @@ queries.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu">keyring</span><span class="fu">::</span><span class="fu"><a href="https://keyring.r-lib.org/reference/key_get.html" class="external-link">key_get</a></span><span class="op">(</span><span class="st">"API_openalex_personal"</span><span class="op">)</span> <span class="co"># a personal key</span></span></span>
 <span class="r-in"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>search <span class="op">=</span> <span class="st">"coral bleaching"</span>, publication_year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
+<span class="r-in"><span>                    api_key <span class="op">=</span> <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fu">jsonlite</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/read_json.html" class="external-link">read_json</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"_collection.json"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">collection_id</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Later: records of the collection that are open access. corpus = "all":</span></span></span>
-<span class="r-in"><span><span class="co"># without it, the filter returns only the core works</span></span></span>
+<span class="r-in"><span><span class="co"># without it, the filter returns only the core works. A private collection</span></span></span>
+<span class="r-in"><span><span class="co"># is visible only with its owner's key</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>collection <span class="op">=</span> <span class="va">id</span>, is_oa <span class="op">=</span> <span class="cn">TRUE</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>corpus <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          project_folder <span class="op">=</span> <span class="st">"oa"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>          project_folder <span class="op">=</span> <span class="st">"oa"</span>, api_key <span class="op">=</span> <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Let anyone with the link or ID use it</span></span></span>
 <span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
-<span class="r-in"><span>               access <span class="op">=</span> <span class="st">"shared_by_link"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>               api_key <span class="op">=</span> <span class="va">key</span>, access <span class="op">=</span> <span class="st">"shared_by_link"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add titles to the download (re-downloads the records)</span></span></span>
 <span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
-<span class="r-in"><span>               select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"title"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>               api_key <span class="op">=</span> <span class="va">key</span>, select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"title"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A long DOI list in one collection: the chunks are fetched in parallel</span></span></span>
 <span class="r-in"><span><span class="co"># and their IDs added as members</span></span></span>
 <span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="fu"><a href="pro_query.html">pro_query</a></span><span class="op">(</span>doi <span class="op">=</span> <span class="va">dois</span>, chunk_limit <span class="op">=</span> <span class="fl">200</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"my dois"</span>,</span></span>
-<span class="r-in"><span>               project_folder <span class="op">=</span> <span class="st">"proj"</span>, workers <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span>               project_folder <span class="op">=</span> <span class="st">"proj"</span>, api_key <span class="op">=</span> <span class="va">key</span>,</span></span>
+<span class="r-in"><span>               api_key_fetch <span class="op">=</span> <span class="fu"><a href="pro_api_key.html">pro_api_key</a></span><span class="op">(</span><span class="op">)</span>, workers <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A single query, fetched first instead of imported</span></span></span>
+<span class="r-in"><span><span class="fu">pro_collection</span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral 2024 fetched"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span></span>
+<span class="r-in"><span>               api_key <span class="op">=</span> <span class="va">key</span>, fetch_first <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

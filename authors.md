@@ -8,17 +8,17 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/openalexPro/openalexPro/blob/v0.18.1/inst/CITATION)
+[`inst/CITATION`](https://github.com/openalexPro/openalexPro/blob/main/inst/CITATION)
 
 Krug, R. M. (2026). openalexPro: Providing a more advanced access to
-OpenAlex for the power user. R package version 0.18.1.
+OpenAlex for the power user. R package version 0.19.0.
 https://doi.org/10.5281/zenodo.17453180
 
     @Manual{openalexPro,
       title = {{openalexPro}: Providing a more advanced access to OpenAlex for the power user},
       author = {Rainer M Krug},
       year = {2026},
-      note = {R package version 0.18.1},
+      note = {R package version 0.19.0},
       doi = {10.5281/zenodo.17453180},
       url = {https://github.com/openalexPro/openalexPro},
     }

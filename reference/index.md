@@ -79,6 +79,9 @@
 - [`pro_request_parquet()`](https://openalexpro.github.io/openalexPro/reference/pro_request_parquet.md)
   : Convert JSON files from pro_request() directly to Apache Parquet
 
+- [`pro_translate()`](https://openalexpro.github.io/openalexPro/reference/pro_translate.md)
+  : Translate a query with OpenAlex's \`/query\` endpoint
+
 - [`pro_validate_credentials()`](https://openalexpro.github.io/openalexPro/reference/pro_validate_credentials.md)
   : Validate OpenAlex credentials
 

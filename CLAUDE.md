@@ -123,25 +123,40 @@ Functions that query the live OpenAlex REST API:
   `pro_fetch(pro_query(collection = id, select = …))` into `records/`
   when `select` has more than `id`. Everything in
   `<project_folder>/<name>.collection/_collection.json`. A list **with**
-  `name` takes the members route (`.col_members()`): no imports
-  (OpenAlex caps an import at 20,000 chars of OQL, a `query` URL at
-  8,000, and takes no `oqo`; one import per ~600 DOIs measured ~5x
-  slower than this route), but `pro_fetch(parts, select = id[+fields])`
-  into `_ids/` (deleted) or `records/`, then
-  `POST …/members {member_ids}` in batches of 10,000 (free, idempotent);
-  `members_added` in the record marks completion, so a rerun resumes the
-  fetch (`resume = TRUE`) and syncs again. The parts (name, URL) are in
-  `_parts.parquet`, compared locally on re-run (no `/query` calls);
-  `_collection.json` holds no queries. A single over-long query stops in
-  `.col_check()` before anything is created. Re-issue: same OQO
-  (`.oqo_equivalent()`) keeps the collection (waits for a running
-  import; `refresh` syncs the members), a changed one deletes and
-  re-creates it, unless `refresh = TRUE`: then `.col_keep()` keeps the
-  collection (same ID, same entity) and its members are synced; `select`
-  changes drop columns locally or re-download. All calls go through
-  `.col_req()` (`api_call()` with explicit status check). Needs a
-  *personal* key: other keys get 401 on `/collections` even when they
-  work for queries. Collections combine only via OQO (AND rows,
+  `name`, or any query with `fetch_first = TRUE`, takes the members
+  route (`.col_members()`): fetch first, then create the collection (a
+  failing fetch leaves no empty collection; `_parts.parquet` is written
+  before the fetch so an interrupted one resumes; a same-name collection
+  not in `project_folder` is looked up with
+  `.col_take_over(take = refresh)` *before* the fetch and stops without
+  `refresh`; changed queries delete the old collection only after the
+  fetch, `replaces` in the record marks a pending replacement for a
+  rerun; switching `fetch_first` for an unchanged query keeps the
+  collection on both routes); no imports (OpenAlex caps an import at
+  20,000 chars of OQL, a `query` URL at 8,000, and takes no `oqo`; one
+  import per ~600 DOIs measured ~5x slower than this route), but
+  `pro_fetch(parts, select = id[+fields])` into `_ids/` (deleted) or
+  `records/`, then `POST …/members {member_ids}` in batches of 10,000
+  (free, idempotent); `members_added` in the record marks completion, so
+  a rerun resumes the fetch (`resume = TRUE`) and syncs again. The parts
+  (name, URL) are in `_parts.parquet`, compared locally on re-run (no
+  `/query` calls); `_collection.json` holds no queries. A single
+  over-long query stops in `.col_check()` before anything is created.
+  Re-issue: same OQO (`.oqo_equivalent()`) keeps the collection (waits
+  for a running import; `refresh` syncs the members), a changed one
+  deletes and re-creates it, unless `refresh = TRUE`: then `.col_keep()`
+  keeps the collection (same ID, same entity) and its members are
+  synced; `select` changes drop columns locally or re-download. All
+  calls go through `.col_req()` (`api_call()` with explicit status
+  check). Needs a *personal* key: other keys get 401 on `/collections`
+  even when they work for queries. Two keys: `api_key` (required; all
+  `/collections` calls, and record downloads via the `collection:`
+  filter, since a private collection is 404 for any other key) and
+  `api_key_fetch` (default the same; `/query` translation and
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  of the queries). Internally passed as
+  `keys = list(collection, fetch)`; credits are summed over both
+  (`.col_credits_keys()`). Collections combine only via OQO (AND rows,
   `join: "or"`, `is_negated`); a URL allows one `collection:` filter. A
   collection *filter* on works returns only core works unless
   `corpus = "all"` (OQL `works (all corpora) where …`); the members CSV

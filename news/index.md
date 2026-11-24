@@ -1,5 +1,46 @@
 # Changelog
 
+## openalexPro 0.19.0
+
+- New
+  [`pro_translate()`](https://openalexpro.github.io/openalexPro/reference/pro_translate.md):
+  exported wrapper around the free `POST /query` endpoint. Takes a list
+  with one of `oql`, `oxurl`, `oqo` and returns OpenAlex’s translation
+  (`oqo`, `oql`, `oql_oneline`, `oxurl`, `validation`), or stops with
+  its validation messages.
+
+- **Breaking:** `pro_collection(api_key)` is required (a personal key;
+  the
+  [`pro_api_key()`](https://openalexpro.github.io/openalexPro/reference/pro_api_key.md)
+  default is gone, since other keys get 401 on collections). The new
+  `api_key_fetch` (default `api_key`) runs the queries that fill the
+  collection, e.g. with a key that has a larger daily budget. Records
+  downloaded through the collection filter use `api_key`, because a
+  private collection is visible only to its owner’s key (another key
+  gets 404).
+
+- `pro_collection(fetch_first = TRUE)` fills a single query’s collection
+  by fetching its IDs with
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  and adding them as members, instead of an import (the route a list
+  with `name` always takes).
+
+- The fetch now runs *before* the collection is created: a failing query
+  leaves no empty collection, a fetch interrupted before the creation is
+  resumed, and a name already used by a collection not recorded in
+  `project_folder` stops the run before anything is fetched.
+
+- With changed queries, the members route now deletes the old collection
+  only after the new queries are fetched: a failing fetch keeps it. The
+  pending replacement is recorded (`replaces` in `_collection.json`) and
+  resumed by a rerun.
+
+- Switching `fetch_first` on or off for an unchanged query keeps the
+  collection (same ID) instead of deleting and re-creating it.
+
+- A same-name collection of another entity is reported as such, instead
+  of suggesting `refresh = TRUE`.
+
 ## openalexPro 0.18.1
 
 - DuckDB connections no longer print duckdb 2.0’s “storing downloaded

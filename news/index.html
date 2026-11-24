@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.19.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,19 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/v0.18.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/openalexPro/openalexPro/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.19.0" id="openalexpro-0190">openalexPro 0.19.0<a class="anchor" aria-label="anchor" href="#openalexpro-0190"></a></h2>
+<ul><li><p>New <code><a href="../reference/pro_translate.html">pro_translate()</a></code>: exported wrapper around the free <code>POST /query</code> endpoint. Takes a list with one of <code>oql</code>, <code>oxurl</code>, <code>oqo</code> and returns OpenAlex’s translation (<code>oqo</code>, <code>oql</code>, <code>oql_oneline</code>, <code>oxurl</code>, <code>validation</code>), or stops with its validation messages.</p></li>
+<li><p><strong>Breaking:</strong> <code>pro_collection(api_key)</code> is required (a personal key; the <code><a href="../reference/pro_api_key.html">pro_api_key()</a></code> default is gone, since other keys get 401 on collections). The new <code>api_key_fetch</code> (default <code>api_key</code>) runs the queries that fill the collection, e.g. with a key that has a larger daily budget. Records downloaded through the collection filter use <code>api_key</code>, because a private collection is visible only to its owner’s key (another key gets 404).</p></li>
+<li><p><code>pro_collection(fetch_first = TRUE)</code> fills a single query’s collection by fetching its IDs with <code><a href="../reference/pro_fetch.html">pro_fetch()</a></code> and adding them as members, instead of an import (the route a list with <code>name</code> always takes).</p></li>
+<li><p>The fetch now runs <em>before</em> the collection is created: a failing query leaves no empty collection, a fetch interrupted before the creation is resumed, and a name already used by a collection not recorded in <code>project_folder</code> stops the run before anything is fetched.</p></li>
+<li><p>With changed queries, the members route now deletes the old collection only after the new queries are fetched: a failing fetch keeps it. The pending replacement is recorded (<code>replaces</code> in <code>_collection.json</code>) and resumed by a rerun.</p></li>
+<li><p>Switching <code>fetch_first</code> on or off for an unchanged query keeps the collection (same ID) instead of deleting and re-creating it.</p></li>
+<li><p>A same-name collection of another entity is reported as such, instead of suggesting <code>refresh = TRUE</code>.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.1" id="openalexpro-0181">openalexPro 0.18.1<a class="anchor" aria-label="anchor" href="#openalexpro-0181"></a></h2>
 <ul><li>DuckDB connections no longer print duckdb 2.0’s “storing downloaded extensions and secrets under ~/.duckdb” message (up to 60 times per run), and no longer ask to create <code>~/.duckdb</code> in interactive sessions. openalexPro uses the location duckdb would choose itself (<code>~/.duckdb</code> if it exists, a temporary directory otherwise); a <code>duckdb.home</code> option or <code>DUCKDB_R_HOME</code> you set is still respected (<a href="https://github.com/openalexPro/openalexPro/issues/88" class="external-link">#88</a>).</li>

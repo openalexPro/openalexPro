@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="index.html">openalexPro</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.18.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.19.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -168,14 +168,17 @@ To run online contract checks against the live OpenAlex API:</p>
 </h2>
 <p>An OpenAlex <a href="https://help.openalex.org/api/collections" class="external-link">collection</a> is a set of IDs saved on OpenAlex’s servers. A collection can be reused as a filter in later queries and combined with other collections. <code><a href="reference/pro_collection.html">pro_collection()</a></code> turns a query into a collection. OpenAlex runs the query (an <em>import</em>), and the member IDs are then downloaded as parquet:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>search <span class="op">=</span> <span class="st">"coral bleaching"</span>, publication_year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span>
-<span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_collection.html">pro_collection</a></span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu">keyring</span><span class="fu">::</span><span class="fu"><a href="https://keyring.r-lib.org/reference/key_get.html" class="external-link">key_get</a></span><span class="op">(</span><span class="st">"API_openalex_personal"</span><span class="op">)</span> <span class="co"># a personal key</span></span>
+<span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>search <span class="op">=</span> <span class="st">"coral bleaching"</span>, publication_year <span class="op">=</span> <span class="fl">2024</span><span class="op">)</span></span>
+<span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pro_collection.html">pro_collection</a></span><span class="op">(</span><span class="va">q</span>, name <span class="op">=</span> <span class="st">"coral bleaching 2024"</span>, project_folder <span class="op">=</span> <span class="st">"proj"</span>,</span>
+<span>                    api_key <span class="op">=</span> <span class="va">key</span><span class="op">)</span></span>
 <span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fu">jsonlite</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/read_json.html" class="external-link">read_json</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"_collection.json"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">collection_id</span></span>
 <span></span>
 <span><span class="co"># Later: only the open-access members, as records. corpus = "all": without</span></span>
-<span><span class="co"># it, a collection filter returns only the core works, not the expansion ones</span></span>
+<span><span class="co"># it, a collection filter returns only the core works, not the expansion ones.</span></span>
+<span><span class="co"># A private collection is visible only with its owner's key.</span></span>
 <span><span class="fu"><a href="reference/pro_fetch.html">pro_fetch</a></span><span class="op">(</span><span class="fu"><a href="reference/pro_query.html">pro_query</a></span><span class="op">(</span>collection <span class="op">=</span> <span class="va">id</span>, is_oa <span class="op">=</span> <span class="cn">TRUE</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>corpus <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>          project_folder <span class="op">=</span> <span class="st">"oa"</span><span class="op">)</span></span></code></pre></div>
+<span>          project_folder <span class="op">=</span> <span class="st">"oa"</span>, api_key <span class="op">=</span> <span class="va">key</span><span class="op">)</span></span></code></pre></div>
 <p>Everything about the collection is in <code>proj/coral bleaching 2024.collection/</code>:</p>
 <ul>
 <li>
@@ -186,13 +189,13 @@ To run online contract checks against the live OpenAlex API:</p>
 <li>
 <code>records/</code>: the records, when <code>select</code> asks for more than <code>id</code>.</li>
 </ul>
-<p>Running <code><a href="reference/pro_collection.html">pro_collection()</a></code> again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless <code>refresh = TRUE</code>: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With <code>name</code>, the whole list goes into one collection: its queries are fetched with <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> (in parallel with <code>workers</code>) and the IDs added as members. Use this for long ID or DOI lists (<code>pro_query(..., chunk_limit = 200)</code>): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs).</p>
+<p>Running <code><a href="reference/pro_collection.html">pro_collection()</a></code> again keeps the collection for the same query. A changed query re-creates the collection (new ID), unless <code>refresh = TRUE</code>: that always keeps the ID and makes the members match the query (adding and removing), also when the query changed or the local folder is gone. A named list of queries gives one collection per element. With <code>name</code>, the whole list goes into one collection: its queries are fetched with <code><a href="reference/pro_fetch.html">pro_fetch()</a></code> (in parallel with <code>workers</code>) and only then is the collection created and the IDs added as members. Use this for long ID or DOI lists (<code>pro_query(..., chunk_limit = 200)</code>): OpenAlex imports at most 20,000 characters of OQL (about 600 to 800 DOIs). <code>fetch_first = TRUE</code> fills single queries the same way instead of with an import.</p>
 <p>Costs:</p>
 <ul>
 <li>Downloading the member IDs is free.</li>
 <li>An import costs the same credits as paging through the results yourself, and runs at about 200 results per second.</li>
 </ul>
-<p>Collections need a <strong>personal</strong> OpenAlex API key; other keys are refused even when they work for queries. See <code><a href="articles/collections.html">vignette("collections")</a></code>.</p>
+<p>Collections need a <strong>personal</strong> OpenAlex API key (<code>api_key</code>, required); other keys are refused even when they work for queries. The queries that fill a collection can run with another key (<code>api_key_fetch</code>, default <code>api_key</code>). See <code><a href="articles/collections.html">vignette("collections")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="advanced-workflow-individual-functions">Advanced Workflow (Individual Functions)<a class="anchor" aria-label="anchor" href="#advanced-workflow-individual-functions"></a>

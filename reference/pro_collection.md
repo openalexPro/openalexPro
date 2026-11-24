@@ -18,7 +18,9 @@ pro_collection(
   select = "id",
   refresh = FALSE,
   access = NULL,
-  api_key = pro_api_key(),
+  fetch_first = FALSE,
+  api_key,
+  api_key_fetch = api_key,
   verbose = FALSE,
   progress = TRUE,
   ...
@@ -70,9 +72,21 @@ pro_collection(
   can set this for now; OpenAlex refuses it with HTTP 403). `NULL`
   (default) leaves it as it is.
 
+- fetch_first:
+
+  If `TRUE`, fill a single query's collection by fetching its IDs with
+  [`pro_fetch()`](https://openalexpro.github.io/openalexPro/reference/pro_fetch.md)
+  and adding them as members, instead of an import (see **Fetch
+  first**). A list with `name` is always filled this way.
+
 - api_key:
 
-  A personal OpenAlex API key.
+  A personal OpenAlex API key for the collection calls. Required.
+
+- api_key_fetch:
+
+  The OpenAlex API key for the queries that fill the collection.
+  Defaults to `api_key`.
 
 - verbose:
 
@@ -181,6 +195,13 @@ again (syncing is idempotent). A changed query re-creates the collection
 unless `refresh = TRUE`, which keeps it, fetches everything again and
 syncs the members.
 
+**Fetch first:** the queries are fetched *before* the collection is
+created, so a query that fails leaves no empty collection behind. This
+is always the route for a list with `name`; `fetch_first = TRUE` takes
+it for single queries too (and for each element of a list without
+`name`) instead of an import. OpenAlex does not check that the IDs it is
+given exist, but these come from the queries, so they do.
+
 **Limits:** 1,000,000 members per collection, 500 collections per
 account, names up to 100 characters and unique per account. A collection
 with more than 300,000 members (100,000 for authors) cannot be used as a
@@ -197,9 +218,14 @@ expansion works get into the collection depends on the query that fills
 it (`options = list(corpus = "all")` in
 [`pro_query()`](https://openalexpro.github.io/openalexPro/reference/pro_query.md)).
 
-**API key:** collections need a *personal* OpenAlex API key;
-organisation keys and some older keys are refused (HTTP 401) even when
-they work for queries.
+**API keys:** collections need a *personal* OpenAlex API key
+(`api_key`); organisation keys and some older keys are refused (HTTP
+401) even when they work for queries. The queries that fill the
+collection can run with another key (`api_key_fetch`, e.g. one with a
+larger daily budget); they cost credits, the collection calls do not.
+Records downloaded through the collection filter (the import route) use
+`api_key`: a private collection is visible only to its owner's key
+(another key gets HTTP 404).
 
 ## See also
 
@@ -211,26 +237,34 @@ they work for queries.
 
 ``` r
 if (FALSE) { # \dontrun{
+key <- keyring::key_get("API_openalex_personal") # a personal key
 q <- pro_query(search = "coral bleaching", publication_year = 2024)
-f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj")
+f <- pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
+                    api_key = key)
 id <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
 
 # Later: records of the collection that are open access. corpus = "all":
-# without it, the filter returns only the core works
+# without it, the filter returns only the core works. A private collection
+# is visible only with its owner's key
 pro_fetch(pro_query(collection = id, is_oa = TRUE, options = list(corpus = "all")),
-          project_folder = "oa")
+          project_folder = "oa", api_key = key)
 
 # Let anyone with the link or ID use it
 pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
-               access = "shared_by_link")
+               api_key = key, access = "shared_by_link")
 
 # Add titles to the download (re-downloads the records)
 pro_collection(q, name = "coral bleaching 2024", project_folder = "proj",
-               select = c("id", "title"))
+               api_key = key, select = c("id", "title"))
 
 # A long DOI list in one collection: the chunks are fetched in parallel
 # and their IDs added as members
 pro_collection(pro_query(doi = dois, chunk_limit = 200), name = "my dois",
-               project_folder = "proj", workers = 8)
+               project_folder = "proj", api_key = key,
+               api_key_fetch = pro_api_key(), workers = 8)
+
+# A single query, fetched first instead of imported
+pro_collection(q, name = "coral 2024 fetched", project_folder = "proj",
+               api_key = key, fetch_first = TRUE)
 } # }
 ```
