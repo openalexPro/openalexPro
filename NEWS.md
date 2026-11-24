@@ -1,5 +1,10 @@
 # openalexPro (development version)
 
+- New `pro_translate()`: exported wrapper around the free `POST /query`
+  endpoint. Takes a list with one of `oql`, `oxurl`, `oqo` and returns
+  OpenAlex's translation (`oqo`, `oql`, `oql_oneline`, `oxurl`,
+  `validation`), or stops with its validation messages.
+
 - **Breaking:** `pro_collection(api_key)` is required (a personal key; the
   `pro_api_key()` default is gone, since other keys get 401 on collections).
   The new `api_key_fetch` (default `api_key`) runs the queries that fill the
