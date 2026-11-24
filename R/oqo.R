@@ -132,6 +132,18 @@ pro_translate <- function(
       call. = FALSE
     )
   }
+  v <- body[[1]]
+  if (identical(names(body), "oqo")) {
+    if (!is.list(v)) {
+      stop(
+        "`body$oqo` must be a list (a parsed OQO, e.g. ",
+        "`jsonlite::fromJSON(x, simplifyVector = FALSE)`), not a JSON string.",
+        call. = FALSE
+      )
+    }
+  } else if (!is.character(v) || length(v) != 1L || is.na(v) || !nzchar(v)) {
+    stop("`body$", names(body), "` must be a single non-empty string.", call. = FALSE)
+  }
   .oa_translate(root, body, api_key)
 }
 

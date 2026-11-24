@@ -31,4 +31,8 @@ test_that("pro_translate() checks `body` before any request", {
   expect_error(pro_translate("get works"), "exactly one of")
   expect_error(pro_translate(list(oql = "x", oxurl = "/works")), "exactly one of")
   expect_error(pro_translate(list(query = "x")), "exactly one of")
+  expect_error(pro_translate(list(oql = NULL)), "single non-empty string")
+  expect_error(pro_translate(list(oql = c("a", "b"))), "single non-empty string")
+  expect_error(pro_translate(list(oxurl = "")), "single non-empty string")
+  expect_error(pro_translate(list(oqo = '{"get_rows":"works"}')), "must be a list")
 })
