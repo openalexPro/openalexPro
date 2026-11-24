@@ -88,7 +88,7 @@
 #' )
 #'
 #' # Reuse a DuckDB connection for multiple samples
-#' con <- DBI::dbConnect(.pro_duckdb())
+#' con <- DBI::dbConnect(duckdb::duckdb())
 #' on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
 #'
 #' s1 <- sample_parquet_duckdb(
