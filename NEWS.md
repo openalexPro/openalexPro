@@ -1,4 +1,4 @@
-# openalexPro (development version)
+# openalexPro 0.19.0
 
 - New `pro_translate()`: exported wrapper around the free `POST /query`
   endpoint. Takes a list with one of `oql`, `oxurl`, `oqo` and returns
