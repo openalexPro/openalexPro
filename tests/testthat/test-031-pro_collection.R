@@ -699,3 +699,70 @@ test_that("the import route uses the fetch key for queries, the collection key f
   expect_setequal(auth("^/rate-limit$"), c("k", "f"))
   expect_equal(calls$key, "k") # records via the private collection filter
 })
+
+test_that("switching fetch_first on or off keeps the collection of an unchanged query", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  rec <- function(f) jsonlite::read_json(file.path(f, "_collection.json"))
+  f <- pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  id <- rec(f)$collection_id
+  expect_equal(rec(f)$via, "collection")
+
+  # import -> fetched first: same ID, members synced, nothing deleted
+  pro_collection(q1, name = "c", project_folder = pf, fetch_first = TRUE,
+                 api_key = "k", progress = FALSE)
+  expect_equal(rec(f)$collection_id, id)
+  expect_equal(rec(f)$via, "members")
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_false(any(vapply(state$log, function(x) x$method == "DELETE", TRUE)))
+
+  # fetched first -> import: same ID, no new import
+  imports <- posts(state, "imports$")
+  pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(rec(f)$collection_id, id)
+  expect_equal(rec(f)$via, "collection")
+  expect_equal(posts(state, "imports$"), imports)
+  expect_length(state$cols, 1)
+})
+
+test_that("changed queries replace the collection only after a successful fetch", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  f <- pro_collection(chunks, name = "d", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  old <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
+
+  # the new fetch fails: the old collection is still there (and the name
+  # lookup does not stop the run although it finds it)
+  calls$fail <- TRUE
+  expect_error(pro_collection(chunks[1:2], name = "d", project_folder = pf, api_key = "k",
+                              progress = FALSE), "fetch failed")
+  expect_true(old %in% names(state$cols))
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$replaces, old)
+
+  # the rerun resumes the replacement: old deleted, new one created
+  calls$fail <- FALSE
+  pro_collection(chunks[1:2], name = "d", project_folder = pf, api_key = "k",
+                 progress = FALSE)
+  r <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_false(old %in% names(state$cols))
+  expect_false(identical(r$collection_id, old))
+  expect_null(r$replaces)
+  expect_true(r$collection_id %in% names(state$cols))
+})
+
+test_that("a same-name collection of another entity says so before suggesting refresh", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  state$cols$col_9 <- list(id = "https://openalex.org/collections/col_9", display_name = "x",
+                           entity_type = "authors", member_count = 0L, access = "private",
+                           imports = list(), members = character(0))
+  expect_error(pro_collection(chunks, name = "x", project_folder = withr::local_tempdir(),
+                              api_key = "k", progress = FALSE), "holds authors")
+  expect_equal(calls$n, 0L)
+})

@@ -297,8 +297,17 @@ pro_collection <- function(
   imports <- list()
   prev_credits <- 0
   changed <- FALSE
+  switched <- FALSE
+  parts <- if (identical(rec$via, "members")) .col_read_parts(file.path(folder, "_parts.parquet"))
   if (!is.null(rec)) {
-    if (.oqo_equivalent(rec$oqo, oq$oqo)) {
+    if (!is.null(parts) && nrow(parts) == 1L && identical(parts$query_url, url) &&
+        !is.null(col <- .col_get(root, rec$collection_id, api_key))) {
+      # Same query, fetched first before (`fetch_first` switched off): its
+      # members are already the query's results, so no import is needed
+      step("same query, now imported: keeping collection")
+      changed <- TRUE
+      switched <- TRUE
+    } else if (.oqo_equivalent(rec$oqo, oq$oqo)) {
       col <- .col_get(root, rec$collection_id, api_key)
       imports <- rec$imports %||% list()
       prev_credits <- as.numeric(rec$credits_import %||% 0)
@@ -355,7 +364,7 @@ pro_collection <- function(
     synced <- .col_fetch_and_sync(root, id, url, folder, keys, verbose,
                                   progress, step, ...)
   }
-  imported <- is.null(synced) && (created || (!waited && !state$done))
+  imported <- is.null(synced) && !switched && (created || (!waited && !state$done))
   if (imported) {
     step("importing query")
     imp <- .col_json(.col_req(root, "POST", c("collections", id, "imports"), api_key,
@@ -451,7 +460,13 @@ pro_collection <- function(
   rec <- .col_read_record(rec_file)
   col <- NULL
   prev_credits <- 0
-  if (!is.null(rec)) {
+  # Collection to delete once the new queries are fetched; set in the record
+  # by a replacement that did not finish
+  old_id <- rec$replaces
+  if (!is.null(old_id)) {
+    step(paste("resuming the replacement of collection", old_id))
+    rec <- NULL
+  } else if (!is.null(rec)) {
     if (identical(rec$via, "members") && same_parts) {
       col <- .col_get(root, rec$collection_id, api_key)
       prev_credits <- as.numeric(rec$credits %||% 0)
@@ -461,15 +476,30 @@ pro_collection <- function(
         rec <- NULL
         prev_credits <- 0
       }
+    } else if (identical(rec$via, "collection") && n == 1L &&
+               .oqo_equivalent(rec$oqo, .oa_to_oqo(urls[[1]], keys$fetch)$oqo) &&
+               !is.null(col <- .col_get(root, rec$collection_id, api_key))) {
+      # Same query, filled by an import before (`fetch_first` switched on)
+      step("same query, now fetched first: keeping collection and syncing its members")
+      .col_clear(folder)
+      rec <- NULL
     } else if (isTRUE(refresh) &&
                !is.null(col <- .col_keep(root, rec$collection_id, entity, folder, api_key, step))) {
       rec <- NULL # the new queries and record are written below
     } else {
-      .col_replace(root, rec$collection_id, folder, api_key, step)
+      # Deleted only after the new queries are fetched: a failing fetch keeps
+      # the old collection. Marked in the record, so a rerun resumes this.
+      old_id <- rec$collection_id
+      step(paste("query changed: collection", old_id, "is replaced once fetched"))
+      .col_clear(folder)
+      rec$replaces <- old_id
+      rec$members_added <- FALSE
+      jsonlite::write_json(rec, rec_file, auto_unbox = TRUE, pretty = TRUE,
+                           null = "null", digits = NA)
       rec <- NULL
     }
   }
-  if (is.null(col) && is.null(rec)) {
+  if (is.null(col) && is.null(rec) && is.null(old_id)) {
     # No local record: a collection of that name is taken over with refresh
     # (same ID); without it, stop before the fetch spends credits
     col <- .col_take_over(root, name, entity, folder, api_key, step, take = isTRUE(refresh))
@@ -508,6 +538,12 @@ pro_collection <- function(
   # 4. Create the collection and make the IDs its members: a new collection
   #    gets them added; an existing one is synced (new IDs added, IDs no
   #    longer found removed; idempotent, also after an interruption)
+  if (!is.null(old_id)) {
+    # the replaced collection, now that the new queries are fetched (its name
+    # must be free before the new one is created)
+    step(paste("deleting collection", old_id))
+    .col_req(root, "DELETE", c("collections", old_id), api_key, ok = c(204L, 404L))
+  }
   if (created) col <- .col_create(root, name, entity, folder, api_key, step)
   if (is.null(rec)) {
     # Written now so an interrupted run knows the collection
@@ -631,15 +667,15 @@ pro_collection <- function(
     return(NULL)
   }
   col <- hit[[1]]
+  if (!identical(col$entity_type, entity)) {
+    stop("The collection `", name, "` (", .col_id(col$id), ") holds ", col$entity_type,
+         ", not ", entity, ". Choose another `name`.", call. = FALSE)
+  }
   if (!take) {
     stop("A collection named `", name, "` (", .col_id(col$id), ") exists but is not ",
          "recorded in `project_folder`. Use `refresh = TRUE` to take it over (same ID; ",
          "its members are replaced by the query's results), choose another `name`, ",
          "or delete it on OpenAlex.", call. = FALSE)
-  }
-  if (!identical(col$entity_type, entity)) {
-    stop("The collection `", name, "` (", .col_id(col$id), ") holds ", col$entity_type,
-         ", not ", entity, ". Choose another `name`.", call. = FALSE)
   }
   step(paste("taking over existing collection", .col_id(col$id)))
   col
