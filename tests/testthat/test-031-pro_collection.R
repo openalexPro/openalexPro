@@ -1,5 +1,12 @@
 # pro_collection(): offline, against a small in-memory collections API.
 
+# The Bearer key of a request
+.test_auth <- function(req) {
+  h <- req$headers$Authorization
+  if (is.null(h)) return(NA_character_)
+  sub("^Bearer ", "", if (inherits(h, "weakref")) rlang::wref_value(h) else as.character(h))
+}
+
 # Serves /query (translation), /rate-limit, and /collections with imports
 # (running on the first poll, done on the second) and a members CSV.
 mock_collections <- function(state, n_members = 3L) {
@@ -15,7 +22,8 @@ mock_collections <- function(state, n_members = 3L) {
                          simplifyVector = FALSE)
     }
     p <- strsplit(sub("^/", "", u$path), "/")[[1]]
-    state$log[[length(state$log) + 1L]] <- list(method = method, path = u$path, body = body)
+    state$log[[length(state$log) + 1L]] <- list(method = method, path = u$path, body = body,
+                                                    auth = .test_auth(req))
     json <- function(x, status = 200L) {
       httr2::response(status, headers = list("content-type" = "application/json"),
         body = charToRaw(as.character(jsonlite::toJSON(x, auto_unbox = TRUE, null = "null"))))
@@ -124,6 +132,9 @@ local_fake_fetch <- function(calls, env = parent.frame()) {
   calls$n <- 0L
   local_mocked_bindings(pro_fetch = function(query_url, project_folder, resume = FALSE, ...) {
     calls$n <- calls$n + 1L
+    calls$key <- list(...)$api_key
+    calls$at <- if (!is.null(calls$state)) length(calls$state$log) # requests before it
+    if (isTRUE(calls$fail)) stop("fetch failed")
     calls$url <- query_url
     calls$resume <- resume
     sel <- httr2::url_parse(if (is.list(query_url)) query_url[[1]] else query_url)$query$select
@@ -299,6 +310,7 @@ test_that("invalid input stops before anything is created", {
   expect_error(pro_collection(q1, project_folder = pf, api_key = "k"), "`name` is required")
   expect_error(pro_collection(list(q1), project_folder = pf, api_key = "k"), "needs a name")
   expect_error(pro_collection(q1, name = "c", api_key = "k"), "`project_folder` is required")
+  expect_error(pro_collection(q1, name = "c", project_folder = pf), "`api_key` is required")
   expect_error(pro_collection(paste0(q1, "&group_by=type"), name = "c", project_folder = pf,
                               api_key = "k", progress = FALSE), "group_by")
   expect_error(pro_collection(paste0(q1, "&sample=10"), name = "c", project_folder = pf,
@@ -546,11 +558,12 @@ test_that("without a local record, refresh takes over the collection of that nam
 
   expect_error(pro_collection(chunks, name = "dois", project_folder = pf, api_key = "k",
                               progress = FALSE), "refresh = TRUE")
+  expect_equal(calls$n, 1L) # nothing fetched for it
   calls$ids <- paste0("W", 2:4)
   f <- pro_collection(chunks, name = "dois", project_folder = pf, refresh = TRUE,
                       api_key = "k", progress = FALSE)
-  # created once; the second POST is the refused attempt without `refresh`
-  expect_equal(posts(state, "/collections$"), 2)
+  # created once: the attempt without `refresh` stops before a fetch or POST
+  expect_equal(posts(state, "/collections$"), 1)
   expect_length(state$cols, 1)
   expect_false(any(vapply(state$log, function(x) {
     x$method == "DELETE" && grepl("^/collections/col_[0-9]+$", x$path)
@@ -622,4 +635,134 @@ test_that("a changed query with refresh keeps the collection and syncs its membe
   pro_collection(chunks, name = "d", project_folder = pf, api_key = "k", progress = FALSE)
   expect_equal(deletes(), 1)
   expect_false(identical(jsonlite::read_json(file.path(f, "_collection.json"))$collection_id, id))
+})
+
+test_that("fetch_first fills a single query's collection from a fetch, made before it", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  calls$state <- state
+  pf <- withr::local_tempdir()
+  f <- pro_collection(q1, name = "c", project_folder = pf, fetch_first = TRUE,
+                      api_key = "k", api_key_fetch = "f", progress = FALSE)
+  expect_equal(posts(state, "imports$"), 0)
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_equal(sum(vapply(state$log[seq_len(calls$at)], function(x) {
+    x$method == "POST" && grepl("/collections$", x$path)
+  }, TRUE)), 0) # fetched before the collection was created
+  expect_equal(calls$key, "f")
+  expect_equal(unique(unlist(lapply(state$log, function(x) {
+    if (startsWith(x$path, "/collections")) x$auth
+  }))), "k")
+  expect_setequal(state$cols$col_1$members, paste0("W", 1:3))
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$via, "members")
+
+  # a list without `name`: one fetched collection per element
+  out <- pro_collection(list(a = q1, b = q2), project_folder = pf, fetch_first = TRUE,
+                        api_key = "k", progress = FALSE)
+  expect_equal(names(out), c("a", "b"))
+  expect_equal(posts(state, "imports$"), 0)
+  expect_equal(calls$key, "k") # api_key_fetch defaults to api_key
+})
+
+test_that("a failed fetch creates no collection; the re-run resumes it", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  calls$fail <- TRUE
+  expect_error(pro_collection(chunks, name = "d", project_folder = pf,
+                              api_key = "k", progress = FALSE), "fetch failed")
+  expect_equal(posts(state, "/collections$"), 0)
+  expect_false(file.exists(file.path(pf, "d.collection", "_collection.json")))
+  calls$fail <- FALSE
+  dir.create(file.path(pf, "d.collection", "_ids")) # the partial download
+  pro_collection(chunks, name = "d", project_folder = pf, api_key = "k",
+                 progress = FALSE)
+  expect_true(calls$resume)
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_equal(state$cols$col_1$member_count, 3L)
+})
+
+test_that("the import route uses the fetch key for queries, the collection key for the rest", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  f <- pro_collection(q1, name = "c", project_folder = withr::local_tempdir(),
+                      select = c("id", "title"), api_key = "k",
+                      api_key_fetch = "f", progress = FALSE)
+  auth <- function(re) unique(unlist(lapply(state$log, function(x) {
+    if (grepl(re, x$path)) x$auth
+  })))
+  expect_equal(auth("^/query$"), "f")
+  expect_equal(auth("^/collections"), "k")
+  expect_setequal(auth("^/rate-limit$"), c("k", "f"))
+  expect_equal(calls$key, "k") # records via the private collection filter
+})
+
+test_that("switching fetch_first on or off keeps the collection of an unchanged query", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  rec <- function(f) jsonlite::read_json(file.path(f, "_collection.json"))
+  f <- pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  id <- rec(f)$collection_id
+  expect_equal(rec(f)$via, "collection")
+
+  # import -> fetched first: same ID, members synced, nothing deleted
+  pro_collection(q1, name = "c", project_folder = pf, fetch_first = TRUE,
+                 api_key = "k", progress = FALSE)
+  expect_equal(rec(f)$collection_id, id)
+  expect_equal(rec(f)$via, "members")
+  expect_equal(posts(state, "/collections$"), 1)
+  expect_false(any(vapply(state$log, function(x) x$method == "DELETE", TRUE)))
+
+  # fetched first -> import: same ID, no new import
+  imports <- posts(state, "imports$")
+  pro_collection(q1, name = "c", project_folder = pf, api_key = "k", progress = FALSE)
+  expect_equal(rec(f)$collection_id, id)
+  expect_equal(rec(f)$via, "collection")
+  expect_equal(posts(state, "imports$"), imports)
+  expect_length(state$cols, 1)
+})
+
+test_that("changed queries replace the collection only after a successful fetch", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  pf <- withr::local_tempdir()
+  f <- pro_collection(chunks, name = "d", project_folder = pf, api_key = "k",
+                      progress = FALSE)
+  old <- jsonlite::read_json(file.path(f, "_collection.json"))$collection_id
+
+  # the new fetch fails: the old collection is still there (and the name
+  # lookup does not stop the run although it finds it)
+  calls$fail <- TRUE
+  expect_error(pro_collection(chunks[1:2], name = "d", project_folder = pf, api_key = "k",
+                              progress = FALSE), "fetch failed")
+  expect_true(old %in% names(state$cols))
+  expect_equal(jsonlite::read_json(file.path(f, "_collection.json"))$replaces, old)
+
+  # the rerun resumes the replacement: old deleted, new one created
+  calls$fail <- FALSE
+  pro_collection(chunks[1:2], name = "d", project_folder = pf, api_key = "k",
+                 progress = FALSE)
+  r <- jsonlite::read_json(file.path(f, "_collection.json"))
+  expect_false(old %in% names(state$cols))
+  expect_false(identical(r$collection_id, old))
+  expect_null(r$replaces)
+  expect_true(r$collection_id %in% names(state$cols))
+})
+
+test_that("a same-name collection of another entity says so before suggesting refresh", {
+  state <- new.env(); calls <- new.env()
+  local_collections(state)
+  local_fake_fetch(calls)
+  state$cols$col_9 <- list(id = "https://openalex.org/collections/col_9", display_name = "x",
+                           entity_type = "authors", member_count = 0L, access = "private",
+                           imports = list(), members = character(0))
+  expect_error(pro_collection(chunks, name = "x", project_folder = withr::local_tempdir(),
+                              api_key = "k", progress = FALSE), "holds authors")
+  expect_equal(calls$n, 0L)
 })

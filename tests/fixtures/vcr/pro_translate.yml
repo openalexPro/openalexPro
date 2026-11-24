@@ -1,0 +1,122 @@
+http_interactions:
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oql":"get works where type is [erratum](erratum)"}'
+  response:
+    status: 200
+    headers:
+      date: Tue, 24 Nov 2026 14:28:44 GMT
+      content-type: application/json
+      cf-ray: a5f91a0ca84b719b-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999724'
+      x-ratelimit-remaining-usd: '199.9724'
+      x-ratelimit-reset: '34276'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition, X-OpenAlex-UI-Token
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1795530524"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1795530524"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=type:erratum","oql":"get works where type is [erratum](erratum)","oql_oneline":"get works where type is [erratum](erratum)","x_new_oql":"get works where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"type","column_id":"type","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-11-24 14:28:44
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oxurl":"/works?filter=type:erratum"}'
+  response:
+    status: 200
+    headers:
+      date: Tue, 24 Nov 2026 14:28:44 GMT
+      content-type: application/json
+      cf-ray: a5f91a101957719b-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999724'
+      x-ratelimit-remaining-usd: '199.9724'
+      x-ratelimit-reset: '34276'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition, X-OpenAlex-UI-Token
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1795530524"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1795530524"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=type:erratum","oql":"get works where type is [erratum](erratum)","oql_oneline":"get works where type is [erratum](erratum)","x_new_oql":"get works where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"type","column_id":"type","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-11-24 14:28:44
+- request:
+    method: POST
+    uri: https://api.openalex.org/query
+    body:
+      string: '{"oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"erratum"}]}}'
+  response:
+    status: 200
+    headers:
+      date: Tue, 24 Nov 2026 14:28:44 GMT
+      content-type: application/json
+      cf-ray: a5f91a11ad9b719b-ZRH
+      cf-cache-status: DYNAMIC
+      access-control-allow-origin: '*'
+      server: cloudflare
+      via: 2.0 heroku-router
+      x-ratelimit-cost-usd: '0'
+      x-ratelimit-credits-used: '0'
+      x-ratelimit-limit: '2000000'
+      x-ratelimit-limit-usd: '200'
+      x-ratelimit-onetime-remaining: '0'
+      x-ratelimit-prepaid-remaining-usd: '0'
+      x-ratelimit-remaining: '1999724'
+      x-ratelimit-remaining-usd: '199.9724'
+      x-ratelimit-reset: '34276'
+      access-control-allow-headers: Accept, Accept-Language, Accept-Encoding, Authorization,
+        Content-Type, X-OpenAlex-UI, X-Impersonate-User
+      access-control-allow-methods: GET, HEAD, POST, PATCH, DELETE, OPTIONS
+      access-control-expose-headers: Cache-Control, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Onetime-Remaining, X-RateLimit-Credits-Used, X-RateLimit-Credits-Required,
+        X-RateLimit-Reset, X-RateLimit-Limit-USD, X-RateLimit-Remaining-USD, X-RateLimit-Prepaid-Remaining-USD,
+        X-RateLimit-Cost-USD, X-RateLimit-Cost-Required-USD, Retry-After, Location,
+        Content-Disposition, X-OpenAlex-UI-Token
+      nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      report-to: '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\u0026ts=1795530524"}],"max_age":3600}'
+      reporting-endpoints: heroku-nel="https://nel.heroku.com/reports?s=YmkpTk7miuMPiW1ZRzb%2BX9TVZ3Ba0XfHL3GSZszh6XI%3D&sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&ts=1795530524"
+      content-encoding: gzip
+    body:
+      string: |
+        {"oxurl":"/works?filter=type:erratum","oql":"get works where type is [erratum](erratum)","oql_oneline":"get works where type is [erratum](erratum)","x_new_oql":"get works where type is [erratum](erratum)","oql_render_v2":{"version":"2.0","entity":{"id":"works","text":"works"},"corpus_phrase":"","where_keyword":" where ","where":{"node":"clause","id":"n1","clause_kind":"other","column_id":"type","column":"type","operator":"is","segments":[{"kind":"column","text":"type","meta":{"column_id":"type"}},{"kind":"operator","text":" is "},{"kind":"text","text":"("},{"kind":"value","text":"erratum","meta":{"column_id":"type","value":"erratum"}},{"kind":"text","text":")"}],"leaf":{"column_id":"type","value":"erratum"},"addr":[1]},"directives":[],"lines":[{"indent":0,"tokens":[{"t":"kw","id":"works","text":"works","label":"works"},{"t":"kw","text":" where ","label":"where"},{"t":"col","id":"n1","text":"type","column_id":"type","addr":"1"},{"t":"op","id":"n1","text":" is ","addr":"1"},{"t":"text","id":"n1","text":"(","addr":"1"},{"t":"vbrick","id":"n1","text":"erratum","column_id":"type","value":"erratum","kind":"other","addr":"1.1"},{"t":"text","id":"n1","text":")","addr":"1"}],"n":1}]},"oqo":{"get_rows":"works","filter_rows":[{"column_id":"type","value":"erratum"}]},"validation":{"valid":true,"errors":[],"warnings":[]}}
+  recorded_at: 2026-11-24 14:28:44
+recorded_with: VCR-vcr/2.1.0
